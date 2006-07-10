@@ -1,0 +1,1 @@
+all = ["bin", "angel_app"]
