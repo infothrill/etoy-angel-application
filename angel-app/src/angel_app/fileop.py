@@ -47,8 +47,8 @@ from twisted.web2.http import StatusResponse, HTTPError
 from twisted.web2.stream import FileStream, readIntoFile
 from twisted.web2.dav.http import ResponseQueue, statusForFailure
 
-from angel_app.davServer.static import AngelFile
-from angel_app.core.elements import Deleted
+from angel_app.static import AngelFile
+from angel_app.elements import Deleted
 
 def delete(uri, filepath, depth="infinity"):
     """

@@ -32,7 +32,7 @@ __all__ = ["http_DELETE"]
 from twisted.python import log
 from twisted.web2 import responsecode
 from twisted.web2.http import HTTPError
-from angel_app.dav.fileop import delete
+from angel_app.fileop import delete
 
 def http_DELETE(self, request):
     """

@@ -34,8 +34,8 @@ from twisted.web2.http import HTTPError
 from twisted.web2 import responsecode
 from twisted.internet.defer import deferredGenerator
 #from twisted.web2.dav.fileop import put
-from angel_app.dav.fileop import put
-from angel_app.core import elements
+from angel_app.fileop import put
+from angel_app import elements
 
 def http_PUT(self, request):
     """

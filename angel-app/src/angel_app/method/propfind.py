@@ -39,7 +39,7 @@ from twisted.web2.dav import davxml
 from twisted.web2.dav.http import MultiStatusResponse, statusForFailure
 from twisted.web2.dav.util import normalizeURL, joinURL, davXMLFromStream
 
-from angel_app.davServer.static import AngelFile
+from angel_app.static import AngelFile
 
 def http_PROPFIND(self, request):
     """

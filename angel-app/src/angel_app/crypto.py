@@ -19,3 +19,5 @@ def loadKeysFromFile():
                        ).read()
                        )    
     return angelKey
+
+angelKey = loadKeysFromFile()

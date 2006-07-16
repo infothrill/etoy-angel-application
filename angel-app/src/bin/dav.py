@@ -3,7 +3,7 @@ from twisted.web2 import server
 from twisted.web2 import channel
 from twisted.internet import reactor
 
-from angel_app.davServer import static
+from angel_app import static
 
 port = 9998
 rootDir = "/Users/vincent/Desktop/test"
