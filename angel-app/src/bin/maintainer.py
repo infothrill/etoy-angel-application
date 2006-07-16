@@ -3,6 +3,9 @@ from twisted.python import log
 from twisted.web2 import stream
 from twisted.internet import protocol
 
+
+
+
 def testConn(host = "localhost"):
     from twisted.internet import reactor
     d = protocol.ClientCreator(reactor, HTTPClientProtocol).connectTCP(host, 9999)
@@ -20,5 +23,9 @@ def testConn(host = "localhost"):
     d.addCallback(sendReqs)
     del d
     reactor.run()
-    
-testConn()
+ 
+# nah, not here   
+#testConn()
+
+from angel_app.maintainer.util import treeMap, inspectResource
+for item in treeMap(inspectResource): pass
