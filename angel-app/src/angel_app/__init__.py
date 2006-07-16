@@ -1,1 +1,1 @@
-all = ["crypto", "meatConfig", "metaData", "metaFile"]
+all = ["crypto", "elements", "fileop", "static", "method"]
