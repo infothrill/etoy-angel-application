@@ -11,11 +11,10 @@ from twisted.web2 import channel
 from twisted.internet import reactor
 
 from angel_app import static
+from config.internal import interface, rootDir, port
 
-port = 9998
-rootDir = "/Users/vincent/Desktop/test"
+
 root = static.AngelFile(rootDir)
-interface = "127.0.0.1"
 
 # DO NOT EXPOSE THIS KEY!!!!
 from angel_app.crypto import loadKeysFromFile

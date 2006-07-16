@@ -1,7 +1,6 @@
-all = ["bin", "angel_app"]
+all = ["angel_app", "bin", "config"]
 """
-
-bin: binaries to be executed
-angel_app: all the interesting library stuff
-
+angel_app:      all the interesting library stuff
+bin:            binaries to be executed
+config:         configuration stuff
 """
