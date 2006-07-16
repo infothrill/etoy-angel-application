@@ -10,7 +10,7 @@ keyBase = sep.join([
 
 def loadKeysFromFile():
     """
-    Load the keys from the appropriate location in the meat directory.
+    Load the ***SECRET*** keys from the appropriate location in the angel-app directory.
     """
     angelKey = ezKey()                                             
     angelKey.importKey(
@@ -19,5 +19,3 @@ def loadKeysFromFile():
                        ).read()
                        )    
     return angelKey
-
-angelKey = loadKeysFromFile()

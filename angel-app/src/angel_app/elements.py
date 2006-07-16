@@ -28,11 +28,11 @@ legalMatters = """
  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
 """
 
-author = """Vincent Kraeutler, 2005"""
+author = """Vincent Kraeutler, 2006"""
 
 from twisted.python import log
 from twisted.python.filepath import FilePath
-from twisted.web2.dav.element.base import WebDAVTextElement
+from twisted.web2.dav.element.base import WebDAVElement, WebDAVTextElement, dav_namespace
 
 class Revision (WebDAVTextElement):
     """
@@ -71,22 +71,41 @@ class MetaDataSignature (WebDAVTextElement):
     """
     name = "metaDataSignature"     
 
-class Clones (WebDAVTextElement):
+class Clone (WebDAVElement):
     """
-    List of clone urls of this AngelFile.
+    Specifies a clone of an angel-file (as a url)
     """
-    name = "clones"   
+    name = "clone"
+
+    allowed_children = {
+        (dav_namespace, "href"): (1, 1),
+        }
+
+class Clones (WebDAVElement):
+    """
+    List of zero or more clones of a specific angel-file.
+    """
+    name = "clones"
+    
+    allowed_children = {
+        (dav_namespace, "clone"): (0, None),
+        }
     
 class Children (WebDAVTextElement):
     """
-    List of child urls of this AngelFile (empty, if it is not a collection).
+    The children (and all their clones) of an angel-file which is a collection.
     """
-    name = "children"    
+    name = "children"
+    
+    allowed_children = {
+        (dav_namespace, "clones"): (0, None),
+        }
 
 
 # the above keys are _required_ for the angel-app to be (even conceptually)
 # operational. It is convenient to provide additional information for performance
 # and scalability.
+requiredKeys = signedKeys + [MetaDataSignature, Clones, Children]
 
 class ForceLocalCache (WebDAVTextElement):
     """

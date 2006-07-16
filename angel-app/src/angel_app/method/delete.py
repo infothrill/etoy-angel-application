@@ -44,6 +44,9 @@ def http_DELETE(self, request):
         log.err("File not found: %s" % (self.fp.path,))
         raise HTTPError(responsecode.NOT_FOUND)
 
+    if not self.isWritableFile():
+        raise HTTPError(responsecode.UNAUTHORIZED)
+    
     depth = request.headers.getHeader("depth", "infinity")
 
     return delete(request.uri, self.fp, depth)

@@ -4,11 +4,9 @@ from twisted.web2 import responsecode
 from twisted.web2.http import HTTPError
 
 from twisted.web2.dav.util import bindMethods
-from angel_app.crypto import angelKey
 from ezPyCrypto import key as ezKey
 from twisted.web2 import http, stream
 from twisted.web2.dav.xattrprops import xattrPropertyStore
-from twisted.web2.dav.element.base import WebDAVTextElement
 from angel_app import elements
 
 
