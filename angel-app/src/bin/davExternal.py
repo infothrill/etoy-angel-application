@@ -7,19 +7,18 @@ metadata).
 """
 
 
-#from twisted.web2.dav import static
+
+from config.common import rootDir
+from config.external import interface, port
+
+
+from angel_app import static
+root = static.AngelFile(rootDir)
+
+
 from twisted.web2 import server
 from twisted.web2 import channel
 from twisted.internet import reactor
-
-from angel_app import static
-
-port = 9999
-rootDir = "/Users/vincent/Desktop/test"
-root = static.AngelFile(rootDir)
-interface = "localhost"
-
-
 site = server.Site(root)
 reactor.listenTCP(port, channel.HTTPFactory(site), 50, interface)
 reactor.run()

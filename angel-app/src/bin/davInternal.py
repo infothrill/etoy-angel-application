@@ -11,14 +11,14 @@ from twisted.web2 import channel
 from twisted.internet import reactor
 
 from angel_app import static
-from config.internal import interface, rootDir, port
-
-
-root = static.AngelFile(rootDir)
+from config.common import rootDir
+from config.internal import interface, port
 
 # DO NOT EXPOSE THIS KEY!!!!
 from angel_app.crypto import loadKeysFromFile
-angelKey = loadKeysFromFile()
+static.AngelFile.secretKey = loadKeysFromFile()
+
+root = static.AngelFile(rootDir)
 
 site = server.Site(root)
 reactor.listenTCP(port, channel.HTTPFactory(site), 50, interface)

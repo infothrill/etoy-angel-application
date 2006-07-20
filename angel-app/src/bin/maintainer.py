@@ -28,4 +28,6 @@ def testConn(host = "localhost"):
 #testConn()
 
 from angel_app.maintainer.util import treeMap, inspectResource
-for item in treeMap(inspectResource): pass
+from angel_app.maintainer import setup
+setup.setupMasterClones()
+#for item in treeMap(inspectResource): pass

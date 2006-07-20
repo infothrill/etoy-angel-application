@@ -1,28 +1,29 @@
 from twisted.web2.dav.static import DAVFile
 from twisted.python import log
-from twisted.web2 import responsecode
+from twisted.web2 import responsecode, dirlist
 from twisted.web2.http import HTTPError
-
 from twisted.web2.dav.util import bindMethods
-from ezPyCrypto import key as ezKey
 from twisted.web2 import http, stream
 from twisted.web2.dav.xattrprops import xattrPropertyStore
 from angel_app import elements
+from angel_app.angelMixins import deletable, putable
+from ezPyCrypto import key as ezKey
 
+DEBUG = False
 
-class AngelFile(DAVFile):
+class AngelFile(DAVFile, deletable.Deletable, putable.Putable):
     """
     In addition to providing WebDAV functionality (file system operations
     over the network), this class also implements encryption and metadata
     management.
     """
+    
+    secretKey = None
+    
     def __init__(self, path,
                  defaultType="text/plain",
                  indexNames=None):
         DAVFile.__init__(self, path, defaultType, indexNames)
-        
-        #self.metaData = BasicMetaData(self.fp)
-
     
     def davComplianceClasses(self):
         """
@@ -59,36 +60,44 @@ class AngelFile(DAVFile):
         
         TODO: this implementation is dog slow and non-atomic. Revamp.
         """
+        
+        if self.fp.isdir(): return
+        
         myFile = self.fp.open() 
         plainText = myFile.read()
         myFile.close()
-        cypherText = angelKey.encString(plainText)
-        log.err("encrypting file")
+        cypherText = self.secretKey.encString(plainText)
+        DEBUG and log.err("encrypting file")
         myFile = self.fp.open("w") 
         myFile.write(cypherText)
         myFile.close()  
 
     def sign(self):
         """
-        Sign the file contents and store the public key nd signature in the metadata.
+        Sign the file contents and store the public key and signature in the metadata.
         """
-        myFile = self.fp.open()
-        fileContents = myFile.read()
-        myFile.close()
-        signature = angelKey.signString(fileContents)
+        
+        # TODO: this sucks, too
+        if self.fp.isdir(): 
+            signature = self.secretKey.signString("directory")
+        else:
+            myFile = self.fp.open()
+            fileContents = myFile.read()
+            myFile.close()
+            signature = self.secretKey.signString(fileContents)
         #signedKeys["contentSignature"].data = signature
         self.deadProperties().set(
                                   elements.ContentSignature.fromString(signature)
                                   )
         self.deadProperties().set(
-                                  elements.PublicKeyString.fromString(angelKey.exportKey())
+                                  elements.PublicKeyString.fromString(self.secretKey.exportKey())
                                   )
         return signature
 
     def getOrSet(self, davXmlTextElement, defaultValueString = ""):
         
         if not self.fp.exists():
-            log.err("AngelFile.getOrSet: file not found for path: " + self.fp.path)
+            DEBUG and log.err("AngelFile.getOrSet: file not found for path: " + self.fp.path)
             raise HTTPError(responsecode.NOT_FOUND)
         
         dp = self.deadProperties()
@@ -96,11 +105,11 @@ class AngelFile(DAVFile):
             element = dp.get(davXmlTextElement.qname())
             #data = element.children[0].data
             data = "".join([c.data for c in element.children])
-            log.err("AngelFile.getOrSet: data for " + `davXmlTextElement.qname()` + ": " + data)
+            DEBUG and log.err("AngelFile.getOrSet: data for " + `davXmlTextElement.qname()` + ": " + data)
             self.fp.restat()
             return data
         except HTTPError:
-            log.err("AngelFile.getOrSet: initializing element " + `davXmlTextElement.qname()` + " to " + defaultValueString)
+            DEBUG and log.err("AngelFile.getOrSet: initializing element " + `davXmlTextElement.qname()` + " to " + defaultValueString)
             dp.set(davXmlTextElement.fromString(defaultValueString))
             self.fp.restat()
             return defaultValueString
@@ -116,7 +125,7 @@ class AngelFile(DAVFile):
         Increase the revision number by one, if it not initialized, set it to 1.
         """
         nn = self.revisionNumber() + 1
-        log.err("revision number now at: " + `nn`)
+        DEBUG and log.err("revision number for " + self.fp.path +" now at: " + `nn`)
         self.deadProperties().set(elements.Revision.fromString(`nn`))
         return int(nn)
     
@@ -125,7 +134,7 @@ class AngelFile(DAVFile):
         """
         vv = self.getOrSet(elements.Deleted, "0")
         id = (vv != "0")       
-        log.err("AngelFile.isDeleted(): " + vv + ": " + `id`)
+        DEBUG and log.err("AngelFile.isDeleted(): " + vv + ": " + `id`)
         return vv != "0"
 
     def publicKeyString(self):
@@ -134,8 +143,8 @@ class AngelFile(DAVFile):
         except:
             # no key set yet -- maybe we have a key handy for signign?
             try:
-                keyString = angelKey.exportKey()
-                log.err("initializing public key to: " + keyString)
+                keyString = self.secretKey.exportKey()
+                DEBUG and log.err("initializing public key to: " + keyString)
                 return self.getOrSet(elements.PublicKeyString, keyString) 
             finally:
                 raise HTTPError(responsecode.FORBIDDEN)
@@ -152,12 +161,12 @@ class AngelFile(DAVFile):
         @returns True if the location is writable, False otherwise
         """
         
-        try:
-            myKeyString = angelKey.exportKey()
-        except:
+        if not self.secretKey:
             # we don't even have a private key
-            log.err("no key available")
+            DEBUG and log.err("no key available")
             return False
+        
+        myKeyString = self.secretKey.exportKey()
         
         if not self.fp.exists():
             # the corresponding file does not exist
@@ -173,9 +182,9 @@ class AngelFile(DAVFile):
         fileKeyString = self.getOrSet(elements.PublicKeyString, myKeyString)
         bb = (fileKeyString == myKeyString)
         if not bb:
-            log.err("isWritableFile: not writable: " + self.fp.path)
-            log.err("fileKey: " + fileKeyString)
-            log.err("myKey: " + myKeyString)
+            DEBUG and log.err("isWritableFile: not writable: " + self.fp.path)
+            DEBUG and log.err("fileKey: " + fileKeyString)
+            DEBUG and log.err("myKey: " + myKeyString)
         return fileKeyString == myKeyString
 
     def signableMetadata(self):
@@ -200,7 +209,7 @@ class AngelFile(DAVFile):
         See also: L{ezPyCrypto.key}
         """
 
-        signature = angelKey.signString(self.signableMetadata())
+        signature = self.secretKey.signString(self.signableMetadata())
         self.deadProperties().set(elements.MetaDataSignature.fromString(signature))
         #storedsignature = self.getOrSet(elements.MetaDataSignature, "0")
         #log.err(signature)
@@ -227,19 +236,49 @@ class AngelFile(DAVFile):
         publicKey.importKey(self.getOrSet(elements.PublicKeyString))
 
         contentSignature = self.getOrSet(elements.ContentSignature, "")
-        log.err("verify(): signature: " + contentSignature)
+        DEBUG and log.err("verify(): signature: " + contentSignature)
         dataIsCorrect = publicKey.verifyString(
                                   self.fp.open().read(),
                                   contentSignature)
-        log.err("data signature for file " + self.fp.path + " is correct: " + `dataIsCorrect`)
+        DEBUG and log.err("data signature for file " + self.fp.path + " is correct: " + `dataIsCorrect`)
             
         metaDataIsCorrect = publicKey.verifyString(
                                   self.signableMetadata(),
                                   self.getOrSet(elements.MetaDataSignature))
         
-        log.err("meta data signature for file " + self.fp.path + " is correct: " + `metaDataIsCorrect`)
+        DEBUG and log.err("meta data signature for file " + self.fp.path + " is correct: " + `metaDataIsCorrect`)
             
         return dataIsCorrect and metaDataIsCorrect
+
+    def render(self, req):
+        """You know what you doing. override render method (for GET) in twisted.web2.static.py"""
+        if not self.fp.exists():
+            return responsecode.NOT_FOUND
+
+        if self.fp.isdir():
+            return self.renderDirectory(req)
+
+        return self.renderFile()
+
+    def renderDirectory(self, req):
+        if req.uri[-1] != "/":
+            # Redirect to include trailing '/' in URI
+            return http.RedirectResponse(req.unparseURL(path=req.path+'/'))
+        else:
+            ifp = self.fp.childSearchPreauth(*self.indexNames)
+            if ifp:
+                # Render from the index file
+                standin = self.createSimilarFile(ifp.path)
+            else:
+                # Render from a DirectoryLister
+                standin = dirlist.DirectoryLister(
+                    self.fp.path,
+                    self.listChildren(),
+                    self.contentTypes,
+                    self.contentEncodings,
+                    self.defaultType
+                )
+            return standin.render(req)
 
 
     def renderFile(self):
@@ -266,7 +305,7 @@ class AngelFile(DAVFile):
         # check if the file is encrypted (should be an xattr flag),
         # if it is, decrypt, otherwise return the file right away.
         try:
-            fileContents = angelKey.decString(self.fp.open().read())
+            fileContents = self.secretKey.decString(self.fp.open().read())
             response.stream = stream.MemoryStream(fileContents, 0, len(fileContents))
             
         except:
@@ -289,3 +328,9 @@ class AngelFile(DAVFile):
 #
 import angel_app.method
 bindMethods(angel_app.method, AngelFile)
+
+
+def py2AppWorkaroundIgnoreMe():
+    try:
+        from angel_app.method import delete, lock, propfind, put
+    except: pass

@@ -30,48 +30,15 @@ WebDAV PUT method
 __all__ = ["http_PUT"]
 
 from twisted.python import log
-from twisted.web2.http import HTTPError
-from twisted.web2 import responsecode
 from twisted.internet.defer import deferredGenerator
-#from twisted.web2.dav.fileop import put
-from angel_app.fileop import put
-from angel_app import elements
+
+DEBUG = True
 
 def http_PUT(self, request):
     """
     Respond to a PUT request. (RFC 2518, section 8.7)
     """
     
-    log.err("received PUT request for " + self.fp.path)   
-    
-    try:
-        pass
-    except: # the file doesn't exist (yet)
-        log.err("adding new file at: " + self.fp.path)
-
-    if not self.isWritableFile():
-        log.err("http_PUT: not authorized to put file: " + self.fp.path)
-        raise HTTPError(responsecode.UNAUTHORIZED)
-        
-    deferred = put(request.stream, self.fp) 
-    # define callbacks as closures:
-    
-    def updateMetadata(response): 
-        # if the file has been previously deleted,
-        # the "deleted" flag has been set to "1"
-        # undo that
-        self.deadProperties().set(elements.Deleted.fromString("0"))
-        self.update()
-        return response 
-    
-
-    #log.err(DAVFile.http_PUT(self, request).__dict__.keys())
-    #log.err(super(DAVFile, self).__dict__.keys())
-    #deferred = super(DAVFile, self).http_PUT(request)
-    #deferred = DAVFile.http_PUT(self, request)
-
-
-               
-    deferred.addCallback(updateMetadata)
-      
-    return deferred
+    DEBUG and log.err("received PUT request for " + self.fp.path)
+    put = deferredGenerator(self.put)
+    return put(request.stream)

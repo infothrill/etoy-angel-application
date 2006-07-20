@@ -30,23 +30,18 @@ WebDAV DELETE method
 __all__ = ["http_DELETE"]
 
 from twisted.python import log
-from twisted.web2 import responsecode
-from twisted.web2.http import HTTPError
-from angel_app.fileop import delete
+
+DEBUG = True
 
 def http_DELETE(self, request):
     """
     Respond to a DELETE request. (RFC 2518, section 8.6)
     """
     
-    log.err("received DELETE request for file: " + self.fp.path)
-    if not self.fp.exists():
-        log.err("File not found: %s" % (self.fp.path,))
-        raise HTTPError(responsecode.NOT_FOUND)
+    DEBUG and log.err("received DELETE request for file: " + self.fp.path)
 
-    if not self.isWritableFile():
-        raise HTTPError(responsecode.UNAUTHORIZED)
-    
-    depth = request.headers.getHeader("depth", "infinity")
-
-    return delete(request.uri, self.fp, depth)
+    return self.delete(
+                       request.uri, 
+                       request.headers.getHeader("depth", "infinity")
+                       )
+    #return delete(request.uri, self.fp, depth)

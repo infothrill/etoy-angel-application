@@ -1,7 +1,7 @@
-all = ["common", "internal", "external"]
+all = ["common", "default_peers", "external", "internal"]
 """
-
-bin: binaries to be executed
-angel_app: all the interesting library stuff
-
+common:         configuration common to all angel-app processes
+default_peers:  initial list of peers used to bootstrap the p2p-process
+external:       configuration of the 'external' webdav server (the 'server' aspect of the p2p system)
+internal:       configuration of the 'internal' webdav server (the 'gui')
 """

@@ -39,16 +39,18 @@ from twisted.web2.dav import davxml
 from twisted.web2.dav.http import MultiStatusResponse, statusForFailure
 from twisted.web2.dav.util import normalizeURL, joinURL, davXMLFromStream
 
-from angel_app.static import AngelFile
+#from angel_app.static import AngelFile
+
+DEBUG = False
 
 def http_PROPFIND(self, request):
     """
     Respond to a PROPFIND request. (RFC 2518, section 8.1)
     """
-    log.err("received PROPFIND request for file: " + self.fp.path)
+    DEBUG and log.err("received PROPFIND request for file: " + self.fp.path)
     
     if not self.exists():
-        log.err("http_PROPFIND: File not found (doesn't exist): %s" % (self.fp.path,))
+        DEBUG and log.err("http_PROPFIND: File not found (doesn't exist): %s" % (self.fp.path,))
         raise HTTPError(responsecode.NOT_FOUND)
 
     #
@@ -101,7 +103,7 @@ def http_PROPFIND(self, request):
 
     if self.isDeleted():
         # pretend the resource doesn't exist
-        log.err("http_PROPFIND, isDeleted(): File not found: %s" % (self.fp.path,))
+        DEBUG and log.err("http_PROPFIND, isDeleted(): File not found: %s" % (self.fp.path,))
         raise HTTPError(responsecode.NOT_FOUND)
     
     resources = [
@@ -112,13 +114,13 @@ def http_PROPFIND(self, request):
         from os import sep
         happyChildren = []
         for child in self.findChildren(depth):
-            log.err("http_PROPFIND checking for: " + child[1])
-            if not AngelFile(self.fp.path + sep + child[1]).isDeleted():
-            # TODO: what's going on here?
-            #if self.deadProperties().get(Deleted()) != "1":
+            DEBUG and log.err("http_PROPFIND checking for: " + child[1])
+            if not self.createSimilarFile(
+                                          self.fp.path + sep + child[1]
+                                          ).isDeleted():
                 happyChildren.append(child)
             else:
-                log.err("unhappy child: " + child[1])
+                DEBUG and log.err("unhappy child: " + child[1])
         return happyChildren
     
     resources.extend(findNotDeletedChildren())

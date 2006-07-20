@@ -5,6 +5,8 @@ from config.common import rootDir
 
 from os import sep
 
+DEBUG = True
+
 def relativePath(absolutePath = sep):
     """
     Given the absolute path of a resource (e.g. an AngelFile),
@@ -13,10 +15,11 @@ def relativePath(absolutePath = sep):
     """
     if absolutePath.find(rootDir) != 0:
         raise "the absolute path supplied must lie below the root directory."
-    if rootDir[-1] != sep:
-        return absolutePath.replace(rootDir, sep)
-    else:
-        return absolutePath.replace(rootDir, "")
+    
+    myRootDir = rootDir
+    if myRootDir[-1] == sep: myRootDir = myRootDir[:-1]
+    
+    return absolutePath.replace(myRootDir, "")
 
 
 
@@ -29,4 +32,6 @@ def treeMap(function, filePath = FilePath(rootDir)):
     
     
 def inspectResource(resource = FilePath(rootDir)):
-    log.err("inspecting resource: " + resource.path)
+    DEBUG and log.err("inspecting resource: " + resource.path)
+    DEBUG and log.err("relative path is: " + relativePath(resource.path))
+    
