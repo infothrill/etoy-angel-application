@@ -8,6 +8,8 @@ from config.common import rootDir
 from config.default_peers import default_peers
 import config.external
 
+DEBUG = True
+
 def cloneFromName(name = ("localhost", 90)):
     """
     Takes a node description in the form of a (hostname/ip-address, port number)
@@ -26,7 +28,7 @@ def defaultPeers():
     list.
     """
     return elements.Clones(
-                    [
+                    *[
                      cloneFromName(peer) 
                      for peer in default_peers
                      ]
@@ -46,7 +48,12 @@ def setupDefaultPeers():
         clones = dp.get(elements.Clones.qname())
     except:
         log.err("root directory has no clones -- initializing.")
-        #clones = elements.Clones()
-        dp.set(defaultPeers())
-    log.err(`dp.get(elements.Clones.qname())`) 
+        clones = elements.Clones()
+    
+    cc = [child for child in clones.children]
+    for peer in defaultPeers().children:
+        if peer not in cc:
+            cc.append(peer)
+    dp.set(elements.Clones(*cc))
+    DEBUG and log.err(`dp.get(elements.Clones.qname())`)
     

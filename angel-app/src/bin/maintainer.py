@@ -29,5 +29,5 @@ def testConn(host = "localhost"):
 
 from angel_app.maintainer.util import treeMap, inspectResource
 from angel_app.maintainer import setup
-setup.setupMasterClones()
+setup.setupDefaultPeers()
 #for item in treeMap(inspectResource): pass

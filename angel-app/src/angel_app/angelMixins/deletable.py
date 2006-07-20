@@ -8,7 +8,7 @@ from twisted.web2.http import HTTPError, StatusResponse
 from twisted.web2.dav.http import ResponseQueue, statusForFailure
 from angel_app import elements
 
-DEBUG = False
+DEBUG = True
 
 class Deletable(object):
     """
@@ -28,6 +28,8 @@ class Deletable(object):
 
         self.deadProperties().set(
                                   elements.Deleted().fromString("1"))
+        
+        DEBUG and log.err("deleting resource " + self.fp.path)
         self.update()
         
         return succeededFileOperation

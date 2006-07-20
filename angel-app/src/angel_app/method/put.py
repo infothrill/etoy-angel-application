@@ -40,5 +40,6 @@ def http_PUT(self, request):
     """
     
     DEBUG and log.err("received PUT request for " + self.fp.path)
-    put = deferredGenerator(self.put)
-    return put(request.stream)
+    return self.put(request.stream)
+    #put = deferredGenerator(self.put)
+    #return put(request.stream)

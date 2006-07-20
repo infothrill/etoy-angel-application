@@ -7,15 +7,13 @@ from angel_app import elements
 from twisted.python import log
 from twisted.python.failure import Failure
 from twisted.internet.defer import succeed, deferredGenerator, waitForDeferred
-from twisted.web2 import responsecode
-from twisted.web2.http import StatusResponse, HTTPError
 from twisted.web2.stream import readIntoFile
 from twisted.web2.dav.http import ResponseQueue, statusForFailure
 
 from twisted.web2.dav.fileop import checkResponse
 from twisted.internet.defer import succeed, deferredGenerator, waitForDeferred
 
-DEBUG = False
+DEBUG = True
 
 class Putable(object):
     """
@@ -47,7 +45,9 @@ class Putable(object):
         the "deleted" flag has been set to "1"
         undo that
         """
+        DEBUG and log.err("updating meta data for " + self.fp.path)
         self.deadProperties().set(elements.Deleted.fromString("0"))
+        DEBUG and log.err(self.fp.path + " is now flagged as deleted: " + `self.isDeleted()`)
         self.update()
         
         
@@ -78,15 +78,17 @@ class Putable(object):
         # TODO: actually do the above
         
         if self.fp.exists():
-            response = waitForDeferred(self.delete())
-            yield response
-            response = response.getResult()
+            response = self.delete()
+            
+            #response = waitForDeferred(self.delete())
+            #yield response
+            #response = response.getResult()
             checkResponse(response, "delete", responsecode.NO_CONTENT)
             success_code = responsecode.NO_CONTENT
         else:
             success_code = responsecode.CREATED
         
-        yield success_code
+        return success_code
     
     
     def __putFile(self, stream):
