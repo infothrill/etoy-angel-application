@@ -30,7 +30,7 @@ WebDAV PUT method
 __all__ = ["http_PUT"]
 
 from twisted.python import log
-from twisted.internet.defer import deferredGenerator
+from twisted.internet.defer import succeed, deferredGenerator, waitForDeferred
 
 DEBUG = True
 
@@ -40,6 +40,9 @@ def http_PUT(self, request):
     """
     
     DEBUG and log.err("received PUT request for " + self.fp.path)
-    return self.put(request.stream)
+    
+    #return self.put(request.stream)
+    return deferredGenerator(self.put)(request.stream)
+    #return self.put(request.stream)
     #put = deferredGenerator(self.put)
     #return put(request.stream)

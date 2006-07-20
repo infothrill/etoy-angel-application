@@ -11,7 +11,6 @@ from twisted.web2.stream import readIntoFile
 from twisted.web2.dav.http import ResponseQueue, statusForFailure
 
 from twisted.web2.dav.fileop import checkResponse
-from twisted.internet.defer import succeed, deferredGenerator, waitForDeferred
 
 DEBUG = True
 
@@ -29,25 +28,38 @@ class Putable(object):
             log.err("http_PUT: not authorized to put file: " + self.fp.path)
             raise HTTPError(responsecode.UNAUTHORIZED)
         
-        response = self.__putDelete()
+        #response = self.__putDelete()
+        #yield self.__putDelete()
         
-        self.__putFile(stream)
+        response = waitForDeferred(deferredGenerator(self.__putDelete)())
+        yield response
+        response = response.getResult()
+        DEBUG and log.err("return code: " + `response`)
         
-        self.__updateMetadata()
+        xx  = waitForDeferred(deferredGenerator(self.__putFile)(stream))
+        yield xx
+        xx = xx.getResult()
+
+        #self.__updateMetadata()
+        
+        xx = waitForDeferred(deferredGenerator(self.__updateMetadata)())
+        yield xx
+        #xx.getResult()
         
         DEBUG and log.err("return code: " + `response`)
         
-        return response
+        yield response
     
     def __updateMetadata(self): 
-        """
-        if the file has been previously deleted,
-        the "deleted" flag has been set to "1"
-        undo that
-        """
+
+        #if the file has been previously deleted,
+        #the "deleted" flag has been set to "1"
+        #undo that.
         DEBUG and log.err("updating meta data for " + self.fp.path)
         self.deadProperties().set(elements.Deleted.fromString("0"))
         DEBUG and log.err(self.fp.path + " is now flagged as deleted: " + `self.isDeleted()`)
+        
+        # now encrypt and sign etc.
         self.update()
         
         
@@ -78,17 +90,19 @@ class Putable(object):
         # TODO: actually do the above
         
         if self.fp.exists():
-            response = self.delete()
+            #response = self.delete()
             
-            #response = waitForDeferred(self.delete())
-            #yield response
-            #response = response.getResult()
+            response = waitForDeferred(self.delete())
+            yield response
+            response = response.getResult()
             checkResponse(response, "delete", responsecode.NO_CONTENT)
             success_code = responsecode.NO_CONTENT
         else:
             success_code = responsecode.CREATED
         
-        return success_code
+        DEBUG and log.err("XXX: " + `success_code`)
+        
+        yield success_code
     
     
     def __putFile(self, stream):
@@ -105,10 +119,10 @@ class Putable(object):
                 ))
 
         try:
-            readIntoFile(stream, resource_file)
-            #x = waitForDeferred(readIntoFile(stream, resource_file))
-            #yield x
-            #x.getResult()
+            #readIntoFile(stream, resource_file)
+            x = waitForDeferred(readIntoFile(stream, resource_file))
+            yield x
+            x.getResult()
         except:
             raise HTTPError(statusForFailure(
                                              Failure(),

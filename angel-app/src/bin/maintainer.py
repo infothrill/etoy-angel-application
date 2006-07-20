@@ -25,7 +25,7 @@ def testConn(host = "localhost"):
     reactor.run()
  
 # nah, not here   
-#testConn()
+testConn()
 
 from angel_app.maintainer.util import treeMap, inspectResource
 from angel_app.maintainer import setup

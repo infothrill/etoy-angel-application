@@ -70,7 +70,9 @@ class AngelFile(DAVFile, deletable.Deletable, putable.Putable):
         DEBUG and log.err("encrypting file")
         myFile = self.fp.open("w") 
         myFile.write(cypherText)
-        myFile.close()  
+        myFile.flush()
+        myFile.close()
+        DEBUG and log.err(cypherText)  
 
     def sign(self):
         """
@@ -222,8 +224,8 @@ class AngelFile(DAVFile, deletable.Deletable, putable.Putable):
         self.sign()
         self.bumpRevisionNumber()
         self.seal()
-        # for debugging
-        self.verify()
+
+        DEBUG and self.verify()
         
         # certainly not going to hurt if we do this:
         self.fp.restat()

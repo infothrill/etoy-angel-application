@@ -41,7 +41,7 @@ from twisted.web2.dav.util import normalizeURL, joinURL, davXMLFromStream
 
 #from angel_app.static import AngelFile
 
-DEBUG = True
+DEBUG = False
 
 def http_PROPFIND(self, request):
     """
