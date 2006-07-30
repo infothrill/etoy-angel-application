@@ -8,7 +8,7 @@ from twisted.web2.http import HTTPError, StatusResponse
 from twisted.web2.dav.http import ResponseQueue, statusForFailure
 from angel_app import elements
 
-DEBUG = True
+DEBUG = False
 
 class Deletable(object):
     """

@@ -8,6 +8,7 @@ from config.common import rootDir
 from config.default_peers import default_peers
 import config.external
 
+from angel_app.maintainer.util import syncClones
 DEBUG = True
 
 def cloneFromName(name = ("localhost", 90)):
@@ -43,17 +44,5 @@ def setupDefaultPeers():
     maintenance loop will do the rest.
     """
     angelRoot = AngelFile(rootDir)
-    dp = angelRoot.deadProperties()
-    try:
-        clones = dp.get(elements.Clones.qname())
-    except:
-        log.err("root directory has no clones -- initializing.")
-        clones = elements.Clones()
-    
-    cc = [child for child in clones.children]
-    for peer in defaultPeers().children:
-        if peer not in cc:
-            cc.append(peer)
-    dp.set(elements.Clones(*cc))
-    DEBUG and log.err(`dp.get(elements.Clones.qname())`)
+    syncClones(angelRoot, defaultPeers())
     

@@ -12,7 +12,7 @@ from twisted.web2.dav.http import ResponseQueue, statusForFailure
 
 from twisted.web2.dav.fileop import checkResponse
 
-DEBUG = True
+DEBUG = False
 
 class Putable(object):
     """

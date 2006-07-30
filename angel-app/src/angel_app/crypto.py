@@ -1,5 +1,4 @@
 from ezPyCrypto import key as ezKey
-from pickle import load
 from os import sep, environ
 
 keyBase = sep.join([
@@ -8,7 +7,9 @@ keyBase = sep.join([
                     "keyring"
                     ])
 
-def loadKeysFromFile():
+#def loadKeysFromFile(): pass
+
+def loadKeysFromFile(fileName = ""):
     """
     Load the ***SECRET*** keys from the appropriate location in the angel-app directory.
     """

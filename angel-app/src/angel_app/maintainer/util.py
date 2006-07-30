@@ -5,21 +5,24 @@ from config.common import rootDir
 
 from os import sep
 
+from angel_app import elements
+
 DEBUG = True
 
-def relativePath(absolutePath = sep):
+def relativePath(absolutePath = sep, rootDir = rootDir):
     """
     Given the absolute path of a resource (e.g. an AngelFile),
     return the relative path of that resource with respect to the root
     directory.
     """
+    
     if absolutePath.find(rootDir) != 0:
         raise "the absolute path supplied must lie below the root directory."
     
-    myRootDir = rootDir
-    if myRootDir[-1] == sep: myRootDir = myRootDir[:-1]
+    if rootDir[-1] == sep: 
+        rootDir = rootDir[:-1]
     
-    return absolutePath.replace(myRootDir, "")
+    return absolutePath.replace(rootDir, "")
 
 
 
@@ -31,7 +34,22 @@ def treeMap(function, filePath = FilePath(rootDir)):
     for resource in filePath.walk(): yield function(resource)
     
     
-def inspectResource(resource = FilePath(rootDir)):
-    DEBUG and log.err("inspecting resource: " + resource.path)
-    DEBUG and log.err("relative path is: " + relativePath(resource.path))
+
     
+    
+def syncClones(angelFile, clonesB):
+    """
+    Insert all as yet unknown clones from clonesB into the angelFile.
+    """
+    dp = angelFile.deadProperties()
+    try:
+        clones = dp.get(elements.Clones.qname())
+    except:
+        log.err("root directory has no clones -- initializing.")
+        clones = elements.Clones()
+
+    cc = [child for child in clones.children]
+    for peer in clonesB.children:
+        if peer not in cc:
+            cc.append(peer)
+    dp.set(elements.Clones(*cc))
