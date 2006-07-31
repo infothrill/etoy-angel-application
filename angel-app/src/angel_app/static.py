@@ -220,6 +220,10 @@ class AngelFile(DAVFile, deletable.Deletable, putable.Putable):
 
     
     def update(self):
+        
+        if not self.isWritableFile(): 
+            raise "not authorized to perform update of signed meta data"
+        
         self.encrypt()
         self.sign()
         self.bumpRevisionNumber()

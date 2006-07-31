@@ -18,8 +18,10 @@ from config.internal import interface, port
 from angel_app.crypto import loadKeysFromFile
 static.AngelFile.secretKey = loadKeysFromFile()
 
-root = static.AngelFile(rootDir)
+from angel_app.presenter.setup import setupRootMetaData
+setupRootMetaData()
 
+root = static.AngelFile(rootDir)
 site = server.Site(root)
 reactor.listenTCP(port, channel.HTTPFactory(site), 50, interface)
 reactor.run()

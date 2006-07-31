@@ -1,15 +1,14 @@
-from twisted.python.filepath import FilePath
-from twisted.python import log
-
 from angel_app.static import AngelFile
 from angel_app import elements
 from twisted.web2.dav.element.rfc2518 import HRef
 from config.common import rootDir
-from config.default_peers import default_peers
+from config import rootDefaults
 import config.external
 
 from angel_app.maintainer.util import syncClones
 DEBUG = True
+
+angelRoot = AngelFile(rootDir)
 
 def cloneFromName(name = ("localhost", 90)):
     """
@@ -31,7 +30,7 @@ def defaultPeers():
     return elements.Clones(
                     *[
                      cloneFromName(peer) 
-                     for peer in default_peers
+                     for peer in rootDefaults.peers
                      ]
                     )
 
@@ -43,6 +42,4 @@ def setupDefaultPeers():
     to one or more default peers. Once we have copied those over, the
     maintenance loop will do the rest.
     """
-    angelRoot = AngelFile(rootDir)
     syncClones(angelRoot, defaultPeers())
-    

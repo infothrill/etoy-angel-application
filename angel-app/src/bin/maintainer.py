@@ -1,6 +1,7 @@
 from angel_app.maintainer.client import inspectResource
-from angel_app.maintainer import setup
-setup.setupDefaultPeers()
+from angel_app.maintainer.setup import setupDefaultPeers
+
+setupDefaultPeers()
 
 from config.common import rootDir
 
