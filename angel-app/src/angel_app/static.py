@@ -95,24 +95,23 @@ class AngelFile(DAVFile, deletable.Deletable, putable.Putable):
                                   elements.PublicKeyString.fromString(self.secretKey.exportKey())
                                   )
         return signature
-
-    def getOrSet(self, davXmlTextElement, defaultValueString = ""):
+    
+    def get(self, davXMLTextElement):
         
         if not self.fp.exists():
             DEBUG and log.err("AngelFile.getOrSet: file not found for path: " + self.fp.path)
             raise HTTPError(responsecode.NOT_FOUND)
         
-        dp = self.deadProperties()
+        return self.deadProperties().get(davXMLTextElement.qname())
+        
+    def getOrSet(self, davXmlTextElement, defaultValueString = ""):
+        
         try:
-            element = dp.get(davXmlTextElement.qname())
-            #data = element.children[0].data
-            data = "".join([c.data for c in element.children])
-            DEBUG and log.err("AngelFile.getOrSet: data for " + `davXmlTextElement.qname()` + ": " + data)
-            self.fp.restat()
-            return data
+            return self.get(davXmlTextElement)
+        
         except HTTPError:
             DEBUG and log.err("AngelFile.getOrSet: initializing element " + `davXmlTextElement.qname()` + " to " + defaultValueString)
-            dp.set(davXmlTextElement.fromString(defaultValueString))
+            self.deadProperties().set(davXmlTextElement.fromString(defaultValueString))
             self.fp.restat()
             return defaultValueString
 
