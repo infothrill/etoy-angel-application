@@ -1,4 +1,7 @@
-from angel_app.static import AngelFile
+#from angel_app.static import AngelFile
+
+from os import mkdir
+from angel_app.angelFile.crypto import Crypto
 from angel_app import elements
 from config.common import rootDir
 from config import rootDefaults
@@ -6,6 +9,10 @@ from config import rootDefaults
 
 DEBUG = True
 
+def setupRoot():
+    angelRoot = Crypto(rootDir)
+    if not angelRoot.fp.exists(): mkdir(rootDir)
+    setupRootMetaData()
     
 def setupRootMetaData():
     """
@@ -18,8 +25,8 @@ def setupRootMetaData():
     YOU ONLY NEED THIS IF YOU WANT TO SET UP A NEW ROOT DIRECTORY -- NOT VERY LIKELY,
     I THINK.
     """
- 
-    angelRoot = AngelFile(rootDir)   
+    angelRoot = Crypto(rootDir)   
+       
     for item in {
                 elements.PublicKeyString     :    rootDefaults.publicKey,
                 elements.Revision            :    "0",
