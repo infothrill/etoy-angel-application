@@ -1,6 +1,8 @@
-all = ["crypto", "elements", "fileop", "maintainer", "method", "presenter", "static"]
+all = ["angelFile", "angelMixins", "crypto", "elements", "fileop", "maintainer", "method", "presenter", "static"]
 
 """
+angelFile:    the core classes of the angel-app
+angelMixins:  mixin classes for the angel files
 crypto:       trivial ezPyCrypto stuff
 elements:     angel-app specific WebDAV XML element definitions
 fileop:       we need to override some operations from twisted.web2.dav.fileop.py

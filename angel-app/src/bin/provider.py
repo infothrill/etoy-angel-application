@@ -12,8 +12,8 @@ from config.common import rootDir
 from config.external import interface, port
 
 
-from angel_app import static
-root = static.AngelFile(rootDir)
+from angel_app.angelFile.basic import Basic
+root = Basic(rootDir)
 
 
 from twisted.web2 import server
