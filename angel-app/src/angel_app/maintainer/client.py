@@ -9,6 +9,8 @@ from angel_app.static import AngelFile
 from angel_app import elements
 from angel_app.maintainer.util import relativePath
 
+from ezPyCrypto import key
+
 DEBUG = True
 
 from httplib import HTTPConnection
@@ -101,6 +103,21 @@ def validateClone(url, af):
     #    raise "illegal element(s) for meta data signature"
     metaDataSignature = "".join([str(ee) for ee in metaDataSignatureElements.children])
     #print metaDataSignature 
+    
+    if publicKeyString != af.get(elements.PublicKeyString):
+        raise "invalid public key string"
+    
+    pubKey = key()
+    pubKey.importKey(publicKeyString)
+    
+    # TODO: this must be in the same order as elements.signedKeys!
+    # there must be a better way to do this
+    toBeVerified = "".join([revision, contentSignature, publicKeyString, isDeleted])
+    print toBeVerified
+    print af.signableMetadata()
+    
+    if not pubKey.verifyString(toBeVerified, metaDataSignature):
+        raise "invalid meta data"
     
     conn.close()
 
