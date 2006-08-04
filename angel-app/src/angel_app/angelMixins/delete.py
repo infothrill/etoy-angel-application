@@ -8,7 +8,7 @@ from twisted.web2.http import HTTPError, StatusResponse
 from twisted.web2.dav.http import ResponseQueue, statusForFailure
 from angel_app import elements
 
-DEBUG = False
+DEBUG = True
 
 class Deletable(object):
     """
@@ -16,22 +16,26 @@ class Deletable(object):
     """
     def delete(self, uri = "", depth = "infinity"): 
     
-        DEBUG and log.err("attempting to : " + self.fp.path)
         if not self.fp.exists():
             DEBUG and log.err("File not found: %s" % (self.fp.path,))
             raise HTTPError(responsecode.NOT_FOUND)
 
         if not self.isWritableFile():
+            DEBUG and log.err("Not authorized to delete file: %s" % (self.fp.path,))
             raise HTTPError(responsecode.UNAUTHORIZED)
 
+        DEBUG and log.err("foo")
         succeededFileOperation =  self.__delete(uri, self.fp, depth)
-
+        
+        
+        DEBUG and log.err("bar")
         self.deadProperties().set(
                                   elements.Deleted().fromString("1"))
         
-        DEBUG and log.err("deleting resource " + self.fp.path)
         self.update()
         
+        
+        log.err("done deleting file, with return code: " + `succeededFileOperation`)
         return succeededFileOperation
         
     def __deleteFile(self):
@@ -151,12 +155,22 @@ class Deletable(object):
             if the X{DELETE} operation succeeds.
         """
     
-        if self.fp.isdir(): response = self.__deleteDirectory(depth)
-       
-        
+        if self.fp.isdir(): response = self.__deleteDirectory(depth)   
         else: response = self.__deleteFile()
         
-        self.fp.restat(False)
-        
-        return succeed(response)
+        return response
+    
+    
+    def http_DELETE(self, request):
+        """
+        Respond to a DELETE request. (RFC 2518, section 8.6)
+        """
+    
+        log.err("received DELETE request for file: " + self.fp.path)
+
+        return self.delete(
+                       request.uri, 
+                       request.headers.getHeader("depth", "infinity")
+                       )
+        #return delete(request.uri, self.fp, depth)
 

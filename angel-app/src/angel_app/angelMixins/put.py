@@ -4,11 +4,10 @@ from twisted.web2.http import HTTPError
 from angel_app import elements
 
 
-from twisted.python import log
 from twisted.python.failure import Failure
-from twisted.internet.defer import succeed, deferredGenerator, waitForDeferred
+from twisted.internet.defer import deferredGenerator, waitForDeferred
 from twisted.web2.stream import readIntoFile
-from twisted.web2.dav.http import ResponseQueue, statusForFailure
+from twisted.web2.dav.http import statusForFailure
 
 from twisted.web2.dav.fileop import checkResponse
 
@@ -18,7 +17,7 @@ class Putable(object):
     """
     A mixin class (for AngelFile) that implements put operations.
     """
-    def put(self, stream): 
+    def _put(self, stream): 
        
         log.err("putting stream")
        
@@ -28,25 +27,26 @@ class Putable(object):
             log.err("http_PUT: not authorized to put file: " + self.fp.path)
             raise HTTPError(responsecode.UNAUTHORIZED)
         
-        #response = self.__putDelete()
-        #yield self.__putDelete()
+        DEBUG and log.err("deleting file at: " + self.fp.path)
         
+        #response = self.__putDelete()
         response = waitForDeferred(deferredGenerator(self.__putDelete)())
         yield response
         response = response.getResult()
-        DEBUG and log.err("return code: " + `response`)
+        DEBUG and log.err("return code for deleting file: " + `response`)
         
         xx  = waitForDeferred(deferredGenerator(self.__putFile)(stream))
         yield xx
         xx = xx.getResult()
 
+        DEBUG and log.err("done putting file stream: " + self.fp.path)
         #self.__updateMetadata()
         
         xx = waitForDeferred(deferredGenerator(self.__updateMetadata)())
         yield xx
         #xx.getResult()
         
-        DEBUG and log.err("return code: " + `response`)
+        DEBUG and log.err("return code for updating meta data: " + `response`)
         
         yield response
     
@@ -90,17 +90,18 @@ class Putable(object):
         # TODO: actually do the above
         
         if self.fp.exists():
-            #response = self.delete()
+            response = self.delete()
             
-            response = waitForDeferred(self.delete())
-            yield response
-            response = response.getResult()
+            #response = waitForDeferred(self.delete())
+            #yield response
+            #response = response.getResult()
+            log.err("yay")
             checkResponse(response, "delete", responsecode.NO_CONTENT)
+            log.err("blafasel")
+            DEBUG and log.err("self.delete() exited with response code: " + `responsecode.NO_CONTENT`)
             success_code = responsecode.NO_CONTENT
         else:
             success_code = responsecode.CREATED
-        
-        DEBUG and log.err("XXX: " + `success_code`)
         
         yield success_code
     
@@ -113,6 +114,7 @@ class Putable(object):
         try:
             resource_file = self.fp.open("w")
         except:
+            DEBUG and log.err("failed to open file: " + self.fp.path)
             raise HTTPError(statusForFailure(
                                              Failure(),
                 "opening file for writing: %s" % (self.fp.path,)
@@ -124,8 +126,23 @@ class Putable(object):
             yield x
             x.getResult()
         except:
+            DEBUG and log.err("failed to write to file: " + self.fp.path)
             raise HTTPError(statusForFailure(
                                              Failure(),
                 "writing to file: %s" % (self.fp.path,)
                 ))
+            
+            
+    def http_PUT(self, request):
+        """
+        Respond to a PUT request. (RFC 2518, section 8.7)
+        """
+    
+        log.err("received PUT request for " + self.fp.path)
+    
+        #return self.put(request.stream)
+        return deferredGenerator(self._put)(request.stream)
+        #return self.put(request.stream)
+        #put = deferredGenerator(self.put)
+        #return put(request.stream)
         
