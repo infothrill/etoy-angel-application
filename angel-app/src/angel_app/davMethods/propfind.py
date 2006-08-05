@@ -40,8 +40,6 @@ from twisted.web2.dav.http import MultiStatusResponse, statusForFailure
 from twisted.web2.dav.util import normalizeURL, joinURL, davXMLFromStream
 from twisted.web2.dav.method.propfind import propertyName
 
-#from angel_app.static import AngelFile
-
 DEBUG = True
 
 class PropfindMixin:
@@ -50,12 +48,13 @@ class PropfindMixin:
     """
     Respond to a PROPFIND request. (RFC 2518, section 8.1)
     """
-    DEBUG and log.err( "received PROPFIND request for file: " + self.fp.path )
     
-    if not self.exists():
-        DEBUG and log.err( "http_PROPFIND: File not found (doesn't exist): %s" % ( self.fp.path, ) )
-        raise HTTPError( responsecode.NOT_FOUND )
+    if not self.exists() or self.isDeleted():
+        e = "http_PROPFIND: File not found (doesn't exist, or is flagged as deleted): %s" % ( self.fp.path, )
+        DEBUG and log.err( e )
+        raise HTTPError(responsecode.NOT_FOUND)
 
+    DEBUG and log.err("reading PROPFIND request body")
     #
     # Read request body
     #
@@ -66,6 +65,9 @@ class PropfindMixin:
     except ValueError, e:
         log.err( "Error while handling PROPFIND body: %s" % ( e, ) )
         raise HTTPError( StatusResponse( responsecode.BAD_REQUEST, str( e ) ) )
+
+
+    DEBUG and log.err("PROPFIND body for uri: " + request.uri + " is : "  + `doc.root_element`)
 
     if doc is None:
         # No request body means get all properties.
@@ -104,10 +106,10 @@ class PropfindMixin:
 
     xml_responses = []
 
-    if self.isDeleted():
+    #if self.isDeleted():
         # pretend the resource doesn't exist
-        DEBUG and log.err( "http_PROPFIND, isDeleted(): File not found: %s" % ( self.fp.path, ) )
-        raise HTTPError( responsecode.NOT_FOUND )
+    #    DEBUG and log.err( "http_PROPFIND, isDeleted(): File not found: %s" % ( self.fp.path, ) )
+    #    raise HTTPError( responsecode.NOT_FOUND )
     
     resources = [
                  ( self, None )
@@ -197,19 +199,10 @@ class PropfindMixin:
     #
     # Return response
     #
-    #log.err(`xml_responses`)
+    DEBUG and log.err(`xml_responses`)
     yield MultiStatusResponse( xml_responses )
 
   def http_PROPFIND(self, request):
-                return deferredGenerator(self.__propfind)(request)
-
-##
-# Utilities
-##
-
-#def propertyName( name ):
-#    property_namespace, property_name = name
-#    class PropertyName ( davxml.WebDAVEmptyElement ):
-#        namespace = property_namespace
-#        name = property_name
-#    return PropertyName()
+      log.err("received PROPFIND request for " + self.fp.path)
+      return deferredGenerator(self.__propfind)(request)
+  

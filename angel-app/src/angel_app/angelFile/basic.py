@@ -6,8 +6,8 @@ from twisted.web2.http import HTTPError
 from twisted.web2 import http, stream
 from twisted.web2.dav.xattrprops import xattrPropertyStore
 from angel_app import elements
-from angel_app.angelMixins.lock import Lockable
-from angel_app.angelMixins.propfind import PropfindMixin
+from angel_app.davMethods.lock import Lockable
+from angel_app.davMethods.propfind import PropfindMixin
 
 DEBUG = False
 
@@ -74,6 +74,13 @@ class Basic(Lockable, PropfindMixin, DAVFile):
         log.err("Denying MOVE request.")
         return responsecode.FORBIDDEN  
     
+    def http_PROPPATCH(self, request):
+        """
+        Disallowed.
+        """
+        log.err("Denying PROPPATCH request.")
+        return responsecode.FORBIDDEN  
+
     def davComplianceClasses(self):
         """
         We fake level 2 compliance, to be able to run with OS X 10.4 's 
@@ -143,7 +150,7 @@ class Basic(Lockable, PropfindMixin, DAVFile):
         """
         vv = self.getOrSet(elements.Deleted, "0")
         id = (vv != "0")       
-        DEBUG and log.err("AngelFile.isDeleted(): " + vv + ": " + `id`)
+        DEBUG and log.err("AngelFile.isDeleted(): " + vv + ": " + `id` + " for " + self.fp.path)
         return vv != "0"
 
     def publicKeyString(self):

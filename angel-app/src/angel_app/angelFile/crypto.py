@@ -1,7 +1,7 @@
 from twisted.python import log
 from twisted.web2 import stream
 from angel_app import elements
-from angel_app.angelMixins import delete, put
+from angel_app.davMethods import delete, put, mkcol
 from angel_app.angelFile.basic import Basic
 from ezPyCrypto import key as ezKey
 
@@ -10,7 +10,7 @@ DEBUG = False
 # DO NOT EXPOSE THIS KEY!!!!
 from angel_app.crypto import loadKeysFromFile
 
-class Crypto(delete.Deletable, put.Putable, Basic):
+class Crypto(delete.Deletable, mkcol.mkcolMixin, put.Putable, Basic):
     """
     <p>
     </p>
@@ -147,6 +147,8 @@ class Crypto(delete.Deletable, put.Putable, Basic):
         See also: L{ezPyCrypto.key}
         """
 
+        self.getOrSet(elements.Deleted, "0")
+        
         signature = self.secretKey.signString(self.signableMetadata())
         self.deadProperties().set(elements.MetaDataSignature.fromString(signature))
         #storedsignature = self.getOrSet(elements.MetaDataSignature, "0")

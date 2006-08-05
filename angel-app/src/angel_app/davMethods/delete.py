@@ -8,7 +8,7 @@ from twisted.web2.http import HTTPError, StatusResponse
 from twisted.web2.dav.http import ResponseQueue, statusForFailure
 from angel_app import elements
 
-DEBUG = True
+DEBUG = False
 
 class Deletable(object):
     """
@@ -134,6 +134,8 @@ class Deletable(object):
             msg = ("Client sent illegal depth header value for DELETE: %s" % (depth,))
             DEBUG and log.err(msg)
             raise HTTPError(StatusResponse(responsecode.BAD_REQUEST, msg))
+        
+        return responsecode.NO_CONTENT
 
 
  

@@ -11,7 +11,7 @@ from twisted.web2.dav.http import statusForFailure
 
 from twisted.web2.dav.fileop import checkResponse
 
-DEBUG = False
+DEBUG = True
 
 class Putable(object):
     """
@@ -95,9 +95,7 @@ class Putable(object):
             #response = waitForDeferred(self.delete())
             #yield response
             #response = response.getResult()
-            log.err("yay")
             checkResponse(response, "delete", responsecode.NO_CONTENT)
-            log.err("blafasel")
             DEBUG and log.err("self.delete() exited with response code: " + `responsecode.NO_CONTENT`)
             success_code = responsecode.NO_CONTENT
         else:
