@@ -5,9 +5,9 @@ from twisted.web2.dav.element import base
 from twisted.web2.dav import davxml
 
 from config.common import rootDir
-from angel_app.static import AngelFile
 from angel_app import elements
 from angel_app.maintainer.util import relativePath
+from angel_app.angelFile.basic import Basic
 
 from ezPyCrypto import key
 
@@ -102,7 +102,7 @@ def validateClone(url, af):
     #not [ee for ee in properties.children[1].children if isinstance(ee, base.PCDATAElement)]: 
     #    raise "illegal element(s) for meta data signature"
     metaDataSignature = "".join([str(ee) for ee in metaDataSignatureElements.children])
-    #print metaDataSignature 
+    #print "meta data signature: \n", metaDataSignature,
     
     if publicKeyString != af.get(elements.PublicKeyString):
         raise "invalid public key string"
@@ -113,8 +113,8 @@ def validateClone(url, af):
     # TODO: this must be in the same order as elements.signedKeys!
     # there must be a better way to do this
     toBeVerified = "".join([revision, contentSignature, publicKeyString, isDeleted])
-    print toBeVerified
-    print af.signableMetadata()
+    #print "to be verified: \n", toBeVerified
+    #print "signable meta data: ", af.signableMetadata()
     
     if not pubKey.verifyString(toBeVerified, metaDataSignature):
         raise "invalid meta data"
@@ -142,7 +142,7 @@ def inspectResource(path = rootDir):
     #if DEBUG and relativePath(resource.path) != "": raise "debugging and stopping beyond root: " + relativePath(resource.path)
     DEBUG and log.err("inspecting resource: " + path)
     DEBUG and log.err("relative path is: " + relativePath(path))
-    af = AngelFile(path)
+    af = Basic(path)
     updateClones(af)
     DEBUG and log.err("DONE\n\n")
     

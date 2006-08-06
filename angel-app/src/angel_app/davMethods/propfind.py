@@ -40,7 +40,7 @@ from twisted.web2.dav.http import MultiStatusResponse, statusForFailure
 from twisted.web2.dav.util import normalizeURL, joinURL, davXMLFromStream
 from twisted.web2.dav.method.propfind import propertyName
 
-DEBUG = True
+DEBUG = False
 
 class PropfindMixin:
     
@@ -48,11 +48,7 @@ class PropfindMixin:
     """
     Respond to a PROPFIND request. (RFC 2518, section 8.1)
     """
-    
-    if not self.exists() or self.isDeleted():
-        e = "http_PROPFIND: File not found (doesn't exist, or is flagged as deleted): %s" % ( self.fp.path, )
-        DEBUG and log.err( e )
-        raise HTTPError(responsecode.NOT_FOUND)
+
 
     DEBUG and log.err("reading PROPFIND request body")
     #
@@ -68,6 +64,13 @@ class PropfindMixin:
 
 
     DEBUG and log.err("PROPFIND body for uri: " + request.uri + " is : "  + `doc.root_element`)
+
+    
+    if not self.exists() or self.isDeleted():
+        e = "http_PROPFIND: File not found (doesn't exist, or is flagged as deleted): %s" % ( self.fp.path, )
+        DEBUG and log.err( e )
+        raise HTTPError(responsecode.NOT_FOUND)
+
 
     if doc is None:
         # No request body means get all properties.

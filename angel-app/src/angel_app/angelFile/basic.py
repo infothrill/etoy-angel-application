@@ -9,18 +9,16 @@ from angel_app import elements
 from angel_app.davMethods.lock import Lockable
 from angel_app.davMethods.propfind import PropfindMixin
 
-DEBUG = False
+DEBUG = True
 
 
 class Basic(Lockable, PropfindMixin, DAVFile):
     """
-    <p>
     This is a basic AngelFile that provides (at least as stubs) the necessary
     WebDAV methods, as well as support for the encryption and metadata semantics
     required by the angel-app. This class serves as the main class for the 
     angel/distributer.
-    </p>
-    <p>
+
     the following (destructive) DAV-methods are explicitly forbidden a priori: 
     PUT, MKCOL, DELETE, COPY, MOVE, PROPPATCH.
     we pretend to implement the following (but ignore them):
@@ -195,6 +193,7 @@ class Basic(Lockable, PropfindMixin, DAVFile):
     def renderDirectory(self, req):
         if req.uri[-1] != "/":
             # Redirect to include trailing '/' in URI
+            DEBUG and log.err("redirecting")
             return http.RedirectResponse(req.unparseURL(path=req.path+'/'))
         else:
             ifp = self.fp.childSearchPreauth(*self.indexNames)
@@ -231,7 +230,7 @@ class Basic(Lockable, PropfindMixin, DAVFile):
         """
         The Basic AngelFile just returns the cypthertext of the file.
         """
-        
+        DEBUG and log.err("rendering file in cyphertext: " + self.fp.path)
         try:
             f = self.fp.open()
         except IOError, e:

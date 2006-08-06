@@ -5,7 +5,7 @@ from angel_app.davMethods import delete, put, mkcol
 from angel_app.angelFile.basic import Basic
 from ezPyCrypto import key as ezKey
 
-DEBUG = False
+DEBUG = True
 
 # DO NOT EXPOSE THIS KEY!!!!
 from angel_app.crypto import loadKeysFromFile
@@ -130,11 +130,9 @@ class Crypto(delete.Deletable, mkcol.mkcolMixin, put.Putable, Basic):
         Returns a string representation of the metadata that needs to
         be signed.
         """
-        pp = self.deadProperties()
-        return "".join([
-                                  `pp.get(key.qname())`
-                                  for key in elements.signedKeys
-                                  ])
+        sm = "".join([self.get(key) for key in elements.signedKeys])
+        DEBUG and log.err("signable meta data for " + self.fp.path + ":" + sm)
+        return sm
 
 
     def seal(self):
@@ -208,5 +206,6 @@ class Crypto(delete.Deletable, mkcol.mkcolMixin, put.Putable, Basic):
         check if the file is encrypted (should be an xattr flag),
         if it is, decrypt, otherwise return the file right away.
         """
+        DEBUG and log.err("rendering file in plaintext: " + self.fp.path)
         fileContents = self.secretKey.decString(self.fp.open().read())
         return stream.MemoryStream(fileContents, 0, len(fileContents))

@@ -2,7 +2,6 @@ import os, urllib
 from urlparse import urlsplit
 from twisted.python import log
 from twisted.python.failure import Failure
-from twisted.internet.defer import succeed, deferredGenerator, waitForDeferred 
 from twisted.web2 import responsecode
 from twisted.web2.http import HTTPError, StatusResponse
 from twisted.web2.dav.http import ResponseQueue, statusForFailure
@@ -24,11 +23,8 @@ class Deletable(object):
             DEBUG and log.err("Not authorized to delete file: %s" % (self.fp.path,))
             raise HTTPError(responsecode.UNAUTHORIZED)
 
-        DEBUG and log.err("foo")
         succeededFileOperation =  self.__delete(uri, self.fp, depth)
         
-        
-        DEBUG and log.err("bar")
         self.deadProperties().set(
                                   elements.Deleted().fromString("1"))
         
@@ -106,17 +102,17 @@ class Deletable(object):
                     except:
                         errors.add(path, Failure())
 
-        try:
-            os.rmdir(self.fp.path)
-        except:
-            raise HTTPError(statusForFailure(
-                Failure(),
-                "deleting directory: %s" % (self.fp.path,)
-            ))
+        #try:
+        #    os.rmdir(self.fp.path)
+        #except:
+        #    raise HTTPError(statusForFailure(
+        #        Failure(),
+        #        "deleting directory: %s" % (self.fp.path,)
+        #    ))
 
         return errors.response()
     
-    def __deleteDirectory(self, depth):
+    def __deleteDirectory(self, uri, depth):
         """
         RFC 2518, section 8.6 says that we must act as if the Depth header is
         set to infinity, and that the client must omit the Depth header or set
@@ -134,6 +130,8 @@ class Deletable(object):
             msg = ("Client sent illegal depth header value for DELETE: %s" % (depth,))
             DEBUG and log.err(msg)
             raise HTTPError(StatusResponse(responsecode.BAD_REQUEST, msg))
+        
+        self.__recursiveDelete(uri)
         
         return responsecode.NO_CONTENT
 
@@ -157,7 +155,7 @@ class Deletable(object):
             if the X{DELETE} operation succeeds.
         """
     
-        if self.fp.isdir(): response = self.__deleteDirectory(depth)   
+        if self.fp.isdir(): response = self.__deleteDirectory(uri, depth)   
         else: response = self.__deleteFile()
         
         return response
