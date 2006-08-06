@@ -121,6 +121,16 @@ def validateClone(url, af):
     
     conn.close()
 
+def getCloneList(url): 
+    """
+    Given the url of a clone, retrieve the list of clones of that clone.
+    """
+    return []
+
+def expandClones(clones):
+    """
+    """
+
 def updateClones(af):
     """
     @param af -- an AngelFile
