@@ -137,7 +137,7 @@ class Deletable(object):
 
 
  
-    def __delete(self, uri, filepath, depth = "infinity"):
+    def __delete(self, uri, depth = "infinity"):
         """
         Based on twisted.web2.dav.fileop.delete
         

@@ -9,18 +9,32 @@ DEBUG = True
 
 from httplib import HTTPConnection
 
+def splitParse(urlString):
+    """
+    @rtype (string, int)
+    @return (hostname, port)
+    """
+    words = urlString.split(":")
+    return (words[0], int(words[1]))
+
 class Clone(object):
     """
     Provides methods for transparent access to frequently used clone meta data.
     """
     
-    def __init__(self, host = "localhost", port = 9999):
+    def __init__(self, host = "localhost", port = 9999, path = "/"):
+        """
+        @rtype Clone
+        @return a new clone
+        """
         self.host = host
         self.port = port
+        self.path = path
     
     def __makeRequestBody(self, *properties):
         """
-        Generate XML body of PROPFIND request.
+        @rtype string
+        @return XML body of PROPFIND request.
         """
         return PropertyFind(
                     PropertyContainer(
@@ -29,19 +43,20 @@ class Clone(object):
     
     def __eq__(self, clone):
         """
+        @rtype boolean
         Comparison operator.
         """
         return self.host == clone.host and self.port == clone.port
     
     def propertiesAsXml(self, properties):
         """
-        Returns the raw XML body of the multistatus response
-        corresponding to the respective PROPFIND request.
+        @rtype string
+        @return the raw XML body of the multistatus response corresponding to the respective PROPFIND request.
         """  
         conn = HTTPConnection(self.host, self.port)       
         conn.request(
                  "PROPFIND", 
-                 "/", 
+                 self.path, 
                  headers = {"Depth" : 0}, 
                  body = self.__makeRequestBody(properties)
                  )
@@ -56,7 +71,8 @@ class Clone(object):
     
     def propertiesDocument(self, properties):
         """
-        Return the properties as a davxml document tree.
+        @rtype WebDAVDocument
+        @return the properties as a davxml document tree.
         """
         return davxml.WebDAVDocument.fromString(
                                                self.propertiesAsXml(
@@ -64,7 +80,8 @@ class Clone(object):
     
     def propertyBody(self, property):
         """
-        Return the body of an property consisting of just PCDATA.
+        @rtype string
+        @return the body of a property consisting of just PCDATA.
         """
         
         # points to the first dav "prop"-element
@@ -76,13 +93,22 @@ class Clone(object):
     
     def revision(self):
         """
-        The clone's revision number.
+        @rtype int
+        @return the clone's revision number.
         """
         return int(self.propertyBody(elements.Revision))
     
+    def publicKeyString(self):
+        """
+        @rtype string
+        @return the public key string of the clone.
+        """
+        return self.propertyBody(elements.PublicKeyString)
+    
     def validate(self):
         """
-        Assert that the meta data of a given clone is internally consistent.
+        @rtype boolean
+        @return if the meta data of a given clone is internally consistent.
         """
         toBeVerified = "".join([
                                 self.propertyBody(element)
@@ -101,19 +127,76 @@ class Clone(object):
         
     def cloneList(self):
         """
-        Returns a list of (string hostname, int port) tuples of clones registered
-        with this clone.
+        @rtype [(string, int)]
+        @return a list of (string hostname, int port) tuples of clones registered with this clone.
         """
         prop = self.propertiesDocument(elements.Clones).root_element.children[0].children[1].children[0]
         
-        def splitAndParse(localHostPortString):
-            words = localHostPortString.split(":")
-            return (words[0], int(words[1]))
-        
-        return [
-                splitAndParse(
-                              str(clone.children[0].children[0].children[0]))
-                for clone in prop.children
-                ]
+        return [splitParse(
+                           str(clone.children[0].children[0].children[0]))
+                for clone in prop.children]
          
     
+    
+
+def getClonesOf(clonesList):
+    """
+    @type clonesList [Clone]
+    @param clonesList list of clones we want to get the clones from
+    @rtype [Clone]
+    @return list of clones of the clones in clonesList
+    """
+    cc = []
+    for clone in clonesList:
+        cc += [Clone(host, port) for host, port in clone.cloneList()]  
+    return cc
+
+def getUncheckedClones(clonesList, checkedClones):
+    """
+    @rtype ([Clone], [Clone])
+    @return (cc, checkedClones + cc), where cc ist the list of clones in clonesList which are not in checkedClones
+    """
+    cc = [clone for clone in clonesList if clone not in checkedClones]
+    return cc, checkedClones + cc
+
+def getValidatedClones(clonesList, publicKeyString, revision):
+    """
+    @rtype [Clone]
+    @return 
+    """
+    return [clone for clone in clonesList 
+            if clone.validate() 
+            and clone.revision() >= revision
+            and clone.publicKeyString() == publicKeyString]
+
+
+def getMostCurrentClones(clonesList):
+    """
+    @rtype [Clone]
+    @return the most current clones from the clonesList
+    """
+    newest = max([clone.revision() for clone in clonesList])    
+    return [clone for clone in clonesList if clone.revision() == newest]
+
+
+def iterateClones(validCloneList, checkedCloneList, publicKeyString):
+    """
+    get all the clones of the (valid) clones we have already looked at
+    which are not among any (including the invalid) of the clones we
+    have already looked at, and validate those clones.  
+    """  
+    unvalidatedClones, checkedCloneList = getUncheckedClones(
+                             getClonesOf(validCloneList),
+                             checkedCloneList)
+    
+    validCloneList = getMostCurrentClones(
+                                          getValidatedClones(
+                                                             unvalidatedClones, 
+                                                             publicKeyString, 
+                                                             validCloneList[0].revision()
+                                                             ) + validCloneList
+                                          )
+    if unvalidatedClones == []:
+        return validCloneList, checkedCloneList
+    else:
+        return iterateClones(validCloneList, checkedCloneList, publicKeyString)

@@ -31,17 +31,13 @@ WebDAV LOCK method
 __all__ = ["http_LOCK"]
 
 from twisted.python import log
-from twisted.python.filepath import FilePath
-from twisted.python.failure import Failure
 from twisted.internet.defer import deferredGenerator
 from twisted.internet.defer import waitForDeferred
 from twisted.web2 import responsecode
 from twisted.web2.http import HTTPError, StatusResponse
 from twisted.web2.dav.http import MultiStatusResponse
 from twisted.web2.dav import davxml
-from twisted.web2.dav.http import statusForFailure
 from twisted.web2.dav.util import davXMLFromStream
-from twisted.web2.dav.util import normalizeURL
 
 def contentHandlerFromLockXML(request):
     """

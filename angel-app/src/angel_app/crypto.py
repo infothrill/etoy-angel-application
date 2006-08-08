@@ -9,14 +9,14 @@ keyBase = sep.join([
 
 #def loadKeysFromFile(): pass
 
-def loadKeysFromFile(fileName = ""):
+def loadKeysFromFile(fileName = sep.join([keyBase, "key.private"])):
     """
     Load the ***SECRET*** keys from the appropriate location in the angel-app directory.
     """
     angelKey = ezKey()                                             
     angelKey.importKey(
                      open(
-                       sep.join([keyBase, "key.private"])
+                       fileName
                        ).read()
                        )    
     return angelKey

@@ -35,7 +35,6 @@ from twisted.web2 import responsecode
 from twisted.web2.http import HTTPError, StatusResponse
 from twisted.web2.dav.fileop import mkcollection
 from twisted.web2.dav.util import noDataFromStream, parentForURL
-from twisted.internet.defer import succeed
 from angel_app import elements
 
 

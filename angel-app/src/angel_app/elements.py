@@ -30,8 +30,6 @@ legalMatters = """
 
 author = """Vincent Kraeutler, 2006"""
 
-from twisted.python import log
-from twisted.python.filepath import FilePath
 from twisted.web2.dav.element.base import WebDAVElement, WebDAVTextElement, dav_namespace
 
 class Revision (WebDAVTextElement):
