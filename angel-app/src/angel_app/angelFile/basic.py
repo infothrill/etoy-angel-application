@@ -8,10 +8,11 @@ from angel_app import elements
 from angel_app.davMethods.lock import Lockable
 from angel_app.davMethods.propfind import PropfindMixin
 
-DEBUG = True
+DEBUG = False
 
 
-class Basic(Lockable, PropfindMixin, DAVFile):
+#class Basic(Lockable, PropfindMixin, DAVFile):
+class Basic(Lockable, DAVFile):
     """
     This is a basic AngelFile that provides (at least as stubs) the necessary
     WebDAV methods, as well as support for the encryption and metadata semantics
@@ -149,6 +150,30 @@ class Basic(Lockable, PropfindMixin, DAVFile):
         id = (vv != "0")       
         DEBUG and log.err("AngelFile.isDeleted(): " + vv + ": " + `id` + " for " + self.fp.path)
         return vv != "0"
+    
+    def exists(self):
+        return self.fp.exists() and not self.isDeleted()
+
+    def findChildren(self, depth, getDeleted = False):
+        """
+        Return child nodes of this node. Optionally (and by default),
+        child nodes which have the deleted flag set can be ignored. 
+        """
+        
+        if not self.fp.isdir(): return []
+        
+        from os import sep
+        cc = super(Basic, self).findChildren(depth)
+        
+        if getDeleted: return cc
+        
+        return [
+                child for child in cc
+                if not 
+                self.createSimilarFile( 
+                                          self.fp.path + sep + child[1]
+                                          ).isDeleted()
+                ]
 
     def publicKeyString(self):
         

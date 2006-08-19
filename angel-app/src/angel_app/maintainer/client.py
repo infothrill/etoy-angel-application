@@ -5,10 +5,9 @@ from angel_app.maintainer.util import relativePath
 from angel_app.angelFile.basic import Basic
 
 from angel_app.maintainer.clone import splitParse, Clone
-
+from angel_app.maintainer.clone import iterateClones
 
 DEBUG = True
-
 
 def getLocalCloneURLList(af):
     """
@@ -25,18 +24,23 @@ def getLocalCloneURLList(af):
     
     return [str(clone.children[0].children[0]) for clone in clones.children]
 
-def getLocalCloneList(cloneURLList):
-    clones = []
-    for url in cloneURLList:
-        hostname, port = splitParse(url)
-        clones.append(Clone(hostname, port))
-    return clones
+def getLocalCloneList(af):
+    hostPorts = [splitParse(url) for url in getLocalCloneURLList(af)]
+    return [Clone(url, port) for url, port in hostPorts]
+
 
 def inspectResource(path = rootDir):
     #if DEBUG and relativePath(resource.path) != "": raise "debugging and stopping beyond root: " + relativePath(resource.path)
     DEBUG and log.err("inspecting resource: " + path)
     DEBUG and log.err("relative path is: " + relativePath(path))
     af = Basic(path)
-    updateClones(af)
+    
+    if not af.exists: return
+    
+    
+    validClones, checkedClones = iterateClones(
+                                               getLocalCloneList(af), 
+                                               [],
+                                               af.publicKeyString())
     DEBUG and log.err("DONE\n\n")
     

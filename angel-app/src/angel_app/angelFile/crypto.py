@@ -5,7 +5,7 @@ from angel_app.davMethods import delete, put, mkcol
 from angel_app.angelFile.basic import Basic
 from ezPyCrypto import key as ezKey
 
-DEBUG = True
+DEBUG = False
 
 # DO NOT EXPOSE THIS KEY!!!!
 from angel_app.crypto import loadKeysFromFile
