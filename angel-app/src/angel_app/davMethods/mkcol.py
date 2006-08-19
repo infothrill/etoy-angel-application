@@ -51,7 +51,9 @@ class mkcolMixin:
 
     if not parent.isCollection():
         log.err("Attempt to create collection with non-collection parent: %s"
-                % (self.fp.path,))
+                % (parent.fp.path,))
+        log.err(parent.listChildren())
+        log.err(parent.fp.isdir())
         raise HTTPError(StatusResponse(
             responsecode.CONFLICT,
             "Parent resource is not a collection."

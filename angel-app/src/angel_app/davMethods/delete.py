@@ -23,7 +23,7 @@ class Deletable(object):
             DEBUG and log.err("Not authorized to delete file: %s" % (self.fp.path,))
             raise HTTPError(responsecode.UNAUTHORIZED)
 
-        succeededFileOperation =  self.__delete(uri, self.fp, depth)
+        succeededFileOperation =  self.__delete(uri, depth)
         
         self.deadProperties().set(
                                   elements.Deleted().fromString("1"))
@@ -76,7 +76,6 @@ class Deletable(object):
 
         # NOTE: len(uri_path) is wrong if os.sep is not one byte long... meh.
         request_basename = self.fp.path[:-len(uri_path)]
-        request_basename_len = len(request_basename)
 
         errors = ResponseQueue(request_basename, "DELETE", responsecode.NO_CONTENT)
 

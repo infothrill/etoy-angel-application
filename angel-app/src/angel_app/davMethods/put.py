@@ -11,7 +11,7 @@ from twisted.web2.dav.http import statusForFailure
 
 from twisted.web2.dav.fileop import checkResponse
 
-DEBUG = True
+DEBUG = False
 
 class Putable(object):
     """

@@ -25,6 +25,9 @@
 
 """
 WebDAV PROPFIND method
+
+    this should be identical to twisted.web2.dav.method.propfind,
+    and one should consider removing it.
 """
 
 __all__ = ["http_PROPFIND"]
@@ -46,7 +49,9 @@ class PropfindMixin:
     
   def __propfind( self, request ):
     """
-    Respond to a PROPFIND request. (RFC 2518, section 8.1)
+    Respond to a PROPFIND request. (RFC 2518, section 8.1),
+
+
     """
 
 
@@ -117,21 +122,7 @@ class PropfindMixin:
     resources = [
                  ( self, None )
                  ]
-    
-    def findNotDeletedChildren():
-        from os import sep
-        happyChildren = []
-        for child in self.findChildren( depth ):
-            DEBUG and log.err( "http_PROPFIND checking for: " + child[1] )
-            if not self.createSimilarFile( 
-                                          self.fp.path + sep + child[1]
-                                          ).isDeleted():
-                happyChildren.append( child )
-            else:
-                DEBUG and log.err( "unhappy child: " + child[1] )
-        return happyChildren
-    
-    resources.extend( findNotDeletedChildren() )
+    resources.extend(self.findChildren(depth))
 
     for resource, uri in resources:
         if uri is None:
