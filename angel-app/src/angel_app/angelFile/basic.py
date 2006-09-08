@@ -6,7 +6,6 @@ from twisted.web2 import http, stream
 from twisted.web2.dav.xattrprops import xattrPropertyStore
 from angel_app import elements
 from angel_app.davMethods.lock import Lockable
-from angel_app.davMethods.propfind import PropfindMixin
 
 DEBUG = False
 
@@ -137,14 +136,18 @@ class Basic(Lockable, DAVFile):
             self.deadProperties().set(davXmlTextElement.fromString(defaultValueString))
             self.fp.restat()
             return defaultValueString
-
-        
-        
+       
     def revisionNumber(self):
+        """
+        @rtype int
+        @return the revision number. if not already set, it is initialized to 1.
+        """
         return int(self.getOrSet(elements.Revision, "1"))
     
     def isDeleted(self):
-        """
+        """        
+        @rtype boolean
+        @return whether the deleted flag is set
         """
         vv = self.getOrSet(elements.Deleted, "0")
         id = (vv != "0")       
@@ -152,12 +155,17 @@ class Basic(Lockable, DAVFile):
         return vv != "0"
     
     def exists(self):
+        """
+        @rtype boolean
+        @return true, if the corresponding file exists and is not flagged as deleted, false otherwise.
+        """
         return self.fp.exists() and not self.isDeleted()
 
     def findChildren(self, depth, getDeleted = False):
-        """
-        Return child nodes of this node. Optionally (and by default),
-        child nodes which have the deleted flag set can be ignored. 
+        """        
+        @rtype [Filepath]
+        @return child nodes of this node. Optionally (and by default),
+        child nodes which have the deleted flag set can be ignored.
         """
         
         if not self.fp.isdir(): return []
@@ -165,9 +173,10 @@ class Basic(Lockable, DAVFile):
         from os import sep
         cc = super(Basic, self).findChildren(depth)
         
-        if getDeleted: return cc
-        
-        return [
+        if getDeleted: 
+            return cc
+        else:
+            return [
                 child for child in cc
                 if not 
                 self.createSimilarFile( 
