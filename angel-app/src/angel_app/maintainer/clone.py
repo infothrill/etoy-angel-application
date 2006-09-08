@@ -183,7 +183,10 @@ def iterateClones(validCloneList, checkedCloneList, publicKeyString):
     """
     get all the clones of the (valid) clones we have already looked at
     which are not among any (including the invalid) of the clones we
-    have already looked at, and validate those clones.  
+    have already looked at, and validate those clones.
+    
+    @rtype ([Clone], [Clone])
+    @return a tuple of ([the list of valid clones], [the list of checked clones])
     """  
     unvalidatedClones, checkedCloneList = getUncheckedClones(
                              getClonesOf(validCloneList),

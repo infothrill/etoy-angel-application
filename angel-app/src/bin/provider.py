@@ -9,7 +9,7 @@ metadata).
 
 
 from config.common import rootDir
-from config.external import interface, port
+from config.external import port
 
 
 from angel_app.angelFile.basic import Basic
@@ -20,5 +20,5 @@ from twisted.web2 import server
 from twisted.web2 import channel
 from twisted.internet import reactor
 site = server.Site(root)
-reactor.listenTCP(port, channel.HTTPFactory(site), 50, interface)
+reactor.listenTCP(port, channel.HTTPFactory(site), 50)
 reactor.run()
