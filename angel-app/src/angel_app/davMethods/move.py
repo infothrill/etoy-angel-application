@@ -32,5 +32,5 @@ __all__ = ["http_MOVE"]
 from twisted.web2.dav.method.copymove import http_MOVE
 
 class moveMixin:
-    def __init__(self):
-        self.http_MOVE = http_MOVE
+    def http_MOVE(self, request): 
+        return http_MOVE(self, request)

@@ -32,5 +32,5 @@ __all__ = ["http_COPY"]
 from twisted.web2.dav.method.copymove import http_COPY
 
 class copyMixin:
-    def __init__(self):
-        self.http_COPY = http_COPY
+    def http_COPY(self, request): 
+        return http_COPY(self, request)
