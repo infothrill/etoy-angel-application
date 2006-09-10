@@ -9,6 +9,10 @@ from angel_app.davMethods.lock import Lockable
 
 DEBUG = False
 
+# xattrs under linux must be prefixed with "user.".
+# therefore, extend the default deadPropertyXattrPrefix defined
+# in twisted.web2.dav.xattrprops
+xattrPropertyStore.deadPropertyXattrPrefix = "user.WebDAV:"
 
 #class Basic(Lockable, PropfindMixin, DAVFile):
 class Basic(Lockable, DAVFile):
