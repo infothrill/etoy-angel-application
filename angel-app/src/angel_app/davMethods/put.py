@@ -19,8 +19,6 @@ class Putable(object):
     """
     def _put(self, stream): 
        
-        log.err("putting stream")
-       
         not self.fp.exists() and DEBUG and log.err("adding new file at: " + self.fp.path)
 
         if not self.isWritableFile():
@@ -29,7 +27,6 @@ class Putable(object):
         
         DEBUG and log.err("deleting file at: " + self.fp.path)
         
-        #response = self.__putDelete()
         response = waitForDeferred(deferredGenerator(self.__putDelete)())
         yield response
         response = response.getResult()
@@ -38,13 +35,10 @@ class Putable(object):
         xx  = waitForDeferred(deferredGenerator(self.__putFile)(stream))
         yield xx
         xx = xx.getResult()
-
         DEBUG and log.err("done putting file stream: " + self.fp.path)
-        #self.__updateMetadata()
         
         xx = waitForDeferred(deferredGenerator(self.__updateMetadata)())
         yield xx
-        #xx.getResult()
         
         DEBUG and log.err("return code for updating meta data: " + `response`)
         
@@ -89,7 +83,8 @@ class Putable(object):
         
         # TODO: actually do the above
         
-        if self.fp.exists():
+#        if self.fp.exists():
+        if self.fp.exists() and not self.isDeleted():
             response = self.delete()
             
             #response = waitForDeferred(self.delete())
@@ -135,8 +130,6 @@ class Putable(object):
         """
         Respond to a PUT request. (RFC 2518, section 8.7)
         """
-    
-        log.err("received PUT request for " + self.fp.path)
     
         #return self.put(request.stream)
         return deferredGenerator(self._put)(request.stream)

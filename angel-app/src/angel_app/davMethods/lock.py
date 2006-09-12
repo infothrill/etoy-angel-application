@@ -128,8 +128,6 @@ class Lockable:
         """
         Respond to a LOCK request. (RFC 2518, section 8.10)
         """
-        
-        log.err( "received LOCK request for %s" % ( self.fp.path, ) )
     
         lock = parseLockRequest(self.fp, request)
         #log.err(lock)

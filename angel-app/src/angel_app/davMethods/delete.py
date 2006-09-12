@@ -164,8 +164,6 @@ class Deletable(object):
         """
         Respond to a DELETE request. (RFC 2518, section 8.6)
         """
-    
-        log.err("received DELETE request for file: " + self.fp.path)
 
         return self.delete(
                        request.uri, 
