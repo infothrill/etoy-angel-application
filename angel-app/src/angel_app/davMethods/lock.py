@@ -1,31 +1,11 @@
-# -*- test-case-name: twisted.web2.dav.test.test_mkcol -*-
-##
-# Copyright (c) 2005 Apple Computer, Inc. All rights reserved.
-# Copyright (c) 2006 etoy.CORPORATION, AG. All rights reserved.
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-# 
-# The above copyright notice and this permission notice shall be included in all
-# copies or substantial portions of the Software.
-# 
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-#
-# DRI: Wilfredo Sanchez, wsanchez@apple.com
-##
-
 """
 WebDAV LOCK method
+
+
+Provides minimalistic LOCK request support required to be WebDAV Level 2 compliant.
+
+Only exclusive (see L{assertExclusiveLock}) write (see L{assertWriteLock}) locks are supported.
+Timeout headers are ignored (RFC 2518, Section 9.8).
 """
 
 __all__ = ["http_LOCK"]
@@ -38,100 +18,102 @@ from twisted.web2.http import HTTPError, StatusResponse
 from twisted.web2.dav.http import MultiStatusResponse
 from twisted.web2.dav import davxml
 from twisted.web2.dav.util import davXMLFromStream
+from twisted.web2.dav.element.rfc2518 import LockInfo
 
-def contentHandlerFromLockXML(stream):
-    """
-    parse an xml request body. yields a WebDAVContentHandler (?).
-    """
+from angel_app.contrib.uuid import uuid4
 
-    doc = davXMLFromStream(stream)
 
-    #try:
-    #    doc = waitForDeferred(davXMLFromStream(stream))
-    #    yield doc
-    #    doc = doc.getResult()
-    #except ValueError, e:
-    #    log.err("Error while handling LOCK body: %s" % (e,))
-    #    raise HTTPError(StatusResponse(responsecode.BAD_REQUEST, str(e)))
-    
-    if doc is None:
-        # No request body makes no sense
-        error = ("Empty LOCK request.")
-        log.err(error)
-        raise HTTPError(StatusResponse(responsecode.BAD_REQUEST, error))
 
-    return doc
+def parseLockRequest(stream):
 
-def getChildOfType(elementNode, itemType):
-    """
-    Return the first child of elementNode that is an instance of
-    itemType. If no such child is found, raise an exception.
-    """
-    for child in elementNode.children:
-        if isinstance(child, itemType):
-            return child
-        
-    error = "Expected element of type: " + itemType.name
-    raise HTTPError(StatusResponse(responsecode.BAD_REQUEST, error))
-
-def lockSpecFromContentHandler(contentHandler):
-    """
-    Validate lock request document.
-    """
-    
-    root = contentHandler.root_element
-    if not isinstance(root, davxml.LockInfo):
-        error = ("Non-%s element in LOCK request body: %s"
-                     % (davxml.LockInfo.sname(), root))
-        log.err(error)
-        raise HTTPError(StatusResponse(responsecode.BAD_REQUEST, error))
-
-    lockScope = getChildOfType(root, davxml.LockScope)
-    lockType = getChildOfType(root, davxml.LockType)
-    lockOwner = getChildOfType(root, davxml.Owner)
-    lockHref = getChildOfType(lockOwner, davxml.HRef)
-    return {
-            davxml.LockScope.name   : lockScope,
-            davxml.LockType.name    : lockType,
-            davxml.Owner.name       : lockOwner,
-            davxml.HRef.name        : lockHref
-            }
-
-def parseLockRequest(filePath, stream):
-    
-    # does the file exist?
-    if not filePath.exists():
-        log.err( "File not found in LOCK request: %s" % ( filePath.path, ) )
-        raise HTTPError(responsecode.NOT_FOUND)
-    
-    #dom = contentHandlerFromLockXML(stream)
-    dom = waitForDeferred(contentHandlerFromLockXML(stream))
-    yield dom
-    dom = dom.getResult()
-    
-    log.err(type(dom))
-    
-    if not isinstance(dom.root_element, davxml.LockInfo):
-        error = ("Non-%s element in LOCK request body: %s"
-                     % (davxml.LockInfo.sname(), dom.root_element))
-        log.err(error)
-        raise HTTPError(StatusResponse(responsecode.BAD_REQUEST, error))
+    # obtain a DOM representation of the xml on the stream
+    document = waitForDeferred(davXMLFromStream(stream))
+    yield document
+    document = document.getResult()
    
-    yield lockSpecFromContentHandler(dom)
-
-
-
-class Lockable:
+    if document is None:
+        # No request body makes no sense
+        error = "Empty LOCK request."
+        log.err(error)
+        raise HTTPError(StatusResponse(responsecode.BAD_REQUEST, error)) 
+   
+    if not isinstance(document.root_element, LockInfo):
+        error = "LOCK request must have lockinfo element as root element."
+        raise HTTPError(StatusResponse(responsecode.BAD_REQUEST, error))
     
-    def __lock(self, stream):
-        """
-        Respond to a LOCK request. (RFC 2518, section 8.10)
-        """
-    
-        lock = deferredGenerator(parseLockRequest)(self.fp, stream)
-        log.err(lock)
+    yield document.root_element
 
-        #
+
+
+def assertExclusiveLock(lockInfo):
+    """
+    RFC 2518, Section 15.2: A class 2 compliant resource MUST meet all class 1 requirements and support the 
+    LOCK method, the supportedlock property, the lockdiscovery property, the Time-Out response header and the 
+    Lock-Token request header. A class "2" compliant resource SHOULD also support the Time-Out request header 
+    and the owner XML element.
+    
+    RFC 2518, Section 6.1: If the server does support locking it may choose to support any combination of 
+    exclusive and shared locks for any access types. 
+    
+    
+    In other words, it seems sufficient to only support exclusive locks in order to be class 2 compliant,
+    which is convenient.
+    """
+    
+       
+    error = "Only exclusive locks supported so far."   
+    if lockInfo.childOfType(davxml.LockScope).childOfType(davxml.Exclusive) is None:
+        raise HTTPError(StatusResponse(responsecode.NOT_IMPLEMENTED, error))
+
+
+
+def assertWriteLock(lockInfo):
+    """
+    RFC 2518, Section 7: The write lock is a specific instance of a lock type, 
+    and is the only lock type described in this specification.
+    
+    I suppose this means that we can require that the LOCK request requests a
+    write lock.
+    """  
+    
+    error = "Only write locks supported so far."
+    if lockInfo.childOfType(davxml.LockType).childOfType(davxml.Write) is None:
+        raise HTTPError(StatusResponse(responsecode.NOT_IMPLEMENTED, error))
+
+
+
+def buildActiveLock(lockInfo, depth):
+    """
+    build a activelock element corresponding to the lockinfo document body and depth
+    header from the request.
+    
+    e.g. http://www.webdav.org/specs/rfc2518.html#rfc.section.8.10.8
+    """
+    olt = "opaquelocktoken:" + str(uuid4())
+    href = davxml.HRef.fromString(olt)
+    lockToken = davxml.LockToken(href)
+    
+    depth = davxml.Depth(depth)
+    
+    activeLock = davxml.ActiveLock(
+                                   lockInfo.childOfType(davxml.LockType),
+                                   lockInfo.childOfType(davxml.LockScope),
+                                   depth,
+                                   lockInfo.childOfType(davxml.Owner),
+                                   lockToken
+                                   ) 
+    return activeLock
+
+
+def performLockOperation(filePath, lockInfo):
+    
+          
+    yield None
+
+
+
+def buildLockResponse(activeLock):
+         #
         # TODO: Generate XML output stream (do something with lock)
         #
 
@@ -139,11 +121,75 @@ class Lockable:
         # we should certainly return a reasonable response here
         # (for inspiration, see twisted.dav.method.propfind and RFC 2518, examples 8.10.8
         # through 8.10.10), but since i only want OS X 10.4 to be happy (and it is with
-        # this), i'll stop here for now.
-        yield MultiStatusResponse([])
-    #def __init__(self):
-    #    self.http_LOCK = deferredGenerator(self.http_LOCK)
+        # this), i'll stop here for now.   
+    yield davxml.LockDiscovery()
+
+def getDepth(headers):
+    """
+    RFC 2518, Section 8.10.4: 
+    
+    The Depth header may be used with the LOCK method. Values other than 0 or infinity MUST NOT be used with the 
+    Depth header on a LOCK method. All resources that support the LOCK method MUST support the Depth header.
+    
+    If no Depth header is submitted on a LOCK request then the request MUST act as if a "Depth:infinity" had been submitted.
+    """
+    depth = headers.getHeader("depth", "infinity")
+    
+    
+    if depth not in ("0", "infinity"):
+        error = "Values other than 0 or infinity MUST NOT be used with the Depth header on a LOCK method."
+        raise HTTPError(StatusResponse(responsecode.BAD_REQUEST, error))
+    
+    return depth
+        
+    
+
+def processLockRequest(resource, request):
+    """
+    Respond to a LOCK request. (RFC 2518, section 8.10)
+    
+    Relevant notes:
+    
+    """
+    
+    requestStream = request.stream
+    depth = getDepth(request.headers)
+    
+    # generate DAVDocument from request body
+    lockInfo = waitForDeferred(deferredGenerator(parseLockRequest)(requestStream))
+    yield lockInfo
+    lockInfo = lockInfo.getResult()
+            
+    assertExclusiveLock(lockInfo)   
+    assertWriteLock(lockInfo)
+    
+    # build the corresponding activelock element
+    # e.g. http://www.webdav.org/specs/rfc2518.html#rfc.section.8.10.8
+    activeLock = buildActiveLock(lockInfo, depth)
+    
+    lockResponses = waitForDeferred(deferredGenerator(performLockOperation)(resource, activeLock))
+    yield lockResponses
+    lockResponses = lock.getResult()
+
+    yield MultiStatusResponse(lockResponses)
+
+
+class Lockable:
+    
+    def preconditions_LOCK(self, request):
+        """
+        Throw a NOT_FOUND error if the requested file does not exist.
+        """
+        if not self.exists():
+            error = "File not found in LOCK request: %s" % ( filePath.path, )
+            raise HTTPError(StatusResponse(responsecode.NOT_FOUND, error))
+        
+        if not self.isWritableFile():
+            error = "No write permission for file."
+            HTTPError(StatusResponse(responsecode.UNAUTHORIZED, error))
     
     def http_LOCK(self, request):
-                #return self.put(request.stream)
-        return deferredGenerator(self.__lock)(request.stream)
+        """
+        Method interface to locking operation.
+        """
+        return deferredGenerator(processLockRequest)(self, request)
