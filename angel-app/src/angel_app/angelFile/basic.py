@@ -9,12 +9,6 @@ from angel_app.davMethods.lock import Lockable
 
 DEBUG = False
 
-# xattrs under linux must be prefixed with "user.".
-# therefore, extend the default deadPropertyXattrPrefix defined
-# in twisted.web2.dav.xattrprops
-xattrPropertyStore.deadPropertyXattrPrefix = "user.WebDAV:"
-
-#class Basic(Lockable, PropfindMixin, DAVFile):
 class Basic(Lockable, DAVFile):
     """
     This is a basic AngelFile that provides (at least as stubs) the necessary
@@ -39,6 +33,7 @@ class Basic(Lockable, DAVFile):
                  defaultType="text/plain",
                  indexNames=None):
         DAVFile.__init__(self, path, defaultType, indexNames)
+        self._dead_properties = xattrPropertyStore(self)
         
     def http_PUT(self, request):
         """
@@ -89,26 +84,6 @@ class Basic(Lockable, DAVFile):
         straightforward, though.
         """
         return ("1", "2") # Add "2" when we have locking
-
-    def deadProperties(self):
-        """
-        Provides internal access to the WebDAV dead property store.  You
-        probably shouldn't be calling this directly if you can use the property
-        accessors in the L{IDAVResource} API instead.  However, a subclass must
-        override this method to provide it's own dead property store.
-
-        This implementation returns an instance of L{NonePropertyStore}, which
-        cannot store dead properties.  Subclasses must override this method if
-        they wish to store dead properties.
-
-        @return: a dict-like object from which one can read and to which one can
-            write dead properties.  Keys are qname tuples (ie. C{(namespace, name)})
-            as returned by L{davxml.WebDAVElement.qname()} and values are
-            L{davxml.WebDAVElement} instances.
-        """
-        if not hasattr(self, "_dead_properties"):
-            self._dead_properties = xattrPropertyStore(self)
-        return self._dead_properties
 
     def contentAsString(self):
         if self.fp.isdir(): 
