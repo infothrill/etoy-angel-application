@@ -39,27 +39,28 @@ from twisted.web2.dav.http import MultiStatusResponse
 from twisted.web2.dav import davxml
 from twisted.web2.dav.util import davXMLFromStream
 
-def contentHandlerFromLockXML(request):
+def contentHandlerFromLockXML(stream):
     """
     parse an xml request body. yields a WebDAVContentHandler (?).
     """
 
-    try:
-        doc = waitForDeferred(davXMLFromStream(request.stream))
-        yield doc
-        doc = doc.getResult()
-    except ValueError, e:
-        log.err("Error while handling LOCK body: %s" % (e,))
-        raise HTTPError(StatusResponse(responsecode.BAD_REQUEST, str(e)))
+    doc = davXMLFromStream(stream)
+
+    #try:
+    #    doc = waitForDeferred(davXMLFromStream(stream))
+    #    yield doc
+    #    doc = doc.getResult()
+    #except ValueError, e:
+    #    log.err("Error while handling LOCK body: %s" % (e,))
+    #    raise HTTPError(StatusResponse(responsecode.BAD_REQUEST, str(e)))
     
     if doc is None:
         # No request body makes no sense
         error = ("Empty LOCK request.")
         log.err(error)
         raise HTTPError(StatusResponse(responsecode.BAD_REQUEST, error))
-    
-    log.err(type(doc))
-    yield doc
+
+    return doc
 
 def getChildOfType(elementNode, itemType):
     """
@@ -88,7 +89,7 @@ def lockSpecFromContentHandler(contentHandler):
     lockScope = getChildOfType(root, davxml.LockScope)
     lockType = getChildOfType(root, davxml.LockType)
     lockOwner = getChildOfType(root, davxml.Owner)
-    lockHref = getChildOfType(lockOwner, davxml.Owner)
+    lockHref = getChildOfType(lockOwner, davxml.HRef)
     return {
             davxml.LockScope.name   : lockScope,
             davxml.LockType.name    : lockType,
@@ -96,21 +97,19 @@ def lockSpecFromContentHandler(contentHandler):
             davxml.HRef.name        : lockHref
             }
 
-def parseLockRequest(filePath, request):
+def parseLockRequest(filePath, stream):
     
     # does the file exist?
     if not filePath.exists():
         log.err( "File not found in LOCK request: %s" % ( filePath.path, ) )
         raise HTTPError(responsecode.NOT_FOUND)
     
-    dom = contentHandlerFromLockXML(request)
+    #dom = contentHandlerFromLockXML(stream)
+    dom = waitForDeferred(contentHandlerFromLockXML(stream))
     yield dom
     dom = dom.getResult()
     
     log.err(type(dom))
-    #dom = dom.next().getResult()
-    #log.err(type(dom))
-    #log.err(dir(dom))
     
     if not isinstance(dom.root_element, davxml.LockInfo):
         error = ("Non-%s element in LOCK request body: %s"
@@ -118,19 +117,19 @@ def parseLockRequest(filePath, request):
         log.err(error)
         raise HTTPError(StatusResponse(responsecode.BAD_REQUEST, error))
    
-    yield lockSpecFromContentHandler(dom.root_element)
+    yield lockSpecFromContentHandler(dom)
 
 
 
 class Lockable:
     
-    def __lock(self, request):
+    def __lock(self, stream):
         """
         Respond to a LOCK request. (RFC 2518, section 8.10)
         """
     
-        lock = parseLockRequest(self.fp, request)
-        #log.err(lock)
+        lock = deferredGenerator(parseLockRequest)(self.fp, stream)
+        log.err(lock)
 
         #
         # TODO: Generate XML output stream (do something with lock)
