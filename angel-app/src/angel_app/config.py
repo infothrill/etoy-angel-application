@@ -82,7 +82,7 @@ class Config:
         self.__checkOption(section, option)
 
     def __isAllowedSection(self, section):
-        allowedSections = set(["presenter", "common", "maintainer"])
+        allowedSections = ["presenter", "common", "maintainer"]
         if not section in allowedSections:
             return False
         else:
