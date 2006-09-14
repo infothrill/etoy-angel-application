@@ -179,12 +179,40 @@ def processLockRequest(resource, request):
     
     lockResponses = waitForDeferred(deferredGenerator(performLockOperation)(resource, activeLock))
     yield lockResponses
-    lockResponses = lock.getResult()
+    lockResponses = lockResponses.getResult()
 
-    yield MultiStatusResponse(lockResponses)
+    yield MultiStatusResponse([lockResponses])
 
 def getOpaqueLockToken(request):
-    ifh = request.headers.getHeader("If:")
+    """
+    @return the opaque lock token on the If:-header, if it exists.
+    
+    TODO: (vincent) i could not find meaningful documentation on the structure/semantics
+    of the If: header (if such a thing exists). We currently assume it looks like this:
+    If: (<opaquelocktoken:UUID>)
+    which is certainly overly simplistic (see examples in RFC 2518). Should work for now,
+    though. THIS MUST BE CLEANED UP!!!
+    """
+    
+    if not request.headers.hasHeader("If:"): return None
+    
+    ifh = request.headers.getRawHeaders("If:")[0]   
+    
+    # ugly hack: the string representation of a UUID has 8 + 3 * 4 + 12 + 4 == 36 characters,
+    # the string "opaquelocktoken" has 15 characters, plus one ":" and four padding 
+    # characters this yields a string of 56 characters:
+    if not len(ifh) != 56:
+        error = "invalid opaque lock token"
+        HTTPError(StatusResponse(responsecode.BAD_REQUEST, error))
+   
+    # remove the padding characters:
+    oplt = ifh[2:-2]
+    
+    if not oplt.find("opaquelocktoken") == 0:
+        error = "invalid opaque lock token"
+        HTTPError(StatusResponse(responsecode.BAD_REQUEST, error))
+        
+    return oplt
 
 class Lockable:
     """
@@ -201,6 +229,10 @@ class Lockable:
         if not self.isWritableFile():
             error = "No write permission for file."
             HTTPError(StatusResponse(responsecode.UNAUTHORIZED, error))
+            
+        if not self.__isMutable(request):
+            error = "Resource is locked and you don't have the proper token handy."
+            HTTPError(StatusResponse(responsecode.LOCKED, error))
     
     def http_LOCK(self, request):
         """
@@ -216,24 +248,37 @@ class Lockable:
             return self.getAttribute(davxml.ActiveLock)
         else:
             return None
+        
+    def __setLock(self, activeLock, request):
+        """
+        Lock this resource with the supplied activelock.
+        """
+
+        if not self.__isMutable(request):
+            error = "Resource is locked and you don't have the proper token handy."
+            HTTPError(StatusResponse(responsecode.LOCKED, error))       
+        
+        self.writeProperty(activeLock, request)       
     
     def __lockToken(self):
         """
         @return the uri of the opaquelocktoken of the lock on this resource, if the latter exists, otherwise None.
+        
+        See: http://webdav.org/specs/rfc2518.html#rfc.section.6.4
         """
         lock = self.__getLock() 
         if lock is None: return None
+        return str(lock.childOfType(davxml.LockToken).childOfType(davxml.HRef))
     
     def __isMutable(self, request):
         """
         A resource is considered mutable in this context, if 
         -- it is not locked
         -- the request provides the opaquelocktoken corresponding to the lock on this resource
-        
-        TODO: implement the latter requirement
         """
         lt = self.__lockToken()
-        if lt is not None and : return True
+        if lt is None or lt == getOpaqueLockToken(request): return True
+        
         return False
         
         
