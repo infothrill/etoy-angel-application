@@ -194,7 +194,7 @@ class Basic(Lockable, DAVFile):
 
     def render(self, req):
         """You know what you doing. override render method (for GET) in twisted.web2.static.py"""
-        if not self.fp.exists():
+        if not self.exists():
             return responsecode.NOT_FOUND
 
         if self.fp.isdir():
