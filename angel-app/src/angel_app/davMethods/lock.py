@@ -7,6 +7,7 @@ Provides minimalistic LOCK request support required to be WebDAV Level 2 complia
 Only exclusive (see L{assertExclusiveLock}) write (see L{assertWriteLock}) locks are supported.
 Timeout headers are ignored (RFC 2518, Section 9.8).
 """
+from twisted.web2 import responsecode
 
 __all__ = ["http_LOCK"]
 
@@ -91,6 +92,19 @@ def assertWriteLock(lockInfo):
         raise HTTPError(StatusResponse(responsecode.NOT_IMPLEMENTED, error))
 
 
+def assertZeroLockDepth(depth):
+    """
+
+    We currently only support lock depths of "0" (i.e. no recursive locking of collection contents).
+    This is NOT in agreement with RFC 2518, Section 8.10.4:
+    All resources that support the LOCK method MUST support the Depth header.
+    
+    Whatever.    
+    """
+    if depth != "0":
+        error = "LOCK operations with depth 'infinity' are not yet supported."  
+        raise HTTPError(StatusResponse(responsecode.NOT_IMPLEMENTED, error))
+
 
 def buildActiveLock(lockInfo, depth):
     """
@@ -113,12 +127,6 @@ def buildActiveLock(lockInfo, depth):
                                    lockToken
                                    ) 
     return activeLock
-
-
-def performLockOperation(filePath, lockInfo):
-    
-          
-    yield None
 
 
 
@@ -162,6 +170,9 @@ def processLockRequest(resource, request):
     
     """
     
+    log.err("parsing lock request")    
+    
+    
     requestStream = request.stream
     depth = getDepth(request.headers)
     
@@ -169,19 +180,27 @@ def processLockRequest(resource, request):
     lockInfo = waitForDeferred(deferredGenerator(parseLockRequest)(requestStream))
     yield lockInfo
     lockInfo = lockInfo.getResult()
-            
+          
     assertExclusiveLock(lockInfo)   
     assertWriteLock(lockInfo)
+    
+    # we currently only allow lock depths of "0"
+    assertZeroLockDepth(depth)
     
     # build the corresponding activelock element
     # e.g. http://www.webdav.org/specs/rfc2518.html#rfc.section.8.10.8
     activeLock = buildActiveLock(lockInfo, depth)
     
-    lockResponses = waitForDeferred(deferredGenerator(performLockOperation)(resource, activeLock))
+    log.err("done parsing lock request")    
+    
+    lockResponses = waitForDeferred(deferredGenerator(resource._setLock)(activeLock, request))
     yield lockResponses
     lockResponses = lockResponses.getResult()
 
-    yield MultiStatusResponse([lockResponses])
+    log.err(`activeLock`)
+    yield StatusResponse(
+                         responsecode.OK,
+                         davxml.LockDiscovery(activeLock).toxml())
 
 def getOpaqueLockToken(request):
     """
@@ -211,17 +230,23 @@ def getOpaqueLockToken(request):
     if not oplt.find("opaquelocktoken") == 0:
         error = "invalid opaque lock token"
         HTTPError(StatusResponse(responsecode.BAD_REQUEST, error))
-        
+    
+    log.err(oplt)
+    
     return oplt
+
+
 
 class Lockable:
     """
     A mixin class for http resources that provide the DAVPropertyMixIn.
     """
     def preconditions_LOCK(self, request):
-        """
-        Throw a NOT_FOUND error if the requested file does not exist.
-        """
+        return deferredGenerator(self.__lockPreconditions)(request)
+
+
+    def __lockPreconditions(self, request):
+
         if not self.exists():
             error = "File not found in LOCK request: %s" % ( self.fp.path, )
             raise HTTPError(StatusResponse(responsecode.NOT_FOUND, error))
@@ -229,10 +254,21 @@ class Lockable:
         if not self.isWritableFile():
             error = "No write permission for file."
             HTTPError(StatusResponse(responsecode.UNAUTHORIZED, error))
-            
-        if not self.__isMutable(request):
+       
+        im =  waitForDeferred(deferredGenerator(self._isMutable)(request))
+        yield im
+        im = im.getResult()
+        
+        if im != True:
             error = "Resource is locked and you don't have the proper token handy."
             HTTPError(StatusResponse(responsecode.LOCKED, error))
+            
+            
+        
+        # for some reason, the result of preconditions_LOCK is handed as an argument to http_LOCK
+        # (i guess so that the request can be modified during the preconditions call). anyway,
+        # we must yield the request at the end.
+        yield request
     
     def http_LOCK(self, request):
         """
@@ -240,46 +276,66 @@ class Lockable:
         """
         return deferredGenerator(processLockRequest)(self, request)
     
-    def __getLock(self):
+    def _getLock(self):
         """
         @return the activeLock WebDAVDocument stored in the attributes, if it exists, otherwise None.
         """
-        if self.hasAttribute(davxml.ActiveLock):
-            return self.getAttribute(davxml.ActiveLock)
-        else:
-            return None
         
-    def __setLock(self, activeLock, request):
+        lock = None
+        # for some reason, DAVPropertyMixin property accessors require a request object, which they
+        # later ignore ... supply None instead.
+        if self.hasProperty(davxml.ActiveLock, None) == True:
+            lock = waitForDeferred(self.readProperty(davxml.ActiveLock, None))
+            yield lock
+            lock = lock.getResult()
+
+        yield lock
+        
+    def _setLock(self, activeLock, request):
         """
         Lock this resource with the supplied activelock.
         """
-
-        if not self.__isMutable(request):
+        
+        log.err("setting lock")
+        
+        im = waitForDeferred(deferredGenerator(self._isMutable)(request))
+        yield im
+        im = im.getResult()
+        
+        if not im:
             error = "Resource is locked and you don't have the proper token handy."
             HTTPError(StatusResponse(responsecode.LOCKED, error))       
         
         self.writeProperty(activeLock, request)       
     
-    def __lockToken(self):
+    def _lockToken(self):
         """
         @return the uri of the opaquelocktoken of the lock on this resource, if the latter exists, otherwise None.
         
         See: http://webdav.org/specs/rfc2518.html#rfc.section.6.4
         """
-        lock = self.__getLock() 
-        if lock is None: return None
-        return str(lock.childOfType(davxml.LockToken).childOfType(davxml.HRef))
+        lock = waitForDeferred(deferredGenerator(self._getLock)())
+        yield lock
+        lock = lock.getResult()
+        if lock is None: 
+            yield None
+        else:
+            href = str(lock.childOfType(davxml.LockToken).childOfType(davxml.HRef))
+            yield href
     
-    def __isMutable(self, request):
+    def _isMutable(self, request):
         """
         A resource is considered mutable in this context, if 
         -- it is not locked
         -- the request provides the opaquelocktoken corresponding to the lock on this resource
         """
-        lt = self.__lockToken()
-        if lt is None or lt == getOpaqueLockToken(request): return True
-        
-        return False
+        lt = waitForDeferred(deferredGenerator(self._lockToken)())
+        yield lt
+        lt = lt.getResult()
+        if lt is None or lt == getOpaqueLockToken(request): 
+            yield True
+        else:
+            yield False
         
         
         
