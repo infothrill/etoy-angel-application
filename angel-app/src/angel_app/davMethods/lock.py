@@ -25,6 +25,15 @@ from angel_app.contrib.uuid import uuid4
 
 
 def parseLockRequest(stream):
+    """
+    @return a twisted.web2.dav.element.WebDAVElement corresponding to the root element of the request body.
+    
+    Raises an error if the root element is not a lockinfo element, or 
+    if the request body (the stream) is empty. The latter is not quite
+    correct, since according to RFC 2518, Section 7.8, a client may submit a LOCK request
+    with an empty body (and an appropriate If: header) in order to refresh a lock, but it 
+    should be good enough for now.
+    """
 
     # obtain a DOM representation of the xml on the stream
     document = waitForDeferred(davXMLFromStream(stream))
@@ -32,7 +41,8 @@ def parseLockRequest(stream):
     document = document.getResult()
    
     if document is None:
-        # No request body makes no sense
+        # No request body makes no sense.
+        # this is actually not quite correct, 
         error = "Empty LOCK request."
         log.err(error)
         raise HTTPError(StatusResponse(responsecode.BAD_REQUEST, error)) 
@@ -173,15 +183,19 @@ def processLockRequest(resource, request):
 
     yield MultiStatusResponse(lockResponses)
 
+def getOpaqueLockToken(request):
+    ifh = request.headers.getHeader("If:")
 
 class Lockable:
-    
+    """
+    A mixin class for http resources that provide the DAVPropertyMixIn.
+    """
     def preconditions_LOCK(self, request):
         """
         Throw a NOT_FOUND error if the requested file does not exist.
         """
         if not self.exists():
-            error = "File not found in LOCK request: %s" % ( filePath.path, )
+            error = "File not found in LOCK request: %s" % ( self.fp.path, )
             raise HTTPError(StatusResponse(responsecode.NOT_FOUND, error))
         
         if not self.isWritableFile():
@@ -193,3 +207,34 @@ class Lockable:
         Method interface to locking operation.
         """
         return deferredGenerator(processLockRequest)(self, request)
+    
+    def __getLock(self):
+        """
+        @return the activeLock WebDAVDocument stored in the attributes, if it exists, otherwise None.
+        """
+        if self.hasAttribute(davxml.ActiveLock):
+            return self.getAttribute(davxml.ActiveLock)
+        else:
+            return None
+    
+    def __lockToken(self):
+        """
+        @return the uri of the opaquelocktoken of the lock on this resource, if the latter exists, otherwise None.
+        """
+        lock = self.__getLock() 
+        if lock is None: return None
+    
+    def __isMutable(self, request):
+        """
+        A resource is considered mutable in this context, if 
+        -- it is not locked
+        -- the request provides the opaquelocktoken corresponding to the lock on this resource
+        
+        TODO: implement the latter requirement
+        """
+        lt = self.__lockToken()
+        if lt is not None and : return True
+        return False
+        
+        
+        
