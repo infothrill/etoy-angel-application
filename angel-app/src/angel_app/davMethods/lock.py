@@ -15,7 +15,7 @@ from twisted.python import log
 from twisted.internet.defer import deferredGenerator
 from twisted.internet.defer import waitForDeferred
 from twisted.web2 import responsecode
-from twisted.web2.http import HTTPError, StatusResponse
+from twisted.web2.http import HTTPError, Response, StatusResponse
 from twisted.web2.dav.http import MultiStatusResponse
 from twisted.web2.dav import davxml
 from twisted.web2.dav.util import davXMLFromStream
@@ -130,18 +130,6 @@ def buildActiveLock(lockInfo, depth):
 
 
 
-def buildLockResponse(activeLock):
-         #
-        # TODO: Generate XML output stream (do something with lock)
-        #
-
-        # vincent:
-        # we should certainly return a reasonable response here
-        # (for inspiration, see twisted.dav.method.propfind and RFC 2518, examples 8.10.8
-        # through 8.10.10), but since i only want OS X 10.4 to be happy (and it is with
-        # this), i'll stop here for now.   
-    yield davxml.LockDiscovery()
-
 def getDepth(headers):
     """
     RFC 2518, Section 8.10.4: 
@@ -168,10 +156,7 @@ def processLockRequest(resource, request):
     
     Relevant notes:
     
-    """
-    
-    log.err("parsing lock request")    
-    
+    """ 
     
     requestStream = request.stream
     depth = getDepth(request.headers)
@@ -189,18 +174,15 @@ def processLockRequest(resource, request):
     
     # build the corresponding activelock element
     # e.g. http://www.webdav.org/specs/rfc2518.html#rfc.section.8.10.8
-    activeLock = buildActiveLock(lockInfo, depth)
+    activeLock = buildActiveLock(lockInfo, depth)  
     
-    log.err("done parsing lock request")    
+    ld = davxml.LockDiscovery(activeLock)
     
-    lockResponses = waitForDeferred(deferredGenerator(resource._setLock)(activeLock, request))
-    yield lockResponses
-    lockResponses = lockResponses.getResult()
+    ignored = waitForDeferred(deferredGenerator(resource._setLock)(ld, request))
+    yield ignored
+    ignored = ignored.getResult()
 
-    log.err(`activeLock`)
-    yield StatusResponse(
-                         responsecode.OK,
-                         davxml.LockDiscovery(activeLock).toxml())
+    yield StatusResponse(responsecode.OK, ld.toxml())
 
 def getOpaqueLockToken(request):
     """
@@ -230,8 +212,6 @@ def getOpaqueLockToken(request):
     if not oplt.find("opaquelocktoken") == 0:
         error = "invalid opaque lock token"
         HTTPError(StatusResponse(responsecode.BAD_REQUEST, error))
-    
-    log.err(oplt)
     
     return oplt
 
@@ -272,31 +252,37 @@ class Lockable:
     
     def http_LOCK(self, request):
         """
-        Method interface to locking operation.
+        WebDAV Method interface to locking operation.
         """
         return deferredGenerator(processLockRequest)(self, request)
     
-    def _getLock(self):
+    def http_UNLOCK(self, request):
         """
-        @return the activeLock WebDAVDocument stored in the attributes, if it exists, otherwise None.
+        WebDAV method interface to unlocking operation.
+        """
+        return deferredGenerator(self._removeLock)()
+    
+    def _lockDiscovery(self):
+        """
+        @return the lockdiscovery WebDAVDocument stored in the attributes, if it exists, otherwise None.
         """
         
-        lock = None
+        lock = None       
+        lockElement = davxml.LockDiscovery
+        
         # for some reason, DAVPropertyMixin property accessors require a request object, which they
         # later ignore ... supply None instead.
-        if self.hasProperty(davxml.ActiveLock, None) == True:
-            lock = waitForDeferred(self.readProperty(davxml.ActiveLock, None))
+        if self.hasProperty(lockElement, None) == True:
+            lock = waitForDeferred(self.readProperty(lockElement, None))
             yield lock
             lock = lock.getResult()
 
         yield lock
         
-    def _setLock(self, activeLock, request):
+    def _setLock(self, lockDiscovery, request):
         """
         Lock this resource with the supplied activelock.
         """
-        
-        log.err("setting lock")
         
         im = waitForDeferred(deferredGenerator(self._isMutable)(request))
         yield im
@@ -306,7 +292,18 @@ class Lockable:
             error = "Resource is locked and you don't have the proper token handy."
             HTTPError(StatusResponse(responsecode.LOCKED, error))       
         
-        self.writeProperty(activeLock, request)       
+        # the lockDiscovery property is protected, it must therefore be
+        # set through writeDeadProperty instead of through writeProperty
+        self.writeDeadProperty(lockDiscovery)
+        
+    def _removeLock(self):
+        """
+        Remove the lockDiscovery property from the resource.
+        """ 
+        
+        self.removeDeadProperty(davxml.LockDiscovery)
+        
+        yield Response(responsecode.NO_CONTENT)
     
     def _lockToken(self):
         """
@@ -314,7 +311,7 @@ class Lockable:
         
         See: http://webdav.org/specs/rfc2518.html#rfc.section.6.4
         """
-        lock = waitForDeferred(deferredGenerator(self._getLock)())
+        lock = waitForDeferred(deferredGenerator(self._lockDiscovery)())
         yield lock
         lock = lock.getResult()
         if lock is None: 
