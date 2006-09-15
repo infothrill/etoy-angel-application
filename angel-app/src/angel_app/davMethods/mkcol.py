@@ -44,7 +44,8 @@ class mkcolMixin:
 
   def __checkSpot(self, parent):
 
-    if self.fp.exists() and not self.isCollection():
+
+    if self.exists():
         log.err("Attempt to create collection where file exists: %s"
                 % (self.fp.path,))
         raise HTTPError(responsecode.NOT_ALLOWED)
@@ -52,8 +53,6 @@ class mkcolMixin:
     if not parent.isCollection():
         log.err("Attempt to create collection with non-collection parent: %s"
                 % (parent.fp.path,))
-        log.err(parent.listChildren())
-        log.err(parent.fp.isdir())
         raise HTTPError(StatusResponse(
             responsecode.CONFLICT,
             "Parent resource is not a collection."

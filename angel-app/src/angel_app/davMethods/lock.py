@@ -14,7 +14,7 @@ __all__ = ["http_LOCK"]
 from twisted.python import log
 from twisted.internet.defer import deferredGenerator
 from twisted.internet.defer import waitForDeferred
-from twisted.web2 import responsecode
+from twisted.web2 import responsecode, stream
 from twisted.web2.http import HTTPError, Response, StatusResponse
 from twisted.web2.dav.http import MultiStatusResponse
 from twisted.web2.dav import davxml
@@ -181,8 +181,9 @@ def processLockRequest(resource, request):
     ignored = waitForDeferred(deferredGenerator(resource._setLock)(ld, request))
     yield ignored
     ignored = ignored.getResult()
-
-    yield StatusResponse(responsecode.OK, ld.toxml())
+    
+    pp = davxml.PropertyContainer(ld)
+    yield Response(code = responsecode.OK, stream = stream.MemoryStream(pp.toxml()))
 
 def getOpaqueLockToken(request):
     """
