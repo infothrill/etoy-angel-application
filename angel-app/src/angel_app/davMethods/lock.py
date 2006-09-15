@@ -184,16 +184,21 @@ def processLockRequest(resource, request):
     
     pp = davxml.PropertyContainer(ld)
     yield Response(code = responsecode.OK, stream = stream.MemoryStream(pp.toxml()))
+    #yield StatusResponse(responsecode.OK, pp.toxml())
 
 def getOpaqueLockToken(request):
     """
     @return the opaque lock token on the If:-header, if it exists.
     
-    TODO: (vincent) i could not find meaningful documentation on the structure/semantics
-    of the If: header (if such a thing exists). We currently assume it looks like this:
+    TODO: We currently assume it looks like this:
     If: (<opaquelocktoken:UUID>)
-    which is certainly overly simplistic (see examples in RFC 2518). Should work for now,
+    which is certainly overly simplistic. Should work for now,
     though. THIS MUST BE CLEANED UP!!!
+    
+    See: http://www.webdav.org/specs/rfc2518.html#HEADER_If  
+    and 
+    twisted.web2.http_headers, parser_dav_headers, generator_dav_headers
+    for a proper implementation of the If: header 
     """
     
     if not request.headers.hasHeader("If:"): return None
