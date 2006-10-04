@@ -14,7 +14,7 @@ __all__ = ["http_LOCK"]
 from twisted.python import log
 from twisted.internet.defer import deferredGenerator
 from twisted.internet.defer import waitForDeferred
-from twisted.web2 import responsecode, stream
+from twisted.web2 import responsecode, stream, http_headers
 from twisted.web2.http import HTTPError, Response, StatusResponse
 from twisted.web2.dav.http import MultiStatusResponse
 from twisted.web2.dav import davxml
@@ -119,6 +119,9 @@ def buildActiveLock(lockInfo, depth):
     
     depth = davxml.Depth(depth)
     
+    log.err("owner: " + `lockInfo.childOfType(davxml.Owner)`)
+    log.err(lockInfo.childOfType(davxml.Owner).toxml())
+    
     activeLock = davxml.ActiveLock(
                                    lockInfo.childOfType(davxml.LockType),
                                    lockInfo.childOfType(davxml.LockScope),
@@ -175,15 +178,24 @@ def processLockRequest(resource, request):
     # build the corresponding activelock element
     # e.g. http://www.webdav.org/specs/rfc2518.html#rfc.section.8.10.8
     activeLock = buildActiveLock(lockInfo, depth)  
+
+    # extract the lock token
+    lt = activeLock.childOfType(davxml.LockToken).childOfType(davxml.HRef)
+    # make headers with lock token header
+    lth = http_headers.Headers(
+                               rawHeaders = {"Lock-Token": [lt]}
+                               )
+    
     
     ld = davxml.LockDiscovery(activeLock)
+
     
     ignored = waitForDeferred(deferredGenerator(resource._setLock)(ld, request))
     yield ignored
     ignored = ignored.getResult()
     
     pp = davxml.PropertyContainer(ld)
-    yield Response(code = responsecode.OK, stream = stream.MemoryStream(pp.toxml()))
+    yield Response(code = responsecode.OK, headers = lth, stream = stream.MemoryStream(pp.toxml()))
     #yield StatusResponse(responsecode.OK, pp.toxml())
 
 def getOpaqueLockToken(request):
