@@ -12,11 +12,9 @@ from twisted.web2 import responsecode
 __all__ = ["http_LOCK"]
 
 from twisted.python import log
-from twisted.internet.defer import deferredGenerator
-from twisted.internet.defer import waitForDeferred
+from twisted.internet.defer import deferredGenerator, waitForDeferred, maybeDeferred
 from twisted.web2 import responsecode, stream, http_headers
 from twisted.web2.http import HTTPError, Response, StatusResponse
-from twisted.web2.dav.http import MultiStatusResponse
 from twisted.web2.dav import davxml
 from twisted.web2.dav.util import davXMLFromStream
 from twisted.web2.dav.element.rfc2518 import LockInfo
@@ -120,7 +118,7 @@ def buildActiveLock(lockInfo, depth):
     depth = davxml.Depth(depth)
     
     log.err("owner: " + `lockInfo.childOfType(davxml.Owner)`)
-    log.err(lockInfo.childOfType(davxml.Owner).toxml())
+    #log.err(lockInfo.childOfType(davxml.Owner).toxml())
     
     activeLock = davxml.ActiveLock(
                                    lockInfo.childOfType(davxml.LockType),
@@ -164,6 +162,8 @@ def processLockRequest(resource, request):
     requestStream = request.stream
     depth = getDepth(request.headers)
     
+    #log.err(request.headers.getRawHeaders("X-Litmus")[0])
+    
     # generate DAVDocument from request body
     lockInfo = waitForDeferred(deferredGenerator(parseLockRequest)(requestStream))
     yield lockInfo
@@ -174,7 +174,7 @@ def processLockRequest(resource, request):
     
     # we currently only allow lock depths of "0"
     assertZeroLockDepth(depth)
-    
+        
     # build the corresponding activelock element
     # e.g. http://www.webdav.org/specs/rfc2518.html#rfc.section.8.10.8
     activeLock = buildActiveLock(lockInfo, depth)  
@@ -194,13 +194,21 @@ def processLockRequest(resource, request):
     yield ignored
     ignored = ignored.getResult()
     
+    # debug
+    ignored = waitForDeferred(deferredGenerator(resource._getLock)())
+    yield ignored
+    ignored = ignored.getResult()
+    log.err("current lock: " + `ignored`)
+    
     pp = davxml.PropertyContainer(ld)
-    yield Response(code = responsecode.OK, headers = lth, stream = stream.MemoryStream(pp.toxml()))
-    #yield StatusResponse(responsecode.OK, pp.toxml())
+    yield Response(
+                   code = responsecode.OK, 
+                   headers = lth, 
+                   stream = stream.MemoryStream(pp.toxml()))
 
 def getOpaqueLockToken(request):
     """
-    @return the opaque lock token on the If:-header, if it exists.
+    @return the opaque lock token on the If:-header, if it exists, None otherwise.
     
     TODO: We currently assume it looks like this:
     If: (<opaquelocktoken:UUID>)
@@ -234,14 +242,22 @@ def getOpaqueLockToken(request):
     return oplt
 
 
-
-class Lockable:
+class Lockable(object):
     """
     A mixin class for http resources that provide the DAVPropertyMixIn.
     """
     def preconditions_LOCK(self, request):
         return deferredGenerator(self.__lockPreconditions)(request)
 
+    def assertNotLocked(self, request):
+        il =  waitForDeferred(deferredGenerator(self.isLocked)(request))
+        yield il
+        il = il.getResult()
+        if il is True:
+
+            error = "Resource is locked and you don't have the proper token handy."
+            log.err(error)
+            raise HTTPError(StatusResponse(responsecode.LOCKED, error))
 
     def __lockPreconditions(self, request):
 
@@ -251,46 +267,177 @@ class Lockable:
         
         if not self.isWritableFile():
             error = "No write permission for file."
-            HTTPError(StatusResponse(responsecode.UNAUTHORIZED, error))
+            raise HTTPError(StatusResponse(responsecode.UNAUTHORIZED, error))
        
-        im =  waitForDeferred(deferredGenerator(self._isMutable)(request))
-        yield im
-        im = im.getResult()
-        
-        if im != True:
-            error = "Resource is locked and you don't have the proper token handy."
-            HTTPError(StatusResponse(responsecode.LOCKED, error))
-            
-            
+        ignore = waitForDeferred(deferredGenerator(self.assertNotLocked)(request))
+        yield ignore
+        ignore = ignore.getResult()
         
         # for some reason, the result of preconditions_LOCK is handed as an argument to http_LOCK
         # (i guess so that the request can be modified during the preconditions call). anyway,
         # we must yield the request at the end.
         yield request
-    
+
+
+    def isLocked(self, request):
+        """
+        A resource is considered mutable in this context, if 
+        -- it is not locked
+        -- the request provides the opaquelocktoken corresponding to the lock on this resource
+        """
+        lt = waitForDeferred(deferredGenerator(self._lockToken)())
+        yield lt
+        lt = lt.getResult()
+        if lt == None:
+            # log.err("resource not locked") 
+            yield False
+        elif lt == getOpaqueLockToken(request):
+            # log.err("proper lock token suplied")
+            yield False
+        else:
+            # log.err("resource is locked")
+            yield True
+
+
+   
     def http_LOCK(self, request):
         """
         WebDAV Method interface to locking operation.
         """
         return deferredGenerator(processLockRequest)(self, request)
     
+    
+    
     def http_UNLOCK(self, request):
         """
         WebDAV method interface to unlocking operation.
         """
-        return deferredGenerator(self._removeLock)()
+        return deferredGenerator(self._removeLock)(request)
     
-    def _lockDiscovery(self):
+
+    
+    def http_PUT(self, request):
         """
-        @return the lockdiscovery WebDAVDocument stored in the attributes, if it exists, otherwise None.
+        Wrap the request in an assertion that the lock token provided with
+        the request corresponds to the lock token associated with the resource.
+        """
+        def __http_put(self, request):
+        
+            ignore = waitForDeferred(deferredGenerator(self.assertNotLocked)(request))
+            yield ignore
+            ignore = ignore.getResult()
+            log.err(type(super(Lockable, self).http_PUT))
+            
+            dd = waitForDeferred(super(Lockable, self).http_PUT(request))
+            yield dd
+            yield dd.getResult()
+        
+        return deferredGenerator(__http_put)(self, request)
+
+
+    
+    def http_DELETE(self, request):
+        """
+        Wrap the request in an assertion that the lock token provided with
+        the request corresponds to the lock token associated with the resource.
+        """
+        def __http_delete(self, request):
+        
+            ignore = waitForDeferred(deferredGenerator(self.assertNotLocked)(request))
+            yield ignore
+            ignore = ignore.getResult()
+                
+            yield super(Lockable, self).http_DELETE(request)
+        
+        return deferredGenerator(__http_delete)(self, request)
+
+        
+    def http_PROPPATCH(self, request):
+        """
+        Wrap the request in an assertion that the lock token provided with
+        the request corresponds to the lock token associated with the resource.
         """
         
-        lock = None       
+        def _http_proppatch(self, request):
+        
+            ignore = waitForDeferred(deferredGenerator(self.assertNotLocked)(request))
+            yield ignore
+            ignore = ignore.getResult()
+                
+            yield deferredGenerator(super(Lockable, self).http_PROPPATCH)(request)
+        
+        return deferredGenerator(_http_proppatch)(self, request)    
+    
+        
+    def http_MOVE(self, request):
+        """
+        Wrap the request in an assertion that the lock token provided with
+        the request corresponds to the lock token associated with the resource.
+        """
+        
+        def __http_move(self, request):
+        
+            ignore = waitForDeferred(deferredGenerator(self.assertNotLocked)(request))
+            yield ignore
+            ignore = ignore.getResult()
+                
+            yield deferredGenerator(super(Lockable, self).http_MOVE)(request)
+        
+        return deferredGenerator(__http_move)(self, request)
+    
+
+
+
+    
+        
+    def http_COPY(self, request):
+        """
+        Wrap the request in an assertion that the lock token provided with
+        the request corresponds to the lock token associated with the resource.
+        """
+        
+        def __http_copy(self, request):
+            """Assert that the destination is not locked."""
+            
+            destination_uri = request.headers.getHeader("destination")
+
+            if not destination_uri:
+                msg = "No destination header in %s request." % (request.method,)
+                log.err(msg)
+                raise HTTPError(StatusResponse(responsecode.BAD_REQUEST, msg))
+
+            dest = waitForDeferred(request.locateResource(destination_uri))
+            yield dest
+            dest = dest.getResult()
+                       
+            ignore = waitForDeferred(deferredGenerator(dest.assertNotLocked)(request))
+            yield ignore
+            ignore = ignore.getResult()
+        
+            dd = waitForDeferred(super(Lockable, self).http_COPY(request))
+            yield dd
+            yield dd.getResult()
+            #yield deferredGenerator(super(Lockable, self).http_COPY)(request)
+        
+        
+        return deferredGenerator(__http_copy)(self, request)
+    
+    def _getLock(self, lock = None):
+        """
+        @param ld if not None: a lockDiscovery WebDAVDocument to be stored in the attributes
+        @return the lockdiscovery WebDAVDocument stored in the attributes, if it exists, otherwise None.
+        """
+
+        lock = None
         lockElement = davxml.LockDiscovery
+        
+        gotLock = waitForDeferred(self.hasProperty(lockElement, None))
+        yield gotLock
+        gotLock = gotLock.getResult()
         
         # for some reason, DAVPropertyMixin property accessors require a request object, which they
         # later ignore ... supply None instead.
-        if self.hasProperty(lockElement, None) == True:
+        if gotLock == True:
             lock = waitForDeferred(self.readProperty(lockElement, None))
             yield lock
             lock = lock.getResult()
@@ -302,22 +449,24 @@ class Lockable:
         Lock this resource with the supplied activelock.
         """
         
-        im = waitForDeferred(deferredGenerator(self._isMutable)(request))
-        yield im
-        im = im.getResult()
-        
-        if not im:
-            error = "Resource is locked and you don't have the proper token handy."
-            HTTPError(StatusResponse(responsecode.LOCKED, error))       
+        ignore = waitForDeferred(deferredGenerator(self.assertNotLocked)(request))
+        yield ignore
+        ignore = ignore.getResult()    
         
         # the lockDiscovery property is protected, it must therefore be
         # set through writeDeadProperty instead of through writeProperty
         self.writeDeadProperty(lockDiscovery)
         
-    def _removeLock(self):
+        yield lockDiscovery
+        
+    def _removeLock(self, request):
         """
         Remove the lockDiscovery property from the resource.
         """ 
+                
+        ignore = waitForDeferred(deferredGenerator(self.assertNotLocked)(request))
+        yield ignore
+        ignore = ignore.getResult()
         
         self.removeDeadProperty(davxml.LockDiscovery)
         
@@ -329,28 +478,17 @@ class Lockable:
         
         See: http://webdav.org/specs/rfc2518.html#rfc.section.6.4
         """
-        lock = waitForDeferred(deferredGenerator(self._lockDiscovery)())
-        yield lock
-        lock = lock.getResult()
-        if lock is None: 
+        lockDiscovery = waitForDeferred(deferredGenerator(self._getLock)())
+        yield lockDiscovery
+        lockDiscovery = lockDiscovery.getResult()
+        
+        if lockDiscovery is None: 
             yield None
         else:
-            href = str(lock.childOfType(davxml.LockToken).childOfType(davxml.HRef))
+            href = str(lockDiscovery.childOfType(davxml.ActiveLock).childOfType(davxml.LockToken).childOfType(davxml.HRef))
             yield href
     
-    def _isMutable(self, request):
-        """
-        A resource is considered mutable in this context, if 
-        -- it is not locked
-        -- the request provides the opaquelocktoken corresponding to the lock on this resource
-        """
-        lt = waitForDeferred(deferredGenerator(self._lockToken)())
-        yield lt
-        lt = lt.getResult()
-        if lt is None or lt == getOpaqueLockToken(request): 
-            yield True
-        else:
-            yield False
+
         
         
         

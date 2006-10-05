@@ -1,7 +1,7 @@
 from twisted.python import log
 from twisted.web2 import stream
 from angel_app import elements
-from angel_app.davMethods import copy, delete, mkcol, move, put
+from angel_app.davMethods import copy, delete, lock, mkcol, move, put
 from angel_app.angelFile.basic import Basic
 from ezPyCrypto import key as ezKey
 
@@ -10,7 +10,9 @@ DEBUG = False
 # DO NOT EXPOSE THIS KEY!!!!
 from angel_app.crypto import loadKeysFromFile
 
-class Crypto(copy.copyMixin,
+class Crypto(
+             lock.Lockable,
+             copy.copyMixin,
              delete.Deletable, 
              mkcol.mkcolMixin,
              move.moveMixin,

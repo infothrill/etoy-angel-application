@@ -9,7 +9,7 @@ from angel_app.davMethods.lock import Lockable
 
 DEBUG = False
 
-class Basic(Lockable, DAVFile):
+class Basic(DAVFile):
     """
     This is a basic AngelFile that provides (at least as stubs) the necessary
     WebDAV methods, as well as support for the encryption and metadata semantics
@@ -70,12 +70,12 @@ class Basic(Lockable, DAVFile):
         log.err("Denying MOVE request.")
         return responsecode.FORBIDDEN  
     
-    def http_PROPPATCH(self, request):
-        """
-        Disallowed.
-        """
-        log.err("Denying PROPPATCH request.")
-        return responsecode.FORBIDDEN  
+    #def http_PROPPATCH(self, request):
+    #    """
+    #    Disallowed.
+    #    """
+    #    log.err("Denying PROPPATCH request.")
+    #    return responsecode.FORBIDDEN  
 
     def davComplianceClasses(self):
         """
