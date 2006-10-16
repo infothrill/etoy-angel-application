@@ -253,11 +253,16 @@ class Lockable(object):
         il =  waitForDeferred(deferredGenerator(self.isLocked)(request))
         yield il
         il = il.getResult()
+        
+        log.err("is locked? :" + `il`)
+        
         if il is True:
 
             error = "Resource is locked and you don't have the proper token handy."
             log.err(error)
             raise HTTPError(StatusResponse(responsecode.LOCKED, error))
+        
+        yield None
 
     def __lockPreconditions(self, request):
 
@@ -285,17 +290,32 @@ class Lockable(object):
         -- it is not locked
         -- the request provides the opaquelocktoken corresponding to the lock on this resource
         """
-        lt = waitForDeferred(deferredGenerator(self._lockToken)())
-        yield lt
-        lt = lt.getResult()
-        if lt == None:
-            # log.err("resource not locked") 
+        
+        # get the local lock token
+        llt = waitForDeferred(deferredGenerator(self._lockToken)())
+        yield llt
+        llt = llt.getResult()
+        log.err("local lock token: " + `llt`)
+    
+        # get the remote lock token
+        rlt = getOpaqueLockToken(request)
+        log.err("remote lock token: " + `rlt`)    
+
+        if self.exists():
+            # a resource that does not exist can not be locked
             yield False
-        elif lt == getOpaqueLockToken(request):
-            # log.err("proper lock token suplied")
+
+        elif llt == None:
+            # this resource has no lock associated with it, ergo not locked
+            yield False        
+
+        elif rlt == llt:
+            # this resource has a lock token associated with it, but the same
+            # lock token has been supplied, ergo not locked (for this request)
             yield False
+        
         else:
-            # log.err("resource is locked")
+            # resource is locked
             yield True
 
 
@@ -428,7 +448,6 @@ class Lockable(object):
         @return the lockdiscovery WebDAVDocument stored in the attributes, if it exists, otherwise None.
         """
 
-        lock = None
         lockElement = davxml.LockDiscovery
         
         gotLock = waitForDeferred(self.hasProperty(lockElement, None))
@@ -436,7 +455,7 @@ class Lockable(object):
         gotLock = gotLock.getResult()
         
         # for some reason, DAVPropertyMixin property accessors require a request object, which they
-        # later ignore ... supply None instead.
+        # later seem to ignore ... supply None instead.
         if gotLock == True:
             lock = waitForDeferred(self.readProperty(lockElement, None))
             yield lock
