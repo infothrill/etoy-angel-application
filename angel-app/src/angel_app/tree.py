@@ -11,7 +11,7 @@ def treeWalker(node, getChildren, toEvaluate):
     @param node the tree node where we start
     @param getChildren a function f such that f(node) returns the child nodes of node
     @param toEvaluate a function g such that result, newCarryAlong = g(node, carryAlong)
-    @returns a tree iterator
+    @returns an iterator over the results of applying toEvaluate to every node in the tree
     
     @see walkTest() for an example.
     """
@@ -59,7 +59,6 @@ def walkTest(root = os.getcwd()):
             raise StopIteration
         
         ab = absPath(node)
-        #print ab
         if not isdir(ab): return []
         
 
