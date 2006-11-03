@@ -13,7 +13,7 @@ zope-interface: virtual-python
 	cd ZopeInterface-3.0.1 && ${vPython} setup.py install
 	
 
-xattr: xattr-patched setupToolsBootStrap
+xattr: setupToolsBootStrap
 	cd ${installLocation} && svn co http://svn.red-bean.com/bob/xattr/trunk/ xattr && ${vPython} setup.py build && ${vPython} setup.py install
 
 ezPyCrypto: pyCrypto
