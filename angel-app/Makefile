@@ -1,7 +1,7 @@
 installLocation=${PWD}/angel-app
 vPython=${installLocation}/bin/python
 
-angel-app: virtual-python setupToolsBootStrap twisted ezPyCrypto xattr 
+angelApp: virtual-python setupToolsBootStrap twisted ezPyCrypto xattr 
 	cd ${installLocation} && svn co http://svn.gna.org/svn/angel-app/trunk angel-app
 	wget "http://angelapp.missioneternity.org/index.py/Documentation/Install?action=AttachFile&do=get&target=angel_app.tgz" -O angel_app.tgz
 	tar xvfz angel_app.tgz
