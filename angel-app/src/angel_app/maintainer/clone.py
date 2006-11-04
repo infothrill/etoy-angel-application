@@ -143,35 +143,11 @@ class Clone(object):
         return [splitParse(
                            str(clone.children[0].children[0].children[0]))
                 for clone in prop.children]
-         
-    
-    def pushProperties(self, localClone):
-        """
-        Push the relevant properties of a local clone to the remote clone via a PROPPATCH request.
-        """
-        rfc2518.PropertyUpdate()
-        conn = HTTPConnection(self.host, self.port)       
-        conn.request(
-                 "PROPPATCH", 
-                 self.path, 
-                 headers = {"Depth" : 0}, 
-                 body = self.__makePropfindRequestBody(properties)
-                 )
-       
-        resp = conn.getresponse()
-        if resp.status != responsecode.MULTI_STATUS:
-            raise "must receive a MULTI_STATUS response for PROPFIND, otherwise something's wrong"
-        
-        data = resp.read()
-        conn.close()
-
-
 
     def performPushRequest(self, localClone):
         """
         Push the relevant properties of a local clone to the remote clone via a PROPPATCH request.
         """
-        rfc2518.PropertyUpdate()
         conn = HTTPConnection(self.host, self.port)       
         conn.request(
                  "PROPPATCH", 
@@ -182,11 +158,11 @@ class Clone(object):
         resp = conn.getresponse()
         if resp.status != responsecode.MULTI_STATUS:
             raise "must receive a MULTI_STATUS response for PROPPATCH (received " + \
-                resp.status + "), otherwise something's wrong"
+                `resp.status` + "), otherwise something's wrong"
         
         # we probably ignore the returned data, but who knows
         data = resp.read()
-
+        print data
         conn.close()
            
 def makePushBody(localClone):
@@ -194,13 +170,17 @@ def makePushBody(localClone):
     Generate the DAVDocument representation of the signed properties of the local clone.
     """
     
-    plist = [
-             localClone.deadProperties().get(el)
+    rfc2518.PropertyName
+    pList = [
+             rfc2518.Set(
+                         rfc2518.PropertyContainer(
+                                      localClone.deadProperties().get(el.qname())))
              for el
              in elements.signedKeys
              ]
     
-    return davxml.PropertyUpdate(pList)
+    pu = davxml.PropertyUpdate(*pList)
+    return pu.toxml()
 
 def getClonesOf(clonesList):
     """
