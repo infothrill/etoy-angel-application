@@ -6,10 +6,11 @@ from twisted.web2 import http, stream
 from twisted.web2.dav.xattrprops import xattrPropertyStore
 from angel_app import elements
 from angel_app.davMethods.lock import Lockable
+from angel_app.davMethods.proppatch import ProppatchMixin
 
 DEBUG = False
 
-class Basic(DAVFile):
+class Basic(DAVFile, ProppatchMixin):
     """
     This is a basic AngelFile that provides (at least as stubs) the necessary
     WebDAV methods, as well as support for the encryption and metadata semantics
