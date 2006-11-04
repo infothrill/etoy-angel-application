@@ -29,8 +29,8 @@ WebDAV MOVE method. Very much incomplete.
 
 __all__ = ["http_MOVE"]
 
-from twisted.web2.dav.method.copymove import http_MOVE
+from twisted.web2.dav.method.copymove import http_MOVE as hm
 
 class moveMixin:
     def http_MOVE(self, request): 
-        return http_MOVE(self, request)
+        return hm(self, request)
