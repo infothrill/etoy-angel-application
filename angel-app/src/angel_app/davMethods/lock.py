@@ -369,6 +369,8 @@ class Lockable(object):
         """
         Wrap the request in an assertion that the lock token provided with
         the request corresponds to the lock token associated with the resource.
+        
+        TODO: assert that the destination file is not locked.
         """       
         return deferredGenerator(self.assertNotLocked)(request).addCallback(
                                                                             super(Lockable, self).http_MOVE)
@@ -388,11 +390,13 @@ class Lockable(object):
             
             destination_uri = request.headers.getHeader("destination")
 
+            # assert that the destination exists
             if not destination_uri:
                 msg = "No destination header in %s request." % (request.method,)
                 log.err(msg)
                 raise HTTPError(StatusResponse(responsecode.BAD_REQUEST, msg))
 
+            # assert that the destination is not locked
             dest = waitForDeferred(request.locateResource(destination_uri))
             yield dest
             dest = dest.getResult()
