@@ -24,14 +24,19 @@
 ##
 
 """
-WebDAV COPY method.
+WebDAV PROPPATCH method.
 """
 
-__all__ = ["http_COPY"]
+__all__ = ["http_PROPPATCH"]
 
-from twisted.web2.dav.method.copymove import http_COPY
+from twisted.python import log
+from twisted.internet.defer import deferredGenerator
 
-class proppatchMixin:
-    def preconditions_PROPPATCH(self, request):
+class ProppatchMixin:
+    
+    def __proppatchPreconditions(self, request):
         log.err("proppatch preconditions")
         yield request
+    
+    def preconditions_PROPPATCH(self, request):
+        return deferredGenerator(self.__proppatchPreconditions)(request)
