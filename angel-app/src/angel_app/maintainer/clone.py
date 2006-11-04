@@ -1,5 +1,5 @@
 from twisted.web2 import responsecode
-from twisted.web2.dav.element.rfc2518 import PropertyFind, PropertyContainer
+from twisted.web2.dav.element import rfc2518
 from twisted.web2.dav import davxml
 
 from angel_app import elements
@@ -31,13 +31,13 @@ class Clone(object):
         self.port = port
         self.path = path
     
-    def __makeRequestBody(self, *properties):
+    def __makePropfindRequestBody(self, *properties):
         """
         @rtype string
         @return XML body of PROPFIND request.
         """
-        return PropertyFind(
-                    PropertyContainer(
+        return rfc2518.PropertyFind(
+                    rfc2518.PropertyContainer(
                           *[property() for property in properties]
                           )).toxml()
     
@@ -48,7 +48,7 @@ class Clone(object):
         """
         return self.host == clone.host and self.port == clone.port
     
-    def propertiesAsXml(self, properties):
+    def propFindAsXml(self, properties):
         """
         @rtype string
         @return the raw XML body of the multistatus response corresponding to the respective PROPFIND request.
@@ -58,7 +58,7 @@ class Clone(object):
                  "PROPFIND", 
                  self.path, 
                  headers = {"Depth" : 0}, 
-                 body = self.__makeRequestBody(properties)
+                 body = self.__makePropfindRequestBody(properties)
                  )
        
         resp = conn.getresponse()
@@ -75,10 +75,10 @@ class Clone(object):
         @return the properties as a davxml document tree.
         """
         return davxml.WebDAVDocument.fromString(
-                                               self.propertiesAsXml(
+                                               self.propFindAsXml(
                                                                   properties))
     
-    def propertyBody(self, property):
+    def propertyFindBody(self, property):
         """
         @rtype string
         @return the body of a property consisting of just PCDATA.
@@ -96,14 +96,14 @@ class Clone(object):
         @rtype int
         @return the clone's revision number.
         """
-        return int(self.propertyBody(elements.Revision))
+        return int(self.propertyFindBody(elements.Revision))
     
     def publicKeyString(self):
         """
         @rtype string
         @return the public key string of the clone.
         """
-        return self.propertyBody(elements.PublicKeyString)
+        return self.propertyFindBody(elements.PublicKeyString)
     
     def validate(self):
         """
@@ -111,18 +111,24 @@ class Clone(object):
         @return if the meta data of a given clone is internally consistent.
         """
         toBeVerified = "".join([
-                                self.propertyBody(element)
+                                self.propertyFindBody(element)
                                 for element in
-                                [elements.Revision, elements.ContentSignature, elements.PublicKeyString, elements.Deleted]])
+                                [
+                                 elements.Revision, 
+                                 elements.ContentSignature, 
+                                 elements.PublicKeyString, 
+                                 elements.Deleted
+                                 ]
+                                ])
         
         pubKey = key()
         pubKey.importKey(
-                         self.propertyBody(
+                         self.propertyFindBody(
                                            elements.PublicKeyString))
         
         return pubKey.verifyString(
                                    toBeVerified, 
-                                   self.propertyBody(
+                                   self.propertyFindBody(
                                                      elements.MetaDataSignature))
         
     def cloneList(self):
@@ -130,14 +136,71 @@ class Clone(object):
         @rtype [(string, int)]
         @return a list of (string hostname, int port) tuples of clones registered with this clone.
         """
-        prop = self.propertiesDocument(elements.Clones).root_element.children[0].children[1].children[0]
+        prop = self.propertiesDocument(
+                                       elements.Clones
+                                       ).root_element.children[0].children[1].children[0]
         
         return [splitParse(
                            str(clone.children[0].children[0].children[0]))
                 for clone in prop.children]
          
     
+    def pushProperties(self, localClone):
+        """
+        Push the relevant properties of a local clone to the remote clone via a PROPPATCH request.
+        """
+        rfc2518.PropertyUpdate()
+        conn = HTTPConnection(self.host, self.port)       
+        conn.request(
+                 "PROPPATCH", 
+                 self.path, 
+                 headers = {"Depth" : 0}, 
+                 body = self.__makePropfindRequestBody(properties)
+                 )
+       
+        resp = conn.getresponse()
+        if resp.status != responsecode.MULTI_STATUS:
+            raise "must receive a MULTI_STATUS response for PROPFIND, otherwise something's wrong"
+        
+        data = resp.read()
+        conn.close()
+
+
+
+    def performPushRequest(self, localClone):
+        """
+        Push the relevant properties of a local clone to the remote clone via a PROPPATCH request.
+        """
+        rfc2518.PropertyUpdate()
+        conn = HTTPConnection(self.host, self.port)       
+        conn.request(
+                 "PROPPATCH", 
+                 self.path,
+                 body = makePushBody(localClone)
+                 )
+       
+        resp = conn.getresponse()
+        if resp.status != responsecode.MULTI_STATUS:
+            raise "must receive a MULTI_STATUS response for PROPPATCH (received " + \
+                resp.status + "), otherwise something's wrong"
+        
+        # we probably ignore the returned data, but who knows
+        data = resp.read()
+
+        conn.close()
+           
+def makePushBody(localClone):
+    """
+    Generate the DAVDocument representation of the signed properties of the local clone.
+    """
     
+    plist = [
+             localClone.deadProperties().get(el)
+             for el
+             in elements.signedKeys
+             ]
+    
+    return davxml.PropertyUpdate(pList)
 
 def getClonesOf(clonesList):
     """
