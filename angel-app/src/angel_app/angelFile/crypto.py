@@ -132,15 +132,6 @@ class Crypto(
         DEBUG and log.err("public key for " + self.fp.path + " " + fileKeyString)
         return fileKeyString == myKeyString
 
-    def signableMetadata(self):
-        """
-        Returns a string representation of the metadata that needs to
-        be signed.
-        """
-        sm = "".join([self.get(key) for key in elements.signedKeys])
-        DEBUG and log.err("signable meta data for " + self.fp.path + ":" + sm)
-        return sm
-
 
     def seal(self):
         """

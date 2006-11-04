@@ -177,8 +177,6 @@ class Basic(DAVFile):
                 return self.getOrSet(elements.PublicKeyString, keyString) 
             finally:
                 raise HTTPError(responsecode.FORBIDDEN)
-        
-
  
 
     def signableMetadata(self):
@@ -186,11 +184,9 @@ class Basic(DAVFile):
         Returns a string representation of the metadata that needs to
         be signed.
         """
-        pp = self.deadProperties()
-        return "".join([
-                                  `pp.get(key.qname())`
-                                  for key in elements.signedKeys
-                                  ])
+        sm = "".join([self.get(key) for key in elements.signedKeys])
+        DEBUG and log.err("signable meta data for " + self.fp.path + ":" + sm)
+        return sm
 
     def render(self, req):
         """You know what you doing. override render method (for GET) in twisted.web2.static.py"""
