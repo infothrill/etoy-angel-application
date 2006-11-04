@@ -54,7 +54,7 @@ class PublicKeyString (WebDAVTextElement):
 class Deleted (WebDAVTextElement):
     """
     Whether the file has been deleted (in which case the metadata must still be available!
-    weird but true).
+    weird but true). hmm. maybe move this into a reference in the parent directory.
     """
     name = "deleted"     
 
@@ -68,6 +68,26 @@ class MetaDataSignature (WebDAVTextElement):
     Signature of the metadata tags that need to be signed.
     """
     name = "metaDataSignature"     
+
+class CloneSig (WebDAVTextElement):
+    """
+    The clone sig is an xml representation of the union of the signed keys
+    and the metadata signature. A clone sig therefore encapsulates all the
+    meta data (veryfiable via the metaDataSignature) that's necessary to
+    identify and validate a clone. 
+    """
+    name = "cloneSig"
+    
+    # require the presence of exactly one element of each signed key and the meta
+    # data signature
+    allowed_children = dict([
+                             (
+                             (dav_namespace, element.name), 
+                             (1, 1)
+                             ) 
+                            for element in 
+                            signedKeys + [MetaDataSignature]
+                            ])
 
 class Clone (WebDAVElement):
     """
