@@ -206,6 +206,7 @@ def processLockRequest(resource, request):
                    headers = lth, 
                    stream = stream.MemoryStream(pp.toxml()))
 
+
 def getOpaqueLockToken(request):
     """
     @return the opaque lock token on the If:-header, if it exists, None otherwise.
@@ -249,6 +250,7 @@ class Lockable(object):
     def preconditions_LOCK(self, request):
         return deferredGenerator(self.__lockPreconditions)(request)
 
+
     def assertNotLocked(self, request):
         il =  waitForDeferred(deferredGenerator(self.isLocked)(request))
         yield il
@@ -264,6 +266,7 @@ class Lockable(object):
         
         # we must forward the request to possible callbacks
         yield request
+
 
     def __lockPreconditions(self, request):
 
@@ -319,15 +322,13 @@ class Lockable(object):
             # resource is locked
             yield True
 
-
    
     def http_LOCK(self, request):
         """
         WebDAV Method interface to locking operation.
         """
         return deferredGenerator(processLockRequest)(self, request)
-    
-    
+       
     
     def http_UNLOCK(self, request):
         """
@@ -335,7 +336,6 @@ class Lockable(object):
         """
         return deferredGenerator(self._removeLock)(request)
     
-
     
     def http_PUT(self, request):
         """
@@ -344,7 +344,6 @@ class Lockable(object):
         """
         return deferredGenerator(self.assertNotLocked)(request).addCallback(
                                                                             super(Lockable, self).http_PUT) 
-
 
     
     def http_DELETE(self, request):
@@ -375,10 +374,7 @@ class Lockable(object):
         return deferredGenerator(self.assertNotLocked)(request).addCallback(
                                                                             super(Lockable, self).http_MOVE)
 
-
-
-    
-        
+      
     def http_COPY(self, request):
         """
         Wrap the request in an assertion that the lock token provided with
@@ -409,9 +405,9 @@ class Lockable(object):
             yield dd
             yield dd.getResult()
             #yield deferredGenerator(super(Lockable, self).http_COPY)(request)
-        
-        
+                
         return deferredGenerator(__http_copy)(self, request)
+
     
     def _getLock(self, lock = None):
         """
