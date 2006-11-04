@@ -262,7 +262,8 @@ class Lockable(object):
             log.err(error)
             raise HTTPError(StatusResponse(responsecode.LOCKED, error))
         
-        yield None
+        # we must forward the request to possible callbacks
+        yield request
 
     def __lockPreconditions(self, request):
 
@@ -341,18 +342,8 @@ class Lockable(object):
         Wrap the request in an assertion that the lock token provided with
         the request corresponds to the lock token associated with the resource.
         """
-        def __http_put(self, request):
-        
-            ignore = waitForDeferred(deferredGenerator(self.assertNotLocked)(request))
-            yield ignore
-            ignore = ignore.getResult()
-            log.err(type(super(Lockable, self).http_PUT))
-            
-            dd = waitForDeferred(super(Lockable, self).http_PUT(request))
-            yield dd
-            yield dd.getResult()
-        
-        return deferredGenerator(__http_put)(self, request)
+        return deferredGenerator(self.assertNotLocked)(request).addCallback(
+                                                                            super(Lockable, self).http_PUT) 
 
 
     
@@ -361,15 +352,8 @@ class Lockable(object):
         Wrap the request in an assertion that the lock token provided with
         the request corresponds to the lock token associated with the resource.
         """
-        def __http_delete(self, request):
-        
-            ignore = waitForDeferred(deferredGenerator(self.assertNotLocked)(request))
-            yield ignore
-            ignore = ignore.getResult()
-                
-            yield super(Lockable, self).http_DELETE(request)
-        
-        return deferredGenerator(__http_delete)(self, request)
+        return deferredGenerator(self.assertNotLocked)(request).addCallback(
+                                                                            super(Lockable, self).http_DELETE) 
 
         
     def http_PROPPATCH(self, request):
@@ -377,34 +361,17 @@ class Lockable(object):
         Wrap the request in an assertion that the lock token provided with
         the request corresponds to the lock token associated with the resource.
         """
-        
-        def _http_proppatch(self, request):
-        
-            ignore = waitForDeferred(deferredGenerator(self.assertNotLocked)(request))
-            yield ignore
-            ignore = ignore.getResult()
-                
-            yield deferredGenerator(super(Lockable, self).http_PROPPATCH)(request)
-        
-        return deferredGenerator(_http_proppatch)(self, request)    
+        return deferredGenerator(self.assertNotLocked)(request).addCallback(
+                                                                            super(Lockable, self).http_PROPPATCH) 
     
         
     def http_MOVE(self, request):
         """
         Wrap the request in an assertion that the lock token provided with
         the request corresponds to the lock token associated with the resource.
-        """
-        
-        def __http_move(self, request):
-        
-            ignore = waitForDeferred(deferredGenerator(self.assertNotLocked)(request))
-            yield ignore
-            ignore = ignore.getResult()
-                
-            yield deferredGenerator(super(Lockable, self).http_MOVE)(request)
-        
-        return deferredGenerator(__http_move)(self, request)
-    
+        """       
+        return deferredGenerator(self.assertNotLocked)(request).addCallback(
+                                                                            super(Lockable, self).http_MOVE)
 
 
 
