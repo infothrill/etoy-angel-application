@@ -6,11 +6,11 @@ infinity = -1
 
 def treeWalker(node, getChildren, toEvaluate):
     """
-    A generator that (lazily, recursively) applies an operation to a tree structure.
+    A generator that (lazily, recursively) applies an operation to a directed graph structure.
     
-    @param node the tree node where we start
-    @param getChildren a function f such that f(node) returns the child nodes of node
-    @param toEvaluate a function g such that result, newCarryAlong = g(node, carryAlong)
+    @param node the graph node where we start
+    @param getChildren a callable f such that f(node) returns the child nodes of node
+    @param toEvaluate a callable g such that the result rr for a node is rr = g(node)
     @returns an iterator over the results of applying toEvaluate to every node in the tree
     
     @see walkTest() for an example.
