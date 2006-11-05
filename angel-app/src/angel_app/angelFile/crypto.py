@@ -172,26 +172,6 @@ class Crypto(
         
         log.err(self.fp.path + " now at revision: " + self.getOrSet(elements.Revision)) 
     
-    def verify(self):
-        
-        publicKey = ezKey()
-        publicKey.importKey(self.get(elements.PublicKeyString))
-
-        contentSignature = self.get(elements.ContentSignature)
-        #DEBUG and log.err("verify(): signature: " + contentSignature)
-        dataIsCorrect = publicKey.verifyString(
-                                  self.contentAsString(),
-                                  contentSignature)
-        DEBUG and log.err("data signature for file " + self.fp.path + " is correct: " + `dataIsCorrect`)
-            
-        metaDataIsCorrect = publicKey.verifyString(
-                                  self.signableMetadata(),
-                                  self.getOrSet(elements.MetaDataSignature))
-        
-        DEBUG and log.err("meta data signature for file " + self.fp.path + " is correct: " + `metaDataIsCorrect`)
-            
-        return dataIsCorrect and metaDataIsCorrect
-    
     
         
     def getResponseStream(self):

@@ -18,7 +18,7 @@ class Basic(DAVFile, ProppatchMixin):
     angel/distributer.
 
     the following (destructive) DAV-methods are explicitly forbidden a priori: 
-    PUT, MKCOL, DELETE, COPY, MOVE, PROPPATCH.
+    MKCOL, DELETE, COPY, MOVE, PROPPATCH.
     we pretend to implement the following (but ignore them):
     LOCK, UNLOCK.
     the following methods are supported (directly from DAVFile):
@@ -35,13 +35,20 @@ class Basic(DAVFile, ProppatchMixin):
                  indexNames=None):
         DAVFile.__init__(self, path, defaultType, indexNames)
         self._dead_properties = xattrPropertyStore(self)
+
+    def precondition_PUT(self, request):
+        """
+        A put operation from a non-authenticated source is allowed
+        exactly if the file is is not in a consistent state.
+        See also proppatch.
+        """             
+        try:
+            if not self.verify():
+                raise responsecode.FORBIDDEN
+        except:
+            raise responsecode.FORBIDDEN
         
-    def http_PUT(self, request):
-        """
-        Disallowed.
-        """
-        log.err("Denying PUT request.")
-        return responsecode.FORBIDDEN
+        return request   
 
     def http_MKCOL(self, request):
         """
@@ -123,6 +130,27 @@ class Basic(DAVFile, ProppatchMixin):
         @return the revision number. if not already set, it is initialized to 1.
         """
         return int(self.getOrSet(elements.Revision, "1"))
+
+    
+    def verify(self):
+        
+        publicKey = ezKey()
+        publicKey.importKey(self.get(elements.PublicKeyString))
+
+        contentSignature = self.get(elements.ContentSignature)
+        #DEBUG and log.err("verify(): signature: " + contentSignature)
+        dataIsCorrect = publicKey.verifyString(
+                                  self.contentAsString(),
+                                  contentSignature)
+        DEBUG and log.err("data signature for file " + self.fp.path + " is correct: " + `dataIsCorrect`)
+            
+        metaDataIsCorrect = publicKey.verifyString(
+                                  self.signableMetadata(),
+                                  self.getOrSet(elements.MetaDataSignature))
+        
+        DEBUG and log.err("meta data signature for file " + self.fp.path + " is correct: " + `metaDataIsCorrect`)
+            
+        return dataIsCorrect and metaDataIsCorrect
     
     def isDeleted(self):
         """        
@@ -160,8 +188,8 @@ class Basic(DAVFile, ProppatchMixin):
                 child for child in cc
                 if not 
                 self.createSimilarFile( 
-                                          self.fp.path + sep + child[1]
-                                          ).isDeleted()
+                                  self.fp.path + sep + child[1]
+                                  ).isDeleted()
                 ]
 
     def publicKeyString(self):
