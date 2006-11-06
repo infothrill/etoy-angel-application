@@ -18,8 +18,8 @@ xattr: setupToolsBootStrap
 
 ezPyCrypto: pyCrypto
 	cd ${installLocation} && \
-	wget http://www.freenet.org.nz/ezPyCrypto/ezPyCrypto-0.1.1.tar.gz && \
-	tar xvzf ezPyCrypto-0.1.1.tar.gz && \
+	wget -O ezPyCrypto-0.1.1_lite.tgz "http://angelapp.missioneternity.org/index.py/Documentation/Install?action=AttachFile&do=get&target=ezPyCrypto-0.1.1_lite.tgz" && \
+	tar xvzf ezPyCrypto-0.1.1_lite.tgz && \
 	cd ezPyCrypto-0.1.1 && \
 	${vPython} setup.py install
 	
