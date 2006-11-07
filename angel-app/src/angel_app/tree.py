@@ -1,42 +1,46 @@
-import os
-import stat
-
-
-infinity = -1
-
-def treeWalker(node, getChildren, toEvaluate):
+def graphWalker(node, getChildren, toEvaluate, backPack = None):
     """
     A generator that (lazily, recursively) applies an operation to a directed graph structure.
     
     @param node the graph node where we start
     @param getChildren a callable f such that f(node) returns the child nodes of node
-    @param toEvaluate a callable g such that the result rr for a node is rr = g(node)
+    @param toEvaluate a callable g such that the result rr for a node is rr = g(node, backPack)[0]
+    @param backPack a partial result that is carried along and may change as the graph is traversed. 
+            g(node, backPack)[1] is passed on to the child nodes.
     @returns an iterator over the results of applying toEvaluate to every node in the tree
     
     @see walkTest() for an example.
     """
-    
-    yield toEvaluate(node)
+    rr = toEvaluate(node, backPack)
+    yield rr[0]
     for child in getChildren(node):
-        for result in treeWalker(child, getChildren, toEvaluate):
+        for result in graphWalker(child, getChildren, toEvaluate, rr[1]):
             yield result
 
 
-        
-def walkTest(root = os.getcwd()):
+"""
+
+SAMPLE (TEST) CODE FOLLOWS:
+
+"""
+
+import os
+import stat
+       
+def walkTest(root = os.getcwd(), recursionLimit = 3):
     """
     A walk that prints all the relative path of all files in a file system rooted 
-    at the current directory with respect to that directory. 
-    
-    What does this mean?
-    For each node, we want to generate the relative path with respect to the relative
-    path of the parent node, so we want to carry along the path with respect to the
-    root node that we have traversed so far.
+    at the current directory with respect to that directory. Goes no deeper than
+    recursionLimit.
     """
     
-    def te(node):
-        root, visitedNodes, name = node[:3] 
-        return os.sep.join(visitedNodes + [name])
+    def te(node, rl):
+        root, visitedNodes, name = node[:3]
+        if rl < 0: raise StopIteration
+        return (
+                os.sep.join(visitedNodes + [name])[1:],
+                rl - 1
+                )
     
     def absPath(node):
         return os.sep.join(
@@ -55,9 +59,6 @@ def walkTest(root = os.getcwd()):
         
         root, visitedNodes, name, depth = node
         
-        if depth > 10:
-            raise StopIteration
-        
         ab = absPath(node)
         if not isdir(ab): return []
         
@@ -72,7 +73,7 @@ def walkTest(root = os.getcwd()):
                 for cc in
                 os.listdir(ab)]
 
-    return treeWalker((root, [], "", 0), gc, te)
+    return graphWalker((root, [], "", 0), gc, te, recursionLimit)
 
 if __name__ == "__main__":
     for rr in walkTest():
