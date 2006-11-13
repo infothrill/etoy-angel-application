@@ -24,17 +24,6 @@ def relativePath(absolutePath = sep, rootDir = rootDir):
     
     return absolutePath.replace(rootDir, "")
 
-
-
-def treeMap(function, filePath = FilePath(rootDir)):
-    """
-    apply a function to each node in a file tree rooted at
-    filePath.
-    """
-    for resource in filePath.walk(): yield function(resource)
-    
-    
-
     
     
 def syncClones(angelFile, clonesB):
