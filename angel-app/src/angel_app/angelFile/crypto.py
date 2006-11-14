@@ -162,7 +162,7 @@ class Crypto(
             return None 
         return Crypto(self.fp.parent().path)
     
-    def updateParent(self):
+    def updateParent(self, recursionLimit = 0):
         pp = self.parent()
         log.err(pp.fp.path)
         pp and pp.update()
@@ -186,7 +186,7 @@ class Crypto(
         
         log.err(self.fp.path + " now at revision: " + self.getOrSet(elements.Revision)) 
         if recursionLimit > 0:
-            self.parent().update(recursionLimit - 1)
+            self.updateParent(recursionLimit - 1)
     
     
         

@@ -41,4 +41,5 @@ def syncClones(angelFile, clonesB):
     for peer in clonesB.children:
         if peer not in cc:
             cc.append(peer)
+    log.err("util: " + `elements.Clones(*cc)`)
     dp.set(elements.Clones(*cc))

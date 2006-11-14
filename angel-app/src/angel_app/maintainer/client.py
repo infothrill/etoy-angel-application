@@ -25,6 +25,10 @@ def getLocalCloneURLList(af):
     return [str(clone.children[0].children[0]) for clone in clones.children]
 
 def getLocalCloneList(af):
+    """
+    @return the local list of clones of the root directory.
+    @rtype [Clone]
+    """
     hostPorts = [splitParse(url) for url in getLocalCloneURLList(af)]
     return [Clone(url, port) for url, port in hostPorts]
 
@@ -38,26 +42,23 @@ def inspectResource(path = rootDir):
     if not af.exists: return
     
     
-    validClones, checkedClones = iterateClones(
-                                               getLocalCloneList(af), 
-                                               [],
-                                               af.publicKeyString())
+    goodClones, badClones = iterateClones(getLocalCloneList(af), af.publicKeyString())
     
-    if validClones == []:
+    if goodClones == []:
         log.err("no valid clones found for " + path)
         return
     
+    log.err("inspectResource: valid clones: " + `goodClones`)
+    
     # the valid clones should all be identical, pick any one for future reference
-    rc = validClones[0]
+    rc = goodClones[0]
     
     log.err("reference clone: " + `rc`)
     
-    invalidClones = [clone for clone in checkedClones if not clone in validClones]
-    
     # update all invalid clones with the meta data of the reference clone
-    for ic in invalidClones: 
-        log.err("updating invalid clone: " + ic.host)
-        ic.performPushRequest(rc)
+    for bc in badClones: 
+        log.err("updating invalid clone: " + bc.host)
+        bc.performPushRequest(af)
         
     
     

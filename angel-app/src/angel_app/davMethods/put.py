@@ -53,8 +53,8 @@ class Putable(object):
         self.deadProperties().set(elements.Deleted.fromString("0"))
         DEBUG and log.err(self.fp.path + " is now flagged as deleted: " + `self.isDeleted()`)
         
-        # now encrypt and sign etc.
-        self.update()
+        # now encrypt and sign, update the containing collection
+        self.update(1)
         
         
     def __putDelete(self):

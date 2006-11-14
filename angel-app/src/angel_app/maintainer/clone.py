@@ -51,6 +51,9 @@ class Clone(object):
     def __repr__(self):
         return self.host + ":" + `self.port` + self.path
     
+    def __hash__(self):
+        return `self`.__hash__()
+    
     def propFindAsXml(self, properties):
         """
         @rtype string
@@ -95,6 +98,17 @@ class Clone(object):
         
         return "".join([str(ee) for ee in properties.children[0].children])
 
+    
+    def ping(self):
+        """
+        @return whether a clone is reachable
+        """
+        try:
+            # ... well, nearly
+            self.revision()
+            return True
+        except:
+            return False
     
     def revision(self):
         """
@@ -194,6 +208,8 @@ def makePushBody(localClone):
 
 def getClonesOf(clonesList):
     """
+    TODO: this should probably be replaced by a generator
+    
     @type clonesList [Clone]
     @param clonesList list of clones we want to get the clones from
     @rtype [Clone]
@@ -212,16 +228,6 @@ def getUncheckedClones(clonesList, checkedClones):
     cc = [clone for clone in clonesList if clone not in checkedClones]
     return cc, checkedClones + cc
 
-def getValidatedClones(clonesList, publicKeyString, revision):
-    """
-    @rtype [Clone]
-    @return 
-    """
-    return [clone for clone in clonesList 
-            if clone.validate() 
-            and clone.revision() >= revision
-            and clone.publicKeyString() == publicKeyString]
-
 
 def getMostCurrentClones(clonesList):
     """
@@ -232,7 +238,8 @@ def getMostCurrentClones(clonesList):
     return [clone for clone in clonesList if clone.revision() == newest]
 
 
-def iterateClones(validCloneList, checkedCloneList, publicKeyString):
+#def iterateClones(validCloneList, clonesToValidate, checkedCloneList, publicKeyString, revision = 0):
+def iterateClones(cloneSeedList, publicKeyString):
     """
     get all the clones of the (valid) clones we have already looked at
     which are not among any (including the invalid) of the clones we
@@ -241,19 +248,66 @@ def iterateClones(validCloneList, checkedCloneList, publicKeyString):
     @rtype ([Clone], [Clone])
     @return a tuple of ([the list of valid clones], [the list of checked clones])
     """  
-    unvalidatedClones, checkedCloneList = getUncheckedClones(
-                             getClonesOf(validCloneList),
-                             checkedCloneList)
+    import copy
+    toVisit = copy.copy(cloneSeedList)
+    allVisitedClones = []
+    visited = {}
+    good = []
+    bad = []
+    ugly = []
+    revision = 0
     
-    validatedClones = getValidatedClones(
-                                             unvalidatedClones, 
-                                             publicKeyString, 
-                                             validCloneList[0].revision()
-                                             ) + validCloneList
+    while len(toVisit) != 0:
+        # there are clones that we need to inspect
+        
+        # pop the next clone from the queue
+        cc = toVisit[0]
+        log.err("inspecting clone: " + `cc`)
+        toVisit = toVisit[1:]
+        
+        if visited.has_key(cc):
+            # we have already looked at this clone -- don't bother with it
+            log.err("ignoring")
+            continue
+               
+        # otherwise, mark the clone as checked and proceed
+        allVisitedClones.append(cc)
+        visited[cc] = cc
+        
+        if not cc.ping():
+            # this clone is unreachable, ignore it
+            continue
+        
+        if cc.publicKeyString() != publicKeyString or not cc.validate():
+            # an invalid clone
+            log.err("invalid")
+            bad.append(cc)
+            continue
+        
+        rr = cc.revision()
+        
+        if rr < revision:
+            # too old
+            log.err("too old: " + `cc`)
+            bad.append(cc)
+            continue
+        
+        if rr > revision:
+            # hah! the clone is newer than anything
+            # we've seen so far. all the clones we thought
+            # were good are in fact bad.
+            log.err("very new!")
+            bad.extend(good)
+            good = []
+        
+        # we only arrive here if the clone is valid and sufficiently new
+        good.append(cc)
+        log.err("adding good clone: " + `cc`)
+        toVisit += [Clone(host, port) for host, port in cc.cloneList()]
+        
+        
+
+    log.err("good clones: " + `good`)
+    log.err("bad clones: " + `bad`)
     
-    relevantClones = getMostCurrentClones(validatedClones)
-    
-    if unvalidatedClones == []:
-        return validCloneList, checkedCloneList
-    else:
-        return iterateClones(relevantClones, checkedCloneList, publicKeyString)
+    return good, bad
