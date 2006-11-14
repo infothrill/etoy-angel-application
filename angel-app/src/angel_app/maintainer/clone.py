@@ -1,11 +1,11 @@
 from twisted.web2 import responsecode
 from twisted.web2.dav.element import rfc2518
 from twisted.web2.dav import davxml
-
+from twisted.python import log
 from angel_app import elements
 from ezPyCrypto import key
 
-DEBUG = True
+DEBUG = False
 
 from httplib import HTTPConnection
 
@@ -48,12 +48,16 @@ class Clone(object):
         """
         return self.host == clone.host and self.port == clone.port
     
+    def __repr__(self):
+        return self.host + ":" + `self.port` + self.path
+    
     def propFindAsXml(self, properties):
         """
         @rtype string
         @return the raw XML body of the multistatus response corresponding to the respective PROPFIND request.
         """  
-        conn = HTTPConnection(self.host, self.port)       
+        conn = HTTPConnection(self.host, self.port)
+        DEBUG and log.err("attempting connection to: " + `self.host` + ":" + `self.port` + " " + self.path)   
         conn.request(
                  "PROPFIND", 
                  self.path, 
@@ -67,6 +71,7 @@ class Clone(object):
         
         data = resp.read()
         conn.close()
+        #DEBUG and log.err(data)
         return data
     
     def propertiesDocument(self, properties):
@@ -96,7 +101,11 @@ class Clone(object):
         @rtype int
         @return the clone's revision number.
         """
-        return int(self.propertyFindBody(elements.Revision))
+        try:
+            return int(self.propertyFindBody(elements.Revision))
+        except:
+            log.err("no revision found on clone: " + `self`)
+            return -1
     
     def publicKeyString(self):
         """
@@ -139,10 +148,11 @@ class Clone(object):
         prop = self.propertiesDocument(
                                        elements.Clones
                                        ).root_element.children[0].children[1].children[0]
-        
+                                       
+        DEBUG and log.err(`prop`)
         return [splitParse(
                            str(clone.children[0].children[0].children[0]))
-                for clone in prop.children]
+                for clone in prop.children if len(prop.children[0].children) > 0]
 
     def performPushRequest(self, localClone):
         """
@@ -187,11 +197,11 @@ def getClonesOf(clonesList):
     @type clonesList [Clone]
     @param clonesList list of clones we want to get the clones from
     @rtype [Clone]
-    @return list of clones of the clones in clonesList
+    @return list of clones of the clones in clonesList, except the clones stored on the localhost
     """
     cc = []
     for clone in clonesList:
-        cc += [Clone(host, port) for host, port in clone.cloneList()]  
+        cc += [Clone(host, port) for host, port in clone.cloneList()]
     return cc
 
 def getUncheckedClones(clonesList, checkedClones):
@@ -235,14 +245,15 @@ def iterateClones(validCloneList, checkedCloneList, publicKeyString):
                              getClonesOf(validCloneList),
                              checkedCloneList)
     
-    validCloneList = getMostCurrentClones(
-                                          getValidatedClones(
-                                                             unvalidatedClones, 
-                                                             publicKeyString, 
-                                                             validCloneList[0].revision()
-                                                             ) + validCloneList
-                                          )
+    validatedClones = getValidatedClones(
+                                             unvalidatedClones, 
+                                             publicKeyString, 
+                                             validCloneList[0].revision()
+                                             ) + validCloneList
+    
+    relevantClones = getMostCurrentClones(validatedClones)
+    
     if unvalidatedClones == []:
         return validCloneList, checkedCloneList
     else:
-        return iterateClones(validCloneList, checkedCloneList, publicKeyString)
+        return iterateClones(relevantClones, checkedCloneList, publicKeyString)

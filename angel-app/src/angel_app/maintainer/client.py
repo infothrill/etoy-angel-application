@@ -42,5 +42,25 @@ def inspectResource(path = rootDir):
                                                getLocalCloneList(af), 
                                                [],
                                                af.publicKeyString())
+    
+    if validClones == []:
+        log.err("no valid clones found for " + path)
+        return
+    
+    # the valid clones should all be identical, pick any one for future reference
+    rc = validClones[0]
+    
+    log.err("reference clone: " + `rc`)
+    
+    invalidClones = [clone for clone in checkedClones if not clone in validClones]
+    
+    # update all invalid clones with the meta data of the reference clone
+    for ic in invalidClones: 
+        log.err("updating invalid clone: " + ic.host)
+        ic.performPushRequest(rc)
+        
+    
+    
+    
     DEBUG and log.err("DONE\n\n")
     

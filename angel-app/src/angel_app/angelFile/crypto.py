@@ -151,9 +151,23 @@ class Crypto(
         #log.err(signature)
         #log.err(storedsignature)
         return signature
-
     
-    def update(self):
+    def parent(self):
+        """
+        TODO: this needs a check to not go beyond the root.
+        """
+        log.err(self.fp.path.split("/"))
+        if self.fp.path.split("/") == ("repository"): 
+            # root directory has no parent
+            return None 
+        return Crypto(self.fp.parent().path)
+    
+    def updateParent(self):
+        pp = self.parent()
+        log.err(pp.fp.path)
+        pp and pp.update()
+    
+    def update(self, recursionLimit = 0):
         
         DEBUG and log.err("called update on: " + self.fp.path)
         
@@ -171,6 +185,8 @@ class Crypto(
         self.fp.restat()
         
         log.err(self.fp.path + " now at revision: " + self.getOrSet(elements.Revision)) 
+        if recursionLimit > 0:
+            self.parent().update(recursionLimit - 1)
     
     
         
