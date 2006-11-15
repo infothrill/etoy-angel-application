@@ -1,5 +1,6 @@
 from twisted.python.filepath import FilePath
 from twisted.python import log
+from twisted.web2.dav import davxml
 
 from config.common import rootDir
 
@@ -24,6 +25,16 @@ def relativePath(absolutePath = sep, rootDir = rootDir):
     
     return absolutePath.replace(rootDir, "")
 
+
+def validateMulistatusResponseBody(rawData = ""):
+    """
+    Assert that every response code in the MULTISTATUS response is 200 OK.
+    """
+    rr = davxml.WebDAVDocument.fromString(rawData).root_element
+    for child in rr.children:
+        ps = child.childOfType(davxml.PropertyStatus)
+        ss = ps.childOfType(davxml.Status)
+        assert str(ss) == "HTTP/1.1 200 OK"#, "MULTISTATUS response is not 200 OK."
     
     
 def syncClones(angelFile, clonesB):

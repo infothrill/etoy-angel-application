@@ -3,6 +3,7 @@ from twisted.web2.dav.element import rfc2518
 from twisted.web2.dav import davxml
 from twisted.python import log
 from angel_app import elements
+from angel_app.maintainer import util
 from ezPyCrypto import key
 
 DEBUG = False
@@ -73,6 +74,7 @@ class Clone(object):
             raise "must receive a MULTI_STATUS response for PROPFIND, otherwise something's wrong"
         
         data = resp.read()
+        util.validateMulistatusResponseBody(data)
         conn.close()
         #DEBUG and log.err(data)
         return data
@@ -145,14 +147,19 @@ class Clone(object):
                                 ])
         
         pubKey = key()
-        pubKey.importKey(
+        try:
+            pubKey.importKey(
                          self.propertyFindBody(
                                            elements.PublicKeyString))
-        
-        return pubKey.verifyString(
+            return pubKey.verifyString(
                                    toBeVerified, 
                                    self.propertyFindBody(
                                                      elements.MetaDataSignature))
+        except:
+            log.err(`self` + ": validation failed.")
+            return False
+        
+        
         
     def cloneList(self):
         """
