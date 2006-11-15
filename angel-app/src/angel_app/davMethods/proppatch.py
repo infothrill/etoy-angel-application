@@ -40,14 +40,23 @@ class ProppatchMixin:
             log.err("File not found: %s" % (self.fp.path,))
             raise HTTPError(responsecode.NOT_FOUND)
         
-        log.err("proppatch preconditions")
         yield request
     
     def preconditions_PROPPATCH(self, request):
         return deferredGenerator(self.__proppatchPreconditions)(request)
 
     def authenticate(self, requestProperties):
-        pass
+        """
+        A PROPPATCH request is accepted exactly if the signable meta data and 
+        the corresponding signature match.
+        """
+        sm = "".join([requestProperties.childOfType(key) for key in elements.signedKeys])
+        sig = requestProperties.childOfType(elements.MetaDataSignature)
+        pubKey = key()
+        pubKey.importKey(requestProperties.childOfType(elements.PublicKeyString))
+        pubKey.verifyString(sm, sig)
+        
+            
 
     def apply(self, requestProperties, uri):
 

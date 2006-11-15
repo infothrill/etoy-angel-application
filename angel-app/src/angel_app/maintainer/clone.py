@@ -128,7 +128,10 @@ class Clone(object):
         @rtype string
         @return the public key string of the clone.
         """
-        return self.propertyFindBody(elements.PublicKeyString)
+        try:
+            return self.propertyFindBody(elements.PublicKeyString)
+        except:
+            return ""
     
     def validate(self):
         """
@@ -187,13 +190,13 @@ class Clone(object):
                  )
        
         resp = conn.getresponse()
-        if resp.status != responsecode.MULTI_STATUS:
-            raise "must receive a MULTI_STATUS response for PROPPATCH (received " + \
-                `resp.status` + "), otherwise something's wrong"
         
         # we probably ignore the returned data, but who knows
         data = resp.read()
         print data
+        if resp.status != responsecode.MULTI_STATUS:
+            raise "must receive a MULTI_STATUS response for PROPPATCH (received " + \
+                `resp.status` + "), otherwise something's wrong"
         conn.close()
            
 def makePushBody(localClone):
