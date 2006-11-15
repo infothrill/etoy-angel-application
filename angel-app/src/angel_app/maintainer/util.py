@@ -34,7 +34,7 @@ def validateMulistatusResponseBody(rawData = ""):
     for child in rr.children:
         ps = child.childOfType(davxml.PropertyStatus)
         ss = ps.childOfType(davxml.Status)
-        assert str(ss) == "HTTP/1.1 200 OK"#, "MULTISTATUS response is not 200 OK."
+        assert str(ss) == "HTTP/1.1 200 OK", "MULTISTATUS response is not 200 OK: " + rawData 
     
     
 def syncClones(angelFile, clonesB):

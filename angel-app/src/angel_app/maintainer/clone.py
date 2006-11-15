@@ -169,14 +169,18 @@ class Clone(object):
         @rtype [(string, int)]
         @return a list of (string hostname, int port) tuples of clones registered with this clone.
         """
-        prop = self.propertiesDocument(
+
+        try:
+            prop = self.propertiesDocument(
                                        elements.Clones
                                        ).root_element.children[0].children[1].children[0]
                                        
-        DEBUG and log.err(`prop`)
-        return [splitParse(
+            DEBUG and log.err(`prop`)
+            return [splitParse(
                            str(clone.children[0].children[0].children[0]))
                 for clone in prop.children if len(prop.children[0].children) > 0]
+        except:
+            return []
 
     def performPushRequest(self, localClone):
         """
@@ -210,7 +214,7 @@ def makePushBody(localClone):
                          rfc2518.PropertyContainer(
                                       localClone.deadProperties().get(el.qname())))
              for el
-             in elements.signedKeys + [elements.MetaDataSignature]
+             in elements.signedKeys #+ [elements.MetaDataSignature]
              ]
     
     pu = davxml.PropertyUpdate(*pList)

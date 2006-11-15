@@ -51,10 +51,14 @@ class ProppatchMixin:
         the corresponding signature match.
         """
         sm = "".join([requestProperties.childOfType(key) for key in elements.signedKeys])
+        log.err(sm)
         sig = requestProperties.childOfType(elements.MetaDataSignature)
+        log.err(sig)
         pubKey = key()
         pubKey.importKey(requestProperties.childOfType(elements.PublicKeyString))
-        pubKey.verifyString(sm, sig)
+        isValid = pubKey.verifyString(sm, sig)
+        log.err(isValid)
+        return isValid
         
             
 
