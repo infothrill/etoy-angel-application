@@ -207,7 +207,7 @@ def makePushBody(localClone):
                          rfc2518.PropertyContainer(
                                       localClone.deadProperties().get(el.qname())))
              for el
-             in elements.signedKeys
+             in elements.signedKeys + [elements.MetaDataSignature]
              ]
     
     pu = davxml.PropertyUpdate(*pList)
