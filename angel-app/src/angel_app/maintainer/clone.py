@@ -319,12 +319,12 @@ def iterateClones(cloneSeedList, publicKeyString):
         
         # we only arrive here if the clone is valid and sufficiently new
         good.append(cc)
-        log.err("adding good clone: " + `cc`)
+        DEBUG and log.err("iterateClones: adding good clone: " + `cc`)
         toVisit += [Clone(host, port) for host, port in cc.cloneList()]
         
         
 
-    log.err("good clones: " + `good`)
-    log.err("bad clones: " + `bad`)
+    DEBUG and log.err("iterateClones: good clones: " + `good`)
+    DEBUG and log.err("iterateClones: bad clones: " + `bad`)
     
     return good, bad
