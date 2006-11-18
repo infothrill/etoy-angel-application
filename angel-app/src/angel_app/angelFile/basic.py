@@ -13,22 +13,7 @@ DEBUG = False
 
 class Basic(Safe, ProppatchMixin):
     """
-    This is a basic AngelFile that provides (at least as stubs) the necessary
-    WebDAV methods, as well as support for the encryption and metadata semantics
-    required by the angel-app. This class serves as the main class for the 
-    angel/distributer.
-
-    the following (destructive) DAV-methods are explicitly forbidden a priori: 
-    MKCOL, DELETE, COPY, MOVE, PROPPATCH.
-    we implement the following:
-    LOCK, UNLOCK.
-    the following methods are supported (directly from DAVFile):
-    PROPFIND, GET
-    </p>
-    <p>
-    See subclasses and angel_app.angelMixins for the implementation of
-    specific WebDAV methods.
-    </p>
+    An extension to Safe, that implements common metadata operations.
     """
     
     def __init__(self, path,
@@ -37,27 +22,15 @@ class Basic(Safe, ProppatchMixin):
         Safe.__init__(self, path, defaultType, indexNames)
         self._dead_properties = xattrPropertyStore(self)
 
-    def precondition_PUT(self, request):
-        """
-        A put operation from a non-authenticated source is allowed
-        exactly if the file is is not in a consistent state.
-        See also proppatch.
-        """             
-        try:
-            if not self.verify():
-                raise responsecode.FORBIDDEN
-        except:
-            raise responsecode.FORBIDDEN
-        
-        return request 
-
     def contentAsString(self):
         if self.fp.isdir(): 
             return "directory"
         return self.fp.open().read()
  
     def get(self, davXMLTextElement):
-        
+        """
+        @return the metadata element corresponding to davXMLTextElement
+        """
         if not self.fp.exists():
             DEBUG and log.err("AngelFile.getOrSet: file not found for path: " + self.fp.path)
             raise HTTPError(responsecode.NOT_FOUND)
@@ -72,7 +45,9 @@ class Basic(Safe, ProppatchMixin):
                                                  ])
         
     def getOrSet(self, davXmlTextElement, defaultValueString = ""):
-        
+        """
+        the metadata element corresponding to davXMLTextElement, setting it to defaultValueString if not already present
+        """
         try:
             return self.get(davXmlTextElement)
         
