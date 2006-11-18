@@ -6,7 +6,7 @@ from angel_app import elements
 from angel_app.maintainer import util
 from ezPyCrypto import key
 
-DEBUG = False
+DEBUG = True
 
 from httplib import HTTPConnection
 
@@ -158,8 +158,8 @@ class Clone(object):
                                    toBeVerified, 
                                    self.propertyFindBody(
                                                      elements.MetaDataSignature))
-        except:
-            log.err(`self` + ": validation failed.")
+        except Exception, e:
+            log.err(`self` + ": validation failed. Exception: " + `e`)
             return False
         
         
@@ -214,8 +214,10 @@ def makePushBody(localClone):
                          rfc2518.PropertyContainer(
                                       localClone.deadProperties().get(el.qname())))
              for el
-             in elements.signedKeys #+ [elements.MetaDataSignature]
+             in elements.signedKeys + [elements.MetaDataSignature]
              ]
+    
+    DEBUG and log.err(`pList`)
     
     pu = davxml.PropertyUpdate(*pList)
     return pu.toxml()
@@ -281,7 +283,7 @@ def iterateClones(cloneSeedList, publicKeyString):
         
         if visited.has_key(cc):
             # we have already looked at this clone -- don't bother with it
-            log.err("ignoring")
+            DEBUG and log.err("iterateClones: " + `cc` + " ignoring")
             continue
                
         # otherwise, mark the clone as checked and proceed
@@ -294,7 +296,7 @@ def iterateClones(cloneSeedList, publicKeyString):
         
         if cc.publicKeyString() != publicKeyString or not cc.validate():
             # an invalid clone
-            log.err("invalid")
+            DEBUG and log.err("iterateClones: " + `cc` + "invalid")
             bad.append(cc)
             continue
         
@@ -302,7 +304,7 @@ def iterateClones(cloneSeedList, publicKeyString):
         
         if rr < revision:
             # too old
-            log.err("too old: " + `cc`)
+            DEBUG and log.err("iterateClones: " + `cc` + "too old: " + `rr` + " < " + `revision`)
             bad.append(cc)
             continue
         
@@ -310,9 +312,10 @@ def iterateClones(cloneSeedList, publicKeyString):
             # hah! the clone is newer than anything
             # we've seen so far. all the clones we thought
             # were good are in fact bad.
-            log.err("very new!")
+            DEBUG and log.err("iterateClones: " + `cc` + "very new: " + `rr` + " > " + `revision`)
             bad.extend(good)
             good = []
+            revision = rr
         
         # we only arrive here if the clone is valid and sufficiently new
         good.append(cc)

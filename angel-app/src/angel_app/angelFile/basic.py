@@ -1,4 +1,3 @@
-from twisted.web2.dav.static import DAVFile
 from twisted.python import log
 from twisted.web2 import responsecode, dirlist
 from twisted.web2.http import HTTPError
@@ -8,7 +7,7 @@ from angel_app import elements
 from angel_app.angelFile.safe import Safe
 from angel_app.davMethods.proppatch import ProppatchMixin
 
-DEBUG = False
+DEBUG = True
 
 class Basic(Safe, ProppatchMixin):
     """
