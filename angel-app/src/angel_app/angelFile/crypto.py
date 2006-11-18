@@ -93,7 +93,6 @@ class Crypto(
         DEBUG and log.err("revision number for " + self.fp.path +" now at: " + `nn`)
         self.deadProperties().set(elements.Revision.fromString(`nn`))
         return int(nn)
-        
 
     def isWritableFile(self):
         """
@@ -173,8 +172,9 @@ class Crypto(
         
         if not self.isWritableFile(): 
             raise "not authorized to perform update of signed meta data"
-        
-        self.encrypt()
+
+        if self.isEncryped():
+            self.encrypt()
         self.sign()
         self.bumpRevisionNumber()
         self.seal()

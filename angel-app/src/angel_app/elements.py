@@ -58,6 +58,12 @@ class Deleted (WebDAVTextElement):
     """
     name = "deleted"     
 
+class Enrypted (WebDAVTextElement):
+    """
+    Whether the file contents are encrypted.
+    """
+    name = "encrypted"   
+
 # the above keys must be signed in order for the 
 # AngelFile to be valid
 

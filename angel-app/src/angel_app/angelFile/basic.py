@@ -131,6 +131,15 @@ class Basic(DAVFile, ProppatchMixin):
         """
         return int(self.getOrSet(elements.Revision, "1"))
 
+    def isEncrypted(self):
+        """
+        @rtype boolean
+        @return whether the file is encrypted. 
+        """
+        if int(self.getOrSet(elements.Encrypted, "0")) == 0: 
+            return False
+        else:
+            return True
     
     def verify(self):
         
