@@ -6,7 +6,6 @@ from twisted.web2 import http, stream
 from twisted.web2.dav.xattrprops import xattrPropertyStore
 from angel_app import elements
 from angel_app.angelFile.safe import Safe
-from angel_app.davMethods.lock import Lockable
 from angel_app.davMethods.proppatch import ProppatchMixin
 
 DEBUG = False
