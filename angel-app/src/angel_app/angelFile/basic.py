@@ -5,12 +5,13 @@ from twisted.web2.http import HTTPError
 from twisted.web2 import http, stream
 from twisted.web2.dav.xattrprops import xattrPropertyStore
 from angel_app import elements
+from angel_app.angelFile.safe import Safe
 from angel_app.davMethods.lock import Lockable
 from angel_app.davMethods.proppatch import ProppatchMixin
 
 DEBUG = False
 
-class Basic(DAVFile, ProppatchMixin):
+class Basic(Safe, ProppatchMixin):
     """
     This is a basic AngelFile that provides (at least as stubs) the necessary
     WebDAV methods, as well as support for the encryption and metadata semantics
@@ -19,7 +20,7 @@ class Basic(DAVFile, ProppatchMixin):
 
     the following (destructive) DAV-methods are explicitly forbidden a priori: 
     MKCOL, DELETE, COPY, MOVE, PROPPATCH.
-    we pretend to implement the following (but ignore them):
+    we implement the following:
     LOCK, UNLOCK.
     the following methods are supported (directly from DAVFile):
     PROPFIND, GET
@@ -33,7 +34,7 @@ class Basic(DAVFile, ProppatchMixin):
     def __init__(self, path,
                  defaultType="text/plain",
                  indexNames=None):
-        DAVFile.__init__(self, path, defaultType, indexNames)
+        Safe.__init__(self, path, defaultType, indexNames)
         self._dead_properties = xattrPropertyStore(self)
 
     def precondition_PUT(self, request):
@@ -48,50 +49,7 @@ class Basic(DAVFile, ProppatchMixin):
         except:
             raise responsecode.FORBIDDEN
         
-        return request   
-
-    def http_MKCOL(self, request):
-        """
-        Disallowed.
-        """
-        log.err("Denying MKCOL request.")
-        return responsecode.FORBIDDEN
-    
-    def http_DELETE(self, request):
-        """
-        Disallowed.
-        """
-        log.err("Denying DELETE request.")
-        return responsecode.FORBIDDEN
-
-    def http_COPY(self, request):
-        """
-        Disallowed.
-        """
-        log.err("Denying COPY request.")
-        return responsecode.FORBIDDEN
-
-    def http_MOVE(self, request):
-        """
-        Disallowed.
-        """
-        log.err("Denying MOVE request.")
-        return responsecode.FORBIDDEN  
-    
-    #def http_PROPPATCH(self, request):
-    #    """
-    #    Disallowed.
-    #    """
-    #    log.err("Denying PROPPATCH request.")
-    #    return responsecode.FORBIDDEN  
-
-    def davComplianceClasses(self):
-        """
-        We fake level 2 compliance, to be able to run with OS X 10.4 's 
-        builtin dav client. Adding locking via xattr should be relatively
-        straightforward, though.
-        """
-        return ("1", "2") # Add "2" when we have locking
+        return request 
 
     def contentAsString(self):
         if self.fp.isdir(): 
@@ -140,6 +98,21 @@ class Basic(DAVFile, ProppatchMixin):
             return False
         else:
             return True
+    
+    def isWriteable(self):
+        """
+        A basic AngelFile is writeable (by a non-local host) exactly if:
+          -- the resource is corrupted, i.e. it does not verify()
+          -- the resource does not exist but is referenced by its parent()
+          
+        @rtype boolean
+        @return whether the basic AngelFile is writeable
+        """
+        if not self.verify(): return True
+        
+        pp = self.parent()
+        if not self.exists() and pp.verify() and [self in pp.metaDataChildren()]: return True
+        return False
     
     def verify(self):
         
@@ -200,6 +173,37 @@ class Basic(DAVFile, ProppatchMixin):
                                   self.fp.path + sep + child[1]
                                   ).isDeleted()
                 ]
+
+    def parent(self):
+        """
+        @return this resource's parent
+        """
+        return self.createSimilarFile( 
+                                  self.fp.parent().path
+                                  )
+
+    def metaDataChildren(self):
+        """
+        The children of this resource as specified in the resource metadata.
+        This may (under special circumstances) be different from the list
+        of children as specified in the findChildren routine, since the latter
+        lists all children as found on the file system, while the latter lists
+        all children registered with the angel app. In the case of an incomplete
+        push update, the latter list contains children that are not present in
+        the former.
+        
+        TODO: this needs some more work... href parsing, validation etc.
+        
+        @see isWritable
+        @rtype [Basic] 
+        @return The children of this resource as specified in the resource metadata.
+        """
+        children = self.getOrSet(elements.Children, elements.Children()).children
+        return [
+                self.createSimilarFile(self.fp.path + sep + `cc.childOfType(davxml.HRef)`) 
+                for child in children
+                ]
+
 
     def publicKeyString(self):
         

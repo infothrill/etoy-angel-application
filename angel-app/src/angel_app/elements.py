@@ -58,7 +58,7 @@ class Deleted (WebDAVTextElement):
     """
     name = "deleted"     
 
-class Enrypted (WebDAVTextElement):
+class Encrypted (WebDAVTextElement):
     """
     Whether the file contents are encrypted.
     """
@@ -95,6 +95,26 @@ class CloneSig (WebDAVTextElement):
                             signedKeys + [MetaDataSignature]
                             ])
 
+class Child (WebDAVElement):
+    """
+    Specifies a child of an angel-file (as a local, relative, url)
+    """
+    name = "child"
+
+    allowed_children = {
+        (dav_namespace, "href"): (1, 1),
+        }
+
+class Children (WebDAVElement):
+    """
+    List of zero or more clones of a specific angel-file.
+    """
+    name = "children"
+    
+    allowed_children = {
+        (dav_namespace, "child"): (0, None),
+        }
+
 class Clone (WebDAVElement):
     """
     Specifies a clone of an angel-file (as a url)
@@ -113,16 +133,6 @@ class Clones (WebDAVElement):
     
     allowed_children = {
         (dav_namespace, "clone"): (0, None),
-        }
-    
-class Children (WebDAVTextElement):
-    """
-    The children (and all their clones) of an angel-file which is a collection.
-    """
-    name = "children"
-    
-    allowed_children = {
-        (dav_namespace, "clones"): (0, None),
         }
 
 

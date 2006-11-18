@@ -1,1 +1,1 @@
-all = ["basic", "crypto"]
+all = ["basic", "crypto", "safe"]

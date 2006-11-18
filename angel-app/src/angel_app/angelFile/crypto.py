@@ -173,7 +173,7 @@ class Crypto(
         if not self.isWritableFile(): 
             raise "not authorized to perform update of signed meta data"
 
-        if self.isEncryped():
+        if self.isEncrypted():
             self.encrypt()
         self.sign()
         self.bumpRevisionNumber()
@@ -192,14 +192,12 @@ class Crypto(
         
     def getResponseStream(self):
         """
-        vincent: slurp and decrypt the file, then make a memory 
-        stream out of it
-        response.stream = stream.FileStream(f, 0, self.fp.getsize())
-        TODO: very inefficient and unsafe
-        the proper way to proceed would be the following:
-        check if the file is encrypted (should be an xattr flag),
-        if it is, decrypt, otherwise return the file right away.
+        @see Basic.getResponseStream
         """
         DEBUG and log.err("rendering file in plaintext: " + self.fp.path)
-        fileContents = self.secretKey.decString(self.fp.open().read())
-        return stream.MemoryStream(fileContents, 0, len(fileContents))
+        if self.isEncrypted():
+            
+            fileContents = self.secretKey.decString(self.fp.open().read())
+            return stream.MemoryStream(fileContents, 0, len(fileContents))
+        else:
+            return Basic.getResponseStream(self)
