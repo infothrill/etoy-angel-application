@@ -19,6 +19,18 @@ class Basic(Safe, ProppatchMixin):
                  indexNames=None):
         Safe.__init__(self, path, defaultType, indexNames)
         self._dead_properties = xattrPropertyStore(self)
+        self.__initProperties()
+
+
+    def __initProperties(self):
+        """
+        Set all required properties to a syntactically meaningful defaul value.
+        """
+        dp = self._dead_properties
+        for element in elements.requiredKeys:
+            qq = element.qname()
+            if not dp.contains(qq):
+                dp.set(element())
 
     def contentAsString(self):
         if self.fp.isdir(): 
