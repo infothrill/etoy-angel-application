@@ -139,7 +139,9 @@ class Clones (WebDAVElement):
 # the above keys are _required_ for the angel-app to be (even conceptually)
 # operational. It is convenient to provide additional information for performance
 # and scalability.
-requiredKeys = signedKeys + [MetaDataSignature, Clones, Children]
+requiredKeys = signedKeys + [MetaDataSignature, Children]
+interestingKeys = requiredKeys + [Clones]
+
 
 class ForceLocalCache (WebDAVTextElement):
     """

@@ -205,16 +205,16 @@ class Clone(object):
            
 def makePushBody(localClone):
     """
-    Generate the DAVDocument representation of the signed properties of the local clone.
+    Generate the DAVDocument representation of the required properties of the local clone.
     """
     
-    rfc2518.PropertyName
+    for el in elements.requiredKeys:
+        log.err("makePushBody: " + `el.qname()`)
     pList = [
              rfc2518.Set(
                          rfc2518.PropertyContainer(
                                       localClone.deadProperties().get(el.qname())))
-             for el
-             in elements.signedKeys + [elements.MetaDataSignature]
+             for el in elements.requiredKeys
              ]
     
     DEBUG and log.err(`pList`)
