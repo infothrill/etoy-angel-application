@@ -36,6 +36,15 @@ class Basic(Safe, ProppatchMixin):
         if self.fp.isdir(): 
             return "directory"
         return self.fp.open().read()
+    
+    def contentLength(self):
+        if not self.isEncrypted():
+            return super(self, Safe).getContentLength()
+        else:
+            # getting the content length for an encrypted
+            # file requires decryption of the whole file.
+            # let's just pretend we don't know
+            return None
  
     def get(self, davXMLTextElement):
         """
