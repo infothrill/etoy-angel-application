@@ -60,12 +60,12 @@ class ProppatchMixin:
                     ])
         #sm = "".join([requestProperties.childOfType(key) for key in elements.requiredKeys])
         #sm = "".join(requestProperties[1])
-        log.err(sm)
+        log.err(signable)
         #sig = requestProperties.childOfType(elements.MetaDataSignature)
         log.err(sig)
         pubKey = key()
         pubKey.importKey(keyString)
-        isValid = pubKey.verifyString(sm, sig)
+        isValid = pubKey.verifyString(signable, sig)
         log.err(isValid)
         return isValid
         
