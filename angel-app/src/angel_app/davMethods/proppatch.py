@@ -112,7 +112,7 @@ class ProppatchMixin:
             else:
                 responses.add(responsecode.OK, property)
             
-        return responses
+        return MultiStatusResponse([responses.response()])
 
 
     def __proppatch(self, request):
@@ -133,6 +133,7 @@ class ProppatchMixin:
         
         # apply the changes
         yield self.apply(requestProperties.values(), request.uri)
+
 
         
     def http_PROPPATCH(self, request):
