@@ -1,6 +1,5 @@
-# -*- test-case-name: twisted.web2.dav.test.test_copy,twisted.web2.dav.test.test_move -*-
 ##
-# Copyright (c) 2005 etoy.CORPORATION, Inc. All rights reserved.
+# Copyright (c) 2005-2006 etoy.VENTURE ASSOCIATION, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -53,12 +52,19 @@ class ProppatchMixin:
         A PROPPATCH request is accepted exactly if the signable meta data and 
         the corresponding signature match.
         """
-        sm = "".join([requestProperties.childOfType(key) for key in elements.requiredKeys])
+        sig = requestProperties[elements.MetaDataSignature.name]
+        keyString = requestProperties[elements.PublicKeyString.name]
+        signable = "".join([
+                    requestProperties[key]
+                    for key in elements.requiredKeys
+                    ])
+        #sm = "".join([requestProperties.childOfType(key) for key in elements.requiredKeys])
+        #sm = "".join(requestProperties[1])
         log.err(sm)
-        sig = requestProperties.childOfType(elements.MetaDataSignature)
+        #sig = requestProperties.childOfType(elements.MetaDataSignature)
         log.err(sig)
         pubKey = key()
-        pubKey.importKey(requestProperties.childOfType(elements.PublicKeyString))
+        pubKey.importKey(keyString)
         isValid = pubKey.verifyString(sm, sig)
         log.err(isValid)
         return isValid
@@ -137,10 +143,20 @@ def readRequestBody(request):
     yield doc
 
 def getRequestProperties(doc):
-    return [
-     ee.children[0]
-     for ee in doc.root_element.children
-    ]
+    """
+    We assume that doc has alredy been validated via validateBodyXML.
+    """
+    
+    # get the contents of all the prop elements
+    childList = [
+                 child.children[0].children[0]
+                 for child in doc.root_element.children
+                 ]
+            
+    return dict([
+                 (child.name, child)
+                 for child in childList
+                 ])
 
 def validateBodyXML(doc):
     """
