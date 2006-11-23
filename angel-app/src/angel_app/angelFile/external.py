@@ -9,7 +9,7 @@ from angel_app.angelFile.basic import Basic
 
 DEBUG = False
 
-class External(Basic):
+class External(ProppatchMixin, Basic):
     """
     An AngelFile, as seen on the external (unsafe) network interface.
     """

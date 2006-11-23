@@ -10,7 +10,7 @@ from angel_app.davMethods.proppatch import ProppatchMixin
 
 DEBUG = True
 
-class Basic(Safe, ProppatchMixin):
+class Basic(Safe):
     """
     An extension to Safe, that implements common metadata operations.
     """
