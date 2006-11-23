@@ -158,7 +158,7 @@ def validateBodyXML(doc):
             error = "We don't currently allow property removal via proppatch. Only SET tags are allowed."
             raise HTTPError(StatusResponse(responsecode.BAD_REQUEST, error))
         
-        if not len(child.children == 1):
+        if not len(child.children) == 1:
             error = "All SET tags must contain exactly one PropertyContainer tag."
             raise HTTPError(StatusResponse(responsecode.BAD_REQUEST, error))
         
