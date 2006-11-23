@@ -64,7 +64,7 @@ class ProppatchMixin:
         log.err(signable)
         #sig = requestProperties.childOfType(elements.MetaDataSignature)
         log.err(sig)
-        pubKey = key()
+        pubKey = ezPyCrypto.key()
         pubKey.importKey(keyString)
         isValid = pubKey.verifyString(signable, sig)
         log.err(isValid)
