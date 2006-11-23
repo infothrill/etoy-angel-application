@@ -162,6 +162,6 @@ def validateBodyXML(doc):
             error = "All SET tags must contain exactly one PropertyContainer tag."
             raise HTTPError(StatusResponse(responsecode.BAD_REQUEST, error))
         
-        if not isinstance(child.children[0], davxml.ProperyContainer):
+        if not isinstance(child.children[0], davxml.PropertyContainer):
             error = "All SET tags must contain exactly one PropertyContainer tag."
             raise HTTPError(StatusResponse(responsecode.BAD_REQUEST, error))
