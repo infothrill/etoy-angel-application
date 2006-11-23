@@ -55,7 +55,7 @@ class ProppatchMixin:
         sig = requestProperties[elements.MetaDataSignature.name]
         keyString = requestProperties[elements.PublicKeyString.name]
         signable = "".join([
-                    `requestProperties[key]`
+                    `requestProperties[key.name]`
                     for key in elements.requiredKeys
                     ])
         #sm = "".join([requestProperties.childOfType(key) for key in elements.requiredKeys])
