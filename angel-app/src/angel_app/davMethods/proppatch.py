@@ -95,7 +95,7 @@ class ProppatchMixin:
         # read the body
         doc = waitForDeferred(deferredGenerator(readRequestBody)(request))
         yield doc
-        doc = doc.geResult()
+        doc = doc.getResult()
         
         # perform basic validation
         validateBodyXML(doc)
