@@ -53,8 +53,8 @@ class ProppatchMixin:
         A PROPPATCH request is accepted exactly if the signable meta data and 
         the corresponding signature match.
         """
-        sig = requestProperties[elements.MetaDataSignature.name]
-        keyString = requestProperties[elements.PublicKeyString.name]
+        sig = "".join(requestProperties[elements.MetaDataSignature.name].children)
+        keyString = "".join(requestProperties[elements.PublicKeyString.name].children)
         signable = "".join([
                     `requestProperties[key.name]`
                     for key in elements.requiredKeys
