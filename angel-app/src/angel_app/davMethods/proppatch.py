@@ -29,6 +29,8 @@ WebDAV PROPPATCH method.
 __all__ = ["http_PROPPATCH"]
 
 from twisted.python import log
+from twisted.web2 import responsecode
+from twisted.web2.http import HTTPError, StatusResponse
 from twisted.web2.dav.util import davXMLFromStream
 from twisted.web2.dav import davxml
 from twisted.web2.dav.http import MultiStatusResponse, PropertyStatusResponseQueue
