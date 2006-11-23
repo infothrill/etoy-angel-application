@@ -129,7 +129,10 @@ class ProppatchMixin:
         requestProperties = getRequestProperties(doc)
         
         # authenticate
-        self.authenticate(requestProperties)
+        isValid = self.authenticate(requestProperties)
+        if not isValid:
+            raise HTTPError(StatusResponse(
+                       responsecode.FORBIDDEN, "The PROPPATCH certificate is not valid."))
         
         # apply the changes
         yield self.apply(requestProperties.values(), request.uri)
