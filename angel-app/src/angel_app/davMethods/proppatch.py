@@ -30,6 +30,7 @@ WebDAV PROPPATCH method.
 __all__ = ["http_PROPPATCH"]
 
 from twisted.python import log
+from twisted.web2.dav.util import davXMLFromStream
 from twisted.internet.defer import deferredGenerator, waitForDeferred
 
 class ProppatchMixin:
