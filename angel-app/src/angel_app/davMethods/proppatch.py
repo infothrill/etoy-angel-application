@@ -33,7 +33,7 @@ from twisted.web2.dav.util import davXMLFromStream
 from twisted.web2.dav import davxml
 from twisted.internet.defer import deferredGenerator, waitForDeferred
 from angel_app import elements
-from ezPyCrypto import key
+import ezPyCrypto
 
 class ProppatchMixin:
     
