@@ -145,9 +145,9 @@ class Clones (WebDAVElement):
 
 # the keys that are used in the self.seal() operation of Crypto files
 # TODO: clean up
-requiredKeys = signedKeys
+requiredKeys = signedKeys + [MetaDataSignature]
 # the keys that are used in the maintainer loop
-interestingKeys = requiredKeys + [MetaDataSignature, Clones]
+interestingKeys = requiredKeys + [Clones]
 
 
 class ForceLocalCache (WebDAVTextElement):
