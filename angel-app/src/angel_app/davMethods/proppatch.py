@@ -61,16 +61,19 @@ class ProppatchMixin:
         def __get(element):
             return requestProperties[element.name].children
         
-        def __string(pcdataList):
-            return "".join([str(pcdata) for pcdata in pcdataList])
+        def __string(strings):
+            return "".join([str(ss) for ss in strings])
         
         def __both(element):
             return __string(__get(element))
         
+        def __xml(element):
+            __get(element).toxml()
+        
         sig = __both(elements.MetaDataSignature)
         keyString = __both(elements.PublicKeyString)
         signable = __string([
-                     __both(element)
+                     __xml(element)
                     for element in elements.requiredKeys
                     ])
         #sm = "".join([requestProperties.childOfType(key) for key in elements.requiredKeys])
