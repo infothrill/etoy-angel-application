@@ -59,13 +59,13 @@ class ProppatchMixin:
         """
         
         def __get(element):
-            return requestProperties[element.name].children
+            return requestProperties[element.name]
         
         def __string(strings):
             return "".join([str(ss) for ss in strings])
         
         def __both(element):
-            return __string(__get(element))
+            return __string(__get(element).children)
         
         def __xml(element):
             __get(element).toxml()
