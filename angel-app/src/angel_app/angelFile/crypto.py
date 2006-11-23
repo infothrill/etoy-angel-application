@@ -1,5 +1,6 @@
 from twisted.python import log
 from twisted.web2 import stream
+from twisted.web2.dav.element import rfc2518
 from angel_app import elements
 from angel_app.davMethods import copy, delete, lock, mkcol, move, put
 from angel_app.angelFile.basic import Basic
@@ -177,6 +178,7 @@ class Crypto(
             self.encrypt()
         self.sign()
         self.bumpRevisionNumber()
+        self.updateChildList()
         self.seal()
 
         DEBUG and self.verify()
@@ -187,7 +189,20 @@ class Crypto(
         log.err(self.fp.path + " now at revision: " + self.getOrSet(elements.Revision)) 
         if recursionLimit > 0:
             self.updateParent(recursionLimit - 1)
-    
+ 
+ 
+    def updateChildList(self):
+        
+            childList = self.findChildren("1")
+            log.err("Crypto: children: " + `childList`)
+            
+            childElements = [elements.Child(rfc2518.HRef(child[1]))
+                              for child in childList
+                              ]
+            log.err("Crypto: children as XML: " + `childElements`)
+            self.deadProperties().set(
+                          elements.Children(*childElements)
+                          )   
     
         
     def getResponseStream(self):

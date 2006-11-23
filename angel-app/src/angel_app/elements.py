@@ -64,10 +64,33 @@ class Encrypted (WebDAVTextElement):
     """
     name = "encrypted"   
 
-# the above keys must be signed in order for the 
-# AngelFile to be valid
 
-signedKeys = [Revision, ContentSignature, PublicKeyString, Deleted]
+class Child (WebDAVElement):
+    """
+    Specifies a child of an angel-file (as a local, relative, url)
+    """
+    name = "child"
+
+    allowed_children = {
+        (dav_namespace, "href"): (1, 1),
+        }
+
+class Children (WebDAVElement):
+    """
+    List of zero or more clones of a specific angel-file.
+    """
+    name = "children"
+    
+    allowed_children = {
+        (dav_namespace, "child"): (0, None),
+        }
+
+
+
+# the above keys must be signed in order for the 
+# AngelFile to be valid, i.e. the keys that are signed in the Crypto.seal() operation
+
+signedKeys = [Revision, ContentSignature, PublicKeyString, Deleted, Encrypted,  Children]
 
 class MetaDataSignature (WebDAVTextElement):
     """
@@ -95,26 +118,6 @@ class CloneSig (WebDAVTextElement):
                             signedKeys + [MetaDataSignature]
                             ])
 
-class Child (WebDAVElement):
-    """
-    Specifies a child of an angel-file (as a local, relative, url)
-    """
-    name = "child"
-
-    allowed_children = {
-        (dav_namespace, "href"): (1, 1),
-        }
-
-class Children (WebDAVElement):
-    """
-    List of zero or more clones of a specific angel-file.
-    """
-    name = "children"
-    
-    allowed_children = {
-        (dav_namespace, "child"): (0, None),
-        }
-
 class Clone (WebDAVElement):
     """
     Specifies a clone of an angel-file (as a url)
@@ -139,8 +142,12 @@ class Clones (WebDAVElement):
 # the above keys are _required_ for the angel-app to be (even conceptually)
 # operational. It is convenient to provide additional information for performance
 # and scalability.
-requiredKeys = signedKeys + [MetaDataSignature, Children]
-interestingKeys = requiredKeys + [Clones]
+
+# the keys that are used in the self.seal() operation of Crypto files
+# TODO: clean up
+requiredKeys = signedKeys
+# the keys that are used in the maintainer loop
+interestingKeys = requiredKeys + [MetaDataSignature, Clones]
 
 
 class ForceLocalCache (WebDAVTextElement):

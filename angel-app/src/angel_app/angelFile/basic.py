@@ -3,6 +3,7 @@ from twisted.web2 import responsecode, dirlist
 from twisted.web2.http import HTTPError
 from twisted.web2 import http, stream
 from twisted.web2.dav.xattrprops import xattrPropertyStore
+from twisted.web2.dav.element import rfc2518
 from angel_app import elements
 from angel_app.angelFile.safe import Safe
 from angel_app.davMethods.proppatch import ProppatchMixin
@@ -39,7 +40,7 @@ class Basic(Safe, ProppatchMixin):
     
     def contentLength(self):
         if not self.isEncrypted():
-            return super(self, Safe).getContentLength()
+            return super(Safe, self).contentLength()
         else:
             # getting the content length for an encrypted
             # file requires decryption of the whole file.
@@ -156,6 +157,8 @@ class Basic(Safe, ProppatchMixin):
         
         from os import sep
         cc = super(Basic, self).findChildren(depth)
+        
+        log.err("Basic: running findChildren")
         
         if getDeleted: 
             return cc
