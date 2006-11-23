@@ -140,13 +140,7 @@ class Clone(object):
         """
         toBeVerified = "".join([
                                 self.propertyFindBody(element)
-                                for element in
-                                [
-                                 elements.Revision, 
-                                 elements.ContentSignature, 
-                                 elements.PublicKeyString, 
-                                 elements.Deleted
-                                 ]
+                                for element in elements.requiredKeys
                                 ])
         
         pubKey = key()
