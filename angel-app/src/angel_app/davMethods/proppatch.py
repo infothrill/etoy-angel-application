@@ -58,7 +58,7 @@ class ProppatchMixin:
             return requestProperties[element.name].children
         
         def __string(pcdataList):
-            return "".join([`pcdata` for pcdata in pcdataList])
+            return "".join([str(pcdata) for pcdata in pcdataList])
         
         def __both(element):
             return __string(__get(element))
