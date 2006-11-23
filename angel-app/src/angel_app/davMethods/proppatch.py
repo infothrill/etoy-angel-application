@@ -68,7 +68,7 @@ class ProppatchMixin:
             return __string(__get(element).children)
         
         def __xml(element):
-            __get(element).toxml()
+            return __get(element).toxml()
         
         sig = __both(elements.MetaDataSignature)
         keyString = __both(elements.PublicKeyString)
