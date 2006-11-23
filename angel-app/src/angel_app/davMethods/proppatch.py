@@ -131,7 +131,7 @@ class ProppatchMixin:
         self.authenticate(requestProperties)
         
         # apply the changes
-        yield self.apply(requestProperties, request.uri)
+        yield self.apply(requestProperties.values(), request.uri)
 
         
     def http_PROPPATCH(self, request):
