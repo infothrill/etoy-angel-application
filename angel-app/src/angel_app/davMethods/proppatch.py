@@ -87,7 +87,7 @@ class ProppatchMixin:
 
         responses = PropertyStatusResponseQueue(
                                     "PROPPATCH", 
-                                    request.uri, 
+                                    uri, 
                                     responsecode.NO_CONTENT)
         
         dp = self.deadProperties()
