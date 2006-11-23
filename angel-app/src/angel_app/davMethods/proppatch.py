@@ -95,8 +95,8 @@ class ProppatchMixin:
         
         dp = self.deadProperties()
         
-        for prop in requestProperties:
-            log.err("proppatch applying: " + prop.toxml())
+        for property in requestProperties:
+            log.err("proppatch applying: " + property.toxml())
             try:
                 dp.set(prop)
             except ValueError, err:
