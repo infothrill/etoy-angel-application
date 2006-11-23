@@ -98,7 +98,7 @@ class ProppatchMixin:
         for property in requestProperties:
             log.err("proppatch applying: " + property.toxml())
             try:
-                dp.set(prop)
+                dp.set(property)
             except ValueError, err:
                 responses.add(
                         Failure(
