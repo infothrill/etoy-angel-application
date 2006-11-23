@@ -31,6 +31,7 @@ __all__ = ["http_PROPPATCH"]
 
 from twisted.python import log
 from twisted.web2.dav.util import davXMLFromStream
+from twisted.web2.dav import davxml
 from twisted.internet.defer import deferredGenerator, waitForDeferred
 
 class ProppatchMixin:
