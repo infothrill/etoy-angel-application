@@ -153,6 +153,9 @@ def getRequestProperties(doc):
                  for child in doc.root_element.children
                  ]
             
+    for child in childList:
+            log.err(child.name)
+            
     return dict([
                  (child.name, child)
                  for child in childList
