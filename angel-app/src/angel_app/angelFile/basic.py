@@ -7,8 +7,9 @@ from twisted.web2.dav.element import rfc2518
 from angel_app import elements
 from angel_app.angelFile.safe import Safe
 from angel_app.davMethods.proppatch import ProppatchMixin
+from ezPyCrypto import key as ezKey
 
-DEBUG = True
+DEBUG = False
 
 class Basic(Safe):
     """
@@ -20,12 +21,12 @@ class Basic(Safe):
                  indexNames=None):
         Safe.__init__(self, path, defaultType, indexNames)
         self._dead_properties = xattrPropertyStore(self)
-        self.__initProperties()
+        #self.exists() and self.__initProperties()
 
 
     def __initProperties(self):
         """
-        Set all required properties to a syntactically meaningful defaul value.
+        Set all required properties to a syntactically meaningful default value.
         """
         dp = self._dead_properties
         for element in elements.requiredKeys:
@@ -63,6 +64,20 @@ class Basic(Safe):
                         str(child) for child in 
                        self.deadProperties().get(davXMLTextElement.qname()).children
                                                  ])
+        
+    def getXml(self, davXMLTextElement):
+        """
+        @return the metadata element corresponding to davXMLTextElement
+        """
+        if not self.fp.exists():
+            DEBUG and log.err("AngelFile.getOrSet: file not found for path: " + self.fp.path)
+            raise HTTPError(responsecode.NOT_FOUND)
+        
+        # TODO: for some reason, the xml document parser wants to split
+        # PCDATA strings at newlines etc., returning a list of PCDATA elements
+        # rather than just one. We only have tags of depth one anyway, so we
+        # might as well work around this thing right here:
+        return  self.deadProperties().get(davXMLTextElement.qname()).toxml()
         
     def getOrSet(self, davXmlTextElement, defaultValueString = ""):
         """
@@ -173,6 +188,8 @@ class Basic(Safe):
 
     def parent(self):
         """
+        TODO: ugly hack!! check if the parent is the site root!
+        
         @return this resource's parent
         """
         return self.createSimilarFile( 
@@ -223,7 +240,7 @@ class Basic(Safe):
         Returns a string representation of the metadata that needs to
         be signed.
         """
-        sm = "".join([self.get(key) for key in elements.signedKeys])
+        sm = "".join([self.getXml(key) for key in elements.signedKeys])
         DEBUG and log.err("signable meta data for " + self.fp.path + ":" + sm)
         return sm
 

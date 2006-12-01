@@ -41,7 +41,8 @@ def inspectResource(path = rootDir):
     
     if not af.exists: return
     
-    
+    DEBUG and log.err("reference data to be signed: " + af.signableMetadata() + af.getXml(elements.MetaDataSignature))
+    DEBUG and af.verify()
     goodClones, badClones = iterateClones(getLocalCloneList(af), af.publicKeyString())
     
     if goodClones == []:

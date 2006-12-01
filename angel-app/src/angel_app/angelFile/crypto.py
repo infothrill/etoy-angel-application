@@ -6,7 +6,7 @@ from angel_app.davMethods import copy, delete, lock, mkcol, move, put
 from angel_app.angelFile.basic import Basic
 from ezPyCrypto import key as ezKey
 
-DEBUG = False
+DEBUG = True
 
 # DO NOT EXPOSE THIS KEY!!!!
 from angel_app.crypto import loadKeysFromFile
@@ -144,23 +144,16 @@ class Crypto(
         """
 
         self.getOrSet(elements.Deleted, "0")
+        self.updateChildList()
         
+        DEBUG and log.err("Crypto: sealing " + self.fp.path)
+        DEBUG and log.err("Crypto: signable data: " + self.signableMetadata())
         signature = self.secretKey.signString(self.signableMetadata())
         self.deadProperties().set(elements.MetaDataSignature.fromString(signature))
         #storedsignature = self.getOrSet(elements.MetaDataSignature, "0")
         #log.err(signature)
         #log.err(storedsignature)
         return signature
-    
-    def parent(self):
-        """
-        TODO: this needs a check to not go beyond the root.
-        """
-        log.err(self.fp.path.split("/"))
-        if self.fp.path.split("/") == ("repository"): 
-            # root directory has no parent
-            return None 
-        return Crypto(self.fp.parent().path)
     
     def updateParent(self, recursionLimit = 0):
         pp = self.parent()
@@ -178,7 +171,6 @@ class Crypto(
             self.encrypt()
         self.sign()
         self.bumpRevisionNumber()
-        self.updateChildList()
         self.seal()
 
         DEBUG and self.verify()

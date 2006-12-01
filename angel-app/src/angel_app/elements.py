@@ -164,4 +164,4 @@ class ForceEncryption (WebDAVTextElement):
     the contents of this file are stored in plaintext. This is always false
     for now.
     """
-    name = "encrypted" 
+    name = "encrypted"

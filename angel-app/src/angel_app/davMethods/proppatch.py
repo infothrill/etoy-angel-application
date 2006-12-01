@@ -74,7 +74,7 @@ class ProppatchMixin:
         keyString = __both(elements.PublicKeyString)
         signable = __string([
                      __xml(element)
-                    for element in elements.requiredKeys
+                    for element in elements.signedKeys
                     ])
         #sm = "".join([requestProperties.childOfType(key) for key in elements.requiredKeys])
         #sm = "".join(requestProperties[1])

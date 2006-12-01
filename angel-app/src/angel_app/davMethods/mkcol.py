@@ -98,7 +98,8 @@ class mkcolMixin:
     DEBUG and log.err("updating parent for " + self.fp.path)
     parent.update()
     DEBUG and log.err("updating " + self.fp.path)
-    self.update()
+    
+    self.update(1)
     
     DEBUG and log.err("done MKCOL request")   
     yield responsecode.CREATED

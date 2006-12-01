@@ -87,6 +87,11 @@ class Clone(object):
         return davxml.WebDAVDocument.fromString(
                                                self.propFindAsXml(
                                                                   properties))
+
+
+    def propertyFindBodyXml(self, property):
+        return self.propertiesDocument(property
+                         ).root_element.children[0].children[1].children[0].children[0].toxml()
     
     def propertyFindBody(self, property):
         """
@@ -139,9 +144,11 @@ class Clone(object):
         @return if the meta data of a given clone is internally consistent.
         """
         toBeVerified = "".join([
-                                self.propertyFindBody(element)
+                                self.propertyFindBodyXml(element)
                                 for element in elements.signedKeys
                                 ])
+        
+        DEBUG and log.err("Clone: " + toBeVerified)
         
         pubKey = key()
         try:
@@ -288,9 +295,15 @@ def iterateClones(cloneSeedList, publicKeyString):
             # this clone is unreachable, ignore it
             continue
         
-        if cc.publicKeyString() != publicKeyString or not cc.validate():
+        if cc.publicKeyString() != publicKeyString:
             # an invalid clone
-            DEBUG and log.err("iterateClones: " + `cc` + "invalid")
+            DEBUG and log.err("iterateClones: " + `cc` + " wrong public key")
+            bad.append(cc)
+            continue
+        
+        if not cc.validate():
+            # an invalid clone
+            DEBUG and log.err("iterateClones: " + `cc` + " invalid signature")
             bad.append(cc)
             continue
         
