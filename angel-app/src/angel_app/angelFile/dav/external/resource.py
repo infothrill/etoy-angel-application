@@ -23,13 +23,25 @@ class External(ProppatchMixin, Basic):
     def precondition_PUT(self, request):
         """
         A put operation from a non-authenticated source is allowed
-        exactly if the file is is not in a consistent state.
+        exactly if 
+        -- the file does not exist, but is referenced in the parent resource
+        -- the file is is not in a consistent state.
         See also proppatch.
-        """             
-        try:
-            if not self.verify():
-                raise responsecode.FORBIDDEN
-        except:
-            raise responsecode.FORBIDDEN
+        """ 
         
+        if not self.exists() and not self in self.parent().metaDataChildren():
+            raise HTTPError(
+                    StatusResponse(
+                       responsecode.FORBIDDEN, 
+                       "PUT is forbidden on inexinstant unreferenced resources. Try a PROPPATCH first."
+                       ))
+                    
+        if self.verify():
+                raise HTTPError(
+                    StatusResponse(
+                           responsecode.FORBIDDEN, 
+                           "PUT is forbidden on valid resources. Try a PROPPATCH first."
+                           ))
+        
+        # permission granted
         return request

@@ -126,6 +126,9 @@ class Basic(Safe):
     
     def verify(self):
         
+        if not self.exists():
+            return False
+        
         publicKey = ezKey()
         publicKey.importKey(self.get(elements.PublicKeyString))
 
