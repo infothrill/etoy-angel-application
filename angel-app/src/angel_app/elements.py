@@ -3,7 +3,7 @@ Definition of AngelFile metadata (xattr) XML elements.
 """
 
 legalMatters = """
- Copyright (c) 2005, etoy.CORPORATION
+ Copyright (c) 2005, etoy.VENTURE ASSOCIATION
  All rights reserved.
  
  Redistribution and use in source and binary forms, with or without modification, 
@@ -67,7 +67,8 @@ class Encrypted (WebDAVTextElement):
 
 class Child (WebDAVElement):
     """
-    Specifies a child of an angel-file (as a local, relative, url)
+    Specifies a child of an angel-file (as a local, relative, url).
+    TODO: add support for child keys specifying owners
     """
     name = "child"
 
