@@ -5,8 +5,8 @@ from twisted.web2 import http, stream
 from twisted.web2.dav.xattrprops import xattrPropertyStore
 from twisted.web2.dav.element import rfc2518
 from angel_app import elements
-from angel_app.angelFile.safe import Safe
-from angel_app.davMethods.proppatch import ProppatchMixin
+from angel_app.angelFile.dav.safe import Safe
+from angel_app.angelFile.dav.external.methods.proppatch import ProppatchMixin
 from ezPyCrypto import key as ezKey
 
 DEBUG = False

@@ -2,7 +2,7 @@ from twisted.python import log
 from twisted.web2 import stream
 from twisted.web2.dav.element import rfc2518
 from angel_app import elements
-from angel_app.dav.internal.methods import copy, delete, lock, mkcol, move, put
+from angel_app.angelFile.dav.internal.methods import copy, delete, lock, mkcol, move, put
 from angel_app.angelFile.basic import Basic
 from ezPyCrypto import key as ezKey
 

@@ -18,8 +18,7 @@ repository = AngelConfig.get("common","repository")
 from angel_app.presenter.setup import setupRoot
 setupRoot()
 
-#root = static.AngelFile(rootDir)
-from angel_app.angelFile.crypto import Crypto
+from angel_app.angelFile.dav.internal.resource import Crypto
 root = Crypto(repository)
 
 site = server.Site(root)
