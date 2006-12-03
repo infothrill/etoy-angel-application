@@ -255,7 +255,6 @@ def getMostCurrentClones(clonesList):
     return [clone for clone in clonesList if clone.revision() == newest]
 
 
-#def iterateClones(validCloneList, clonesToValidate, checkedCloneList, publicKeyString, revision = 0):
 def iterateClones(cloneSeedList, publicKeyString):
     """
     get all the clones of the (valid) clones we have already looked at
