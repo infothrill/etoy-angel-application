@@ -4,10 +4,12 @@ from twisted.web2.http import HTTPError
 from twisted.web2 import http, stream
 from twisted.web2.dav.xattrprops import xattrPropertyStore
 from twisted.web2.dav.element import rfc2518
+from twisted.web2.dav import davxml
 from angel_app import elements
 from angel_app.angelFile.dav.safe import Safe
 from angel_app.angelFile.dav.external.methods.proppatch import ProppatchMixin
 from ezPyCrypto import key as ezKey
+import os
 
 DEBUG = False
 
@@ -215,9 +217,11 @@ class Basic(Safe):
         @rtype [Basic] 
         @return The children of this resource as specified in the resource metadata.
         """
-        children = self.getOrSet(elements.Children, elements.Children()).children
+        foo = self.deadProperties().get(elements.Children.qname())
+        log.err(foo.toxml())
+        children = foo.children
         return [
-                self.createSimilarFile(self.fp.path + sep + `cc.childOfType(davxml.HRef)`) 
+                self.createSimilarFile(self.fp.path + os.sep + str(child.childOfType(davxml.HRef))) 
                 for child in children
                 ]
 
