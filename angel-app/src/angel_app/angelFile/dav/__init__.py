@@ -1,1 +1,0 @@
-all = ["external", "internal", "safe"]
