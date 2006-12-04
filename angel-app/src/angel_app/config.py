@@ -3,7 +3,7 @@ Basic configuration getter for angel-app
 """
 
 legalMatters = """
- Copyright (c) 2006, etoy.CORPORATION
+ Copyright (c) 2006, etoy.VENTURE ASSOCIATION
  All rights reserved.
  
  Redistribution and use in source and binary forms, with or without modification, 
