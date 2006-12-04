@@ -14,15 +14,21 @@ def getLocalCloneURLList(af):
     @param af -- an AngelFile
     """
     #print elements.Clones().toxml()
+    clones = []
     
     try:
-        clones = af.deadProperties().get(elements.Clones.qname())
+        clones += af.deadProperties().get(elements.Clones.qname()).children
     except:
-        # we have no clones
-        DEBUG and log.err(af.fp.path + ": no clones")
-        return
+        # we have no clones on this file
+        pass
+
+    try:
+        clones += af.parent().deadProperties().get(elements.Clones.qname()).children
+    except:
+        # we have no clones on this file
+        pass    
     
-    return [str(clone.children[0].children[0]) for clone in clones.children]
+    return [str(clone.children[0].children[0]) for clone in clones]
 
 def getLocalCloneList(af):
     """
@@ -34,7 +40,7 @@ def getLocalCloneList(af):
 
 
 def inspectResource(path = rootDir):
-    #if DEBUG and relativePath(resource.path) != "": raise "debugging and stopping beyond root: " + relativePath(resource.path)
+    log.err("bla")
     DEBUG and log.err("inspecting resource: " + path)
     DEBUG and log.err("relative path is: " + relativePath(path))
     af = Basic(path)
@@ -56,10 +62,18 @@ def inspectResource(path = rootDir):
     
     log.err("reference clone: " + `rc`)
     
+    # first, make sure the local clone is fine:
+    # TODO: this is gunk.
+    if rc.revision() > af.revisionNumber() or not af.verify() and af.fp.isdir():
+        af.fp.open().write(rc.stream().read())
+             
+    
     # update all invalid clones with the meta data of the reference clone
     for bc in badClones: 
-        log.err("updating invalid clone: " + bc.host)
+        DEBUG and log.err("updating invalid clone: " + bc.host)
         bc.performPushRequest(af)
+        if af.exists() and not af.fp.isdir():
+            bc.putFile(af.fp.open())
         
     
     

@@ -55,6 +55,19 @@ class Clone(object):
     def __hash__(self):
         return `self`.__hash__()
     
+    def stream(self):
+        DEBUG and log.err("attempting connection to: " + `self.host` + ":" + `self.port` + " " + self.path)   
+        conn = HTTPConnection(self.host, self.port)
+        conn.request(
+                 "GET", 
+                 self.path,
+                 )
+        resp = conn.getresponse()
+        if resp.status != responsecode.OK:
+            raise "must receive an OK response for GET, otherwise something's wrong"
+        return resp
+    
+    
     def propFindAsXml(self, properties):
         """
         @rtype string
@@ -183,11 +196,24 @@ class Clone(object):
         except:
             return []
 
-    def performPushRequest(self, localClone):
+    def putFile(self, stream):
         """
         Push the relevant properties of a local clone to the remote clone via a PROPPATCH request.
         """
         conn = HTTPConnection(self.host, self.port)       
+        conn.request(
+                 "PUT", 
+                 self.path,
+                 stream.read()
+                 )
+
+
+    def performPushRequest(self, localClone):
+        """
+        Push the relevant properties of a local clone to the remote clone via a PROPPATCH request.
+        """
+        conn = HTTPConnection(self.host, self.port)
+        DEBUG and log.err("attempting connection to: " + `self`)    
         conn.request(
                  "PROPPATCH", 
                  self.path,
