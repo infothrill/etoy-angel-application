@@ -19,6 +19,7 @@ from angel_app.presenter.setup import setupRoot
 setupRoot()
 
 from angel_app.angelFile.dav.internal.resource import Crypto
+Crypto.rootDirectory = repository
 root = Crypto(repository)
 
 site = server.Site(root)
