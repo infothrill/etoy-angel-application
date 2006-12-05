@@ -15,10 +15,10 @@ port = AngelConfig.getint("presenter","listenPort")
 interface = AngelConfig.get("presenter","listenInterface")
 repository = AngelConfig.get("common","repository")
 
-from angel_app.presenter.setup import setupRoot
+from angel_app.server.internal.setup import setupRoot
 setupRoot()
 
-from angel_app.angelFile.dav.internal.resource import Crypto
+from angel_app.resource.local.internal.resource import Crypto
 Crypto.rootDirectory = repository
 root = Crypto(repository)
 

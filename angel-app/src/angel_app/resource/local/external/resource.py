@@ -1,5 +1,5 @@
-from angel_app.angelFile.basic import Basic
-from angel_app.angelFile.dav.external.methods import proppatch, put
+from angel_app.resource.local.basic import Basic
+from angel_app.resource.local.external.methods import proppatch, put
 
 DEBUG = False
 

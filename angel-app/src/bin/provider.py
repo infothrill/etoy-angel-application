@@ -12,7 +12,7 @@ from config.common import rootDir
 from config.external import port
 
 
-from angel_app.angelFile.dav.external.resource import External
+from angel_app.resource.local.external.resource import External
 root = External(rootDir)
 
 

@@ -6,8 +6,8 @@ from twisted.web2.dav.xattrprops import xattrPropertyStore
 from twisted.web2.dav.element import rfc2518
 from twisted.web2.dav import davxml
 from angel_app import elements
-from angel_app.angelFile.dav.safe import Safe
-from angel_app.angelFile.dav.external.methods.proppatch import ProppatchMixin
+from angel_app.resource.local.safe import Safe
+from angel_app.resource.local.external.methods.proppatch import ProppatchMixin
 from ezPyCrypto import key as ezKey
 import os
 
