@@ -1,14 +1,13 @@
 from angel_app.resource.local.basic import Basic
 from angel_app import elements
 from twisted.web2.dav.element.rfc2518 import HRef
-from config.common import rootDir
-from config import rootDefaults
-import config.external
+from angel_app.config import common, external
+from angel_app.config import rootDefaults
 
 from angel_app.resource.remote.util import syncClones
 DEBUG = True
 
-angelRoot = Basic(rootDir)
+angelRoot = Basic(common.rootDir)
 
 def cloneFromName(name = ("localhost", 90)):
     """

@@ -2,7 +2,7 @@ from twisted.python.filepath import FilePath
 from twisted.python import log
 from twisted.web2.dav import davxml
 
-from config.common import rootDir
+from angel_app.config.common import rootDir
 
 from os import sep
 

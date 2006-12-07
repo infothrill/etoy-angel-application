@@ -1,5 +1,5 @@
 from twisted.python import log
-from config.common import rootDir
+from angel_app.config.common import rootDir
 from angel_app import elements
 from angel_app.resource.remote.util import relativePath
 from angel_app.resource.local.basic import Basic

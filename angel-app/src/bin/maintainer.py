@@ -5,7 +5,7 @@ from angel_app.resource.local.basic import Basic
 
 setup.setupDefaultPeers()
 
-from config.common import rootDir
+from angel_app.config.common import rootDir
 
             
 if __name__ == "__main__":

@@ -3,8 +3,8 @@
 from os import mkdir
 from angel_app.resource.local.internal.resource import Crypto
 from angel_app import elements
-from config.common import rootDir
-from config import rootDefaults
+from angel_app.config.common import rootDir
+from angel_app.config import rootDefaults
 
 
 DEBUG = True

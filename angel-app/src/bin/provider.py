@@ -8,17 +8,16 @@ metadata).
 
 
 
-from config.common import rootDir
-from config.external import port
+from angel_app.config import common, external
 
 
 from angel_app.resource.local.external.resource import External
-root = External(rootDir)
+root = External(common.rootDir)
 
 
 from twisted.web2 import server
 from twisted.web2 import channel
 from twisted.internet import reactor
 site = server.Site(root)
-reactor.listenTCP(port, channel.HTTPFactory(site), 50)
+reactor.listenTCP(external.port, channel.HTTPFactory(site), 50)
 reactor.run()
