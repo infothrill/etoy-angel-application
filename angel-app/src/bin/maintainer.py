@@ -2,7 +2,7 @@ from angel_app.maintainer.client import inspectResource
 from angel_app.maintainer.setup import setupDefaultPeers
 from angel_app.graph import graphWalker
 from twisted.python import log
-from angel_app.angelFile.basic import Basic
+from angel_app.resource.local.basic import Basic
 
 setupDefaultPeers()
 
