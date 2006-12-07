@@ -4,6 +4,8 @@ from twisted.web2.dav import davxml
 from twisted.python import log
 from angel_app import elements
 from angel_app.resource.remote import util
+from angel_app.resource import IResource
+from zope.interface import implements
 from ezPyCrypto import key
 
 DEBUG = True
@@ -22,6 +24,7 @@ class Clone(object):
     """
     Provides methods for transparent access to frequently used clone meta data.
     """
+    implements(IResource.IAngelResource)
     
     def __init__(self, host = "localhost", port = 9999, path = "/"):
         """

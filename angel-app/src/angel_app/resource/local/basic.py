@@ -6,6 +6,9 @@ from twisted.web2.dav.xattrprops import xattrPropertyStore
 from twisted.web2.dav.element import rfc2518
 from twisted.web2.dav import davxml
 from angel_app import elements
+
+from zope.interface import implements
+from angel_app.resource import IResource
 from angel_app.resource.local.safe import Safe
 from angel_app.resource.local.external.methods.proppatch import ProppatchMixin
 from ezPyCrypto import key as ezKey
@@ -17,6 +20,7 @@ class Basic(Safe):
     """
     An extension to Safe, that implements common metadata operations.
     """
+    implements(IResource.IAngelResource)
     
     def __init__(self, path,
                  defaultType="text/plain",

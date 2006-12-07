@@ -33,7 +33,7 @@ author = """Vincent Kraeutler, 2006"""
 
 import zope.interface
 
-class AngelResource(zope.interface.Interface):
+class IAngelResource(zope.interface.Interface):
     """
     Angel-app resource interface specification.
     """
@@ -41,6 +41,11 @@ class AngelResource(zope.interface.Interface):
     def exists(self):
         """
         @return: a C{True} if this resource is accessible, C{False} otherwise.
+        """
+    
+    def location(self):
+        """
+        @return the resource's path relative to the site root.
         """
     
     def isCollection():
