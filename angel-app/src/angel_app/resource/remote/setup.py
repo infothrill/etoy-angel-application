@@ -5,7 +5,7 @@ from config.common import rootDir
 from config import rootDefaults
 import config.external
 
-from angel_app.maintainer.util import syncClones
+from angel_app.resource.remote.util import syncClones
 DEBUG = True
 
 angelRoot = Basic(rootDir)

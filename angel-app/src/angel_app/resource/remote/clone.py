@@ -3,7 +3,7 @@ from twisted.web2.dav.element import rfc2518
 from twisted.web2.dav import davxml
 from twisted.python import log
 from angel_app import elements
-from angel_app.maintainer import util
+from angel_app.resource.remote import util
 from ezPyCrypto import key
 
 DEBUG = True

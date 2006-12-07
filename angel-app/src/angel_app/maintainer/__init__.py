@@ -1,1 +1,1 @@
-all = ["client", "clone", "setup", "util"]
+all = ["client", "setup", "util"]
