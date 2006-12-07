@@ -2,7 +2,7 @@ from twisted.python import log
 from config.common import rootDir
 from angel_app import elements
 from angel_app.maintainer.util import relativePath
-from angel_app.angelFile.basic import Basic
+from angel_app.resource.local.basic import Basic
 
 from angel_app.maintainer.clone import splitParse, Clone
 from angel_app.maintainer.clone import iterateClones
