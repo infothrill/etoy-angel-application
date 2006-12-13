@@ -71,7 +71,10 @@ def inspectResource(path = rootDir):
     
     # update all invalid clones with the meta data of the reference clone
     for bc in badClones: 
-        DEBUG and log.err("updating invalid clone: " + bc.host)
+        # at this point, the parent's meta data should already be up-to-date
+        DEBUG and log.err("updating invalid clone: " + `bc`)
+        if not af.isCollection():
+            bc.putFile(open(af.fp.path))
         bc.performPushRequest(af)
         if af.exists() and not af.fp.isdir():
             bc.putFile(af.fp.open())

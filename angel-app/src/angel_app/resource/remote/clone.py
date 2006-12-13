@@ -227,7 +227,6 @@ class Clone(object):
         if resp.status != responsecode.MULTI_STATUS:
             raise "must receive a MULTI_STATUS response for PROPPATCH (received " + \
                 `resp.status` + "), otherwise something's wrong"
-        conn.close()
            
 def makePushBody(localClone):
     """
