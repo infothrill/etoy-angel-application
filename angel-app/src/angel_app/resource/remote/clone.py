@@ -35,16 +35,6 @@ class Clone(object):
         self.port = port
         self.path = path
     
-    def __makePropfindRequestBody(self, *properties):
-        """
-        @rtype string
-        @return XML body of PROPFIND request.
-        """
-        return rfc2518.PropertyFind(
-                    rfc2518.PropertyContainer(
-                          *[property() for property in properties]
-                          )).toxml()
-    
     def __eq__(self, clone):
         """
         @rtype boolean
@@ -57,14 +47,32 @@ class Clone(object):
     
     def __hash__(self):
         return `self`.__hash__()
-    
-    def stream(self):
+
+    def __performRequest(self, method = "GET", headers = {}, body = ""):
         DEBUG and log.err("attempting connection to: " + `self.host` + ":" + `self.port` + " " + self.path)   
-        conn = HTTPConnection(self.host, self.port)
+        conn = HTTPConnection(self.host, self.port)        
         conn.request(
-                 "GET", 
+                 method, 
                  self.path,
+                 headers = headers,
+                 body = body
                  )
+        
+        return conn.getresponse()
+         
+    
+    def __makePropfindRequestBody(self, *properties):
+        """
+        @rtype string
+        @return XML body of PROPFIND request.
+        """
+        return rfc2518.PropertyFind(
+                    rfc2518.PropertyContainer(
+                          *[property() for property in properties]
+                          )).toxml()
+  
+    def stream(self):
+
         resp = conn.getresponse()
         if resp.status != responsecode.OK:
             raise "must receive an OK response for GET, otherwise something's wrong"
@@ -76,23 +84,20 @@ class Clone(object):
         @rtype string
         @return the raw XML body of the multistatus response corresponding to the respective PROPFIND request.
         """  
-        conn = HTTPConnection(self.host, self.port)
-        DEBUG and log.err("attempting connection to: " + `self.host` + ":" + `self.port` + " " + self.path)   
-        conn.request(
-                 "PROPFIND", 
-                 self.path, 
-                 headers = {"Depth" : 0}, 
-                 body = self.__makePropfindRequestBody(properties)
-                 )
-       
-        resp = conn.getresponse()
+        #DEBUG and log.err("running PROPFIND on clone " + `self` + " for properties " + `properties` + " with body " + self.__makePropfindRequestBody(properties))
+        resp = self.__performRequest(
+                              method = "PROPFIND", 
+                              headers = {"Depth" : 0}, 
+                              body = self.__makePropfindRequestBody(properties)
+                              )
+
         if resp.status != responsecode.MULTI_STATUS:
+            log.err("bad response: " + resp.status)
             raise "must receive a MULTI_STATUS response for PROPFIND, otherwise something's wrong"
         
         data = resp.read()
         util.validateMulistatusResponseBody(data)
-        conn.close()
-        #DEBUG and log.err(data)
+        #DEBUG and log.err("PROPFIND body: " + data)
         return data
     
     def propertiesDocument(self, properties):
@@ -106,6 +111,11 @@ class Clone(object):
 
 
     def propertyFindBodyXml(self, property):
+        """
+        @param property an WebDAVElement corresponding to the property we want to get
+        @return the XML of a property find body as appropriate for the supplied property
+        @rtype string
+        """
         return self.propertiesDocument(property
                          ).root_element.children[0].children[1].children[0].children[0].toxml()
     
@@ -121,11 +131,7 @@ class Clone(object):
         
         return "".join([str(ee) for ee in properties.children[0].children])
 
-    
-    def ping(self):
-        """
-        @return whether a clone is reachable
-        """
+    def exists(self): 
         try:
             # ... well, nearly
             self.revision()
@@ -203,27 +209,17 @@ class Clone(object):
         """
         Push the relevant properties of a local clone to the remote clone via a PROPPATCH request.
         """
-        conn = HTTPConnection(self.host, self.port)       
-        conn.request(
-                 "PUT", 
-                 self.path,
-                 stream.read()
-                 )
+        resp = self.__performRequest(method = "PUT", body = stream.read())
+
 
 
     def performPushRequest(self, localClone):
         """
         Push the relevant properties of a local clone to the remote clone via a PROPPATCH request.
         """
-        conn = HTTPConnection(self.host, self.port)
-        DEBUG and log.err("attempting connection to: " + `self`)    
-        conn.request(
-                 "PROPPATCH", 
-                 self.path,
-                 body = makePushBody(localClone)
-                 )
-       
-        resp = conn.getresponse()
+        resp = self.__performRequest(
+                                     method = "PROPPATCH", 
+                                     body = makePushBody(localClone))
         
         # we probably ignore the returned data, but who knows
         data = resp.read()
@@ -319,13 +315,15 @@ def iterateClones(cloneSeedList, publicKeyString):
         allVisitedClones.append(cc)
         visited[cc] = cc
         
-        if not cc.ping():
+        if not cc.exists():
             # this clone is unreachable, ignore it
             continue
         
         if cc.publicKeyString() != publicKeyString:
             # an invalid clone
             DEBUG and log.err("iterateClones: " + `cc` + " wrong public key")
+            DEBUG and log.err("expected: " + publicKeyString)
+            DEBUG and log.err("found: " + cc.publicKeyString())
             bad.append(cc)
             continue
         

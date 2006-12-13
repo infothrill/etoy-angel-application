@@ -38,12 +38,12 @@ class IAngelResource(zope.interface.Interface):
     Angel-app resource interface specification.
     """
     
-    def exists(self):
+    def exists():
         """
         @return: a C{True} if this resource is accessible, C{False} otherwise.
         """
     
-    def location(self):
+    def location():
         """
         @return the resource's path relative to the site root.
         """
@@ -63,6 +63,11 @@ class IAngelResource(zope.interface.Interface):
     def findChildren():
         """
         @return: an iterable over C{uri}.
+        """
+    
+    def stream():
+        """
+        @return: an object that minimally supports the read() method, which in turn returns the stream contents as a string.
         """
 
     def getProperty(property):
