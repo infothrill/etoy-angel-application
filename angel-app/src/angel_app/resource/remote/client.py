@@ -35,13 +35,15 @@ def getLocalCloneList(af):
     @rtype [Clone]
     """
     hostPorts = [splitParse(url) for url in getLocalCloneURLList(af)]
-    return [Clone(url, port) for url, port in hostPorts]
+    absPath = af.fp.path
+    DEBUG and log.err("inspecting resource: " + absPath)
+    rp = relativePath(absPath)
+    DEBUG and log.err("relative path is: " + rp)
+    return [Clone(url, port, rp) for url, port in hostPorts]
 
 
 def inspectResource(path = rootDir):
-    log.err("bla")
-    DEBUG and log.err("inspecting resource: " + path)
-    DEBUG and log.err("relative path is: " + relativePath(path))
+
     af = Basic(path)
     
     if not af.exists: return

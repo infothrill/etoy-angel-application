@@ -170,7 +170,7 @@ class Clone(object):
                                 for element in elements.signedKeys
                                 ])
         
-        DEBUG and log.err("Clone: " + toBeVerified)
+        #DEBUG and log.err("Clone: " + toBeVerified)
         
         pubKey = key()
         try:
