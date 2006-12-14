@@ -1,1 +1,1 @@
-all = ["config", "contrib", "crypto", "elements", "graph", "resource", "server"]
+all = ["config", "contrib", "elements", "graph", "resource", "server"]

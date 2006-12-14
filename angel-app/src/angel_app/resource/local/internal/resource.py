@@ -9,7 +9,7 @@ from ezPyCrypto import key as ezKey
 DEBUG = True
 
 # DO NOT EXPOSE THIS KEY!!!!
-from angel_app.crypto import loadKeysFromFile
+from angel_app.config.internal import loadKeysFromFile
 
 class Crypto(
              lock.Lockable,
