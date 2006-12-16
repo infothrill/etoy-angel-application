@@ -73,13 +73,18 @@ def inspectResource(path = rootDir):
     for bc in badClones: 
         # at this point, the parent's meta data should already be up-to-date
         DEBUG and log.err("updating invalid clone: " + `bc`)
+        
+        # push the resource
         if not af.isCollection():
             bc.putFile(open(af.fp.path))
+        else:
+            if not bc.exists():
+                log.err("resource does not exist yet, creating collection")
+                bc.mkCol()
+            
+        log.err("resource exists, updating metadata")
+        # push the resource metadata
         bc.performPushRequest(af)
-        if af.exists() and not af.fp.isdir():
-            bc.putFile(af.fp.open())
-        
-    
     
     
     DEBUG and log.err("DONE\n\n")

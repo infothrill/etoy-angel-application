@@ -7,6 +7,7 @@ from angel_app.resource.remote import util
 from angel_app.resource import IResource
 from zope.interface import implements
 from ezPyCrypto import key
+import urllib
 
 DEBUG = True
 
@@ -49,11 +50,11 @@ class Clone(object):
         return `self`.__hash__()
 
     def __performRequest(self, method = "GET", headers = {}, body = ""):
-        DEBUG and log.err("attempting connection to: " + `self.host` + ":" + `self.port` + " " + self.path)   
+        DEBUG and log.err("attempting " + method + " connection to: " + `self.host` + ":" + `self.port` + " " + self.path)   
         conn = HTTPConnection(self.host, self.port)        
         conn.request(
                  method, 
-                 self.path,
+                 urllib.quote(self.path),
                  headers = headers,
                  body = body
                  )
@@ -132,9 +133,15 @@ class Clone(object):
         return "".join([str(ee) for ee in properties.children[0].children])
 
     def exists(self): 
+        """
+        A resource is defined to exist, if it has a valid revsion number.
+        Existence does not imply validity.
+        """
+        return self.revision() >= 0
+    
+    def ping(self):
         try:
-            # ... well, nearly
-            self.revision()
+            self.exists()
             return True
         except:
             return False
@@ -207,10 +214,19 @@ class Clone(object):
 
     def putFile(self, stream):
         """
-        Push the relevant properties of a local clone to the remote clone via a PROPPATCH request.
+        Push the file contents, after pushing the relevant properties of a local parent clone to the 
+        remote parent clone via a PROPPATCH request.
+        
+        @see performPushRequest
         """
         resp = self.__performRequest(method = "PUT", body = stream.read())
 
+    def mkCol(self):
+        """
+        Make a remote collection, after pushing the relevant properties of a local parent clone to the 
+        remote parent clone via a PROPPATCH request.
+        """
+        resp = self.__performRequest(method = "MKCOL", body = "")
 
 
     def performPushRequest(self, localClone):
@@ -239,7 +255,7 @@ def makePushBody(localClone):
              rfc2518.Set(
                          rfc2518.PropertyContainer(
                                       localClone.deadProperties().get(el.qname())))
-             for el in elements.requiredKeys
+             for el in elements.requiredKeys + [elements.Clones]
              ]
     
     DEBUG and log.err(`pList`)
@@ -314,7 +330,7 @@ def iterateClones(cloneSeedList, publicKeyString):
         allVisitedClones.append(cc)
         visited[cc] = cc
         
-        if not cc.exists():
+        if not cc.ping():
             # this clone is unreachable, ignore it
             continue
         
@@ -336,7 +352,7 @@ def iterateClones(cloneSeedList, publicKeyString):
         
         if rr < revision:
             # too old
-            DEBUG and log.err("iterateClones: " + `cc` + "too old: " + `rr` + " < " + `revision`)
+            DEBUG and log.err("iterateClones: " + `cc` + " too old: " + `rr` + " < " + `revision`)
             bad.append(cc)
             continue
         
@@ -344,7 +360,7 @@ def iterateClones(cloneSeedList, publicKeyString):
             # hah! the clone is newer than anything
             # we've seen so far. all the clones we thought
             # were good are in fact bad.
-            DEBUG and log.err("iterateClones: " + `cc` + "very new: " + `rr` + " > " + `revision`)
+            DEBUG and log.err("iterateClones: " + `cc` + " very new: " + `rr` + " > " + `revision`)
             bad.extend(good)
             good = []
             revision = rr
