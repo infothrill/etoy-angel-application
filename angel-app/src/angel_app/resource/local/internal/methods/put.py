@@ -37,24 +37,12 @@ class Putable(object):
         xx = xx.getResult()
         DEBUG and log.err("done putting file stream: " + self.fp.path)
         
-        xx = waitForDeferred(deferredGenerator(self.__updateMetadata)())
+        xx = waitForDeferred(deferredGenerator(self._updateMetadata)())
         yield xx
         
         DEBUG and log.err("return code for updating meta data: " + `response`)
         
         yield response
-    
-    def __updateMetadata(self): 
-
-        #if the file has been previously deleted,
-        #the "deleted" flag has been set to "1"
-        #undo that.
-        DEBUG and log.err("updating meta data for " + self.fp.path)
-        self.deadProperties().set(elements.Deleted.fromString("0"))
-        DEBUG and log.err(self.fp.path + " is now flagged as deleted: " + `self.isDeleted()`)
-        
-        # now encrypt and sign, update the containing collection
-        self.update(1)
         
         
     def __putDelete(self):

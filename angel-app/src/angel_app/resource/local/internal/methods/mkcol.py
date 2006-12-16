@@ -92,14 +92,8 @@ class mkcolMixin:
         ignored = ignored.getResult()
     else:
         self.deadProperties().set(elements.Deleted.fromString("0"))
-    
 
-
-    DEBUG and log.err("updating parent for " + self.fp.path)
-    parent.update()
-    DEBUG and log.err("updating " + self.fp.path)
-    
-    self.update(1)
+    self._updateMetadata()
     
     DEBUG and log.err("done MKCOL request")   
     yield responsecode.CREATED

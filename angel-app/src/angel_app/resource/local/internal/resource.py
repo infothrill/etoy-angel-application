@@ -34,6 +34,18 @@ class Crypto(
                  defaultType="text/plain",
                  indexNames=None):
         Basic.__init__(self, path, defaultType, indexNames)
+          
+    def _updateMetadata(self): 
+
+        #if the file has been previously deleted,
+        #the "deleted" flag has been set to "1"
+        #undo that.
+        DEBUG and log.err("updating meta data for " + self.fp.path)
+        self.deadProperties().set(elements.Deleted.fromString("0"))
+        DEBUG and log.err(self.fp.path + " is now flagged as deleted: " + `self.isDeleted()`)
+        
+        # now encrypt and sign, update the containing collection
+        self.update(1)
     
     
     def encrypt(self):
