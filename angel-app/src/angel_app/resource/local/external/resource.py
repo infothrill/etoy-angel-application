@@ -1,5 +1,5 @@
 from angel_app.resource.local.basic import Basic
-from angel_app.resource.local.external.methods import proppatch, put
+from angel_app.resource.local.external.methods import proppatch, put, mkcol
 
 DEBUG = False
 
