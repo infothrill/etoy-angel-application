@@ -34,6 +34,10 @@ class Crypto(
                  defaultType="text/plain",
                  indexNames=None):
         Basic.__init__(self, path, defaultType, indexNames)
+        
+    def _inheritClones(self):
+        # TODO implement
+        pass
           
     def _updateMetadata(self): 
 

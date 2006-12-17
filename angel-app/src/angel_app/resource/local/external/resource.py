@@ -3,7 +3,7 @@ from angel_app.resource.local.external.methods import proppatch, put
 
 DEBUG = False
 
-class External(proppatch.ProppatchMixin, put.PutMixin, Basic):
+class External(proppatch.ProppatchMixin, put.PutMixin,  mkcol.MkcolMixin, Basic):
     """
     An AngelFile, as seen on the external (unsafe) network interface.
     """
