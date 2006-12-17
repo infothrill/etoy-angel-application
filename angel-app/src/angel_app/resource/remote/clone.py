@@ -73,11 +73,10 @@ class Clone(object):
                           )).toxml()
   
     def stream(self):
-
-        resp = conn.getresponse()
-        if resp.status != responsecode.OK:
+        response = self.__performRequest()
+        if response.status != responsecode.OK:
             raise "must receive an OK response for GET, otherwise something's wrong"
-        return resp
+        return response
     
     
     def propFindAsXml(self, properties):

@@ -23,27 +23,28 @@
 ##
 
 """
-WebDAV MKCOL method.
+WebDAV DELETE method.
 """
 
-__all__ = ["precondition_MKCOL"]
+__all__ = ["precondition_DELETE"]
 
 from twisted.web2.http import HTTPError
 
-class MkcolMixin:
-    def precondition_MKCOL(self, request):
+class DeleteMixin:
+    
+    def precondition_DELETE(self, request):
         """
-        A MKCOL operation from a non-authenticated source is allowed
-        exactly if the file does not exist, but is referenced in the parent resource,
+        A DELETE operation from a non-authenticated source is allowed
+        exactly if the file is not referenced in the parent resource,
         See also proppatch.
         """ 
         
-        if not self.exists() and not self in self.parent().metaDataChildren():
+        if not self in self.parent().metaDataChildren():
             raise HTTPError(
                     StatusResponse(
                        responsecode.FORBIDDEN, 
-                       "MKCOL is forbidden on inexinstent unreferenced resources. Try a PROPPATCH first."
+                       "DELETE is forbidden on referenced resources. Try a PROPPATCH on the parent first."
                        ))
         
-        # permission granted
+        # permission to proceed granted
         return request

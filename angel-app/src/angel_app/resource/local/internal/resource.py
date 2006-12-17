@@ -36,8 +36,11 @@ class Crypto(
         Basic.__init__(self, path, defaultType, indexNames)
         
     def _inheritClones(self):
-        # TODO implement
-        pass
+        self.deadProperties().set(
+                                  self.parent().deadProperties().get(
+                                                                     elements.Clones.qname()
+                                                                     )
+                                  )
           
     def _updateMetadata(self): 
 
@@ -50,6 +53,7 @@ class Crypto(
         
         # now encrypt and sign, update the containing collection
         self.update(1)
+        self._inheritClones()
     
     
     def encrypt(self):

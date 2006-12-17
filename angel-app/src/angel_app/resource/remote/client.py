@@ -64,9 +64,8 @@ def inspectResource(path = rootDir):
     log.err("reference clone: " + `rc`)
     
     # first, make sure the local clone is fine:
-    # TODO: this is gunk.
     if rc.revision() > af.revisionNumber() or not af.verify() and af.fp.isdir():
-        af.fp.open().write(rc.stream().read())
+        open(af.fp.path, "w").write(rc.stream().read())
              
     
     # update all invalid clones with the meta data of the reference clone

@@ -154,7 +154,9 @@ class Basic(Safe):
         return dataIsCorrect and metaDataIsCorrect
     
     def isDeleted(self):
-        """        
+        """    
+        DEPRECATED -- now handled via parent's self.parent().metadataChildren()
+            
         @rtype boolean
         @return whether the deleted flag is set
         """
