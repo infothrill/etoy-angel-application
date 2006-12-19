@@ -353,7 +353,8 @@ def iterateClones(cloneSeedList, publicKeyString):
         if rr < revision:
             # too old
             DEBUG and log.err("iterateClones: " + `cc` + " too old: " + `rr` + " < " + `revision`)
-            bad.append(cc)
+            if cc not in bad:
+                bad.append(cc)
             continue
         
         if rr > revision:
