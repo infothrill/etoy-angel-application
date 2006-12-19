@@ -41,6 +41,43 @@ def getLocalCloneList(af):
     DEBUG and log.err("relative path is: " + rp)
     return [Clone(url, port, rp) for url, port in hostPorts]
 
+def _ensureLocalValidity(resource, referenceClone):
+    """
+    Make sure that the local clone is valid and up-to-date, by synchronizing from a reference
+    clone, if necessary.
+    
+    @param resource the local resource
+    @param referenceClone a (valid, up-to-date) reference resource, which may be remote
+    """
+    
+    # first, make sure the local clone is fine:
+    if (referenceClone.revision() > resource.revisionNumber() or not resource.verify()):
+        
+        # update the file contents, if necessary
+        if not resource.fp.isdir():
+            open(resource.fp.path, "w").write(referenceClone.stream().read())  
+            
+def _updateBadClone(af, bc):  
+            
+    # the local resource must be valid when we call this function, so no update necessary
+    if bc.host == "localhost":
+        continue
+        
+    # at this point, the parent's meta data should already be up-to-date
+    DEBUG and log.err("updating invalid clone: " + `bc`)
+        
+    # push the resource
+    if not af.isCollection():
+        bc.putFile(open(af.fp.path))
+    else:
+        if not bc.exists():
+            log.err("resource does not exist yet, creating collection")
+            bc.mkCol()
+            
+    log.err("resource exists, updating metadata")
+    # push the resource metadata
+    bc.performPushRequest(af)
+
 
 def inspectResource(path = rootDir):
 
@@ -62,28 +99,13 @@ def inspectResource(path = rootDir):
     rc = goodClones[0]
     
     log.err("reference clone: " + `rc`)
-    
-    # first, make sure the local clone is fine:
-    if (rc.revision() > af.revisionNumber() or not af.verify()) and not af.fp.isdir():
-        open(af.fp.path, "w").write(rc.stream().read())
+
+    _ensureLocalValidity(af, rc)
              
     
     # update all invalid clones with the meta data of the reference clone
     for bc in badClones: 
-        # at this point, the parent's meta data should already be up-to-date
-        DEBUG and log.err("updating invalid clone: " + `bc`)
-        
-        # push the resource
-        if not af.isCollection():
-            bc.putFile(open(af.fp.path))
-        else:
-            if not bc.exists():
-                log.err("resource does not exist yet, creating collection")
-                bc.mkCol()
-            
-        log.err("resource exists, updating metadata")
-        # push the resource metadata
-        bc.performPushRequest(af)
+        _updateBadClone(af, bc)
     
     
     DEBUG and log.err("DONE\n\n")
