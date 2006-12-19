@@ -57,11 +57,13 @@ def _ensureLocalValidity(resource, referenceClone):
         if not resource.fp.isdir():
             open(resource.fp.path, "w").write(referenceClone.stream().read())  
             
+        # TODO: now update the metadata
+            
 def _updateBadClone(af, bc):  
             
     # the local resource must be valid when we call this function, so no update necessary
     if bc.host == "localhost":
-        continue
+        return
         
     # at this point, the parent's meta data should already be up-to-date
     DEBUG and log.err("updating invalid clone: " + `bc`)

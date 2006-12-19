@@ -21,9 +21,12 @@ def splitParse(urlString):
     words = urlString.split(":")
     return (words[0], int(words[1]))
 
+
 class Clone(object):
     """
     Provides methods for transparent access to frequently used clone meta data.
+    
+    TODO: implement property caching
     """
     implements(IResource.IAngelResource)
     
@@ -60,17 +63,7 @@ class Clone(object):
                  )
         
         return conn.getresponse()
-         
-    
-    def __makePropfindRequestBody(self, *properties):
-        """
-        @rtype string
-        @return XML body of PROPFIND request.
-        """
-        return rfc2518.PropertyFind(
-                    rfc2518.PropertyContainer(
-                          *[property() for property in properties]
-                          )).toxml()
+
   
     def stream(self):
         response = self.__performRequest()
@@ -88,7 +81,7 @@ class Clone(object):
         resp = self.__performRequest(
                               method = "PROPFIND", 
                               headers = {"Depth" : 0}, 
-                              body = self.__makePropfindRequestBody(properties)
+                              body = makePropfindRequestBody(properties)
                               )
 
         if resp.status != responsecode.MULTI_STATUS:
@@ -171,6 +164,10 @@ class Clone(object):
         @rtype boolean
         @return if the meta data of a given clone is internally consistent.
         """
+        
+        
+        # TODO: this probably sucks rocks performance-wise, since for each
+        # element, we generate a HTTP request...
         toBeVerified = "".join([
                                 self.propertyFindBodyXml(element)
                                 for element in elements.signedKeys
@@ -242,6 +239,18 @@ class Clone(object):
         if resp.status != responsecode.MULTI_STATUS:
             raise "must receive a MULTI_STATUS response for PROPPATCH (received " + \
                 `resp.status` + "), otherwise something's wrong"
+
+
+   
+def makePropfindRequestBody(*properties):
+    """
+    @rtype string
+    @return XML body of PROPFIND request.
+    """
+    return rfc2518.PropertyFind(
+                rfc2518.PropertyContainer(
+                      *[property() for property in properties]
+                      )).toxml()
            
 def makePushBody(localClone):
     """
