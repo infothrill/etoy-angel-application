@@ -109,7 +109,7 @@ class Clone(object):
         @return the XML of a property find body as appropriate for the supplied property
         @rtype string
         """
-        return self.propertiesDocument(property
+        return self.propertiesDocument([property]
                          ).root_element.children[0].children[1].children[0].children[0].toxml()
     
     def propertyFindBody(self, property):
@@ -119,7 +119,7 @@ class Clone(object):
         """
         
         # points to the first dav "prop"-element
-        properties = self.propertiesDocument(property
+        properties = self.propertiesDocument([property]
                                              ).root_element.children[0].children[1].children[0]
         
         return "".join([str(ee) for ee in properties.children[0].children])
@@ -198,7 +198,7 @@ class Clone(object):
 
         try:
             prop = self.propertiesDocument(
-                                       elements.Clones
+                                       [elements.Clones]
                                        ).root_element.children[0].children[1].children[0]
                                        
             DEBUG and log.err(`prop`)
@@ -242,7 +242,7 @@ class Clone(object):
 
 
    
-def makePropfindRequestBody(*properties):
+def makePropfindRequestBody(properties):
     """
     @rtype string
     @return XML body of PROPFIND request.

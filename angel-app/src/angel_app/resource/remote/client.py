@@ -1,9 +1,9 @@
 from twisted.python import log
+from twisted.web2.dav.element import rfc2518
 from angel_app.config.common import rootDir
 from angel_app import elements
 from angel_app.resource.remote.util import relativePath
 from angel_app.resource.local.basic import Basic
-
 from angel_app.resource.remote.clone import splitParse, Clone, iterateClones
 
 DEBUG = True
@@ -51,32 +51,48 @@ def _ensureLocalValidity(resource, referenceClone):
     """
     
     # first, make sure the local clone is fine:
-    if (referenceClone.revision() > resource.revisionNumber() or not resource.verify()):
+    if (not resource.exists()) or (referenceClone.revision() > resource.revisionNumber()) or (not resource.verify()):
         
         # update the file contents, if necessary
         if not resource.fp.isdir():
             open(resource.fp.path, "w").write(referenceClone.stream().read())  
             
-        # TODO: now update the metadata
+        # then update the metadata
+        rp = referenceClone.propertiesDocument(elements.signedKeys)
+        re = rp.root_element.childOfType(rfc2518.Response
+                     ).childOfType(rfc2518.PropertyStatus
+                   ).childOfType(rfc2518.PropertyContainer)
+        
+        for sk in elements.signedKeys:
+            dd = re.childOfType(sk)
+            resource.deadProperties().set(dd)
+            
+        DEBUG and log.err("_ensureLocalValidity, local clone's signed keys are now: " + resource.signableMetadata())   
+        
             
 def _updateBadClone(af, bc):  
             
-    # the local resource must be valid when we call this function, so no update necessary
+
     if bc.host == "localhost":
+        # the local resource must be valid when we call this function, so no update necessary
         return
         
-    # at this point, the parent's meta data should already be up-to-date
+    if not bc.ping():
+        # the remote clone is unreachable, ignore for now
+        return
+        
     DEBUG and log.err("updating invalid clone: " + `bc`)
         
     # push the resource
     if not af.isCollection():
         bc.putFile(open(af.fp.path))
     else:
+        # it's a collection, which by definition does not have "contents",
+        # instead, just make sure it exists:
         if not bc.exists():
-            log.err("resource does not exist yet, creating collection")
+            DEBUG and log.err("remote collection resource does not exist yet, creating collection")
             bc.mkCol()
             
-    log.err("resource exists, updating metadata")
     # push the resource metadata
     bc.performPushRequest(af)
 
@@ -85,22 +101,25 @@ def inspectResource(path = rootDir):
 
     af = Basic(path)
     
-    if not af.exists: return
+    # at this point, we have no guarantee that a local clone actually
+    # exists. however, we do know that the parent exists, because it has
+    # been inspected before
+    standin = af
+    if not af.exists():
+        standin = af.parent()
     
-    DEBUG and log.err("reference data to be signed: " + af.signableMetadata() + af.getXml(elements.MetaDataSignature))
-    DEBUG and af.verify()
-    goodClones, badClones = iterateClones(getLocalCloneList(af), af.publicKeyString())
+    goodClones, badClones = iterateClones(getLocalCloneList(standin), standin.publicKeyString())
     
     if goodClones == []:
-        log.err("no valid clones found for " + path)
+        DEBUG and log.err("no valid clones found for " + path)
         return
     
-    log.err("inspectResource: valid clones: " + `goodClones`)
+    DEBUG and log.err("inspectResource: valid clones: " + `goodClones`)
     
     # the valid clones should all be identical, pick any one for future reference
     rc = goodClones[0]
     
-    log.err("reference clone: " + `rc`)
+    DEBUG and log.err("reference clone: " + `rc` + " local path " + af.fp.path)
 
     _ensureLocalValidity(af, rc)
              

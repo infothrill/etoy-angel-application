@@ -135,19 +135,25 @@ class Basic(Safe):
         if not self.exists():
             return False
         
+        try:
+            pk = self.get(elements.PublicKeyString)
+            cs = self.get(elements.ContentSignature)
+            sm = self.signableMetadata()
+            ms = elf.getOrSet(elements.MetaDataSignature)
+        except:
+            return False
+        
         publicKey = ezKey()
-        publicKey.importKey(self.get(elements.PublicKeyString))
+        publicKey.importKey(pk)
 
         contentSignature = self.get(elements.ContentSignature)
         #DEBUG and log.err("verify(): signature: " + contentSignature)
         dataIsCorrect = publicKey.verifyString(
                                   self.contentAsString(),
-                                  contentSignature)
+                                  cs)
         DEBUG and log.err("data signature for file " + self.fp.path + " is correct: " + `dataIsCorrect`)
             
-        metaDataIsCorrect = publicKey.verifyString(
-                                  self.signableMetadata(),
-                                  self.getOrSet(elements.MetaDataSignature))
+        metaDataIsCorrect = publicKey.verifyString(ms, sm)
         
         DEBUG and log.err("meta data signature for file " + self.fp.path + " is correct: " + `metaDataIsCorrect`)
             
