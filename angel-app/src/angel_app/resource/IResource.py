@@ -54,6 +54,11 @@ class IAngelResource(zope.interface.Interface):
         @return: a C{True} if this resource is a collection resource, C{False}
             otherwise.
         """
+
+    def uuid():
+        """
+        @return: a C{String} representation of a version 4 uuid (RFC 4122).
+        """
         
     def revision():
         """

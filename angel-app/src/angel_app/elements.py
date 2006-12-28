@@ -99,6 +99,12 @@ class MetaDataSignature (WebDAVTextElement):
     """
     name = "metaDataSignature"     
 
+class UUID (WebDAVTextElement):
+    """
+    A universally unique ID as defined in RFC 4122.
+    """
+    name = "uuid"
+
 class CloneSig (WebDAVTextElement):
     """
     The clone sig is an xml representation of the union of the signed keys

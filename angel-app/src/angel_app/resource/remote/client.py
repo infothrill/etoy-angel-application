@@ -108,7 +108,9 @@ def inspectResource(path = rootDir):
     if not af.exists():
         standin = af.parent()
     
-    goodClones, badClones = iterateClones(getLocalCloneList(standin), standin.publicKeyString())
+    startingClones = getLocalCloneList(standin)
+    DEBUG and log.err("starting out iteration with: " + `startingClones`)
+    goodClones, badClones = iterateClones(startingClones, standin.publicKeyString())
     
     if goodClones == []:
         DEBUG and log.err("no valid clones found for " + path)

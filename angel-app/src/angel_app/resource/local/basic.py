@@ -14,6 +14,8 @@ from angel_app.resource.local.external.methods.proppatch import ProppatchMixin
 from ezPyCrypto import key as ezKey
 import os
 
+from angel_app.contrib import uuid
+
 DEBUG = False
 
 class Basic(Safe):
@@ -50,7 +52,7 @@ class Basic(Safe):
             return super(Safe, self).contentLength()
         else:
             # getting the content length for an encrypted
-            # file requires decryption of the whole file.
+            # file requires decryption of the file.
             # let's just pretend we don't know
             return None
  
@@ -110,7 +112,8 @@ class Basic(Safe):
         @rtype boolean
         @return whether the file is encrypted. 
         """
-        if int(self.getOrSet(elements.Encrypted, "0")) == 0: 
+        default = self.parent().isEncrypted() and "1" or "0"
+        if int(self.getOrSet(elements.Encrypted, default)) == 0: 
             return False
         else:
             return True
@@ -166,10 +169,25 @@ class Basic(Safe):
         @rtype boolean
         @return whether the deleted flag is set
         """
+        if self.parent().isDeleted(): return True
         vv = self.getOrSet(elements.Deleted, "0")
         id = (vv != "0")       
         DEBUG and log.err("AngelFile.isDeleted(): " + vv + ": " + `id` + " for " + self.fp.path)
         return vv != "0"
+    
+    def uuid(self):
+        """
+        @see IResource
+        """
+        if not self.properties().hasProperty(elements.UUID):
+            self.properties().set(
+                  elements.UUID(
+                        str(
+                            uuid.uuid5(
+                               uuid.NAMESPACE_URL, 
+                               self.fp.path.split(os.sep)[-1]))))
+            
+        return self.properties().get(elements.UUID)
     
     def exists(self):
         """
@@ -217,7 +235,7 @@ class Basic(Safe):
         """
         The children of this resource as specified in the resource metadata.
         This may (under special circumstances) be different from the list
-        of children as specified in the findChildren routine, since the latter
+        of children as specified in the findChildren routine, since the former
         lists all children as found on the file system, while the latter lists
         all children registered with the angel app. In the case of an incomplete
         push update, the latter list contains children that are not present in
@@ -230,7 +248,7 @@ class Basic(Safe):
         @return The children of this resource as specified in the resource metadata.
         """
         foo = self.deadProperties().get(elements.Children.qname())
-        log.err(foo.toxml())
+        DEBUG and log.err(foo.toxml())
         children = foo.children
         return [
                 self.createSimilarFile(self.fp.path + os.sep + str(child.childOfType(davxml.HRef))) 
@@ -259,7 +277,7 @@ class Basic(Safe):
         Returns a string representation of the metadata that needs to
         be signed.
         """
-        sm = "".join([self.getXml(key) for key in elements.signedKeys])
+        sm = "".join([self.getXml(key) for key in elements.signedKeys]) + self.uuid()
         DEBUG and log.err("signable meta data for " + self.fp.path + ":" + sm)
         return sm
 
@@ -278,21 +296,21 @@ class Basic(Safe):
             # Redirect to include trailing '/' in URI
             DEBUG and log.err("redirecting")
             return http.RedirectResponse(req.unparseURL(path=req.path+'/'))
-        else:
-            ifp = self.fp.childSearchPreauth(*self.indexNames)
-            if ifp:
-                # Render from the index file
-                standin = self.createSimilarFile(ifp.path)
-            else:
-                # Render from a DirectoryLister
-                standin = dirlist.DirectoryLister(
+        
+        # is there an index file?
+        ifp = self.fp.childSearchPreauth(*self.indexNames)
+        if ifp:
+            # render from the index file
+            return self.createSimilarFile(ifp.path).render(req)
+        
+        # no index file, list the directory
+        return dirlist.DirectoryLister(
                     self.fp.path,
                     self.listChildren(),
                     self.contentTypes,
                     self.contentEncodings,
                     self.defaultType
-                )
-            return standin.render(req)
+                ).render(req)
 
     def getResponse(self):
         """
@@ -313,7 +331,6 @@ class Basic(Safe):
         """
         The Basic AngelFile just returns the cypthertext of the file.
         """
-        DEBUG and log.err("rendering file in cyphertext: " + self.fp.path)
         try:
             f = self.fp.open()
         except IOError, e:

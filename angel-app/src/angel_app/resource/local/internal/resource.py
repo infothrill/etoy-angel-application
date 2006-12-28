@@ -38,22 +38,19 @@ class Crypto(
     def _inheritClones(self):
         self.deadProperties().set(
                                   self.parent().deadProperties().get(
-                                                                     elements.Clones.qname()
-                                                                     )
-                                  )
+                                                                     elements.Clones.qname()))
           
     def _updateMetadata(self): 
 
         #if the file has been previously deleted,
         #the "deleted" flag has been set to "1"
         #undo that.
-        DEBUG and log.err("updating meta data for " + self.fp.path)
         self.deadProperties().set(elements.Deleted.fromString("0"))
-        DEBUG and log.err(self.fp.path + " is now flagged as deleted: " + `self.isDeleted()`)
-        
+
+        self._inheritClones()        
         # now encrypt and sign, update the containing collection
         self.update(1)
-        self._inheritClones()
+
     
     
     def encrypt(self):
