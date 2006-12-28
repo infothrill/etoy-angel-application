@@ -88,10 +88,7 @@ class Children (WebDAVElement):
 
 
 
-# the above keys must be signed in order for the 
-# AngelFile to be valid, i.e. the keys that are signed in the Crypto.seal() operation
 
-signedKeys = [Revision, ContentSignature, PublicKeyString, Deleted, Encrypted,  Children]
 
 class MetaDataSignature (WebDAVTextElement):
     """
@@ -104,6 +101,12 @@ class UUID (WebDAVTextElement):
     A universally unique ID as defined in RFC 4122.
     """
     name = "uuid"
+
+# the above keys must be signed in order for the 
+# AngelFile to be valid, i.e. the keys that are signed in the Crypto.seal() operation
+
+signedKeys = [Revision, ContentSignature, PublicKeyString, Deleted, Encrypted,  Children, UUID]
+
 
 class CloneSig (WebDAVTextElement):
     """
@@ -144,6 +147,7 @@ class Clones (WebDAVElement):
     allowed_children = {
         (dav_namespace, "clone"): (0, None),
         }
+
 
 
 # the above keys are _required_ for the angel-app to be (even conceptually)

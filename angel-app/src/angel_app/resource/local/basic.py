@@ -6,6 +6,7 @@ from twisted.web2.dav.xattrprops import xattrPropertyStore
 from twisted.web2.dav.element import rfc2518
 from twisted.web2.dav import davxml
 from angel_app import elements
+from angel_app.config.common import rootDir
 
 from zope.interface import implements
 from angel_app.resource import IResource
@@ -112,11 +113,14 @@ class Basic(Safe):
         @rtype boolean
         @return whether the file is encrypted. 
         """
-        default = self.parent().isEncrypted() and "1" or "0"
-        if int(self.getOrSet(elements.Encrypted, default)) == 0: 
-            return False
+        if not self.parent():
+            # in the absence of other information, we default to non-encryption
+            default = "0"
         else:
-            return True
+            # there's a parent resource: use this as default
+            default = self.parent().isEncrypted() and "1" or "0"
+            
+        return int(self.getOrSet(elements.Encrypted, default)) == 0
     
     def isWriteable(self):
         """
@@ -162,63 +166,58 @@ class Basic(Safe):
             
         return dataIsCorrect and metaDataIsCorrect
     
-    def isDeleted(self):
-        """    
-        DEPRECATED -- now handled via parent's self.parent().metadataChildren()
-            
-        @rtype boolean
-        @return whether the deleted flag is set
-        """
-        if self.parent().isDeleted(): return True
-        vv = self.getOrSet(elements.Deleted, "0")
-        id = (vv != "0")       
-        DEBUG and log.err("AngelFile.isDeleted(): " + vv + ": " + `id` + " for " + self.fp.path)
-        return vv != "0"
-    
     def uuid(self):
         """
         @see IResource
         """
-        if not self.properties().hasProperty(elements.UUID):
-            self.properties().set(
+        if not self.deadProperties().contains(elements.UUID.qname()):
+            self.deadProperties().set(
                   elements.UUID(
                         str(
                             uuid.uuid5(
                                uuid.NAMESPACE_URL, 
                                self.fp.path.split(os.sep)[-1]))))
             
-        return self.properties().get(elements.UUID)
+        return self.deadProperties().get(elements.UUID.qname())
+    
+    def referenced(self):
+        # the root is always referenced
+        if self.parent() is None: return True
+        
+        return self in self.parent().metaDataChildren()
     
     def exists(self):
         """
         @rtype boolean
-        @return true, if the corresponding file exists and is not flagged as deleted, false otherwise.
-        """
-        return self.fp.exists() and not self.isDeleted()
+        @return true, if the corresponding file exists and is referenced by the parent collection.
+        """       
+        return self.referenced() and self.fp.exists()
 
-    def findChildren(self, depth, getDeleted = False):
-        """        
+    def removeIfUnreferenced(self):
+        """
+        @rtype boolean
+        @return true if the resource was deleted, false otherwise
+        """
+        import commands
+        if self.fp.exists() and not self.exists():
+            # this implies this resource is not referenced:
+            assert(commands.getstatus("rm -rf %s", self.fp.path) == 0), \
+                "Failed to remove unreferenced resource: %s" % self.fp.path
+            return True
+        
+        return False     
+
+    def findChildren(self, depth):
+        """ 
         @rtype [Filepath]
         @return child nodes of this node. Optionally (and by default),
         child nodes which have the deleted flag set can be ignored.
         """
         
-        if not self.fp.isdir(): return []
-        
-        from os import sep
-        cc = super(Basic, self).findChildren(depth)
-        
-        log.err("Basic: running findChildren")
-        
-        if getDeleted: 
-            return cc
-        else:
-            return [
-                child for child in cc
-                if not 
-                self.createSimilarFile( 
-                                  self.fp.path + sep + child[1]
-                                  ).isDeleted()
+        return [
+                cc for 
+                cc in super(Basic, self).findChildren(depth) 
+                if not cc[0].removeIfUnreferenced()
                 ]
 
     def parent(self):
@@ -227,6 +226,12 @@ class Basic(Safe):
         
         @return this resource's parent
         """
+        assert(self.fp.path.find(rootDir)) == 0, "Path (%s) lies outside of repository." % self.fp.path
+        
+        if self.fp.path == rootDir:
+            # this is the root directory, don't return a parent
+            return None
+        
         return self.createSimilarFile( 
                                   self.fp.parent().path
                                   )
@@ -247,7 +252,10 @@ class Basic(Safe):
         @rtype [Basic] 
         @return The children of this resource as specified in the resource metadata.
         """
-        foo = self.deadProperties().get(elements.Children.qname())
+        try:
+            foo = self.deadProperties().get(elements.Children.qname())
+        except:
+            return []
         DEBUG and log.err(foo.toxml())
         children = foo.children
         return [
@@ -277,7 +285,7 @@ class Basic(Safe):
         Returns a string representation of the metadata that needs to
         be signed.
         """
-        sm = "".join([self.getXml(key) for key in elements.signedKeys]) + self.uuid()
+        sm = "".join([self.getXml(key) for key in elements.signedKeys])
         DEBUG and log.err("signable meta data for " + self.fp.path + ":" + sm)
         return sm
 

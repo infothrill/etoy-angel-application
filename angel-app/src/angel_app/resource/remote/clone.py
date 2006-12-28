@@ -89,7 +89,7 @@ class Clone(object):
             raise "must receive a MULTI_STATUS response for PROPFIND, otherwise something's wrong"
         
         data = resp.read()
-        util.validateMulistatusResponseBody(data)
+        #util.validateMulistatusResponseBody(data)
         #DEBUG and log.err("PROPFIND body: " + data)
         return data
     

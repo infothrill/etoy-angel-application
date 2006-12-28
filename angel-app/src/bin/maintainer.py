@@ -9,7 +9,7 @@ from angel_app.config.common import rootDir
 
             
 if __name__ == "__main__":
-    log.err("starting inspection loop")
+    log.err("starting inspection loop at: " + rootDir)
     
     def getChildren(path):
         return [cc.fp.path for cc in Basic(path).metaDataChildren()]
@@ -17,6 +17,7 @@ if __name__ == "__main__":
     def toEvaluate(foo, bar):
         return (client.inspectResource(foo), None)
     
+    assert(Basic(rootDir).exists()), "Root directory (%s) not found." % rootDir
+    
     for ii in graphWalker(rootDir, getChildren, toEvaluate):
         continue
-    #walkTree()
