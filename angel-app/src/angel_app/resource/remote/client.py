@@ -99,6 +99,7 @@ def _updateBadClone(af, bc):
 
 def inspectResource(path = rootDir):
 
+    DEBUG and log.err("inspecting resource " + path)
     af = Basic(path)
     
     # at this point, we have no guarantee that a local clone actually

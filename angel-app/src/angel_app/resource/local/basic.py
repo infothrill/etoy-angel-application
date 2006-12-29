@@ -30,18 +30,6 @@ class Basic(Safe):
                  indexNames=None):
         Safe.__init__(self, path, defaultType, indexNames)
         self._dead_properties = xattrPropertyStore(self)
-        #self.exists() and self.__initProperties()
-
-
-    def __initProperties(self):
-        """
-        Set all required properties to a syntactically meaningful default value.
-        """
-        dp = self._dead_properties
-        for element in elements.requiredKeys:
-            qq = element.qname()
-            if not dp.contains(qq):
-                dp.set(element())
 
     def contentAsString(self):
         if self.fp.isdir(): 
@@ -226,10 +214,12 @@ class Basic(Safe):
                 if not cc[0].removeIfUnreferenced()
                 ]
 
+    def relativePath(self):
+        DEBUG and log.err(self.fp.path.split(rootDir)[1])
+        return self.fp.path.split(rootDir)[1]
+
     def parent(self):
         """
-        TODO: ugly hack!! check if the parent is the site root!
-        
         @return this resource's parent
         """
         assert(self.fp.path.find(rootDir)) == 0, "Path (%s) lies outside of repository." % self.fp.path

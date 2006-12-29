@@ -34,6 +34,17 @@ class Crypto(
                  defaultType="text/plain",
                  indexNames=None):
         Basic.__init__(self, path, defaultType, indexNames)
+        self.exists() and self.__initProperties()
+
+    def __initProperties(self):
+        """
+        Set all required properties to a syntactically meaningful default value.
+        """
+        dp = self._dead_properties
+        for element in elements.requiredKeys:
+            qq = element.qname()
+            if not dp.contains(qq):
+                dp.set(element())
         
     def _inheritClones(self):
         self.deadProperties().set(
@@ -41,11 +52,6 @@ class Crypto(
                                                                      elements.Clones.qname()))
           
     def _updateMetadata(self): 
-
-        #if the file has been previously deleted,
-        #the "deleted" flag has been set to "1"
-        #undo that.
-        self.deadProperties().set(elements.Deleted.fromString("0"))
 
         self._inheritClones()        
         # now encrypt and sign, update the containing collection
