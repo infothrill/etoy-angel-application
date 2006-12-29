@@ -53,7 +53,7 @@ class Clone(object):
         return `self`.__hash__()
 
     def __performRequest(self, method = "GET", headers = {}, body = ""):
-        DEBUG and log.err("attempting " + method + " connection to: " + `self.host` + ":" + `self.port` + " " + self.path)   
+        DEBUG and log.err("attempting " + method + " connection to: " + self.host + ":" + `self.port` + " " + self.path)   
         conn = HTTPConnection(self.host, self.port)        
         conn.request(
                  method, 
@@ -85,11 +85,11 @@ class Clone(object):
                               )
 
         if resp.status != responsecode.MULTI_STATUS:
-            log.err("bad response: " + resp.status)
-            raise "must receive a MULTI_STATUS response for PROPFIND, otherwise something's wrong"
+            DEBUG and log.err("bad response: " + `resp.status`)
+            raise "must receive a MULTI_STATUS response for PROPFIND, otherwise something's wrong, got: " + `resp.status` +\
+                resp.read()
         
         data = resp.read()
-        #util.validateMulistatusResponseBody(data)
         #DEBUG and log.err("PROPFIND body: " + data)
         return data
     
@@ -118,6 +118,7 @@ class Clone(object):
         @return the body of a property consisting of just PCDATA.
         """
         
+        log.err("returned for property "  + `property.qname()` + ": " + self.propertiesDocument([property]).toxml())
         # points to the first dav "prop"-element
         properties = self.propertiesDocument([property]
                                              ).root_element.children[0].children[1].children[0]
@@ -129,14 +130,19 @@ class Clone(object):
         A resource is defined to exist, if it has a valid revsion number.
         Existence does not imply validity.
         """
-        return self.revision() >= 0
+        try:
+            response = self.__performRequest(method = "HEAD", body = "")
+            return response.status == responsecode.OK
+        except:
+            return False       
+
     
     def ping(self):
         try:
-            self.exists()
+            response = self.__performRequest(method = "HEAD", body = "")
             return True
         except:
-            return False
+            return False  
     
     def revision(self):
         """
@@ -154,10 +160,7 @@ class Clone(object):
         @rtype string
         @return the public key string of the clone.
         """
-        try:
-            return self.propertyFindBody(elements.PublicKeyString)
-        except:
-            return ""
+        return self.propertyFindBody(elements.PublicKeyString)
     
     def validate(self):
         """
@@ -327,7 +330,7 @@ def iterateClones(cloneSeedList, publicKeyString):
         
         # pop the next clone from the queue
         cc = toVisit[0]
-        log.err("inspecting clone: " + `cc`)
+        DEBUG and log.err("inspecting clone: " + `cc`)
         toVisit = toVisit[1:]
         
         if visited.has_key(cc):
@@ -341,6 +344,12 @@ def iterateClones(cloneSeedList, publicKeyString):
         
         if not cc.ping():
             # this clone is unreachable, ignore it
+            continue
+        
+        if not cc.exists():
+            # the corresponding resource does not exist
+            DEBUG and log.err("iterateClones: " + `cc.path` + " not found on host " + `cc`)
+            bad.append(cc)
             continue
         
         if cc.publicKeyString() != publicKeyString:
