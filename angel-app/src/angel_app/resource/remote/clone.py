@@ -127,7 +127,6 @@ class Clone(object):
 
     def exists(self): 
         """
-        A resource is defined to exist, if it has a valid revsion number.
         Existence does not imply validity.
         """
         try:
@@ -138,6 +137,9 @@ class Clone(object):
 
     
     def ping(self):
+        """
+        If an HTTP request can be performed, the remote host is up.
+        """
         try:
             response = self.__performRequest(method = "HEAD", body = "")
             return True

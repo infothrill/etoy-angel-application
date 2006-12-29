@@ -205,7 +205,13 @@ class Basic(Safe):
                 "Failed to remove unreferenced resource: %s" % self.fp.path
             return True
         
-        return False     
+        return False
+    
+    def familyPlanning(self):
+        """
+        Remove all direct children that are not referenced.
+        """
+        self.findChildren("1")
 
     def findChildren(self, depth):
         """ 

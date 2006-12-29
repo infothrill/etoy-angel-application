@@ -114,7 +114,10 @@ class ProppatchMixin:
                 responses.add(Failure(), property)
             else:
                 responses.add(responsecode.OK, property)
-            
+      
+        # remove all unreferenced children
+        self.familyPlanning()
+        
         return MultiStatusResponse([responses.response()])
 
 
