@@ -4,7 +4,7 @@ from angel_app.config.common import rootDir
 from angel_app import elements
 from angel_app.resource.remote.util import relativePath
 from angel_app.resource.local.basic import Basic
-from angel_app.resource.remote.clone import splitParse, Clone, iterateClones
+from angel_app.resource.remote.clone import splitParse, Clone
 
 DEBUG = True
 
@@ -133,4 +133,94 @@ def inspectResource(path = rootDir):
     
     
     DEBUG and log.err("DONE\n\n")
+    
+    
+
+
+def iterateClones(cloneSeedList, publicKeyString):
+    """
+    get all the clones of the (valid) clones we have already looked at
+    which are not among any (including the invalid) of the clones we
+    have already looked at, and validate those clones.
+    
+    @rtype ([Clone], [Clone])
+    @return a tuple of ([the list of valid clones], [the list of checked clones])
+    """  
+    import copy
+    toVisit = copy.copy(cloneSeedList)
+    visited = []
+    good = []
+    bad = []
+    ugly = []
+    revision = 0
+    
+    while len(toVisit) != 0:
+        # there are clones that we need to inspect
+        
+        # pop the next clone from the queue
+        cc = toVisit[0]
+        DEBUG and log.err("inspecting clone: " + `cc`)
+        toVisit = toVisit[1:]
+        
+        if cc in visited:
+            # we have already looked at this clone -- don't bother with it
+            DEBUG and log.err("iterateClones: " + `cc` + " ignoring")
+            continue
+               
+        # otherwise, mark the clone as checked and proceed
+        visited.append(cc)
+        
+        if not cc.ping():
+            # this clone is unreachable, ignore it
+            continue
+        
+        if not cc.exists():
+            # the corresponding resource does not exist
+            DEBUG and log.err("iterateClones: " + `cc.path` + " not found on host " + `cc`)
+            bad.append(cc)
+            continue
+        
+        if cc.publicKeyString() != publicKeyString:
+            # an invalid clone
+            DEBUG and log.err("iterateClones: " + `cc` + " wrong public key")
+            DEBUG and log.err("expected: " + publicKeyString)
+            DEBUG and log.err("found: " + cc.publicKeyString())
+            bad.append(cc)
+            continue
+        
+        if not cc.validate():
+            # an invalid clone
+            DEBUG and log.err("iterateClones: " + `cc` + " invalid signature")
+            bad.append(cc)
+            continue
+        
+        rr = cc.revision()
+        
+        if rr < revision:
+            # too old
+            DEBUG and log.err("iterateClones: " + `cc` + " too old: " + `rr` + " < " + `revision`)
+            if cc not in bad:
+                bad.append(cc)
+            continue
+        
+        if rr > revision:
+            # hah! the clone is newer than anything
+            # we've seen so far. all the clones we thought
+            # were good are in fact bad.
+            DEBUG and log.err("iterateClones: " + `cc` + " very new: " + `rr` + " > " + `revision`)
+            bad.extend(good)
+            good = []
+            revision = rr
+        
+        # we only arrive here if the clone is valid and sufficiently new
+        good.append(cc)
+        DEBUG and log.err("iterateClones: adding good clone: " + `cc`)
+        toVisit += [Clone(host, port) for host, port in cc.cloneList()]
+        
+        
+
+    DEBUG and log.err("iterateClones: good clones: " + `good`)
+    DEBUG and log.err("iterateClones: bad clones: " + `bad`)
+    
+    return good, bad
     

@@ -15,11 +15,11 @@ if __name__ == "__main__":
         return [cc.fp.path for cc in Basic(path).metaDataChildren()]
     
     def toEvaluate(foo, bar):
-        try:
+        #try:
             return (client.inspectResource(foo), None)
-        except:
-            log.err("Inspection loop failed for resource: " + `foo`)
-            raise StopIteration
+        #except:
+        #    log.err("Inspection loop failed for resource: " + `foo`)
+        #    raise StopIteration
     
     assert(Basic(rootDir).exists()), "Root directory (%s) not found." % rootDir
     

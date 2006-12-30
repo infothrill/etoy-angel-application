@@ -30,3 +30,4 @@ import time
 
 def makeResourceID(relativePath = "/"):
     return relativePath + `time.gmtime()`
+
