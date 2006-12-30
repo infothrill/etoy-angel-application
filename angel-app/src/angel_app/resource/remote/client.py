@@ -2,7 +2,6 @@ from twisted.python import log
 from twisted.web2.dav.element import rfc2518
 from angel_app.config.common import rootDir
 from angel_app import elements
-from angel_app.resource.remote.util import relativePath
 from angel_app.resource.local.basic import Basic
 from angel_app.resource.remote.clone import splitParse, Clone
 
@@ -35,11 +34,7 @@ def getLocalCloneList(af):
     @rtype [Clone]
     """
     hostPorts = [splitParse(url) for url in getLocalCloneURLList(af)]
-    absPath = af.fp.path
-    DEBUG and log.err("inspecting resource: " + absPath)
-    rp = relativePath(absPath)
-    DEBUG and log.err("relative path is: " + rp)
-    return [Clone(url, port, rp) for url, port in hostPorts]
+    return [Clone(url, port, af.relativePath()) for url, port in hostPorts]
 
 def _ensureLocalValidity(resource, referenceClone):
     """
@@ -99,7 +94,7 @@ def _updateBadClone(af, bc):
 
 def inspectResource(path = rootDir):
 
-    DEBUG and log.err("inspecting resource " + path)
+    DEBUG and log.err("inspecting resource: " + path)
     af = Basic(path)
     
     # at this point, we have no guarantee that a local clone actually
@@ -115,7 +110,7 @@ def inspectResource(path = rootDir):
     
     if goodClones == []:
         DEBUG and log.err("no valid clones found for " + path)
-        return
+        raise StopIteration
     
     DEBUG and log.err("inspectResource: valid clones: " + `goodClones`)
     
@@ -171,12 +166,11 @@ def iterateClones(cloneSeedList, publicKeyString):
         visited.append(cc)
         
         if not cc.ping():
-            # this clone is unreachable, ignore it
+            DEBUG and log.err("iterateClones: clone " + `cc` + " no reachable, ignoring")
             continue
         
         if not cc.exists():
-            # the corresponding resource does not exist
-            DEBUG and log.err("iterateClones: " + `cc.path` + " not found on host " + `cc`)
+            DEBUG and log.err("iterateClones: resouce " + `cc.path` + " not found on host " + `cc`)
             bad.append(cc)
             continue
         

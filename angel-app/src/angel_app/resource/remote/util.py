@@ -9,22 +9,6 @@ from angel_app import elements
 
 DEBUG = True
 
-def relativePath(absolutePath = sep, rootDir = rootDir):
-    """
-    Given the absolute path of a resource (e.g. an AngelFile),
-    return the relative path of that resource with respect to the root
-    directory.
-    """
-    
-    if absolutePath.find(rootDir) != 0:
-        raise "the absolute path supplied must lie below the root directory."
-    
-    if rootDir[-1] == sep: 
-        rootDir = rootDir[:-1]
-    
-    return absolutePath.replace(rootDir, "")
-
-
 def validateMulistatusResponseBody(rawData = ""):
     """
     Assert that every response code in the MULTISTATUS response is 200 OK.

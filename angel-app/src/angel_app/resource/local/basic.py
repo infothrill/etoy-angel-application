@@ -240,6 +240,8 @@ class Basic(Safe):
         @rtype [Basic] 
         @return The children of this resource as specified in the resource metadata.
         """
+        if not self.isCollection(): return []
+        
         try:
             foo = self.deadProperties().get(elements.Children.qname())
         except:

@@ -49,18 +49,11 @@ class PublicKeyString (WebDAVTextElement):
     String representation of the public key of the cryptographic key pair that authorizes for
     writing to the file.
     """
-    name = "publicKeyString" 
-    
-class Deleted (WebDAVTextElement):
-    """
-    Whether the file has been deleted (in which case the metadata must still be available!
-    weird but true). hmm. maybe move this into a reference in the parent directory.
-    """
-    name = "deleted"     
+    name = "publicKeyString"     
 
 class Encrypted (WebDAVTextElement):
     """
-    Whether the file contents are encrypted.
+    Whether the file contents (and, later, file names) are encrypted.
     """
     name = "encrypted"   
 
@@ -106,7 +99,7 @@ class ResourceID (WebDAVTextElement):
 # the above keys must be signed in order for the 
 # AngelFile to be valid, i.e. the keys that are signed in the Crypto.seal() operation
 
-signedKeys = [Revision, ContentSignature, PublicKeyString, Deleted, Encrypted,  Children, ResourceID]
+signedKeys = [Revision, ContentSignature, PublicKeyString, Encrypted,  Children, ResourceID]
 
 
 class CloneSig (WebDAVTextElement):

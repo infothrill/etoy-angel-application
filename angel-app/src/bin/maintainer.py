@@ -7,12 +7,15 @@ setup.setupDefaultPeers()
 
 from angel_app.config.common import rootDir
 
+DEBUG = True
             
 if __name__ == "__main__":
     log.err("starting inspection loop at: " + rootDir)
     
     def getChildren(path):
-        return [cc.fp.path for cc in Basic(path).metaDataChildren()]
+        children = [cc.fp.path for cc in Basic(path).metaDataChildren()]
+        DEBUG and log.err("children of " + path + " are " + `children`)
+        return children
     
     def toEvaluate(foo, bar):
         #try:
