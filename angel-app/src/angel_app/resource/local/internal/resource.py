@@ -5,6 +5,7 @@ from angel_app import elements
 from angel_app.resource.local.internal.methods import copy, delete, lock, mkcol, move, put
 from angel_app.resource.local.basic import Basic
 from ezPyCrypto import key as ezKey
+from angel_app.config import internal as config
 
 DEBUG = True
 
@@ -44,7 +45,16 @@ class Crypto(
         for element in elements.requiredKeys:
             qq = element.qname()
             if not dp.contains(qq):
-                dp.set(element())
+                if element in config.defaultMetaData.keys():
+                    ee = element(
+                                   config.defaultMetaData[element](self)
+                           )
+                else:  
+                    ee = element()  
+                
+                DEBUG and log.err("initializing " + element.sname() + " of " + self.fp.path + " to " + ee.toxml())
+                dp.set(ee)
+                    
         
     def _inheritClones(self):
         self.deadProperties().set(
@@ -133,26 +143,27 @@ class Crypto(
         
         if not self.secretKey:
             # we don't even have a private key
-            DEBUG and log.err("no key available")
+            DEBUG and log.err("Crypto: no key available")
             return False
 
         
         if not self.fp.exists():
             # the corresponding file does not exist
-            if not self.fp.parent().exists():
-                # also the parent directory does not exist
+            
+            if not self.parent():
+                # this is the root, the root directory _must_ exist, so fail
+                return False
+            
+            if not self.parent().exists():
+                DEBUG and log.err("this is not the root, but the parent directory does not exist")
                 return False
             else:
-                # TODO: as soon as we have a running maintenance loop
-                # comment out this line
-                return True
-                # and uncomment this:
-                #return AngelFile(self.fp.parent().path).isWritableFile()
+                return self.parent().isWritableFile()
                 
                 
         myKeyString = self.secretKey.exportKey()    
         fileKeyString = self.getOrSet(elements.PublicKeyString, myKeyString)
-        DEBUG and log.err("public key for " + self.fp.path + " " + fileKeyString)
+        DEBUG and log.err("public key for " + self.fp.path + ": " + fileKeyString)
         return fileKeyString == myKeyString
 
 
@@ -165,9 +176,6 @@ class Crypto(
         
         See also: L{ezPyCrypto.key}
         """
-
-        self.getOrSet(elements.Deleted, "0")
-        self.updateChildList()
         
         DEBUG and log.err("Crypto: sealing " + self.fp.path)
         DEBUG and log.err("Crypto: signable data: " + self.signableMetadata())
@@ -176,6 +184,7 @@ class Crypto(
         #storedsignature = self.getOrSet(elements.MetaDataSignature, "0")
         #log.err(signature)
         #log.err(storedsignature)
+        DEBUG and log.err("Crypto: signature is " + signature)
         return signature
     
     def updateParent(self, recursionLimit = 0):
@@ -196,6 +205,7 @@ class Crypto(
         self.bumpRevisionNumber()
         self.seal()
 
+        DEBUG and log.err("Verifying " + self.fp.path)
         DEBUG and self.verify()
         
         # certainly not going to hurt if we do this:
@@ -204,20 +214,6 @@ class Crypto(
         log.err(self.fp.path + " now at revision: " + self.getOrSet(elements.Revision)) 
         if recursionLimit > 0:
             self.updateParent(recursionLimit - 1)
- 
- 
-    def updateChildList(self):
-        
-            childList = self.findChildren("1")
-            log.err("Crypto: children: " + `childList`)
-            
-            childElements = [elements.Child(rfc2518.HRef(child[1]))
-                              for child in childList
-                              ]
-            log.err("Crypto: children as XML: " + `childElements`)
-            self.deadProperties().set(
-                          elements.Children(*childElements)
-                          )   
     
         
     def getResponseStream(self):

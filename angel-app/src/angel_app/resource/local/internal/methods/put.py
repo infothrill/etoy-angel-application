@@ -11,7 +11,7 @@ from twisted.web2.dav.http import statusForFailure
 
 from twisted.web2.dav.fileop import checkResponse
 
-DEBUG = False
+DEBUG = True
 
 class Putable(object):
     """
@@ -47,6 +47,8 @@ class Putable(object):
         
     def __putDelete(self):
         """
+        Original comment from Wilfredo:
+        
         Perform a PUT of the given data stream into the given filepath.
         @param stream: the stream to write to the destination.
         @param filepath: the L{FilePath} of the destination file.
@@ -71,19 +73,13 @@ class Putable(object):
         
         # TODO: actually do the above
         
-#        if self.fp.exists():
-        if self.fp.exists() and not self.isDeleted():
+        if self.fp.exists():
             response = self.delete()
-            
-            #response = waitForDeferred(self.delete())
-            #yield response
-            #response = response.getResult()
+            DEBUG and log.err("__putDelete: " + `response`)
             checkResponse(response, "delete", responsecode.NO_CONTENT)
-            DEBUG and log.err("self.delete() exited with response code: " + `responsecode.NO_CONTENT`)
             success_code = responsecode.NO_CONTENT
         else:
             success_code = responsecode.CREATED
-        
         yield success_code
     
     

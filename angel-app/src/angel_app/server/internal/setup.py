@@ -5,6 +5,7 @@ from angel_app.resource.local.internal.resource import Crypto
 from angel_app import elements
 from angel_app.config.common import rootDir
 from angel_app.config import rootDefaults
+from twisted.python import log
 
 
 DEBUG = True
@@ -26,13 +27,14 @@ def setupRootMetaData():
     I THINK.
     """
     angelRoot = Crypto(rootDir)   
+    DEBUG and log.err("public key: " + rootDefaults.publicKey)
        
-    for item in {
-                elements.PublicKeyString     :    rootDefaults.publicKey,
-                elements.Revision            :    "0",
-                elements.Deleted             :    "0"
-                }.items():
-        angelRoot.getOrSet(item[0], item[1])
+    for item in [
+                elements.PublicKeyString(rootDefaults.publicKey),
+                elements.Revision("0"),
+                elements.Encrypted("0")
+                ]:
+        angelRoot.deadProperties().set(item)
     
     # update all remaining metadata
     angelRoot.update()

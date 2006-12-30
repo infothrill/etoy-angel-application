@@ -86,12 +86,9 @@ class mkcolMixin:
         log.err("Error while handling MKCOL body: %s" % (e,))
         raise HTTPError(responsecode.UNSUPPORTED_MEDIA_TYPE)
 
-    if not self.fp.exists():
-        ignored = waitForDeferred(mkcollection(self.fp))  
-        yield ignored
-        ignored = ignored.getResult()
-    else:
-        self.deadProperties().set(elements.Deleted.fromString("0"))
+    ignored = waitForDeferred(mkcollection(self.fp))  
+    yield ignored
+    ignored = ignored.getResult()
 
     self._updateMetadata()
     

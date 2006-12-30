@@ -7,7 +7,7 @@ from twisted.web2.http import HTTPError, StatusResponse
 from twisted.web2.dav.http import ResponseQueue, statusForFailure
 from angel_app import elements
 
-DEBUG = False
+DEBUG = True
 
 class Deletable(object):
     """
@@ -25,13 +25,10 @@ class Deletable(object):
 
         succeededFileOperation =  self.__delete(uri, depth)
         
-        self.deadProperties().set(
-                                  elements.Deleted().fromString("1"))
-        
         self.update()
         
         
-        log.err("done deleting file, with return code: " + `succeededFileOperation`)
+        DEBUG and log.err("delete on " + self.fp.path + ": done, with return code: " + `succeededFileOperation`)
         return succeededFileOperation
         
     def __deleteFile(self):
@@ -52,7 +49,7 @@ class Deletable(object):
 
         return responsecode.NO_CONTENT
     
-    def __recursiveDelete(self, uri):
+    def _recursiveDelete(self, uri):
         """
         Recursive delete
         
@@ -101,14 +98,6 @@ class Deletable(object):
                     except:
                         errors.add(path, Failure())
 
-        #try:
-        #    os.rmdir(self.fp.path)
-        #except:
-        #    raise HTTPError(statusForFailure(
-        #        Failure(),
-        #        "deleting directory: %s" % (self.fp.path,)
-        #    ))
-
         return errors.response()
     
     def __deleteDirectory(self, uri, depth):
@@ -130,7 +119,7 @@ class Deletable(object):
             DEBUG and log.err(msg)
             raise HTTPError(StatusResponse(responsecode.BAD_REQUEST, msg))
         
-        self.__recursiveDelete(uri)
+        self._recursiveDelete(uri)
         
         return responsecode.NO_CONTENT
 

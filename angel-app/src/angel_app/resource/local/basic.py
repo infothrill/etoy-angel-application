@@ -17,7 +17,7 @@ import os
 
 from angel_app.contrib import uuid
 
-DEBUG = False
+DEBUG = True
 
 class Basic(Safe):
     """
@@ -101,14 +101,7 @@ class Basic(Safe):
         @rtype boolean
         @return whether the file is encrypted. 
         """
-        if not self.parent():
-            # in the absence of other information, we default to non-encryption
-            default = "0"
-        else:
-            # there's a parent resource: use this as default
-            default = self.parent().isEncrypted() and "1" or "0"
-            
-        return int(self.getOrSet(elements.Encrypted, default)) == 0
+        return int(self.get(elements.Encrypted)) == 1
     
     def isWriteable(self):
         """
@@ -119,10 +112,16 @@ class Basic(Safe):
         @rtype boolean
         @return whether the basic AngelFile is writeable
         """
-        if not self.verify(): return True
+        if not self.verify():
+            DEBUG and log.err(self.fp.path + " is writable")
+            return True
         
         pp = self.parent()
-        if not self.exists() and pp.verify() and [self in pp.metaDataChildren()]: return True
+        if not self.exists() and pp.verify() and [self in pp.metaDataChildren()]: 
+            DEBUG and log.err(self.fp.path + " is writable")
+            return True
+        
+        DEBUG and log.err(self.fp.path + " is not writable")
         return False
     
     def verify(self):
@@ -178,11 +177,9 @@ class Basic(Safe):
         @rtype boolean
         @return true if the resource was deleted, false otherwise
         """
-        import commands
         if self.fp.exists() and not self.exists():
-            # this implies this resource is not referenced:
-            assert(commands.getstatus("rm -rf %s" % self.fp.path) == 0), \
-                "Failed to remove unreferenced resource: %s" % self.fp.path
+            DEBUG and log.err(self.fp.path + " not referenced by parent, deleting")
+            self._recursiveDelete(self.fp.path)
             return True
         
         return False
@@ -200,9 +197,11 @@ class Basic(Safe):
         child nodes which have the deleted flag set can be ignored.
         """
         
+        children = super(Basic, self).findChildren(depth)
+
         return [
                 cc for 
-                cc in super(Basic, self).findChildren(depth) 
+                cc in children
                 if not cc[0].removeIfUnreferenced()
                 ]
 
@@ -244,10 +243,11 @@ class Basic(Safe):
         
         try:
             foo = self.deadProperties().get(elements.Children.qname())
+            DEBUG and log.err(foo.toxml())
+            children = foo.children
         except:
-            return []
-        DEBUG and log.err(foo.toxml())
-        children = foo.children
+            children = []
+
         return [
                 self.createSimilarFile(self.fp.path + os.sep + str(child.childOfType(davxml.HRef))) 
                 for child in children
@@ -275,9 +275,13 @@ class Basic(Safe):
         Returns a string representation of the metadata that needs to
         be signed.
         """
-        sm = "".join([self.getXml(key) for key in elements.signedKeys])
-        DEBUG and log.err("signable meta data for " + self.fp.path + ":" + sm)
-        return sm
+        try:
+            sm = "".join([self.getXml(key) for key in elements.signedKeys])
+            DEBUG and log.err("signable meta data for " + self.fp.path + ":" + sm)
+            return sm
+        except Exception, e:
+            log.err("Basic: invalid meta data: " + `e`)
+            raise ValueError
 
     def render(self, req):
         """You know what you doing. override render method (for GET) in twisted.web2.static.py"""
