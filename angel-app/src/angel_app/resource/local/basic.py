@@ -181,7 +181,7 @@ class Basic(Safe):
         import commands
         if self.fp.exists() and not self.exists():
             # this implies this resource is not referenced:
-            assert(commands.getstatus("rm -rf %s", self.fp.path) == 0), \
+            assert(commands.getstatus("rm -rf %s" % self.fp.path) == 0), \
                 "Failed to remove unreferenced resource: %s" % self.fp.path
             return True
         
