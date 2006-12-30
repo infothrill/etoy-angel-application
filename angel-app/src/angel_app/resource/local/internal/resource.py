@@ -34,7 +34,7 @@ class Crypto(
                  defaultType="text/plain",
                  indexNames=None):
         Basic.__init__(self, path, defaultType, indexNames)
-        self.exists() and self.__initProperties()
+        self.fp.exists() and self.__initProperties()
 
     def __initProperties(self):
         """

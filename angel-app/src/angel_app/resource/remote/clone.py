@@ -9,7 +9,7 @@ from zope.interface import implements
 from ezPyCrypto import key
 import urllib
 
-DEBUG = True
+DEBUG = False
 
 from httplib import HTTPConnection
 
@@ -118,7 +118,7 @@ class Clone(object):
         @return the body of a property consisting of just PCDATA.
         """
         
-        log.err("returned for property "  + `property.qname()` + ": " + self.propertiesDocument([property]).toxml())
+        DEBUG and log.err("returned for property "  + `property.qname()` + ": " + self.propertiesDocument([property]).toxml())
         # points to the first dav "prop"-element
         properties = self.propertiesDocument([property]
                                              ).root_element.children[0].children[1].children[0]

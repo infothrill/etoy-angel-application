@@ -55,9 +55,9 @@ class IAngelResource(zope.interface.Interface):
             otherwise.
         """
 
-    def uuid():
+    def resourceID():
         """
-        @return: a C{String} representation of a version 4 uuid (RFC 4122).
+        @return: the id of the resource as C{String}.
         """
         
     def revision():

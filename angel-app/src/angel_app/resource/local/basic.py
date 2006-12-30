@@ -154,19 +154,11 @@ class Basic(Safe):
             
         return dataIsCorrect and metaDataIsCorrect
     
-    def uuid(self):
+    def resourceID(self):
         """
         @see IResource
-        """
-        if not self.deadProperties().contains(elements.UUID.qname()):
-            self.deadProperties().set(
-                  elements.UUID(
-                        str(
-                            uuid.uuid5(
-                               uuid.NAMESPACE_URL, 
-                               self.fp.path.split(os.sep)[-1]))))
-            
-        return self.deadProperties().get(elements.UUID.qname())
+        """ 
+        return self.deadProperties().get(elements.resourceID.qname())
     
     def referenced(self):
         # the root is always referenced

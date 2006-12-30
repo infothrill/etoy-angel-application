@@ -96,16 +96,16 @@ class MetaDataSignature (WebDAVTextElement):
     """
     name = "metaDataSignature"     
 
-class UUID (WebDAVTextElement):
+class ResourceID (WebDAVTextElement):
     """
-    A universally unique ID as defined in RFC 4122.
+    A unique (per-key) ID.
     """
-    name = "uuid"
+    name = "resourceid"
 
 # the above keys must be signed in order for the 
 # AngelFile to be valid, i.e. the keys that are signed in the Crypto.seal() operation
 
-signedKeys = [Revision, ContentSignature, PublicKeyString, Deleted, Encrypted,  Children, UUID]
+signedKeys = [Revision, ContentSignature, PublicKeyString, Deleted, Encrypted,  Children, ResourceID]
 
 
 class CloneSig (WebDAVTextElement):
