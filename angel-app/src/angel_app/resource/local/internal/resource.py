@@ -39,16 +39,14 @@ class Crypto(
 
     def __initProperties(self):
         """
-        Set all required properties to a syntactically meaningful default value.
+        Set all required properties to a syntactically meaningful default value, if not already set.
         """
         dp = self._dead_properties
         for element in elements.requiredKeys:
             qq = element.qname()
             if not dp.contains(qq):
                 if element in config.defaultMetaData.keys():
-                    ee = element(
-                                   config.defaultMetaData[element](self)
-                           )
+                    ee = element(config.defaultMetaData[element](self))
                 else:  
                     ee = element()  
                 
@@ -63,7 +61,8 @@ class Crypto(
           
     def _updateMetadata(self): 
 
-        self._inheritClones()        
+        self.__initProperties()
+        #self._inheritClones()        
         # now encrypt and sign, update the containing collection
         self.update(1)
 
@@ -199,10 +198,15 @@ class Crypto(
         if not self.isWritableFile(): 
             raise "not authorized to perform update of signed meta data"
 
+        DEBUG and log.err("encrypting " + self.fp.path + "?")
         if self.isEncrypted():
+            DEBUG and log.err("encrypting " + self.fp.path)
             self.encrypt()
+        DEBUG and log.err("signing " + self.fp.path)
         self.sign()
+        DEBUG and log.err("bumping revision number for " + self.fp.path)
         self.bumpRevisionNumber()
+        DEBUG and log.err("sealing " + self.fp.path)
         self.seal()
 
         DEBUG and log.err("Verifying " + self.fp.path)

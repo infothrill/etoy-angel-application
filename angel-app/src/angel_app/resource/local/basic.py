@@ -50,7 +50,7 @@ class Basic(Safe):
         @return the metadata element corresponding to davXMLTextElement
         """
         if not self.fp.exists():
-            DEBUG and log.err("AngelFile.getOrSet: file not found for path: " + self.fp.path)
+            DEBUG and log.err("Basic.get(): file not found for path: " + self.fp.path)
             raise HTTPError(responsecode.NOT_FOUND)
         
         # TODO: for some reason, the xml document parser wants to split

@@ -38,7 +38,9 @@ class Deletable(object):
         DEBUG and log.err("Deleting file %s" % (self.fp.path,))
         try:
             if self.fp.exists():
-              open(self.fp.path, "w").close()
+              #open(self.fp.path, "w").close()
+              DEBUG and log.err("__deleteFile: " + self.fp.path)
+              os.remove(self.fp.path)
         except:
             ff = Failure()
             log.err(ff)

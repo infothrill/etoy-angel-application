@@ -25,17 +25,17 @@ class Putable(object):
             log.err("http_PUT: not authorized to put file: " + self.fp.path)
             raise HTTPError(responsecode.UNAUTHORIZED)
         
-        DEBUG and log.err("deleting file at: " + self.fp.path)
+        DEBUG and log.err("_put: deleting file at: " + self.fp.path)
         
         response = waitForDeferred(deferredGenerator(self.__putDelete)())
         yield response
         response = response.getResult()
-        DEBUG and log.err("return code for deleting file: " + `response`)
+        DEBUG and log.err("_put: return code for deleting file: " + `response`)
         
         xx  = waitForDeferred(deferredGenerator(self.__putFile)(stream))
         yield xx
         xx = xx.getResult()
-        DEBUG and log.err("done putting file stream: " + self.fp.path)
+        
         
         xx = waitForDeferred(deferredGenerator(self._updateMetadata)())
         yield xx
@@ -101,12 +101,17 @@ class Putable(object):
             x = waitForDeferred(readIntoFile(stream, resource_file))
             yield x
             x.getResult()
+            DEBUG and log.err("__putFile: read stream into file into: " + self.fp.path)
         except:
             DEBUG and log.err("failed to write to file: " + self.fp.path)
             raise HTTPError(statusForFailure(
                                              Failure(),
                 "writing to file: %s" % (self.fp.path,)
                 ))
+        
+        DEBUG and log.err("__putFile: done putting file stream: " + self.fp.path)
+        DEBUG and log.err("__putFile: file contents: " + open(self.fp.path).read())
+        yield None
             
             
     def http_PUT(self, request):

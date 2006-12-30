@@ -41,4 +41,5 @@ def setupDefaultPeers():
     to one or more default peers. Once we have copied those over, the
     maintenance loop will do the rest.
     """
+    DEBUG and log.err("running setupDefaultPeers")
     syncClones(angelRoot, defaultPeers())

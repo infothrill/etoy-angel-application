@@ -42,38 +42,35 @@ DEBUG = True
 
 class mkcolMixin:
 
-  def __checkSpot(self, parent):
+  def __checkSpot(self):
 
+      DEBUG and log.err("calling __checkSpot")
 
-    if self.exists():
-        log.err("Attempt to create collection where file exists: %s"
+      if self.fp.exists():
+          log.err("Attempt to create collection where file exists: %s"
                 % (self.fp.path,))
-        raise HTTPError(responsecode.NOT_ALLOWED)
+          raise HTTPError(responsecode.NOT_ALLOWED)
 
-    if not parent.isCollection():
-        log.err("Attempt to create collection with non-collection parent: %s"
+      if not self.parent().isCollection():
+          log.err("Attempt to create collection with non-collection parent: %s"
                 % (parent.fp.path,))
-        raise HTTPError(StatusResponse(
+          raise HTTPError(StatusResponse(
             responsecode.CONFLICT,
             "Parent resource is not a collection."
-        ))
+            ))
 
-    if not self.fp.parent().isdir():
-        log.err("Attempt to create collection with no parent directory: %s"
+      if not self.parent() or not self.parent().isCollection():
+          log.err("Attempt to create collection with no parent directory: %s"
                 % (self.fp.path,))
-        raise HTTPError(StatusResponse(
+          raise HTTPError(StatusResponse(
             responsecode.INTERNAL_SERVER_ERROR,
             "The requested resource is not backed by a parent directory."
-        ))
+            ))
         
 
   def __mkcol(self, request):
-
-    parent = waitForDeferred(request.locateResource(parentForURL(request.uri)))
-    yield parent
-    parent = parent.getResult()
     
-    self.__checkSpot(parent)
+    self.__checkSpot()
 
     #
     # Read request body
