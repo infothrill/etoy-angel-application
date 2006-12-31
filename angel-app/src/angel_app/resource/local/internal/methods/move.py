@@ -30,7 +30,22 @@ WebDAV MOVE method. Very much incomplete.
 __all__ = ["http_MOVE"]
 
 from twisted.web2.dav.method.copymove import http_MOVE as hm
+from angel_app.resource.local.util import resourceFromURI
 
 class moveMixin:
     def http_MOVE(self, request): 
-        return hm(self, request)
+        
+        # TODO: need handling of _deRegisterWithParent() and _registerWithParent()
+        
+        def changeRegister(self, response):
+            
+            # deregister the current resource
+            self._deRegisterWithParent()
+            
+            destination_uri = request.headers.getHeader("destination")
+            destination = resourceFromURI(destination_uri)
+            destination._registerWithParent()
+        
+            return response
+        
+        return hm(self, request).addCallback(self.changeRegister)

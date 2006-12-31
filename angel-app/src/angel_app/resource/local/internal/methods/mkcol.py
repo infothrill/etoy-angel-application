@@ -66,6 +66,8 @@ class mkcolMixin:
             responsecode.INTERNAL_SERVER_ERROR,
             "The requested resource is not backed by a parent directory."
             ))
+          
+      DEBUG and log.err("done __checkSpot")
         
 
   def __mkcol(self, request):
@@ -87,6 +89,10 @@ class mkcolMixin:
     yield ignored
     ignored = ignored.getResult()
 
+    DEBUG and log.err("__mkcol registering with parent")
+    self._registerWithParent()
+    
+    DEBUG and log.err("__mkcol updating metadata")
     self._updateMetadata()
     
     DEBUG and log.err("done MKCOL request")   

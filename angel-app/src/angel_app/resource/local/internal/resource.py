@@ -1,3 +1,4 @@
+import os
 from twisted.python import log
 from twisted.web2 import stream
 from twisted.web2.dav.element import rfc2518
@@ -190,6 +191,55 @@ class Crypto(
         pp = self.parent()
         log.err(pp.fp.path)
         pp and pp.update()
+
+    def resourceName(self):
+        """
+        @return the "file name" of the resource
+        """
+        return self.relativePath().split(os.sep)[-1]
+
+    def _deRegisterWithParent(self):
+
+        DEBUG and log.err("entering _deRegisterWithParent")
+        
+        pdp = self.parent().deadProperties()
+        
+        oc = pdp.get(elements.Children.qname()).children
+        DEBUG and log.err(len(oc))
+        
+        DEBUG and log.err("resourceName: " + self.resourceName())     
+        nc = [cc for cc in oc if not str(cc.childOfType(rfc2518.HRef)) == self.resourceName()]
+        
+        pdp.set(elements.Children(*nc))
+        DEBUG and log.err("exiting _deRegisterWithParent")
+    
+    def _registerWithParent(self):
+
+        DEBUG and log.err("entering _registerWithParent")
+        
+        pdp = self.parent().deadProperties()
+        
+        oc = pdp.get(elements.Children.qname()).children
+        DEBUG and log.err(len(oc))
+        
+        DEBUG and log.err("resourceName: " + self.resourceName())     
+        for cc in oc:
+            DEBUG and log.err("child: " + str(cc.childOfType(rfc2518.HRef)))
+            if str(cc.childOfType(rfc2518.HRef)) == self.resourceName():
+                DEBUG and log.err(self.fp.path + ": this resource is already registered with the parent")
+                return
+        
+        ic = elements.Child(*[
+                         rfc2518.HRef(self.resourceName()),
+                         elements.PublicKeyString(self.parent().publicKeyString()) 
+                         ])
+
+        
+        nc = [cc for cc in oc] + [ic]
+        
+        pdp.set(elements.Children(*nc))
+        DEBUG and log.err("exiting _registerWithParent")
+    
     
     def update(self, recursionLimit = 0):
         
