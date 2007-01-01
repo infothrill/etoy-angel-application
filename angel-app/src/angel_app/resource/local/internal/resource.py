@@ -240,6 +240,24 @@ class Crypto(
         pdp.set(elements.Children(*nc))
         DEBUG and log.err("exiting _registerWithParent")
     
+        
+        
+    def _changeRegister(self, request):
+        
+        from angel_app.resource.local.util import resourceFromURI
+        
+        def ccCallBack(response):
+            self._deRegisterWithParent()
+            
+            destination_uri = request.headers.getHeader("destination")
+            DEBUG and log.err("changeRegister: " + `self.__class__`)
+            destination = resourceFromURI(destination_uri, self.__class__)
+            destination._registerWithParent()
+        
+            return response
+        
+        return ccCallBack
+
     
     def update(self, recursionLimit = 0):
         

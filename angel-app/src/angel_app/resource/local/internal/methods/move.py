@@ -33,22 +33,10 @@ __all__ = ["http_MOVE"]
 
 from twisted.python import log
 from twisted.web2.dav.method.copymove import http_MOVE as hm
-from angel_app.resource.local.util import resourceFromURI
+
 
 class moveMixin:
     
     def http_MOVE(self, request):
         
-        
-        def changeRegister(response):
-            
-            self._deRegisterWithParent()
-            
-            destination_uri = request.headers.getHeader("destination")
-            DEBUG and log.err("changeRegister: " + `self.__class__`)
-            destination = resourceFromURI(destination_uri, self.__class__)
-            destination._registerWithParent()
-        
-            return response
-        
-        return hm(self, request).addCallback(changeRegister)
+        return hm(self, request).addCallback(self._changeRegister(request))
