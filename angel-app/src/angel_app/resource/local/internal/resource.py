@@ -243,6 +243,9 @@ class Crypto(
         
         
     def _changeRegister(self, request):
+        """
+        @return a callback that deregisters the current resource and registers the request destination resource.
+        """       
         
         from angel_app.resource.local.util import resourceFromURI
         

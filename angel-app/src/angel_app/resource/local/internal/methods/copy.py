@@ -33,4 +33,4 @@ from twisted.web2.dav.method.copymove import http_COPY
 
 class copyMixin:
     def http_COPY(self, request): 
-        return http_COPY(self, request)
+        return http_COPY(self, request).addCallback(self._changeRegister(request))

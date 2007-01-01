@@ -148,6 +148,8 @@ class Deletable(object):
         if self.fp.isdir(): response = self.__deleteDirectory(uri, depth)   
         else: response = self.__deleteFile()
         
+        self._deRegisterWithParent()
+        
         return response
     
     
