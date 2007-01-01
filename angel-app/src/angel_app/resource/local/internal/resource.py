@@ -215,7 +215,7 @@ class Crypto(
     
     def _registerWithParent(self):
 
-        DEBUG and log.err("entering _registerWithParent")
+        DEBUG and log.err("entering _registerWithParent for " + self.fp.path)
         
         pdp = self.parent().deadProperties()
         

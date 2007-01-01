@@ -38,6 +38,6 @@ def resourceFromURI(uri, resourceClass):
     segments = path.split("/")
     assert segments[0] == "", "URL path didn't begin with '/': %s" % (path,)
     segments = map(unquote, segments[1:])
-    path = rootDir + sep.join(segments)
+    path = rootDir + sep + sep.join(segments)
     return resourceClass(path)
 
