@@ -13,14 +13,6 @@ DEBUG = False
 
 from httplib import HTTPConnection
 
-def splitParse(urlString):
-    """
-    @rtype (string, int)
-    @return (hostname, port)
-    """
-    words = urlString.split(":")
-    return (words[0], int(words[1]))
-
 
 class Clone(object):
     """

@@ -3,9 +3,29 @@ from twisted.web2.dav.element import rfc2518
 from angel_app.config.common import rootDir
 from angel_app import elements
 from angel_app.resource.local.basic import Basic
-from angel_app.resource.remote.clone import splitParse, Clone
+from angel_app.resource.remote.clone import Clone
+from urlparse import urlsplit
 
 DEBUG = True
+
+def splitParse(cloneUri):
+    log.err(cloneUri)
+    host, rest = cloneUri.split(":")
+    fragments = rest.split("/")
+    log.err(`type(fragments[0])` + ":" + fragments[0][0])
+    port = int(fragments[0])
+    
+    if len(fragments) > 1:
+        return host, port, "/" + "/".join(fragments[1:])
+    
+    return host, port
+
+def cloneFromGunk(gunk):
+    assert len(gunk) > 1
+    assert len(gunk) < 4
+    if len(gunk) == 2: return Clone(gunk[0], gunk[1])
+    else: return Clone(gunk[0], gunk[1], gunk[2])
+
 
 def getLocalCloneURLList(af):
     """
@@ -33,8 +53,7 @@ def getLocalCloneList(af):
     @return the local list of clones of the root directory.
     @rtype [Clone]
     """
-    hostPorts = [splitParse(url) for url in getLocalCloneURLList(af)]
-    return [Clone(url, port, af.relativePath()) for url, port in hostPorts]
+    return [cloneFromGunk(splitParse(url)) for url in getLocalCloneURLList(af)]
 
 def _ensureLocalValidity(resource, referenceClone):
     """
@@ -50,6 +69,10 @@ def _ensureLocalValidity(resource, referenceClone):
         
         # update the file contents, if necessary
         if not resource.fp.isdir():
+            DEBUG and log.err("_ensureLocalValidity: updating file contents for " + 
+                              resource.fp.path + " " + `resource.exists()`
+                              + " " + `referenceClone.revision()` + " " + `resource.revisionNumber()`
+                              + " " + `resource.verify()`)
             open(resource.fp.path, "w").write(referenceClone.stream().read())  
             
         # then update the metadata
@@ -118,8 +141,14 @@ def inspectResource(path = rootDir):
     rc = goodClones[0]
     
     DEBUG and log.err("reference clone: " + `rc` + " local path " + af.fp.path)
-
+    
+    af.deadProperties().set(
+                            elements.Clones(*[
+                                elements.Clone(rfc2518.HRef(`cc`)) for cc in goodClones
+                                            ]))
+    
     _ensureLocalValidity(af, rc)
+
              
     
     # update all invalid clones with the meta data of the reference clone
