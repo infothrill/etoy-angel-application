@@ -36,6 +36,7 @@ class Putable(object):
         yield xx
         xx = xx.getResult()
         
+        self._registerWithParent()
         
         xx = waitForDeferred(deferredGenerator(self._updateMetadata)())
         yield xx

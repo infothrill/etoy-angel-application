@@ -25,9 +25,6 @@ class Deletable(object):
 
         succeededFileOperation =  self.__delete(uri, depth)
         
-        self.update()
-        
-        
         DEBUG and log.err("delete on " + self.fp.path + ": done, with return code: " + `succeededFileOperation`)
         return succeededFileOperation
         
@@ -65,6 +62,8 @@ class Deletable(object):
         recursive filesystem deletes fail.
         """
 
+        DEBUG and log.err("_recursiveDelete: entering")
+
         # TODO: this function sucks, review and fix it
         
         uri_path = urllib.unquote(urlsplit(uri)[2])
@@ -80,7 +79,11 @@ class Deletable(object):
 
         # FIXME: defer this
         for dir, subdirs, files in os.walk(self.fp.path, topdown=False):
+            
+            DEBUG and log.err("_recursiveDelete: walking " + dir)
+            
             for filename in files:
+                DEBUG and log.err("_recursiveDelete: deleting: " + filename)
                 path = os.path.join(dir, filename)
                 try:
                     os.remove(path)
@@ -88,6 +91,7 @@ class Deletable(object):
                     errors.add(path, Failure())
 
             for subdir in subdirs:
+                DEBUG and log.err("_recursiveDelete: deleting: " + subdir)
                 path = os.path.join(dir, subdir)
                 if os.path.islink(path):
                     try:
@@ -100,6 +104,24 @@ class Deletable(object):
                     except:
                         errors.add(path, Failure())
 
+        path = self.fp.path
+        if os.path.islink(path):
+            try:
+                os.remove(path)
+            except:
+                errors.add(path, Failure())
+        elif os.path.isdir(path):
+            try:
+                os.rmdir(path)
+            except:
+                errors.add(path, Failure())
+        else:
+            try:
+                os.remove(path)
+            except:
+                errors.add(path, Failure())
+
+        DEBUG and log.err("_recursiveDelete: done")
         return errors.response()
     
     def __deleteDirectory(self, uri, depth):
@@ -150,6 +172,8 @@ class Deletable(object):
         
         self._deRegisterWithParent()
         
+        
+        DEBUG and log.err("__delete: done")
         return response
     
     
@@ -158,9 +182,10 @@ class Deletable(object):
         Respond to a DELETE request. (RFC 2518, section 8.6)
         """
 
-        return self.delete(
+        foo = self.delete(
                        request.uri, 
                        request.headers.getHeader("depth", "infinity")
                        )
-        #return delete(request.uri, self.fp, depth)
+        DEBUG and log.err("http_DELETE: " + `type(foo)`)
+        return foo
 
