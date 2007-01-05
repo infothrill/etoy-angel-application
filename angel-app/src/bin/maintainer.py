@@ -5,12 +5,15 @@ from angel_app.resource.local.basic import Basic
 
 setup.setupDefaultPeers()
 
-from angel_app.config.common import rootDir
+from angel_app.config import config
+AngelConfig = config.Config()
+repository = AngelConfig.get("common","repository")
+
 
 DEBUG = True
             
 if __name__ == "__main__":
-    log.err("starting inspection loop at: " + rootDir)
+    log.err("starting inspection loop at: " + repository)
     
     def getChildren(path):
         children = [cc.fp.path for cc in Basic(path).metaDataChildren()]
@@ -24,7 +27,7 @@ if __name__ == "__main__":
         #    log.err("Inspection loop failed for resource: " + `foo`)
         #    raise StopIteration
     
-    assert(Basic(rootDir).exists()), "Root directory (%s) not found." % rootDir
+    assert(Basic(repository).exists()), "Root directory (%s) not found." % repository
     
-    for ii in graphWalker(rootDir, getChildren, toEvaluate):
+    for ii in graphWalker(repository, getChildren, toEvaluate):
         continue

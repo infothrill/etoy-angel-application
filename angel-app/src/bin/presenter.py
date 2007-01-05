@@ -8,7 +8,6 @@ from twisted.web2 import server
 from twisted.web2 import channel
 from twisted.internet import reactor
 
-#from angel_app import static
 from angel_app.config import config
 AngelConfig = config.Config()
 port = AngelConfig.getint("presenter","listenPort")

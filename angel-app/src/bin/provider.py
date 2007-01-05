@@ -7,17 +7,21 @@ metadata).
 """
 
 
-
-from angel_app.config import common, external
+from angel_app.config import config
+AngelConfig = config.Config()
+providerport = AngelConfig.getint("provider","listenPort")
+providerinterface = AngelConfig.get("provider","listenInterface")
+repository = AngelConfig.get("common","repository")
 
 
 from angel_app.resource.local.external.resource import External
-root = External(common.rootDir)
+root = External(repository)
 
 
 from twisted.web2 import server
 from twisted.web2 import channel
 from twisted.internet import reactor
 site = server.Site(root)
-reactor.listenTCP(external.port, channel.HTTPFactory(site), 50)
+reactor.listenTCP(providerport, channel.HTTPFactory(site), 50, providerinterface)
+print "Listening on IP", providerinterface, "port", providerport, "and serving content from", repository
 reactor.run()
