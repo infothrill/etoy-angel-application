@@ -30,7 +30,10 @@ from urllib import quote, unquote
 from urlparse import urlsplit
 from os import sep
 
-from angel_app.config.common import rootDir
+# get config:
+from angel_app.config import config
+AngelConfig = config.Config()
+repository = AngelConfig.get("common","repository")
 
 def resourceFromURI(uri, resourceClass):
     
@@ -38,6 +41,6 @@ def resourceFromURI(uri, resourceClass):
     segments = path.split("/")
     assert segments[0] == "", "URL path didn't begin with '/': %s" % (path,)
     segments = map(unquote, segments[1:])
-    path = rootDir + sep + sep.join(segments)
+    path = repository + sep + sep.join(segments)
     return resourceClass(path)
 

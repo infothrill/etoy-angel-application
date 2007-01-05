@@ -1,12 +1,16 @@
 from twisted.python import log
 from twisted.web2.dav.element import rfc2518
-from angel_app.config.common import rootDir
 from angel_app import elements
 from angel_app.resource.local.basic import Basic
 from angel_app.resource.remote.clone import Clone
 from urlparse import urlsplit
 
 DEBUG = True
+
+# get config:
+from angel_app.config import config
+AngelConfig = config.Config()
+repository = AngelConfig.get("common","repository")
 
 def splitParse(cloneUri):
     log.err(cloneUri)
@@ -115,7 +119,7 @@ def _updateBadClone(af, bc):
     bc.performPushRequest(af)
 
 
-def inspectResource(path = rootDir):
+def inspectResource(path = repository):
 
     DEBUG and log.err("inspecting resource: " + path)
     af = Basic(path)

@@ -2,7 +2,8 @@ from angel_app.resource.local.basic import Basic
 from angel_app import elements
 from twisted.web2.dav.element.rfc2518 import HRef
 from twisted.python import log
-from angel_app.config import external
+from angel_app.config import defaults
+#from angel_app.config import rootDefaults
 
 from angel_app.resource.remote.util import syncClones
 DEBUG = True
@@ -10,7 +11,7 @@ DEBUG = True
 # get config:
 from angel_app.config import config
 AngelConfig = config.Config()
-repository = AngelConfig.get("common","repository")
+repository = Basic(AngelConfig.get("common","repository"))
 
 def cloneFromName(name = ("localhost", 90)):
     """
@@ -19,7 +20,7 @@ def cloneFromName(name = ("localhost", 90)):
     """
     hostname = name[0]
     if len(name) == 2: port = name[1]
-    else: port = config.external.port # note: not using config file, but hardcoded default external port
+    else: port = config.defaults.publiclistenport # note: not using config file, but hardcoded default external port
     
     return elements.Clone(
                           HRef.fromString(hostname + ":" + `port`))
@@ -32,7 +33,7 @@ def defaultPeers():
     return elements.Clones(
                     *[
                      cloneFromName(peer) 
-                     for peer in rootDefaults.peers
+                     for peer in defaults.peers
                      ]
                     )
 

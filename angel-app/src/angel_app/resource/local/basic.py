@@ -6,7 +6,6 @@ from twisted.web2.dav.xattrprops import xattrPropertyStore
 from twisted.web2.dav.element import rfc2518
 from twisted.web2.dav import davxml
 from angel_app import elements
-from angel_app.config.common import rootDir
 
 from zope.interface import implements
 from angel_app.resource import IResource
@@ -18,6 +17,11 @@ import os
 from angel_app.contrib import uuid
 
 DEBUG = True
+
+# get config:
+from angel_app.config import config
+AngelConfig = config.Config()
+repository = AngelConfig.get("common","repository")
 
 class Basic(Safe):
     """
@@ -210,16 +214,16 @@ class Basic(Safe):
                 ]
 
     def relativePath(self):
-        DEBUG and log.err(self.fp.path.split(rootDir)[1])
-        return self.fp.path.split(rootDir)[1]
+        DEBUG and log.err(self.fp.path.split(repository)[1])
+        return self.fp.path.split(repository)[1]
 
     def parent(self):
         """
         @return this resource's parent
         """
-        assert(self.fp.path.find(rootDir)) == 0, "Path (%s) lies outside of repository." % self.fp.path
+        assert(self.fp.path.find(repository)) == 0, "Path (%s) lies outside of repository." % self.fp.path
         
-        if self.fp.path == rootDir:
+        if self.fp.path == repository:
             # this is the root directory, don't return a parent
             return None
         
