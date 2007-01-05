@@ -3,16 +3,19 @@
 from os import mkdir
 from angel_app.resource.local.internal.resource import Crypto
 from angel_app import elements
-from angel_app.config.common import rootDir
 from angel_app.config import rootDefaults
 from twisted.python import log
 
-
 DEBUG = True
 
+# get config:
+from angel_app.config import config
+AngelConfig = config.Config()
+repository = AngelConfig.get("common","repository")
+
 def setupRoot():
-    angelRoot = Crypto(rootDir)
-    if not angelRoot.fp.exists(): mkdir(rootDir)
+    angelRoot = Crypto(repository)
+    if not angelRoot.fp.exists(): mkdir(repository)
     setupRootMetaData()
     
 def setupRootMetaData():
@@ -26,7 +29,7 @@ def setupRootMetaData():
     YOU ONLY NEED THIS IF YOU WANT TO SET UP A NEW ROOT DIRECTORY -- NOT VERY LIKELY,
     I THINK.
     """
-    angelRoot = Crypto(rootDir)   
+    angelRoot = Crypto(repository)
     DEBUG and log.err("public key: " + rootDefaults.publicKey)
        
     for item in [
