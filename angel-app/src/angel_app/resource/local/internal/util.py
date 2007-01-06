@@ -28,6 +28,6 @@ author = """Vincent Kraeutler, 2006"""
 
 import time
 
-def makeResourceID(relativePath = "/"):
-    return relativePath + `time.gmtime()`
+def makeResourceID(relativePath = ""):
+    return "/" + relativePath + `time.gmtime()`
 
