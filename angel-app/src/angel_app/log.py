@@ -116,9 +116,17 @@ def logTwisted(dict):
 	"""
 	callback for the twisted logging engine
 	"""
-	# TODO : here we could take the received dict object and beautify the output a lot...
+	# TODO : beautify more...
 	ourTwistedLogger = getLogger("twisted")
-	ourTwistedLogger.info(dict)
+	del dict['time'] # we don't need to see the time twice in the log... the accuracy should not be a problem
+	isError = dict['isError']
+	del dict['isError']
+	if dict.has_key('why') and dict['why'] == None:
+		del dict['why']
+	if isError == 1:
+		ourTwistedLogger.error(dict)
+	else:
+		ourTwistedLogger.info(dict)
 
 def __configTwistedLogger():
 	twistedlog.addObserver(logTwisted)
