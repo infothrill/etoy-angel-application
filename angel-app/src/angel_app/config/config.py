@@ -33,7 +33,9 @@ author = """Paul Kremer, 2006"""
 from os import environ, path, mkdir
 from ConfigParser import SafeConfigParser
 from twisted.python.filepath import FilePath
-from twisted.python import log
+from angel_app.log import getLogger
+
+# TODO: this class is OK, but we end up having multiple instances in the app. It should really be a singleton
 
 class Config:
     """
@@ -51,19 +53,20 @@ class Config:
     """
 
     def __init__(self):
-        self.__needscommit = False
-        self.cfgvars = {}
-        self.cfgvars["home"] = environ["HOME"]
-        self.cfgvars["angelhome"] = path.join(self.cfgvars["home"], ".angel_app");
-        self.cfgvars["mainconfigfile"] = path.join(self.cfgvars["angelhome"], "config")
+		getLogger("config").debug("Config instantiated")
+		self.__needscommit = False
+		self.cfgvars = {}
+		self.cfgvars["home"] = environ["HOME"]
+		self.cfgvars["angelhome"] = path.join(self.cfgvars["home"], ".angel_app");
+		self.cfgvars["mainconfigfile"] = path.join(self.cfgvars["angelhome"], "config")
 
-        self.config = SafeConfigParser()
-        self.config.read(self.cfgvars["mainconfigfile"])
-        #dump entire config file (debug)
-        for section in self.config.sections():
-            log.msg(section, debug=True)
-            for option in self.config.options(section):
-                log.msg(" " + option + "=" + self.config.get(section, option), debug=True)
+		self.config = SafeConfigParser()
+		self.config.read(self.cfgvars["mainconfigfile"])
+		#dump entire config file (debug)
+		for section in self.config.sections():
+			getLogger("config").debug(section)
+			for option in self.config.options(section):
+				getLogger("config").debug(" " + option + "=" + self.config.get(section, option))
 
     def get(self, section, key):
         self.__checkGetter(section, key)
@@ -129,9 +132,7 @@ class Config:
             if not angelhomePath.exists():
                 mkdir(angelhomePath.path, 0750)
             if not configfilePath.exists():
-                log.msg("Creating a new, empty config file in '"+configfilePath.path+"'", debug = True)
-            log.msg("committing the config file to '"+self.cfgvars["mainconfigfile"]+"'", debug = True)
+                getLogger("config").info("Creating a new, empty config file in '"+configfilePath.path+"'")
+            getLogger("config").info("committing the config file to '"+self.cfgvars["mainconfigfile"]+"'")
             f = open(self.cfgvars["mainconfigfile"], 'w')
             self.config.write(f)
-
-    

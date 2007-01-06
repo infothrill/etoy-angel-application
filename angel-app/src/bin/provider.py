@@ -6,22 +6,46 @@ I.e. it may NOT commit data to the angel-app (except e.g. new clone
 metadata).
 """
 
+from optparse import OptionParser
+from angel_app.log import getLogger
 
-from angel_app.config import config
-AngelConfig = config.Config()
-providerport = AngelConfig.getint("provider","listenPort")
-providerinterface = AngelConfig.get("provider","listenInterface")
-repository = AngelConfig.get("common","repository")
+def bootInit():
+	"""
+	Method to be called in __main__ before anything else. This method cannot rely on any
+	framework being initialised, e.g. no logging, no exception catching etc.
+	"""
+	import angel_app.config.defaults
+	angel_app.config.defaults.appname = "provider"
 
+def runServer():
+	from angel_app.config import config
+	AngelConfig = config.Config()
+	providerport = AngelConfig.getint("provider","listenPort")
+	providerinterface = AngelConfig.get("provider","listenInterface")
+	repository = AngelConfig.get("common","repository")
 
-from angel_app.resource.local.external.resource import External
-root = External(repository)
+	from angel_app.resource.local.external.resource import External
+	root = External(repository)
 
+	from twisted.web2 import server
+	from twisted.web2 import channel
+	from twisted.internet import reactor
+	site = server.Site(root)
+	reactor.listenTCP(providerport, channel.HTTPFactory(site), 50, providerinterface)
+	getLogger().info("Listening on IP %s port %d and serving content from %s", providerinterface, providerport, repository)
+	reactor.run()
 
-from twisted.web2 import server
-from twisted.web2 import channel
-from twisted.internet import reactor
-site = server.Site(root)
-reactor.listenTCP(providerport, channel.HTTPFactory(site), 50, providerinterface)
-print "Listening on IP", providerinterface, "port", providerport, "and serving content from", repository
-reactor.run()
+if __name__ == "__main__":
+	bootInit()
+	parser = OptionParser()
+	parser.add_option("-d", "--daemon", dest="daemon", help="daemon mode?", default='')
+	(options, args) = parser.parse_args()
+
+	import angel_app.log
+	if len(options.daemon) > 0:
+		angel_app.log.__configLoggerForDaemon()
+		from angel_app import proc
+		proc.startstop(action=options.daemon, stdout='provider.stdout', stderr='provider.stderr', pidfile='provider.pid')
+	else:
+		angel_app.log.__configLoggerForForeground()
+	runServer()

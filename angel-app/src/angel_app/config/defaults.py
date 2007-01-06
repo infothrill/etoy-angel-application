@@ -1,7 +1,7 @@
 """
 
-Defaults for the angel-app. This lists values that influence the way
-angel-app works, but which are not user-configurable.
+Defaults for the angel-app. This contains values/methods that influence the way
+angel-app works, but which are _not_ user-configurable. They may be dynamic though!
 
 """
 
@@ -9,6 +9,19 @@ angel-app works, but which are not user-configurable.
 The listen port that we expect from other peers
 """
 publiclistenport = 9999
+
+"""
+The name of the currently running application. This must be set during bootstrapping!
+(e.g. to presenter/provider ...) It is currently used for logging and pidfiles.
+"""
+
+appname = "defaultAppname"
+
+"""
+Defaults for the logging backend (RotatingFileHandler)
+"""
+log_maxbytes = 1024 * 1024 # each logfile has a max of 1 MB
+log_backupcount = 7        # max 7 "rotated" logfiles
 
 
 """
@@ -21,3 +34,8 @@ peers = [
            ("localhost", 9999),
            ("missioneternity.org", 9999)
            ]
+
+def getAngelHomePath():
+	from os import environ, path
+	home = environ["HOME"]
+	return path.join(home, ".angel_app");

@@ -4,24 +4,50 @@ This guy is safe and has access to the secret key(s). I.e. it
 may commit data to the angel-app.
 """
 
-from twisted.web2 import server
-from twisted.web2 import channel
-from twisted.internet import reactor
+from optparse import OptionParser
+from angel_app.log import getLogger
 
-from angel_app.config import config
-AngelConfig = config.Config()
-port = AngelConfig.getint("presenter","listenPort")
-interface = AngelConfig.get("presenter","listenInterface")
-repository = AngelConfig.get("common","repository")
+def bootInit():
+	"""
+	Method to be called in __main__ before anything else. This method cannot rely on any
+	framework being initialised, e.g. no logging, no exception catching etc.
+	"""
+	import angel_app.config.defaults
+	angel_app.config.defaults.appname = "presenter"
 
-from angel_app.server.internal.setup import setupRoot
-setupRoot()
+def runServer():
+	from angel_app.config import config
+	AngelConfig = config.Config()
+	port = AngelConfig.getint("presenter","listenPort")
+	interface = AngelConfig.get("presenter","listenInterface")
+	repository = AngelConfig.get("common","repository")
 
-from angel_app.resource.local.internal.resource import Crypto
-Crypto.rootDirectory = repository
-root = Crypto(repository)
+	from angel_app.server.internal.setup import setupRoot
+	setupRoot()
 
-site = server.Site(root)
-reactor.listenTCP(port, channel.HTTPFactory(site), 50, interface)
-print "Listening on IP", interface, "port", port, "and serving content from", repository
-reactor.run()
+	from angel_app.resource.local.internal.resource import Crypto
+	Crypto.rootDirectory = repository
+	root = Crypto(repository)
+
+	from twisted.web2 import server
+	from twisted.web2 import channel
+	from twisted.internet import reactor
+	site = server.Site(root)
+	reactor.listenTCP(port, channel.HTTPFactory(site), 50, interface)
+	getLogger().info('Listening on IP %s port %d and serving content from %s', interface, port, repository)
+	reactor.run()
+
+if __name__ == "__main__":
+	bootInit()
+	parser = OptionParser()
+	parser.add_option("-d", "--daemon", dest="daemon", help="daemon mode?", default='')
+	(options, args) = parser.parse_args()
+
+	import angel_app.log
+	if len(options.daemon) > 0:
+		angel_app.log.__configLoggerForDaemon()
+		from angel_app import proc
+		proc.startstop(action=options.daemon, stdout='presenter.stdout', stderr='presenter.stderr', pidfile='presenter.pid')
+	else:
+		angel_app.log.__configLoggerForForeground()
+	runServer()
