@@ -13,10 +13,8 @@ AngelConfig = config.Config()
 repository = AngelConfig.get("common","repository")
 
 def splitParse(cloneUri):
-    log.err(cloneUri)
     host, rest = cloneUri.split(":")
     fragments = rest.split("/")
-    log.err(`type(fragments[0])` + ":" + fragments[0][0])
     port = int(fragments[0])
     
     if len(fragments) > 1:
@@ -68,17 +66,26 @@ def _ensureLocalValidity(resource, referenceClone):
     @param referenceClone a (valid, up-to-date) reference resource, which may be remote
     """
     
+    
     # first, make sure the local clone is fine:
-    if (not resource.exists()) or (referenceClone.revision() > resource.revisionNumber()) or (not resource.verify()):
-        
-        # update the file contents, if necessary
-        if not resource.fp.isdir():
+    if referenceClone.isCollection():
+        if not resource.exists():
+            from twisted.web2.dav.fileop import mkcollection
+            mkcollection(resource.fp)
+    else:
+        if (not resource.exists()) or (referenceClone.revision() > resource.revisionNumber()):
+
+            open(resource.fp.path, "w").write(referenceClone.stream().read())
+                    
+            # update the file contents, if necessary
             DEBUG and log.err("_ensureLocalValidity: updating file contents for " + 
                               resource.fp.path + " " + `resource.exists()`
                               + " " + `referenceClone.revision()` + " " + `resource.revisionNumber()`
                               + " " + `resource.verify()`)
-            open(resource.fp.path, "w").write(referenceClone.stream().read())  
+
             
+           
+    if not resource.verify():
         # then update the metadata
         rp = referenceClone.propertiesDocument(elements.signedKeys)
         re = rp.root_element.childOfType(rfc2518.Response
@@ -91,6 +98,9 @@ def _ensureLocalValidity(resource, referenceClone):
             
         DEBUG and log.err("_ensureLocalValidity, local clone's signed keys are now: " + resource.signableMetadata())   
         
+    resource.familyPlanning()
+    
+    
             
 def _updateBadClone(af, bc):  
             
@@ -118,6 +128,34 @@ def _updateBadClone(af, bc):
     # push the resource metadata
     bc.performPushRequest(af)
 
+def getResourceID(resource):
+    """
+    the resource ID delivered with the parent is actually more trustworthy, 
+    because it has just been updated, however, the root directory has no parent....
+    TODO: review
+    """
+    if not resource.parent():
+        # root directory
+        resourceID = resource.resourceID()
+    else:
+        # yumyum. python prose. enjoy.
+        # TODO: our current xml metdatata model sucks rocks. possibly elementTree to the rescue?
+        children = resource.parent().deadProperties().get(elements.Children.qname()).childrenOfType(elements.Child.qname())
+        DEBUG and log.err("foo: " + `[str(child.childOfType(rfc2518.HRef.qname())) for child in children]`)
+        for child in children:
+            if str(child.childOfType(rfc2518.HRef.qname())) == resource.resourceName():
+                DEBUG and log.err(`child`)
+                DEBUG and log.err(`child.__class__`)
+                for cc in child.children:
+                    if cc.qname() == elements.ResourceID.qname():
+                        return "".join([str(cc) for cc in afTag.getChildOfType(elements.ResourceID.qname()).children])
+                afTag = child.getChildOfType(elements.ResourceID.qname())
+                break
+        DEBUG and log.err(`type(afTag)` + " " + `afTag`)
+        resourceID = "".join([str(cc) for cc in afTag.getChildOfType(elements.ResourceID.qname()).children])
+        
+    DEBUG and log.err("resourceID: " + `resourceID`)
+    return resourceID
 
 def inspectResource(path = repository):
 
@@ -127,13 +165,14 @@ def inspectResource(path = repository):
     # at this point, we have no guarantee that a local clone actually
     # exists. however, we do know that the parent exists, because it has
     # been inspected before
-    standin = af
-    if not af.exists():
-        standin = af.parent()
-    
+
+
+    standin = af.exists() and af or af.parent()
+    pubKey = standin.publicKeyString()
     startingClones = getLocalCloneList(standin)
+    resourceID = getResourceID(af)
     DEBUG and log.err("starting out iteration with: " + `startingClones`)
-    goodClones, badClones = iterateClones(startingClones, standin.publicKeyString())
+    goodClones, badClones = iterateClones(startingClones, pubKey, resourceID)
     
     if goodClones == []:
         DEBUG and log.err("no valid clones found for " + path)
@@ -145,16 +184,14 @@ def inspectResource(path = repository):
     rc = goodClones[0]
     
     DEBUG and log.err("reference clone: " + `rc` + " local path " + af.fp.path)
-    
+
+    _ensureLocalValidity(af, rc)
+       
     af.deadProperties().set(
                             elements.Clones(*[
                                 elements.Clone(rfc2518.HRef(`cc`)) for cc in goodClones
                                             ]))
-    
-    _ensureLocalValidity(af, rc)
 
-             
-    
     # update all invalid clones with the meta data of the reference clone
     for bc in badClones: 
         _updateBadClone(af, bc)
@@ -165,7 +202,7 @@ def inspectResource(path = repository):
     
 
 
-def iterateClones(cloneSeedList, publicKeyString):
+def iterateClones(cloneSeedList, publicKeyString, resourceID):
     """
     get all the clones of the (valid) clones we have already looked at
     which are not among any (including the invalid) of the clones we
@@ -204,6 +241,14 @@ def iterateClones(cloneSeedList, publicKeyString):
         
         if not cc.exists():
             DEBUG and log.err("iterateClones: resouce " + `cc.path` + " not found on host " + `cc`)
+            bad.append(cc)
+            continue
+        
+        if cc.resourceID() != resourceID:
+            # an invalid clone
+            DEBUG and log.err("iterateClones: " + `cc` + " wrong resource ID")
+            DEBUG and log.err("expected: " + `resourceID`)
+            DEBUG and log.err("found: " + `cc.resourceID()`)
             bad.append(cc)
             continue
         
