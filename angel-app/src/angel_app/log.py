@@ -89,6 +89,7 @@ def setup():
 	setup() creates the needed internal directory structure for logging
 	(.angel_app/log/). It must be called once during bootstrap.
 	"""
+	__configLoggerBasic()
 	angelhomePath = FilePath(getAngelHomePath())
 	if not angelhomePath.exists():
 		mkdir(angelhomePath.path, 0750)
@@ -96,8 +97,20 @@ def setup():
 	if not angelLogPath.exists():
 		mkdir(angelLogPath.path, 0750)
 
-def __configTwistedLogger():
-	twistedlog.addObserver(logTwisted)
+def enableHandler(handlername):
+	if handlername == "console":
+		__addConsoleHandler()
+	if handlername == "socket":
+		__addSocketHandler()
+	if handlername == "file":
+		__addRotatingFileHandler()
+
+def getReady():
+	"""
+	must be called after setup() and after enabling handlers with enableHandler()
+	"""
+	twistedlog.startLogging(open('/dev/null', 'w'), setStdout=False)
+	__configTwistedLogger()
 
 def logTwisted(dict):
 	"""
@@ -107,9 +120,11 @@ def logTwisted(dict):
 	ourTwistedLogger = getLogger("twisted")
 	ourTwistedLogger.info(dict)
 
+def __configTwistedLogger():
+	twistedlog.addObserver(logTwisted)
 
 def __configLoggerBasic():
-	setup()
+	#setup()
 	# leave this as is. It is the default root logger and goes to /dev/null
 	logging.basicConfig(level=logging.DEBUG,
 					#format='%(name)s %(asctime)s %(levelname)-8s %(message)s',
@@ -151,19 +166,4 @@ def __addSocketHandler(area = ""):
 	# an unformatted pickle
 	# add the handler to the app's logger
 	getLogger(area).addHandler(socketHandler)
-
-def __configLoggerForForeground():
-	__configLoggerBasic()
-	__addConsoleHandler()
-	# also log to file, even if in console foreground mode:
-	__addRotatingFileHandler()
-	__configTwistedLogger()
-
-
-def __configLoggerForDaemon():
-	__configLoggerBasic()
-	__addRotatingFileHandler()
-	__addSocketHandler()
-	twistedlog.startLogging(open('/dev/null', 'w'), setStdout=False)
-	__configTwistedLogger()
 

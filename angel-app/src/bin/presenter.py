@@ -41,13 +41,20 @@ if __name__ == "__main__":
 	bootInit()
 	parser = OptionParser()
 	parser.add_option("-d", "--daemon", dest="daemon", help="daemon mode?", default='')
+	parser.add_option("-l", "--log", dest="networklogging", help="use network logging?",action="store_true" ,default=False)
 	(options, args) = parser.parse_args()
 
 	import angel_app.log
+	angel_app.log.setup()
+	angel_app.log.enableHandler('file')
 	if len(options.daemon) > 0:
-		angel_app.log.__configLoggerForDaemon()
+		angel_app.log.enableHandler('socket')
 		from angel_app import proc
 		proc.startstop(action=options.daemon, stdout='presenter.stdout', stderr='presenter.stderr', pidfile='presenter.pid')
 	else:
-		angel_app.log.__configLoggerForForeground()
+		if (options.networklogging):
+			angel_app.log.enableHandler('socket')
+		else:
+			angel_app.log.enableHandler('console')
+	angel_app.log.getReady()
 	runServer()
