@@ -192,12 +192,6 @@ class Crypto(
         log.err(pp.fp.path)
         pp and pp.update()
 
-    def resourceName(self):
-        """
-        @return the "file name" of the resource
-        """
-        return self.relativePath().split(os.sep)[-1]
-
     def _deRegisterWithParent(self):
 
         DEBUG and log.err("entering _deRegisterWithParent")

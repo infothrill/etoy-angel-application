@@ -167,6 +167,12 @@ class Basic(Safe):
         """ 
         return self.deadProperties().get(elements.resourceID.qname())
     
+    def resourceName(self):
+        """
+        @return the "file name" of the resource
+        """
+        return self.relativePath().split(os.sep)[-1]
+    
     def referenced(self):
         # the root is always referenced
         if self.parent() is None: return True
