@@ -18,7 +18,7 @@ class Clone(object):
     """
     Provides methods for transparent access to frequently used clone meta data.
     
-    TODO: implement property caching
+    TODO: might want to implement property caching
     """
     implements(IResource.IAngelResource)
     
@@ -116,6 +116,7 @@ class Clone(object):
                                              ).root_element.children[0].children[1].children[0]
         
         return "".join([str(ee) for ee in properties.children[0].children])
+    
 
     def exists(self): 
         """
@@ -137,6 +138,15 @@ class Clone(object):
             return True
         except:
             return False  
+
+    def isCollection(self):
+         DEBUG and log.err("isCollection(): " + self.propertyFindBody(rfc2518.ResourceType) + " " + rfc2518.Collection.sname())
+         return self.propertyFindBody(rfc2518.ResourceType) == rfc2518.Collection.sname()
+    
+    
+    def resourceID(self):
+        return self.propertyFindBody(elements.ResourceID)
+    
     
     def revision(self):
         """
