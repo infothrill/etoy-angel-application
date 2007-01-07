@@ -161,12 +161,4 @@ class ForceLocalCache (WebDAVTextElement):
     a local clone of this file is always maintained. This is always the case
     for now.
     """
-    name = "forceLocalCache" 
-    
-class ForceEncryption (WebDAVTextElement):
-    """
-    If this tag evaluates to false, (e.g. its integer value is non-zero),
-    the contents of this file are stored in plaintext. This is always false
-    for now.
-    """
-    name = "encrypted"
+    name = "forceLocalCache"
