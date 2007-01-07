@@ -109,8 +109,7 @@ def getReady():
 	"""
 	must be called after setup() and after enabling handlers with enableHandler()
 	"""
-	twistedlog.startLogging(open('/dev/null', 'w'), setStdout=False)
-	__configTwistedLogger()
+	twistedlog.startLoggingWithObserver(logTwisted)
 
 def logTwisted(dict):
 	"""
@@ -127,9 +126,6 @@ def logTwisted(dict):
 		ourTwistedLogger.error(dict)
 	else:
 		ourTwistedLogger.info(dict)
-
-def __configTwistedLogger():
-	twistedlog.addObserver(logTwisted)
 
 def __configLoggerBasic():
 	#setup()
