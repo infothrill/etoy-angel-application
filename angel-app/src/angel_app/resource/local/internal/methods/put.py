@@ -111,7 +111,6 @@ class Putable(object):
                 ))
         
         DEBUG and log.err("__putFile: done putting file stream: " + self.fp.path)
-        DEBUG and log.err("__putFile: file contents: " + open(self.fp.path).read())
         yield None
             
             

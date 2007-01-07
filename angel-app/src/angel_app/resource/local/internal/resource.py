@@ -36,16 +36,18 @@ class Crypto(
                  defaultType="text/plain",
                  indexNames=None):
         Basic.__init__(self, path, defaultType, indexNames)
-        self.fp.exists() and self.__initProperties()
+        self.fp.exists() and self._initProperties()
 
-    def __initProperties(self):
+    def _initProperties(self):
         """
         Set all required properties to a syntactically meaningful default value, if not already set.
         """
-        dp = self._dead_properties
+        DEBUG and log.err("foo foo: " + self.relativePath())
+        dp = self.deadProperties()
         for element in elements.requiredKeys:
-            qq = element.qname()
-            if not dp.contains(qq):
+            DEBUG and log.err(element.qname())
+            if not dp.contains(element.qname()):
+                DEBUG and log.err("initializing " + element.sname() + " of " + self.fp.path)
                 if element in config.defaultMetaData.keys():
                     ee = element(config.defaultMetaData[element](self))
                 else:  
@@ -62,7 +64,7 @@ class Crypto(
           
     def _updateMetadata(self): 
 
-        self.__initProperties()
+        self._initProperties()
         #self._inheritClones()        
         # now encrypt and sign, update the containing collection
         self.update(1)
@@ -210,6 +212,9 @@ class Crypto(
     def _registerWithParent(self):
 
         DEBUG and log.err("entering _registerWithParent for " + self.fp.path)
+
+        DEBUG and log.err("make sure the required properties are initialized")
+        self._initProperties()
         
         pdp = self.parent().deadProperties()
         
@@ -223,10 +228,13 @@ class Crypto(
                 DEBUG and log.err(self.fp.path + ": this resource is already registered with the parent")
                 return
         
+        DEBUG and log.err("foo")
         ic = elements.Child(*[
                          rfc2518.HRef(self.resourceName()),
-                         elements.PublicKeyString(self.parent().publicKeyString()) 
+                         elements.PublicKeyString(self.parent().publicKeyString()),
+                         elements.ResourceID(self.resourceID())
                          ])
+        DEBUG and log.err("bar")
 
         
         nc = [cc for cc in oc] + [ic]
@@ -271,6 +279,8 @@ class Crypto(
         self.sign()
         DEBUG and log.err("bumping revision number for " + self.fp.path)
         self.bumpRevisionNumber()
+
+        
         DEBUG and log.err("sealing " + self.fp.path)
         self.seal()
 

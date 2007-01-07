@@ -221,7 +221,8 @@ class Basic(Safe):
 
     def relativePath(self):
         DEBUG and log.err(self.fp.path.split(repository)[1])
-        return self.fp.path.split(repository)[1]
+        import os
+        return os.sep + self.fp.path.split(repository)[1]
 
     def parent(self):
         """
@@ -275,13 +276,14 @@ class Basic(Safe):
         try:
             return self.get(elements.PublicKeyString)           
         except:
-            # no key set yet -- maybe we have a key handy for signign?
+            # no key set yet -- maybe we have a key handy for signing?
             try:
                 keyString = self.secretKey.exportKey()
                 DEBUG and log.err("initializing public key to: " + keyString)
                 return self.getOrSet(elements.PublicKeyString, keyString) 
             finally:
-                raise HTTPError(responsecode.FORBIDDEN)
+                raise HTTPError(responsecode.FORBIDDEN, 
+                                "You don't have sufficient privileges to initialize unititialized resource " + self.relativePath())
  
 
     def signableMetadata(self):
