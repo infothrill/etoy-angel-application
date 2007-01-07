@@ -122,6 +122,8 @@ def logTwisted(dict):
 	isError = dict['isError']
 	del dict['isError']
 	# buggy twisted: sometimes it also has the dict-key isErr:
+	if dict.has_key('printed'):
+		del dict['printed']
 	if dict.has_key('isErr'):
 		isError = dict['isErr']
 		del dict['isErr']
