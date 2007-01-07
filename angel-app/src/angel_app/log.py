@@ -118,8 +118,13 @@ def logTwisted(dict):
 	# TODO : beautify more...
 	ourTwistedLogger = getLogger("twisted")
 	del dict['time'] # we don't need to see the time twice in the log... the accuracy should not be a problem
+	# according to the twisted doc, the dict always has the 'isError' key set to indicate wether it is an error or not
 	isError = dict['isError']
 	del dict['isError']
+	# buggy twisted: sometimes it also has the dict-key isErr:
+	if dict.has_key('isErr'):
+		isError = dict['isErr']
+		del dict['isErr']
 	if dict.has_key('why') and dict['why'] == None:
 		del dict['why']
 	if isError == 1:
