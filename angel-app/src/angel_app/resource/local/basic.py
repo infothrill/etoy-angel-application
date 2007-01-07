@@ -165,7 +165,7 @@ class Basic(Safe):
         """
         @see IResource
         """ 
-        return self.deadProperties().get(elements.resourceID.qname())
+        return self.deadProperties().get(elements.ResourceID.qname())
     
     def resourceName(self):
         """
