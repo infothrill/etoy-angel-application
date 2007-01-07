@@ -21,7 +21,6 @@ def runServer():
 	from angel_app.config import config
 	AngelConfig = config.Config()
 	providerport = AngelConfig.getint("provider","listenPort")
-	providerinterface = AngelConfig.get("provider","listenInterface")
 	repository = AngelConfig.get("common","repository")
 
 	from angel_app.resource.local.external.resource import External
@@ -31,8 +30,8 @@ def runServer():
 	from twisted.web2 import channel
 	from twisted.internet import reactor
 	site = server.Site(root)
-	reactor.listenTCP(providerport, channel.HTTPFactory(site), 50, providerinterface)
-	getLogger().info("Listening on IP %s port %d and serving content from %s", providerinterface, providerport, repository)
+	reactor.listenTCP(providerport, channel.HTTPFactory(site), 50)
+	getLogger().info("Listening on port %d and serving content from %s", providerport, repository)
 	reactor.run()
 
 if __name__ == "__main__":
