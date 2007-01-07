@@ -53,32 +53,37 @@ class Config:
     """
 
     def __init__(self):
-		getLogger("config").debug("Config instantiated")
 		self.__needscommit = False
 		self.cfgvars = {}
-		self.cfgvars["home"] = environ["HOME"]
-		self.cfgvars["angelhome"] = path.join(self.cfgvars["home"], ".angel_app");
+		from angel_app.config.defaults import getAngelHomePath
+		self.cfgvars["angelhome"] = getAngelHomePath()
 		self.cfgvars["mainconfigfile"] = path.join(self.cfgvars["angelhome"], "config")
 
 		self.config = SafeConfigParser()
 		self.config.read(self.cfgvars["mainconfigfile"])
 		#dump entire config file (debug)
-		for section in self.config.sections():
-			getLogger("config").debug(section)
-			for option in self.config.options(section):
-				getLogger("config").debug(" " + option + "=" + self.config.get(section, option))
+		#for section in self.config.sections():
+		#	getLogger("config").debug(section)
+		#	for option in self.config.options(section):
+		#		getLogger("config").debug(" " + option + "=" + self.config.get(section, option))
 
     def get(self, section, key):
         self.__checkGetter(section, key)
-        return self.config.get(section,key)
+        val = self.config.get(section,key)
+        getLogger("config").debug("get(%s, %s) returns '%s'", section, key, val)
+        return val
 
     def getint(self, section, key):
         self.__checkGetter(section, key)
-        return self.config.getint(section,key)
+        val = self.config.getint(section,key)
+        getLogger("config").debug("getint(%s, %s) returns '%d'", section, key, val)
+        return val
 
     def getboolean(self, section, key):
         self.__checkGetter(section, key)
-        return self.config.getboolean(section,key)
+        val = self.config.getboolean(section,key)
+        getLogger("config").debug("getboolean(%s, %s) returns '%s'", section, key, val)
+        return val
 
     def __checkGetter(self, section, option):
         self.__checkSection(section)
