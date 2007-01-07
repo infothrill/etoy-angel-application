@@ -5,39 +5,91 @@ Master process. Responsible for starting all relevant angel-app components
 
 from twisted.internet.protocol import Protocol, Factory, ProcessProtocol
 from twisted.internet import reactor
-import cPickle
 import os
 import logging
+from angel_app.log import getLogger
 
-class externalprocessProtocol(ProcessProtocol):
+def bootInit():
 	"""
-	Simplistic Protocol for an external process.
-	TODO: probably we need a protocol for each process we want to start, so
-	we can control what's happening. E.g. we don't know which process
-	died for example.
+	Method to be called in __main__ before anything else. This method cannot rely on any
+	framework being initialised, e.g. no logging, no exception catching etc.
+	"""
+	import angel_app.config.defaults
+	angel_app.config.defaults.appname = "master"
+
+
+class ExternalProcessProtocol(ProcessProtocol):
+	"""
+	Protocol for an external process.
+	This is the base class for each external process we are going to start.
+	The reason to have a different class for every external process is so
+	we can map the class to a specific program.
 	"""
 	def connectionMade(self):
-		print "external Process started\n" # TODO
+		getLogger().info("external Process with protocol '%s' started", self.__class__.__name__)
 
 	def outReceived(self, data):
 		print data # TODO : this is temporary until we know how to use stdout/stderr
 		pass
 
 	def processEnded(self, reason):
-		print "external Process ENDED" + reason.getErrorMessage() + "!" # TODO
+		getLogger().warn("external Process with protocol '%s' ended with reason: '%s'" , self.__class__.__name__, reason.getErrorMessage())
+		endedProc(self.__class__.__name__)
 
+class presenterProtocol(ExternalProcessProtocol):
+	def dummy():
+		pass
+class providerProtocol(ExternalProcessProtocol):
+	def dummy():
+		pass
+class maintainerProtocol(ExternalProcessProtocol):
+	def dummy():
+		pass
+
+##############################
+wantDown = False # set this to true when you want to shutdown cleanly!
+def endedProc(name):
+	getLogger().debug("proc  protocol '%s' ended", name)
+	if not wantDown:
+		import time
+		time.sleep(5) # TODO: use some sort of Deferred to delay the starting!
+		startProc(name)
+def startProc(name):
+	import re
+	executable = "python"
+	if re.match('^presenter.*', name):
+		proto = presenterProtocol()
+		args = ["python", os.path.join(os.getcwd(),"bin/presenter.py"), '-l']
+		presenterTransport = reactor.spawnProcess(proto, executable, args, env=os.environ, path='/', uid=None, gid=None, usePTY=True)
+	if re.match('^provider.*', name):
+		proto = providerProtocol()
+		args = ["python", os.path.join(os.getcwd(),"bin/provider.py"), '-l']
+		providerTransport = reactor.spawnProcess(proto, executable, args, env=os.environ, path='/', uid=None, gid=None, usePTY=True)
+	if re.match('^maintainer.*', name):
+		proto = maintainerProtocol()
+		args = ["python", os.path.join(os.getcwd(),"bin/maintainer.py"), '-l']
+		providerTransport = reactor.spawnProcess(proto, executable, args, env=os.environ, path='/', uid=None, gid=None, usePTY=True)
+	# give the proc a chance to start:
+	import time
+	time.sleep(1)
+##############################
+
+
+import cPickle
 class LoggingProtocol(Protocol):
 	"""
 	Simplistic logging protocol as given by the "standard" python logging module and
 	its SocketHandler: http://docs.python.org/lib/network-logging.html
 	"""
 	def connectionMade(self):
-		print "Incoming logging connection"
+		getLogger().debug("Incoming logging connection from %s", self.transport.getPeer())
 		if (not hasattr(self.factory, "numProtocols")):
 			self.factory.numProtocols = 0
 		self.factory.numProtocols = self.factory.numProtocols+1 
-		if self.factory.numProtocols > 4:
+		#getLogger().debug("numConnections %d" , self.factory.numProtocols)
+		if self.factory.numProtocols > 100:
 			self.transport.write("Too many connections, try later") 
+			#getLogger().warn("Too many incoming logging connections. Dropping.")
 			self.transport.loseConnection()
 
 		def connectionLost(self, reason):
@@ -45,9 +97,15 @@ class LoggingProtocol(Protocol):
 
 	def dataReceived(self, data):
 		# first 4 bytes specify the length, only useful when doing select()/read()
-		obj = cPickle.loads(data[4:])
-		record = logging.makeLogRecord(obj)
-		self.handleLogRecord(record)
+		if len(data) > 4:
+			# TODO: I have no real clue why the unpickle fails sometimes...
+			try:
+				obj = cPickle.loads(data[4:])
+			except:
+				getLogger().error("Problem unpickling")
+			else:
+				record = logging.makeLogRecord(obj)
+				self.handleLogRecord(record)
 
 	def handleLogRecord(self, record):
 		logger = logging.getLogger(record.name)
@@ -55,25 +113,25 @@ class LoggingProtocol(Protocol):
 		# is normally called AFTER logger-level filtering. If you want
 		# to do filtering, do it at the client end to save wasting
 		# cycles and network bandwidth!
+		#print record
 		logger.handle(record)
+		#getLogger(record.name).handle(record)
 
 if __name__ == "__main__":
-	logging.basicConfig(format="%(name)-15s %(levelname)-8s %(message)s") # TODO
+	bootInit()
+	import angel_app.log
+	angel_app.log.setup()
+	angel_app.log.enableHandler('console')
+	angel_app.log.enableHandler('file')
+	angel_app.log.getReady()
 
 	factory = Factory()
-	factory.protocol = LoggingProtocol	
-	reactor.listenTCP(9020, factory)
+	factory.protocol = LoggingProtocol
+	from logging.handlers import DEFAULT_TCP_LOGGING_PORT
+	reactor.listenTCP(DEFAULT_TCP_LOGGING_PORT, factory)
 
-	processProtocol = externalprocessProtocol()
-
-	executable = "python"
-
-	args = ["python", os.path.join(os.getcwd(),"bin/presenter.py"), '-l']	  
-	presenterTransport = reactor.spawnProcess(processProtocol, executable, args, env=os.environ, path='/', uid=None, gid=None, usePTY=True)
-
-	args = ["python", os.path.join(os.getcwd(),"bin/provider.py"), '-l']	  
-	providerTransport = reactor.spawnProcess(processProtocol, executable, args, env=os.environ, path='/', uid=None, gid=None, usePTY=True)
-
-	# TODO: add maintainer	
+	startProc('presenter')
+	startProc('provider')
+	#startProc('maintainer')
 
 	reactor.run()
