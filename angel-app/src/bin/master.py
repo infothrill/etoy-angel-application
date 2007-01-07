@@ -74,7 +74,7 @@ def startProc(name):
 	time.sleep(1)
 ##############################
 
-
+import struct
 import cPickle
 class LoggingProtocol(Protocol):
 	"""
@@ -82,6 +82,8 @@ class LoggingProtocol(Protocol):
 	its SocketHandler: http://docs.python.org/lib/network-logging.html
 	"""
 	def connectionMade(self):
+		self.buf = ''
+		self.slen = 0
 		getLogger().debug("Incoming logging connection from %s", self.transport.getPeer())
 		if (not hasattr(self.factory, "numProtocols")):
 			self.factory.numProtocols = 0
@@ -96,16 +98,24 @@ class LoggingProtocol(Protocol):
 			self.factory.numProtocols = self.factory.numProtocols-1
 
 	def dataReceived(self, data):
-		# first 4 bytes specify the length, only useful when doing select()/read()
-		if len(data) > 4:
-			# TODO: I have no real clue why the unpickle fails sometimes...
-			try:
-				obj = cPickle.loads(data[4:])
-			except:
-				getLogger().error("Problem unpickling")
-			else:
-				record = logging.makeLogRecord(obj)
-				self.handleLogRecord(record)
+		self.buf += data
+		# first 4 bytes specify the length of the pickle
+		if len(self.buf) >= 4:
+			if self.slen == 0:
+				#print "buf longer than 4, finding slen"
+				self.slen = struct.unpack(">L", self.buf[0:4])[0]
+			#print "slen ", self.slen
+			#print "buf length: ", len(self.buf)-4
+			if (len(self.buf)-4 >= self.slen):
+				try:
+					obj = cPickle.loads(self.buf[4:self.slen+4])
+				except:
+					getLogger().error("Problem unpickling")
+				else:
+					self.buf = self.buf[self.slen+4:]
+					self.slen = 0
+					record = logging.makeLogRecord(obj)
+					self.handleLogRecord(record)
 
 	def handleLogRecord(self, record):
 		logger = logging.getLogger(record.name)
@@ -114,8 +124,8 @@ class LoggingProtocol(Protocol):
 		# to do filtering, do it at the client end to save wasting
 		# cycles and network bandwidth!
 		#print record
-		logger.handle(record)
-		#getLogger(record.name).handle(record)
+		#logger.handle(record)
+		getLogger(record.name).handle(record)
 
 if __name__ == "__main__":
 	bootInit()
