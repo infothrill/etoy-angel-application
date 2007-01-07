@@ -102,7 +102,7 @@ class Config:
         defaultValues = {
                          "common" : { "repository": path.join(self.cfgvars["angelhome"], "repository" ) }, # TODO
                          "presenter": { "listenport": "9998", "listeninterface": "127.0.0.1" },
-						 "provider" : { "listenport": "9999", "listeninterface": "127.0.0.1" },
+						 "provider" : { "listenport": "9999" },
 						 "maintainer" : { "peers": "localhost:9999" }
                          }
         if k not in defaultValues[s]:
