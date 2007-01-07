@@ -9,6 +9,11 @@ from angel_app.config import config
 AngelConfig = config.Config()
 repository = AngelConfig.get("common","repository")
 
+    
+# TODO: ugly twisted workaround to provide angel_app xml elements
+from twisted.web2.dav.element import parser
+from angel_app import elements
+parser.registerElements(elements)
 
 DEBUG = True
             
