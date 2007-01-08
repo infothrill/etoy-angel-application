@@ -117,9 +117,6 @@ def buildActiveLock(lockInfo, depth):
     
     depth = davxml.Depth(depth)
     
-    log.err("owner: " + `lockInfo.childOfType(davxml.Owner)`)
-    #log.err(lockInfo.childOfType(davxml.Owner).toxml())
-    
     activeLock = davxml.ActiveLock(
                                    lockInfo.childOfType(davxml.LockType),
                                    lockInfo.childOfType(davxml.LockScope),
@@ -198,7 +195,6 @@ def processLockRequest(resource, request):
     ignored = waitForDeferred(deferredGenerator(resource._getLock)())
     yield ignored
     ignored = ignored.getResult()
-    log.err("current lock: " + `ignored`)
     
     pp = davxml.PropertyContainer(ld)
     yield Response(
@@ -256,8 +252,6 @@ class Lockable(object):
         yield il
         il = il.getResult()
         
-        log.err("is locked? :" + `il`)
-        
         if il is True:
 
             error = "Resource is locked and you don't have the proper token handy."
@@ -299,11 +293,9 @@ class Lockable(object):
         llt = waitForDeferred(deferredGenerator(self._lockToken)())
         yield llt
         llt = llt.getResult()
-        log.err("local lock token: " + `llt`)
     
         # get the remote lock token
-        rlt = getOpaqueLockToken(request)
-        log.err("remote lock token: " + `rlt`)    
+        rlt = getOpaqueLockToken(request)   
 
         if self.exists():
             # a resource that does not exist can not be locked

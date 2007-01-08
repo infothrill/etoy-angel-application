@@ -43,7 +43,9 @@ def getLocalCloneURLList(af):
         pass
 
     try:
-        clones += af.parent().deadProperties().get(elements.Clones.qname()).children
+        pclones = af.parent().deadProperties().get(elements.Clones.qname()).children
+        for pc in pclones: pc.path = af.relativePath()
+        clones += pclones
     except:
         # we have no clones on this file
         pass    
@@ -134,25 +136,21 @@ def getResourceID(resource):
     because it has just been updated, however, the root directory has no parent....
     TODO: review
     """
+    resourceID = ""
     if not resource.parent():
         # root directory
         resourceID = resource.resourceID()
     else:
+        # otherwise, take the resourceID delivered from the parent
         # yumyum. python prose. enjoy.
         # TODO: our current xml metdatata model sucks rocks. possibly elementTree to the rescue?
-        children = resource.parent().deadProperties().get(elements.Children.qname()).childrenOfType(elements.Child.qname())
-        DEBUG and log.err("foo: " + `[str(child.childOfType(rfc2518.HRef.qname())) for child in children]`)
+        children = resource.parent().deadProperties().get(elements.Children.qname()).children
         for child in children:
             if str(child.childOfType(rfc2518.HRef.qname())) == resource.resourceName():
-                DEBUG and log.err(`child`)
-                DEBUG and log.err(`child.__class__`)
-                for cc in child.children:
-                    if cc.qname() == elements.ResourceID.qname():
-                        return "".join([str(cc) for cc in afTag.getChildOfType(elements.ResourceID.qname()).children])
-                afTag = child.getChildOfType(elements.ResourceID.qname())
-                break
-        DEBUG and log.err(`type(afTag)` + " " + `afTag`)
-        resourceID = "".join([str(cc) for cc in afTag.getChildOfType(elements.ResourceID.qname()).children])
+                xx = child.childOfType(elements.ResourceID.qname())
+                log.err("ASDF" + `xx` + xx.toxml())
+                resourceID = "".join(str(cc) for cc in child.childOfType(elements.ResourceID.qname()).children)
+                log.err("ASDF" + resourceID)
         
     DEBUG and log.err("resourceID: " + `resourceID`)
     return resourceID

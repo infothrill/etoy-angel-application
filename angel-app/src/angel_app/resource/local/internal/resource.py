@@ -42,12 +42,9 @@ class Crypto(
         """
         Set all required properties to a syntactically meaningful default value, if not already set.
         """
-        DEBUG and log.err("foo foo: " + self.relativePath())
         dp = self.deadProperties()
         for element in elements.requiredKeys:
-            DEBUG and log.err(element.qname())
             if not dp.contains(element.qname()):
-                DEBUG and log.err("initializing " + element.sname() + " of " + self.fp.path)
                 if element in config.defaultMetaData.keys():
                     ee = element(config.defaultMetaData[element](self))
                 else:  
@@ -221,7 +218,9 @@ class Crypto(
         oc = pdp.get(elements.Children.qname()).children
         DEBUG and log.err(len(oc))
         
-        DEBUG and log.err("resourceName: " + self.resourceName())     
+        DEBUG and log.err("resourceName: " + self.resourceName())  
+        log.err("foo")   
+        DEBUG and log.err("resourceID: " + `self.resourceID()`)    
         for cc in oc:
             DEBUG and log.err("child: " + str(cc.childOfType(rfc2518.HRef)))
             if str(cc.childOfType(rfc2518.HRef)) == self.resourceName():
@@ -232,7 +231,7 @@ class Crypto(
         ic = elements.Child(*[
                          rfc2518.HRef(self.resourceName()),
                          elements.PublicKeyString(self.parent().publicKeyString()),
-                         elements.ResourceID(self.resourceID())
+                         self.resourceID()
                          ])
         DEBUG and log.err("bar")
 

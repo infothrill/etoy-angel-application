@@ -16,7 +16,7 @@ import os
 
 from angel_app.contrib import uuid
 
-DEBUG = True
+DEBUG = False
 
 # get config:
 from angel_app.config import config
@@ -220,9 +220,7 @@ class Basic(Safe):
                 ]
 
     def relativePath(self):
-        DEBUG and log.err(self.fp.path.split(repository)[1])
-        import os
-        return os.sep + self.fp.path.split(repository)[1]
+        return self.fp.path.split(repository)[1]
 
     def parent(self):
         """

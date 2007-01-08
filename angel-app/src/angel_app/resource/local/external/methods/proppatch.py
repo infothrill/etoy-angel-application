@@ -70,6 +70,10 @@ class ProppatchMixin:
         def __xml(element):
             return __get(element).toxml()
         
+        goodID = (self.resourceID() == __get(elments.ResourceID))
+        log.debug("resource ID for PROPPATCH is valid: " + `goodID`)
+        if not goodID: return False
+        
         sig = __both(elements.MetaDataSignature)
         keyString = __both(elements.PublicKeyString)
         signable = __string([
@@ -84,7 +88,7 @@ class ProppatchMixin:
         pubKey = ezPyCrypto.key()
         pubKey.importKey(keyString)
         isValid = pubKey.verifyString(signable, sig)
-        log.err(isValid)
+        log.debug(isValid)
         return isValid
         
             
