@@ -35,7 +35,16 @@ from ConfigParser import SafeConfigParser
 from twisted.python.filepath import FilePath
 from angel_app.log import getLogger
 
-# TODO: this class is OK, but we end up having multiple instances in the app. It should really be a singleton
+configObject = None # holder for a Config object
+
+def getConfig():
+	"""
+	Returns an instance of Config()
+	"""
+	global configObject
+	if configObject == None:
+		configObject = Config()
+	return configObject
 
 class Config:
     """
@@ -45,6 +54,11 @@ class Config:
     restricted to $HOME/.angel_app/config
     Comment lines in the config file will get stripped off if it is rewritten.
     The directory $HOME/.angel_app will automatically get created if needed.
+
+	<p>
+	In angel-app, you will most probably not instantiate this class directly,
+	but use the routine "getConfig()" in this module.
+	</p>
 
     <p>
     See the documentation of the python SafeConfigParser module for information
@@ -69,19 +83,19 @@ class Config:
 
     def get(self, section, key):
         self.__checkGetter(section, key)
-        val = self.config.get(section,key)
+        val = self.config.get(section, key)
         getLogger("config").debug("get(%s, %s) returns '%s'", section, key, val)
         return val
 
     def getint(self, section, key):
         self.__checkGetter(section, key)
-        val = self.config.getint(section,key)
+        val = self.config.getint(section, key)
         getLogger("config").debug("getint(%s, %s) returns '%d'", section, key, val)
         return val
 
     def getboolean(self, section, key):
         self.__checkGetter(section, key)
-        val = self.config.getboolean(section,key)
+        val = self.config.getboolean(section, key)
         getLogger("config").debug("getboolean(%s, %s) returns '%s'", section, key, val)
         return val
 
@@ -105,9 +119,9 @@ class Config:
         s = section.lower()
         k = key.lower()
         defaultValues = {
-                         "common" : { "repository": path.join(self.cfgvars["angelhome"], "repository" ) }, # TODO
-                         "presenter": { "listenport": "9998", "listeninterface": "127.0.0.1" },
-						 "provider" : { "listenport": "9999" },
+                         "common" : { "repository": path.join(self.cfgvars["angelhome"], "repository") }, 
+                         "presenter": { "listenport": "9998", "listeninterface": "127.0.0.1" }, 
+						 "provider" : { "listenport": "9999" }, 
 						 "maintainer" : { "peers": "localhost:9999" }
                          }
         if k not in defaultValues[s]:
@@ -124,10 +138,10 @@ class Config:
 
     def __checkOption(self, section, key):
         if not self.config.has_option(section, key):
-            if not self.__getDefaultValue(section,key):
+            if not self.__getDefaultValue(section, key):
                 raise NameError, "ConfigError: Section '"+section+"' has no option '"+key+"' and there is no default value available"
             else:
-                self.config.set(section,key, self.__getDefaultValue(section,key)) 
+                self.config.set(section, key, self.__getDefaultValue(section, key)) 
                 self.__needscommit = True
 
     def __del__(self):

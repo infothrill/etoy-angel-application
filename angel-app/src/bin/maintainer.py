@@ -6,7 +6,7 @@ from angel_app.resource.local.basic import Basic
 setup.setupDefaultPeers()
 
 from angel_app.config import config
-AngelConfig = config.Config()
+AngelConfig = config.getConfig()
 repository = AngelConfig.get("common","repository")
 
     

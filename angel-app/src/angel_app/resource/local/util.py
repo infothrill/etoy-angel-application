@@ -32,7 +32,7 @@ from os import sep
 
 # get config:
 from angel_app.config import config
-AngelConfig = config.Config()
+AngelConfig = config.getConfig()
 repository = AngelConfig.get("common","repository")
 
 def resourceFromURI(uri, resourceClass):

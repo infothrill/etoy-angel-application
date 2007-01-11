@@ -23,7 +23,7 @@ def bootInit():
 
 def runServer():
 	from angel_app.config import config
-	AngelConfig = config.Config()
+	AngelConfig = config.getConfig()
 	port = AngelConfig.getint("presenter","listenPort")
 	interface = AngelConfig.get("presenter","listenInterface")
 	repository = AngelConfig.get("common","repository")

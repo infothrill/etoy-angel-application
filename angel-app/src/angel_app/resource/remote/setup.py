@@ -10,7 +10,7 @@ DEBUG = True
 
 # get config:
 from angel_app.config import config
-AngelConfig = config.Config()
+AngelConfig = config.getConfig()
 repository = Basic(AngelConfig.get("common","repository"))
 
 def cloneFromName(name = ("localhost", 90)):

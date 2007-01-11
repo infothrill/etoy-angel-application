@@ -9,7 +9,7 @@ DEBUG = True
 
 # get config:
 from angel_app.config import config
-AngelConfig = config.Config()
+AngelConfig = config.getConfig()
 repository = AngelConfig.get("common","repository")
 
 def splitParse(cloneUri):
