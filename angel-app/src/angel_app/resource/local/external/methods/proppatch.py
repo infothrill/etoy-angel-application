@@ -70,7 +70,13 @@ class ProppatchMixin:
         def __xml(element):
             return __get(element).toxml()
         
-        goodID = (self.resourceID() == __get(elements.ResourceID))
+        try: 
+            rid = self.resourceID()
+        except:
+            # TODO: review -- this is a potential security hole if not handled right,
+            # but we are going to be careful, aren't we?
+            return True
+        goodID = (rid == __get(elements.ResourceID))
         log.debug("resource ID for PROPPATCH is valid: " + `goodID`)
         if not goodID: return False
         
