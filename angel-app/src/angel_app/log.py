@@ -109,13 +109,13 @@ def getReady():
 	"""
 	must be called after setup() and after enabling handlers with enableHandler()
 	"""
-	twistedlog.startLoggingWithObserver(logTwisted)
+	twistedlog.startLoggingWithObserver(logTwisted, setStdout=1)
 
 def logTwisted(dict):
 	"""
 	callback for the twisted logging engine
 	"""
-	# TODO : beautify more...
+	# TODO : beautify more... see twisted.python.log for details on how to implement that
 	ourTwistedLogger = getLogger("twisted")
 	del dict['time'] # we don't need to see the time twice in the log... the accuracy should not be a problem
 	# according to the twisted doc, the dict always has the 'isError' key set to indicate wether it is an error or not
@@ -129,8 +129,16 @@ def logTwisted(dict):
 		del dict['isErr']
 	if dict.has_key('why') and dict['why'] == None:
 		del dict['why']
+
+	text = None
+	if isError == 1 and dict.has_key('failure'):
+		text = ((dict.get('why') or 'Unhandled Error')
+				+ '\n' + dict['failure'].getTraceback())
+
 	if isError == 1:
 		ourTwistedLogger.error(dict)
+		if not text == None:
+			ourTwistedLogger.critical(text)
 	else:
 		ourTwistedLogger.info(dict)
 
