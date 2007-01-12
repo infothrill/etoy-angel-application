@@ -70,7 +70,7 @@ class ProppatchMixin:
         def __xml(element):
             return __get(element).toxml()
         
-        goodID = (self.resourceID() == __get(elments.ResourceID))
+        goodID = (self.resourceID() == __get(elements.ResourceID))
         log.debug("resource ID for PROPPATCH is valid: " + `goodID`)
         if not goodID: return False
         
@@ -137,6 +137,7 @@ class ProppatchMixin:
         
         # extract the properties to be patched
         requestProperties = getRequestProperties(doc)
+        print requestProperties
         
         # authenticate
         isValid = self.authenticate(requestProperties)
