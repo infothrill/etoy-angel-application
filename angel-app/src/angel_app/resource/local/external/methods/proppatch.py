@@ -137,7 +137,6 @@ class ProppatchMixin:
         
         # extract the properties to be patched
         requestProperties = getRequestProperties(doc)
-        print requestProperties
         
         # authenticate
         isValid = self.authenticate(requestProperties)
