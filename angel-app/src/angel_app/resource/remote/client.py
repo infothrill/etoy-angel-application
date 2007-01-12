@@ -195,7 +195,7 @@ def inspectResource(path = repository):
         _updateBadClone(af, bc)
     
     
-    DEBUG and log.err("DONE\n\n")
+    DEBUG and log.err("DONE")
     
     
 

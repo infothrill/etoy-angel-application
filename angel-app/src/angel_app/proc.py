@@ -66,7 +66,7 @@ def daemonize(stdout='/dev/null', stderr=None, stdin='/dev/null',
         pid = os.fork() 
         if pid > 0: sys.exit(0) # Exit first parent.
     except OSError, e: 
-        sys.stderr.write("fork #1 failed: (%d) %s\n" % (e.errno, e.strerror))
+        sys.stderr.write("fork #1 failed: (%d) %s%s" % (e.errno, e.strerror, os.linesep))
         sys.exit(1)
         
     # Decouple from parent environment.
@@ -85,7 +85,7 @@ def daemonize(stdout='/dev/null', stderr=None, stdin='/dev/null',
         pid = os.fork() 
         if pid > 0: sys.exit(0) # Exit second parent.
     except OSError, e: 
-        sys.stderr.write("fork #2 failed: (%d) %s\n" % (e.errno, e.strerror))
+        sys.stderr.write("fork #2 failed: (%d) %s%s" % (e.errno, e.strerror, os.linesep))
         sys.exit(1)
     
     # Open file descriptors and print start message
@@ -94,9 +94,9 @@ def daemonize(stdout='/dev/null', stderr=None, stdin='/dev/null',
     so = file(stdout, 'w+')
     se = file(stderr, 'w+', 0)
     pid = str(os.getpid())
-    sys.stderr.write("\n%s\n" % startmsg % pid)
+    sys.stderr.write("%s%s" % (startmsg, os.linesep )% pid)
     sys.stderr.flush()
-    if pidfile: file(pidfile,'w+').write("%s\n" % pid)
+    if pidfile: file(pidfile,'w+').write("%s%s" % (pid, os.linesep))
     
     # Redirect standard file descriptors.
     os.dup2(si.fileno(), sys.stdin.fileno())
@@ -128,8 +128,8 @@ def startstop(action=None, stdout='/dev/null', stderr=None, stdin='/dev/null',
 			pid = None
 		if 'stop' == action or 'restart' == action:
 			if not pid:
-				mess = "Could not stop, pid file '%s' missing.\n"
-				sys.stderr.write(mess % pidfile)
+				mess = "Could not stop, pid file '%s' missing.%s"
+				sys.stderr.write(mess % (pidfile, os.linesep))
 				sys.exit(1)
 			try:
 				while 1:
@@ -148,8 +148,8 @@ def startstop(action=None, stdout='/dev/null', stderr=None, stdin='/dev/null',
 					sys.exit(1)
 		if 'start' == action:
 			if pid:
-				mess = "Start aborded since pid file '%s' exists.\n"
-				sys.stderr.write(mess % pidfile)
+				mess = "Start aborded since pid file '%s' exists.%s"
+				sys.stderr.write(mess % (pidfile, os.linesep))
 				sys.exit(1)
 			daemonize(stdout,stderr,stdin,pidfile,startmsg)
 			return

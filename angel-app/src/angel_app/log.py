@@ -45,7 +45,7 @@ import logging
 from twisted.python import log as twistedlog
 
 from twisted.python.filepath import FilePath
-from os import environ, path, mkdir
+from os import environ, path, mkdir, linesep
 
 # twisted logging:
 #http://twistedmatrix.com/projects/core/documentation/howto/logging.html
@@ -133,7 +133,7 @@ def logTwisted(dict):
 	text = None
 	if isError == 1 and dict.has_key('failure'):
 		text = ((dict.get('why') or 'Unhandled Error')
-				+ '\n' + dict['failure'].getTraceback())
+				+ os.linesep + dict['failure'].getTraceback())
 
 	if isError == 1:
 		ourTwistedLogger.error(dict)
