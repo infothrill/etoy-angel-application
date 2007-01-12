@@ -33,7 +33,7 @@ author = """Paul Kremer, 2006"""
 from os import environ, path, mkdir
 from ConfigParser import SafeConfigParser
 from twisted.python.filepath import FilePath
-from angel_app.log import getLogger
+import angel_app.log
 
 configObject = None # holder for a Config object
 
@@ -81,22 +81,22 @@ class Config:
 		#	for option in self.config.options(section):
 		#		getLogger("config").debug(" " + option + "=" + self.config.get(section, option))
 
-    def get(self, section, key):
+    def get(self, section, key, raw = False):
         self.__checkGetter(section, key)
-        val = self.config.get(section, key)
-        getLogger("config").debug("get(%s, %s) returns '%s'", section, key, val)
+        val = self.config.get(section, key, raw)
+        angel_app.log.getLogger("config").debug("get(%s, %s) returns '%s'", section, key, val)
         return val
 
     def getint(self, section, key):
         self.__checkGetter(section, key)
         val = self.config.getint(section, key)
-        getLogger("config").debug("getint(%s, %s) returns '%d'", section, key, val)
+        angel_app.log.getLogger("config").debug("getint(%s, %s) returns '%d'", section, key, val)
         return val
 
     def getboolean(self, section, key):
         self.__checkGetter(section, key)
         val = self.config.getboolean(section, key)
-        getLogger("config").debug("getboolean(%s, %s) returns '%s'", section, key, val)
+        angel_app.log.getLogger("config").debug("getboolean(%s, %s) returns '%s'", section, key, val)
         return val
 
     def __checkGetter(self, section, option):
@@ -119,7 +119,11 @@ class Config:
         s = section.lower()
         k = key.lower()
         defaultValues = {
-                         "common" : { "repository": path.join(self.cfgvars["angelhome"], "repository") }, 
+                         "common" : {
+									"repository": path.join(self.cfgvars["angelhome"], "repository"),
+									"loglevel": "DEBUG",
+									"logformat": '%(name)-20s %(asctime)s %(levelname)-6s %(filename)s:%(lineno)d %(message)s',
+									}, 
                          "presenter": { "listenport": "9998", "listeninterface": "127.0.0.1" }, 
 						 "provider" : { "listenport": "9999" }, 
 						 "maintainer" : { "peers": "localhost:9999" }
@@ -151,7 +155,7 @@ class Config:
             if not angelhomePath.exists():
                 mkdir(angelhomePath.path, 0750)
             if not configfilePath.exists():
-                getLogger("config").info("Creating a new, empty config file in '"+configfilePath.path+"'")
-            getLogger("config").info("committing the config file to '"+self.cfgvars["mainconfigfile"]+"'")
+                angel_app.log.getLogger("config").info("Creating a new, empty config file in '"+configfilePath.path+"'")
+            angel_app.log.getLogger("config").info("committing the config file to '"+self.cfgvars["mainconfigfile"]+"'")
             f = open(self.cfgvars["mainconfigfile"], 'w')
             self.config.write(f)
