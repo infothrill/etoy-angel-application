@@ -25,11 +25,11 @@ class Putable(object):
         not self.fp.exists() and DEBUG and log.debug("adding new file at: " + self.fp.path)
 
         if not self.isWritableFile():
-            log.error("http_PUT: not authorized to put file: " + self.fp.path)
-            raise HTTPError(responsecode.UNAUTHORIZED)
+            message = "http_PUT: not authorized to put file: " + self.fp.path
+            log.error(message)
+            raise HTTPError(responsecode.UNAUTHORIZED, message)
         
-        DEBUG and log.debug("_put: deleting file at: " + self.fp.path)
-        
+        DEBUG and log.debug("_put: deleting file at: " + self.fp.path)        
         response = waitForDeferred(deferredGenerator(self.__putDelete)())
         yield response
         response = response.getResult()
@@ -73,16 +73,18 @@ class Putable(object):
         if the destination already exists, or L{responsecode.NO_CONTENT} if the
         destination was created by the X{PUT} operation.
         """
-        DEBUG and log.msg("Writing to file %s" % (self.fp.path,))
+        DEBUG and log.debug("Deleting file %s" % (self.fp.path,))
         
         # TODO: actually do the above
         
         if self.fp.exists():
+            DEBUG and log.debug("deleting: " + self.fp.path)
             response = self.delete()
             DEBUG and log.debug("__putDelete: " + `response`)
             checkResponse(response, "delete", responsecode.NO_CONTENT)
             success_code = responsecode.NO_CONTENT
         else:
+            DEBUG and log.debug("__putDelete, file does not exist, not deleted.")
             success_code = responsecode.CREATED
         yield success_code
     
