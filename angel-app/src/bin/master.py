@@ -3,6 +3,7 @@ Master process. Responsible for starting all relevant angel-app components
 (presenter, provider, maintainer), does the logging as well.
 """
 
+from optparse import OptionParser
 from twisted.internet.protocol import Protocol, Factory, ProcessProtocol
 from twisted.internet import reactor
 import os
@@ -23,57 +24,154 @@ class ExternalProcessProtocol(ProcessProtocol):
 	Protocol for an external process.
 	This is the base class for each external process we are going to start.
 	The reason to have a different class for every external process is so
-	we can map the class to a specific program.
+	we can map the class to a specific external program.
+	This class shall not be used directly. It must be used as a base class!
 	"""
 	def connectionMade(self):
-		getLogger().info("external Process with protocol '%s' started", self.__class__.__name__)
+		self.transport.closeStdin()
 
 	def outReceived(self, data):
-		print data # TODO : this is temporary until we know how to use stdout/stderr
-		pass
+		getLogger(self.__class__.__name__).debug("STDOUT from '%s': %s", self.__class__.__name__, data)
+
+	def errReceived(self, data):
+		getLogger(self.__class__.__name__).debug("STDERR from '%s': %s", self.__class__.__name__, data)
 
 	def processEnded(self, reason):
-		getLogger().warn("external Process with protocol '%s' ended with reason: '%s'" , self.__class__.__name__, reason.getErrorMessage())
-		endedProc(self.__class__.__name__)
+		getLogger().info("external Process with protocol '%s' ended with reason: '%s'" , self.__class__.__name__, reason.getErrorMessage())
+		endedProc(self, reason)
 
+"""
+the next 3 classes are merely here for providing a specific class name for each external process we run
+"""
 class PresenterProtocol(ExternalProcessProtocol):
-	def dummy():
-		pass
+	pass
 class ProviderProtocol(ExternalProcessProtocol):
-	def dummy():
-		pass
+	pass
 class MaintainerProtocol(ExternalProcessProtocol):
-	def dummy():
+	pass
+
+class Process():
+	def setProtocol(self, protocol):
+		self.protocol = protocol
+	def setExecutable(self, executable):
+		self.executable = executable
+	def setArgs(self, args):
+		self.args = args
+	def setTransport(self, val):
+		self.transport = val
+
+class ExternalProcessManager:
+	def __init__(self):
+		self.procDict = {}
+	
+	def registerProcessStarter(self, callback):
+		self.starter = callback
+
+	def registerDelayedStarter(self, callback):
+		self.delayedstarter = callback
+	
+	def startServicing(self, processObj):
+		"""
+		Will start and eventually restart the given process
+		"""
+		processObj.wantDown = False
+		getLogger().debug("startServicing called")
+		#self.procDict[processObj] = 1
+		if not self.procDict.has_key(processObj):
+			getLogger().debug("process is not known")
+#			if delay > 0:
+#				transport = self.delayedstarter(delay, self.startProcess, processObj)
+#			else:
+			self.startProcess(processObj)
+			self.procDict[processObj] = 1
+		else:
+			getLogger().warn("service for this process already known")
+			if self.isAlive(processObj):
+				getLogger().debug("service wants to be started but is still alive.")
+			else:
+				getLogger().debug("service wants to be started and is not alive!")
+				self.startProcess(processObj)
+				self.procDict[processObj] = 1
+
+	def startProcess(self,processObj):
+		if not processObj.wantDown:
+			transport = self.starter(processObj.protocol, processObj.executable, processObj.args, env=os.environ, path='/', uid=None, gid=None, usePTY=True)
+			processObj.setTransport(transport)
+			return True
+		else:
+			return False
+		
+	def stopProcess(self,processObj):
+		getLogger().warn("killing process")
+		if not processObj.transport == None:
+			getLogger().warn("really killing process")
+			try:
+				res = processObj.transport.signalProcess("KILL")
+			except twisted.internet.error.ProcessExitedAlready:
+				getLogger().debug("Could not kill, process is down already")
+			else:
+				getLogger().info("process was killed")
+			
+		return True
+
+	def isAlive(self, processObj):
+		if not processObj.transport:
+			getLogger().warn("process has no transport, cannot signal(0)")
+			return False
+		else:
+			getLogger().debug("process found, signal(0)")
+			return processObj.transport.signal(0)
+
+	def stopServicing(self, processObj):
+		"""
+		Will stop the given process
+		"""
+		processObj.wantDown = True
+		self.stopProcess(processObj)
+
+	def restartServicing(self, processObj):
+		"""
+		Will stop the given process
+		"""
+		# TODO
+		#self.stopServicing(processObj)
+		#self.startServicing(processObj, 5)
 		pass
 
-##############################
-wantDown = False # set this to true when you want to shutdown cleanly!
-def endedProc(name):
-	getLogger().debug("proc  protocol '%s' ended", name)
-	if not wantDown:
-		import time
-		time.sleep(5) # TODO: use some sort of Deferred to delay the starting!
-		startProc(name)
-def startProc(name):
-	import re
-	executable = "python"
-	if re.match('^Presenter.*', name):
-		proto = PresenterProtocol()
-		args = [executable, os.path.join(os.getcwd(),"bin/presenter.py"), '-l']
-		presenterTransport = reactor.spawnProcess(proto, executable, args, env=os.environ, path='/', uid=None, gid=None, usePTY=True)
-	if re.match('^Provider.*', name):
-		proto = ProviderProtocol()
-		args = [executable, os.path.join(os.getcwd(),"bin/provider.py"), '-l']
-		providerTransport = reactor.spawnProcess(proto, executable, args, env=os.environ, path='/', uid=None, gid=None, usePTY=True)
-	if re.match('^Maintainer.*', name):
-		proto = MaintainerProtocol()
-		args = [executable, os.path.join(os.getcwd(),"bin/maintainer.py"), '-l']
-		providerTransport = reactor.spawnProcess(proto, executable, args, env=os.environ, path='/', uid=None, gid=None, usePTY=True)
-	# give the proc a chance to start:
-	import time
-	time.sleep(1)
-##############################
+	def __findProcessWithProtocol(self, protocol):
+		for k, v in self.procDict.iteritems():
+			if k.protocol == protocol:
+				return k
+		getLogger().error("Could not find the process that ended")
+		raise NameError, "Could not find the process that ended"
+		
+	def endedProcess(self, protocol, reason):
+		getLogger().error("proc ended")
+		processObj = self.__findProcessWithProtocol(protocol) # TODO: catch exception
+		processObj.transport = None
+		self.startProcess(processObj)
+		#return
+		#if reason.value.exitCode == 0:
+		#	startServicing(processObj, 0)
+		#else:
+		#	startServicing(processObj, 5)
+		#	pass
+		#reactor.callLater(5, startProc, protocol.__class__.__name__)
+		#pass
 
+def endedProc(protocol, reason):
+	"""
+	Callback for the ProcessProtocol 'processEnded' event
+	"""
+	procManager.endedProcess(protocol, reason)
+	return
+	#getLogger().warn("exit code: '%s'" , reason.value.exitCode)
+	#if not reason.value.exitCode == 0:
+	#	pass
+	#if not wantDown:
+	#	reactor.callLater(5, startProc, protocol.__class__.__name__)
+
+	
 import struct
 import cPickle
 class LoggingProtocol(Protocol):
@@ -89,13 +187,13 @@ class LoggingProtocol(Protocol):
 			self.factory.numProtocols = 0
 		self.factory.numProtocols = self.factory.numProtocols+1 
 		#getLogger().debug("numConnections %d" , self.factory.numProtocols)
-		if self.factory.numProtocols > 100:
+		if self.factory.numProtocols > 20:
 			self.transport.write("Too many connections, try later") 
-			#getLogger().warn("Too many incoming logging connections. Dropping.")
+			getLogger().warn("Too many incoming logging connections. Dropping connection from '%s'.", self.transport.getPeer())
 			self.transport.loseConnection()
 
-		def connectionLost(self, reason):
-			self.factory.numProtocols = self.factory.numProtocols-1
+	def connectionLost(self, reason):
+		self.factory.numProtocols = self.factory.numProtocols-1
 
 	def dataReceived(self, data):
 		self.buf += data
@@ -129,10 +227,20 @@ class LoggingProtocol(Protocol):
 
 if __name__ == "__main__":
 	bootInit()
+	parser = OptionParser()
+	parser.add_option("-d", "--daemon", dest="daemon", help="daemon mode?", default='')
+	(options, args) = parser.parse_args()
+
 	import angel_app.log
 	angel_app.log.setup()
-	angel_app.log.enableHandler('console')
+
 	angel_app.log.enableHandler('file')
+	if len(options.daemon) > 0:
+		from angel_app import proc
+		proc.startstop(action=options.daemon, stdout='master.stdout', stderr='master.stderr', pidfile='master.pid')
+	else:
+		angel_app.log.enableHandler('console')
+
 	angel_app.log.getReady()
 
 	factory = Factory()
@@ -140,8 +248,32 @@ if __name__ == "__main__":
 	from logging.handlers import DEFAULT_TCP_LOGGING_PORT
 	reactor.listenTCP(DEFAULT_TCP_LOGGING_PORT, factory)
 
-	startProc('Presenter')
-	startProc('Provider')
-	#startProc('Maintainer')
+	procManager = ExternalProcessManager()
+	procManager.registerProcessStarter(reactor.spawnProcess)
+	procManager.registerDelayedStarter(reactor.callLater) 
+	
+	executable = "python"
+	binpath = os.path.join(os.getcwd(),"bin") # TODO: where are the scripts?
+
+	presenterProcess = Process()
+	presenterProcess.setProtocol(PresenterProtocol())
+	presenterProcess.setExecutable(executable)
+	presenterProcess.setArgs(args = [executable, os.path.join(binpath,"presenter.py"), '-l']) 
+	procManager.startServicing(presenterProcess)
+	
+	providerProcess = Process()
+	providerProcess.setProtocol(ProviderProtocol())
+	providerProcess.setExecutable(executable)
+	providerProcess.setArgs(args = [executable, os.path.join(binpath,"provider.py"), '-l']) 
+	procManager.startServicing(providerProcess)
+	
+	maintainerProcess = Process()
+	maintainerProcess.setProtocol(MaintainerProtocol())
+	maintainerProcess.setExecutable(executable)
+	maintainerProcess.setArgs(args = [executable, os.path.join(binpath,"maintainer.py"), '-l']) 
+	procManager.startServicing(maintainerProcess)
+	
+
+	#reactor.callLater(5, procManager.stopProcess,presenterProcess)
 
 	reactor.run()
