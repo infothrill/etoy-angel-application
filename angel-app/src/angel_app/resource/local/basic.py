@@ -12,8 +12,10 @@ from angel_app.resource.local.safe import Safe
 from angel_app.resource.local.external.methods.proppatch import ProppatchMixin
 from angel_app.resource.local.resourceMixins import deleteable
 from angel_app.log import getLogger
+from angel_app.contrib import uuid
 from ezPyCrypto import key as ezKey
 import os
+import sha
 
 from angel_app.contrib import uuid
 
@@ -257,17 +259,17 @@ class Basic(deleteable.Deletable, Safe):
         """
         if not self.isCollection(): return []
         
-        try:
-            foo = self.deadProperties().get(elements.Children.qname())
-            DEBUG and log.debug(foo.toxml())
-            children = foo.children
-        except:
-            children = []
+        children = self.deadProperties().get(elements.Children.qname()).children
 
-        return [
-                self.createSimilarFile(self.fp.path + os.sep + str(child.childOfType(davxml.HRef))) 
-                for child in children
-                ]
+        validatedChildren = []
+        for child in children:
+            sf = self.createSimilarFile(self.fp.path + os.sep + str(child.childOfType(davxml.HRef)))
+            log.debug("foo " + `sf.keyCheckSum()`)
+            log.debug("bar " + `child.childOfType(elements.UUID)`)
+            if sf.fp.exists() and sf.keyCheckSum() == child.childOfType(elements.UUID):
+                validatedChildren.append(sf)
+            
+        return validatedChildren
 
 
     def publicKeyString(self):
@@ -286,6 +288,15 @@ class Basic(deleteable.Deletable, Safe):
                 raise HTTPError(responsecode.FORBIDDEN, 
                                 "You don't have sufficient privileges to initialize unititialized resource " + self.relativePath())
  
+    def keyUUID(self):
+        """
+        @return a SHA checksum of the public key string. We only take the first 16 bytes to be convertible
+        to a UUID>
+        """
+        return uuid.UUID(
+                         sha.new(
+                                 self.publicKeyString()
+                         ).hexdigest()[:32])
 
     def signableMetadata(self):
         """
