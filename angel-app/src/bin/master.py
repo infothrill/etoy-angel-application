@@ -38,7 +38,7 @@ class ExternalProcessProtocol(ProcessProtocol):
 
 	def processEnded(self, reason):
 		getLogger().info("external Process with protocol '%s' ended with reason: '%s'" , self.__class__.__name__, reason.getErrorMessage())
-		endedProc(self, reason)
+		procManager.endedProcess(self, reason)
 
 """
 the next 3 classes are merely here for providing a specific class name for each external process we run
@@ -49,8 +49,10 @@ class ProviderProtocol(ExternalProcessProtocol):
 	pass
 class MaintainerProtocol(ExternalProcessProtocol):
 	pass
+class TestProtocol(ExternalProcessProtocol):
+	pass
 
-class Process():
+class Process:
 	def setProtocol(self, protocol):
 		self.protocol = protocol
 	def setExecutable(self, executable):
@@ -63,6 +65,7 @@ class Process():
 class ExternalProcessManager:
 	def __init__(self):
 		self.procDict = {}
+		self.startendedprocessdelay = 5 # number of seconds to delay the restarting of an ended process
 	
 	def registerProcessStarter(self, callback):
 		self.starter = callback
@@ -75,57 +78,66 @@ class ExternalProcessManager:
 		Will start and eventually restart the given process
 		"""
 		processObj.wantDown = False
-		getLogger().debug("startServicing called")
+		getLogger("ExternalProcessManager").info("startServicing %s", processObj.protocol)
 		#self.procDict[processObj] = 1
 		if not self.procDict.has_key(processObj):
-			getLogger().debug("process is not known")
+			getLogger("ExternalProcessManager").debug("process is not known")
 #			if delay > 0:
 #				transport = self.delayedstarter(delay, self.startProcess, processObj)
 #			else:
 			self.startProcess(processObj)
 			self.procDict[processObj] = 1
 		else:
-			getLogger().warn("service for this process already known")
+			getLogger("ExternalProcessManager").debug("service for this process already known")
 			if self.isAlive(processObj):
-				getLogger().debug("service wants to be started but is still alive.")
+				getLogger("ExternalProcessManager").debug("service wants to be started but is still alive.")
 			else:
-				getLogger().debug("service wants to be started and is not alive!")
+				getLogger("ExternalProcessManager").debug("service wants to be started and is not alive!")
 				self.startProcess(processObj)
 				self.procDict[processObj] = 1
 
-	def startProcess(self,processObj):
+	def startProcess(self,processObj, delay = 0):
 		if not processObj.wantDown:
-			transport = self.starter(processObj.protocol, processObj.executable, processObj.args, env=os.environ, path='/', uid=None, gid=None, usePTY=True)
-			processObj.setTransport(transport)
-			return True
+			if delay == 0:
+				transport = self.starter(processObj.protocol, processObj.executable, processObj.args, env=os.environ, path='/', uid=None, gid=None, usePTY=True)
+				getLogger("ExternalProcessManager").info("started process '%s' with PID '%s'", processObj.protocol, transport.pid)
+				processObj.setTransport(transport)
+				return True
+			else:
+				getLogger("ExternalProcessManager").debug("delay startProcess '%s' by %d seconds", processObj.protocol, delay)
+				self.delayedstarter(delay, self.startProcess, processObj)
 		else:
+			del self.procDict[processObj]
 			return False
 		
-	def stopProcess(self,processObj):
-		getLogger().warn("killing process")
+	def stopProcess(self, processObj):
+		getLogger("ExternalProcessManager").info("stopping process %s", processObj.protocol)
 		if not processObj.transport == None:
-			getLogger().warn("really killing process")
+			getLogger("ExternalProcessManager").debug("trying to kill process")
 			try:
 				res = processObj.transport.signalProcess("KILL")
 			except twisted.internet.error.ProcessExitedAlready:
-				getLogger().debug("Could not kill, process is down already")
+				getLogger("ExternalProcessManager").debug("Could not kill, process is down already")
 			else:
-				getLogger().info("process was killed")
-			
+				if not self.isAlive(processObj):
+					getLogger("ExternalProcessManager").debug("process was killed")
+				else:
+					getLogger("ExternalProcessManager").warn("process was NOT successfully killed")
 		return True
 
 	def isAlive(self, processObj):
 		if not processObj.transport:
-			getLogger().warn("process has no transport, cannot signal(0)")
+			getLogger("ExternalProcessManager").warn("process has no transport, cannot signal(0)")
 			return False
 		else:
-			getLogger().debug("process found, signal(0)")
-			return processObj.transport.signal(0)
+			getLogger("ExternalProcessManager").debug("process found, signalProcess(0)")
+			return processObj.transport.signalProcess(0)
 
 	def stopServicing(self, processObj):
 		"""
-		Will stop the given process
+		Will stop the service for the given process
 		"""
+		getLogger("ExternalProcessManager").info("stop servicing %s", processObj.protocol)
 		processObj.wantDown = True
 		self.stopProcess(processObj)
 
@@ -133,44 +145,31 @@ class ExternalProcessManager:
 		"""
 		Will stop the given process
 		"""
-		# TODO
-		#self.stopServicing(processObj)
-		#self.startServicing(processObj, 5)
-		pass
+		# TODO: this relies on the fact that once we kill a process, it must have called 'processEnded' within
+		# the delay self.startendedprocessdelay, e.g. it must have effectively detached from the service monitoring
+		self.stopServicing(processObj)
+		self.delayedstarter(self.startendedprocessdelay, self.startServicing, processObj)
 
 	def __findProcessWithProtocol(self, protocol):
 		for k, v in self.procDict.iteritems():
 			if k.protocol == protocol:
 				return k
-		getLogger().error("Could not find the process that ended")
+		getLogger("ExternalProcessManager").error("Could not find the process that ended")
 		raise NameError, "Could not find the process that ended"
 		
 	def endedProcess(self, protocol, reason):
-		getLogger().error("proc ended")
+		"""
+		Callback for the ProcessProtocol 'processEnded' event
+		"""
 		processObj = self.__findProcessWithProtocol(protocol) # TODO: catch exception
+		getLogger("ExternalProcessManager").debug("process with protocol '%s' and PID '%s' ended", protocol, processObj.transport.pid)
 		processObj.transport = None
-		self.startProcess(processObj)
-		#return
+		# when a process end, the default is to just start it again,
+		# the start routine knows if the process must really  be started again
+		# Also, we delay the starting of an ended process by self.startendedprocessdelay (seconds)
+		self.startProcess(processObj, self.startendedprocessdelay)
+		# TODO: check the exit code and possibly detect a broken setup?
 		#if reason.value.exitCode == 0:
-		#	startServicing(processObj, 0)
-		#else:
-		#	startServicing(processObj, 5)
-		#	pass
-		#reactor.callLater(5, startProc, protocol.__class__.__name__)
-		#pass
-
-def endedProc(protocol, reason):
-	"""
-	Callback for the ProcessProtocol 'processEnded' event
-	"""
-	procManager.endedProcess(protocol, reason)
-	return
-	#getLogger().warn("exit code: '%s'" , reason.value.exitCode)
-	#if not reason.value.exitCode == 0:
-	#	pass
-	#if not wantDown:
-	#	reactor.callLater(5, startProc, protocol.__class__.__name__)
-
 	
 import struct
 import cPickle
@@ -225,34 +224,18 @@ class LoggingProtocol(Protocol):
 		#logger.handle(record)
 		getLogger(record.name).handle(record)
 
-if __name__ == "__main__":
-	bootInit()
-	parser = OptionParser()
-	parser.add_option("-d", "--daemon", dest="daemon", help="daemon mode?", default='')
-	(options, args) = parser.parse_args()
 
-	import angel_app.log
-	angel_app.log.setup()
-
-	angel_app.log.enableHandler('file')
-	if len(options.daemon) > 0:
-		from angel_app import proc
-		proc.startstop(action=options.daemon, stdout='master.stdout', stderr='master.stderr', pidfile='master.pid')
-	else:
-		angel_app.log.enableHandler('console')
-
-	angel_app.log.getReady()
-
+def startLoggingServer():
 	factory = Factory()
 	factory.protocol = LoggingProtocol
 	from logging.handlers import DEFAULT_TCP_LOGGING_PORT
 	reactor.listenTCP(DEFAULT_TCP_LOGGING_PORT, factory)
 
-	procManager = ExternalProcessManager()
+def startProcessesWithProcessManager(procManager):
 	procManager.registerProcessStarter(reactor.spawnProcess)
 	procManager.registerDelayedStarter(reactor.callLater) 
 	
-	executable = "python"
+	executable = "python" # TODO: get exact python binary!
 	binpath = os.path.join(os.getcwd(),"bin") # TODO: where are the scripts?
 
 	presenterProcess = Process()
@@ -272,8 +255,38 @@ if __name__ == "__main__":
 	maintainerProcess.setExecutable(executable)
 	maintainerProcess.setArgs(args = [executable, os.path.join(binpath,"maintainer.py"), '-l']) 
 	procManager.startServicing(maintainerProcess)
+
+	#test/debug code:
+#	testProcess = Process()
+#	testProcess.setProtocol(TestProtocol())
+#	testProcess.setExecutable("/sw/bin/sleep")
+#	testProcess.setArgs(args = ["/sw/bin/sleep", '5']) 
+#	procManager.startServicing(testProcess)
+#	reactor.callLater(4, procManager.restartServicing, presenterProcess)
 	
 
-	#reactor.callLater(5, procManager.stopProcess,presenterProcess)
+if __name__ == "__main__":
+	bootInit()
+	parser = OptionParser()
+	parser.add_option("-d", "--daemon", dest="daemon", help="daemon mode?", default='')
+	(options, args) = parser.parse_args()
+
+	import angel_app.log
+	angel_app.log.setup()
+
+	angel_app.log.enableHandler('file')
+	if len(options.daemon) > 0:
+		from angel_app import proc
+		proc.startstop(action=options.daemon, stdout='master.stdout', stderr='master.stderr', pidfile='master.pid')
+	else:
+		angel_app.log.enableHandler('console')
+	angel_app.log.getReady()
+
+	startLoggingServer()
+
+	# ExternalProcessManager.processEnded must be available to the ProcessProtocol, otherwise callbacks won't work
+	# that's why we instantiate it here in __main__
+	procManager = ExternalProcessManager()
+	startProcessesWithProcessManager(procManager)
 
 	reactor.run()
