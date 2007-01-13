@@ -11,6 +11,7 @@ from zope.interface import implements
 from angel_app.resource import IResource
 from angel_app.resource.local.safe import Safe
 from angel_app.resource.local.external.methods.proppatch import ProppatchMixin
+from angel_app.resource.local.resourceMixins import deleteable
 from ezPyCrypto import key as ezKey
 import os
 
@@ -23,7 +24,7 @@ from angel_app.config import config
 AngelConfig = config.getConfig()
 repository = AngelConfig.get("common","repository")
 
-class Basic(Safe):
+class Basic(deleteable.Deletable, Safe):
     """
     An extension to Safe, that implements common metadata operations.
     """

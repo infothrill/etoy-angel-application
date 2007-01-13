@@ -1,1 +1,1 @@
-all = ["external", "internal", "util", "safe"]
+all = ["external", "internal", "util", "safe", "resourceMixins"]
