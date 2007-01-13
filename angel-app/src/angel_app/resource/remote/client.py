@@ -13,6 +13,7 @@ AngelConfig = config.getConfig()
 repository = AngelConfig.get("common","repository")
 
 def splitParse(cloneUri):
+    log.err(cloneUri)
     host, rest = cloneUri.split(":")
     fragments = rest.split("/")
     port = int(fragments[0])
@@ -37,27 +38,41 @@ def getLocalCloneURLList(af):
     clones = []
     
     try:
-        clones += af.deadProperties().get(elements.Clones.qname()).children
+        log.err("getting clones from resource")
+        clones += [cloneFromGunk(splitParse(str(cc.children[0].children[0]))) for cc in af.deadProperties().get(elements.Clones.qname()).children]
+        log.err("clones with resource: " + clones)
     except:
         # we have no clones on this file
         pass
 
-    try:
-        pclones = af.parent().deadProperties().get(elements.Clones.qname()).children
-        for pc in pclones: pc.path = af.relativePath()
-        clones += pclones
-    except:
-        # we have no clones on this file
-        pass    
+    if af.parent():
+        try:
+            DEBUG and log.err("getting clones from parent resource " + af.parent().fp.path)
+            pclones = [cloneFromGunk(splitParse(str(cc.children[0].children[0]))) for cc in af.parent().deadProperties().get(elements.Clones.qname()).children]
+            #pclones = af.parent().deadProperties().get(elements.Clones.qname()).children
+            DEBUG and log.err("foo: " + `af.parent().deadProperties().get(elements.Clones.qname()).children`)
+            DEBUG and log.err(pclones[0].__class__)
+            for pc in pclones: pc.path = af.relativePath()
+            DEBUG and log.err("clones with parent resource: " + `pclones`)
+            clones += pclones
+        except:
+            # we have no clones on this file
+            import traceback
+            log.err(traceback.print_exc())
+            pass    
     
-    return [str(clone.children[0].children[0]) for clone in clones]
+    DEBUG and log.err("bar: " + `clones` )
+    return clones
+    #return [str(clone.children[0].children[0]) for clone in clones]
 
 def getLocalCloneList(af):
     """
     @return the local list of clones of the root directory.
     @rtype [Clone]
     """
-    return [cloneFromGunk(splitParse(url)) for url in getLocalCloneURLList(af)]
+    #DEBUG and log.err(getLocalCloneURLList(af))
+    #return [cloneFromGunk(splitParse(url)) for url in getLocalCloneURLList(af)]
+    return getLocalCloneURLList(af)
 
 def _ensureLocalValidity(resource, referenceClone):
     """
@@ -101,11 +116,15 @@ def _ensureLocalValidity(resource, referenceClone):
         DEBUG and log.err("_ensureLocalValidity, local clone's signed keys are now: " + resource.signableMetadata())   
         
     resource.familyPlanning()
-    
-    
-            
+                
 def _updateBadClone(af, bc):  
-            
+    """
+    attempts to update a bad clone using the (supposedly good)
+    local resource. returns a list of all clones for which this update was successfull.
+    
+    @param af the local resource
+    @param bc the bad clones
+    """
 
     if bc.host == "localhost":
         # the local resource must be valid when we call this function, so no update necessary
@@ -126,9 +145,14 @@ def _updateBadClone(af, bc):
         if not bc.exists():
             DEBUG and log.err("remote collection resource does not exist yet, creating collection")
             bc.mkCol()
-            
+    
     # push the resource metadata
-    bc.performPushRequest(af)
+    try:
+        bc.performPushRequest(af)
+        return True
+    except:
+        log.err("metadata push failed on bad clone: " + `bc`)
+        return False
 
 def getResourceID(resource):
     """
@@ -148,12 +172,28 @@ def getResourceID(resource):
         for child in children:
             if str(child.childOfType(rfc2518.HRef.qname())) == resource.resourceName():
                 xx = child.childOfType(elements.ResourceID.qname())
-                log.err("ASDF" + `xx` + xx.toxml())
+                #log.err("ASDF" + `xx` + xx.toxml())
                 resourceID = "".join(str(cc) for cc in child.childOfType(elements.ResourceID.qname()).children)
-                log.err("ASDF" + resourceID)
+                #log.err("ASDF" + resourceID)
         
     DEBUG and log.err("resourceID: " + `resourceID`)
     return resourceID
+
+def storeClones(af, goodClones, unreachableClones):
+    
+
+    clonesToBeStored = goodClones
+    if len(clonesToBeStored) < 3:
+        # if we have too few good clones, keep some of the unreachable and bad clones,
+        # just in case ...  
+        clonesToBeStored += unreachableClones
+    clonesToBeStored = (len(clonesToBeStored) > 3 and clonesToBeStored[:3] or clonesToBeStored)
+    DEBUG and log.err("storing clones: " + `clonesToBeStored`)
+    newClones = elements.Clones(*[
+                    elements.Clone(rfc2518.HRef(`cc`)) for cc in clonesToBeStored
+                    ])
+    log.err("in xml: " + newClones.toxml())
+    af.deadProperties().set(newClones)
 
 def inspectResource(path = repository):
 
@@ -170,7 +210,7 @@ def inspectResource(path = repository):
     startingClones = getLocalCloneList(standin)
     resourceID = getResourceID(af)
     DEBUG and log.err("starting out iteration with: " + `startingClones`)
-    goodClones, badClones = iterateClones(startingClones, pubKey, resourceID)
+    goodClones, badClones, unreachableClones = iterateClones(startingClones, pubKey, resourceID)
     
     if goodClones == []:
         DEBUG and log.err("no valid clones found for " + path)
@@ -184,16 +224,13 @@ def inspectResource(path = repository):
     DEBUG and log.err("reference clone: " + `rc` + " local path " + af.fp.path)
 
     _ensureLocalValidity(af, rc)
-       
-    af.deadProperties().set(
-                            elements.Clones(*[
-                                elements.Clone(rfc2518.HRef(`cc`)) for cc in goodClones
-                                            ]))
-
+   
     # update all invalid clones with the meta data of the reference clone
     for bc in badClones: 
-        _updateBadClone(af, bc)
-    
+        if _updateBadClone(af, bc):
+            goodClones.append(bc)
+
+    storeClones(af, goodClones, unreachableClones)
     
     DEBUG and log.err("DONE")
     
@@ -214,7 +251,7 @@ def iterateClones(cloneSeedList, publicKeyString, resourceID):
     visited = []
     good = []
     bad = []
-    ugly = []
+    unreachable = []
     revision = 0
     
     while len(toVisit) != 0:
@@ -235,10 +272,11 @@ def iterateClones(cloneSeedList, publicKeyString, resourceID):
         
         if not cc.ping():
             DEBUG and log.err("iterateClones: clone " + `cc` + " no reachable, ignoring")
+            unreachable.append(cc)
             continue
         
         if not cc.exists():
-            DEBUG and log.err("iterateClones: resouce " + `cc.path` + " not found on host " + `cc`)
+            DEBUG and log.err("iterateClones: resource " + `cc.path` + " not found on host " + `cc`)
             bad.append(cc)
             continue
         
@@ -292,5 +330,5 @@ def iterateClones(cloneSeedList, publicKeyString, resourceID):
     DEBUG and log.err("iterateClones: good clones: " + `good`)
     DEBUG and log.err("iterateClones: bad clones: " + `bad`)
     
-    return good, bad
+    return good, bad, unreachable
     

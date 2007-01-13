@@ -9,7 +9,7 @@ from zope.interface import implements
 from ezPyCrypto import key
 import urllib
 
-DEBUG = False
+DEBUG = True
 
 from httplib import HTTPConnection
 
@@ -236,9 +236,12 @@ class Clone(object):
         """
         Push the relevant properties of a local clone to the remote clone via a PROPPATCH request.
         """
+        pb = makePushBody(localClone)
+        DEBUG and log.err("pushing metadata:" + pb)
         resp = self.__performRequest(
                                      method = "PROPPATCH", 
-                                     body = makePushBody(localClone))
+                                     body = pb
+                                     )
         
         # we probably ignore the returned data, but who knows
         data = resp.read()
