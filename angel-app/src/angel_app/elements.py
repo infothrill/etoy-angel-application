@@ -67,7 +67,7 @@ class Child (WebDAVElement):
     allowed_children = {
         (dav_namespace, "href"): (1, 1),
         (dav_namespace, "resourceid"): (1, 1),
-        (dav_namespace, "publicKeyString"): (1, 1),
+        (dav_namespace, "uuid"): (1, 1),
         }
 
 class Children (WebDAVElement):
