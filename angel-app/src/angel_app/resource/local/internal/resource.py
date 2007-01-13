@@ -201,7 +201,6 @@ class Crypto(
         pdp = self.parent().deadProperties()
         
         oc = pdp.get(elements.Children.qname()).children
-        DEBUG and log.debug(len(oc))
         
         DEBUG and log.debug("resourceName: " + self.resourceName())     
         nc = [cc for cc in oc if not str(cc.childOfType(rfc2518.HRef)) == self.resourceName()]
