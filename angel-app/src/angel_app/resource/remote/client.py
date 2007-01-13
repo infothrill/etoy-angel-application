@@ -38,7 +38,7 @@ def getLocalCloneURLList(af):
     clones = []
     
     try:
-        log.err("getting clones from resource")
+        log.err("getting clones from resource: " + af.fp.path)
         clones += [cloneFromGunk(splitParse(str(cc.children[0].children[0]))) for cc in af.deadProperties().get(elements.Clones.qname()).children]
         log.err("clones with resource: " + clones)
     except:
@@ -50,10 +50,10 @@ def getLocalCloneURLList(af):
             DEBUG and log.err("getting clones from parent resource " + af.parent().fp.path)
             pclones = [cloneFromGunk(splitParse(str(cc.children[0].children[0]))) for cc in af.parent().deadProperties().get(elements.Clones.qname()).children]
             #pclones = af.parent().deadProperties().get(elements.Clones.qname()).children
-            DEBUG and log.err("foo: " + `af.parent().deadProperties().get(elements.Clones.qname()).children`)
+            #DEBUG and log.err("foo: " + `af.parent().deadProperties().get(elements.Clones.qname()).children`)
             DEBUG and log.err(pclones[0].__class__)
             for pc in pclones: pc.path = af.relativePath()
-            DEBUG and log.err("clones with parent resource: " + `pclones`)
+            log.err("clones with parent resource: " + `pclones`)
             clones += pclones
         except:
             # we have no clones on this file
@@ -61,7 +61,6 @@ def getLocalCloneURLList(af):
             log.err(traceback.print_exc())
             pass    
     
-    DEBUG and log.err("bar: " + `clones` )
     return clones
     #return [str(clone.children[0].children[0]) for clone in clones]
 
@@ -95,15 +94,17 @@ def _ensureLocalValidity(resource, referenceClone):
             open(resource.fp.path, "w").write(referenceClone.stream().read())
                     
             # update the file contents, if necessary
-            DEBUG and log.err("_ensureLocalValidity: updating file contents for " + 
+            log.err("_ensureLocalValidity: updating file contents for " + 
                               resource.fp.path + " " + `resource.exists()`
                               + " " + `referenceClone.revision()` + " " + `resource.revisionNumber()`
                               + " " + `resource.verify()`)
 
             
            
-    if not resource.verify():
+    if not resource.verify() or (referenceClone.revision() > resource.revisionNumber()):
         # then update the metadata
+        
+        log.err("updating metadata for invalid local resource: " + resource.fp.path)
         rp = referenceClone.propertiesDocument(elements.signedKeys)
         re = rp.root_element.childOfType(rfc2518.Response
                      ).childOfType(rfc2518.PropertyStatus
@@ -134,7 +135,7 @@ def _updateBadClone(af, bc):
         # the remote clone is unreachable, ignore for now
         return
         
-    DEBUG and log.err("updating invalid clone: " + `bc`)
+    log.err("updating invalid clone: " + `bc`)
         
     # push the resource
     if not af.isCollection():
@@ -327,8 +328,8 @@ def iterateClones(cloneSeedList, publicKeyString, resourceID):
         
         
 
-    DEBUG and log.err("iterateClones: good clones: " + `good`)
-    DEBUG and log.err("iterateClones: bad clones: " + `bad`)
+    log.err("iterateClones: good clones: " + `good`)
+    log.err("iterateClones: bad clones: " + `bad`)
     
     return good, bad, unreachable
     
