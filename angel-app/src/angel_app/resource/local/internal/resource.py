@@ -9,7 +9,7 @@ from angel_app.resource.local.basic import Basic
 from ezPyCrypto import key as ezKey
 from angel_app.config import internal as config
 
-DEBUG = False
+DEBUG = True
 
 log = getLogger()
 # DO NOT EXPOSE THIS KEY!!!!
@@ -226,10 +226,9 @@ class Crypto(
 
         ic = elements.Child(*[
                          rfc2518.HRef(self.resourceName()),
-                         elements.PublicKeyString(self.parent().publicKeyString()),
+                         elements.UUID(str(self.parent().keyUUID())),
                          self.resourceID()
                          ])
-
         
         nc = [cc for cc in oc] + [ic]
         ce = elements.Children(*nc)
