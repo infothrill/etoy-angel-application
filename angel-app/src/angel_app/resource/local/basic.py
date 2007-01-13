@@ -1,4 +1,3 @@
-from twisted.python import log
 from twisted.web2 import responsecode, dirlist
 from twisted.web2.http import HTTPError
 from twisted.web2 import http, stream
@@ -12,10 +11,13 @@ from angel_app.resource import IResource
 from angel_app.resource.local.safe import Safe
 from angel_app.resource.local.external.methods.proppatch import ProppatchMixin
 from angel_app.resource.local.resourceMixins import deleteable
+from angel_app.log import getLogger
 from ezPyCrypto import key as ezKey
 import os
 
 from angel_app.contrib import uuid
+
+log = getLogger()
 
 DEBUG = False
 
@@ -55,7 +57,7 @@ class Basic(deleteable.Deletable, Safe):
         @return the metadata element corresponding to davXMLTextElement
         """
         if not self.fp.exists():
-            DEBUG and log.err("Basic.get(): file not found for path: " + self.fp.path)
+            DEBUG and log.debug("Basic.get(): file not found for path: " + self.fp.path)
             raise HTTPError(responsecode.NOT_FOUND)
         
         # TODO: for some reason, the xml document parser wants to split
@@ -72,7 +74,7 @@ class Basic(deleteable.Deletable, Safe):
         @return the metadata element corresponding to davXMLTextElement
         """
         if not self.fp.exists():
-            DEBUG and log.err("AngelFile.getOrSet: file not found for path: " + self.fp.path)
+            DEBUG and log.debug("AngelFile.getOrSet: file not found for path: " + self.fp.path)
             raise HTTPError(responsecode.NOT_FOUND)
         
         # TODO: for some reason, the xml document parser wants to split
@@ -89,7 +91,7 @@ class Basic(deleteable.Deletable, Safe):
             return self.get(davXmlTextElement)
         
         except HTTPError:
-            DEBUG and log.err("angelFile.Basic.getOrSet: initializing element " + `davXmlTextElement.qname()` + " to " + defaultValueString)
+            DEBUG and log.debug("angelFile.Basic.getOrSet: initializing element " + `davXmlTextElement.qname()` + " to " + defaultValueString)
             self.deadProperties().set(davXmlTextElement.fromString(defaultValueString))
             self.fp.restat()
             return defaultValueString
@@ -118,21 +120,21 @@ class Basic(deleteable.Deletable, Safe):
         @return whether the basic AngelFile is writeable
         """
         if not self.verify():
-            DEBUG and log.err(self.fp.path + " is writable")
+            DEBUG and log.debug(self.fp.path + " is writable")
             return True
         
         pp = self.parent()
         if not self.exists() and pp.verify() and [self in pp.metaDataChildren()]: 
-            DEBUG and log.err(self.fp.path + " is writable")
+            DEBUG and log.debug(self.fp.path + " is writable")
             return True
         
-        DEBUG and log.err(self.fp.path + " is not writable")
+        DEBUG and log.debug(self.fp.path + " is not writable")
         return False
     
     def verify(self):
         
         if not self.exists():
-            DEBUG and log.err("Basic.verify(): False, file does not exist")
+            DEBUG and log.debug("Basic.verify(): False, file does not exist")
             return False
         
         try:
@@ -141,24 +143,24 @@ class Basic(deleteable.Deletable, Safe):
             sm = self.signableMetadata()
             ms = self.get(elements.MetaDataSignature)
         except:
-            DEBUG and log.err("Basic.verify(): False, invalid metadata")
+            DEBUG and log.debug("Basic.verify(): False, invalid metadata")
             return False
         
         publicKey = ezKey()
         publicKey.importKey(pk)
 
         contentSignature = self.get(elements.ContentSignature)
-        #DEBUG and log.err("verify(): signature: " + contentSignature)
+        #DEBUG and log.debug("verify(): signature: " + contentSignature)
         dataIsCorrect = publicKey.verifyString(
                                   self.contentAsString(),
                                   cs)
-        DEBUG and log.err("data signature for file " + self.fp.path + " is correct: " + `dataIsCorrect`)
+        DEBUG and log.debug("data signature for file " + self.fp.path + " is correct: " + `dataIsCorrect`)
         
-        DEBUG and log.err(ms)
-        DEBUG and log.err(sm)
+        DEBUG and log.debug(ms)
+        DEBUG and log.debug(sm)
         metaDataIsCorrect = publicKey.verifyString(sm, ms)
         
-        DEBUG and log.err("meta data signature for file " + self.fp.path + " is correct: " + `metaDataIsCorrect`)
+        DEBUG and log.debug("meta data signature for file " + self.fp.path + " is correct: " + `metaDataIsCorrect`)
             
         return dataIsCorrect and metaDataIsCorrect
     
@@ -193,7 +195,7 @@ class Basic(deleteable.Deletable, Safe):
         @return true if the resource was deleted, false otherwise
         """
         if self.fp.exists() and not self.exists():
-            DEBUG and log.err(self.fp.path + " not referenced by parent, deleting")
+            DEBUG and log.debug(self.fp.path + " not referenced by parent, deleting")
             self._recursiveDelete(self.fp.path)
             return True
         
@@ -257,7 +259,7 @@ class Basic(deleteable.Deletable, Safe):
         
         try:
             foo = self.deadProperties().get(elements.Children.qname())
-            DEBUG and log.err(foo.toxml())
+            DEBUG and log.debug(foo.toxml())
             children = foo.children
         except:
             children = []
@@ -270,7 +272,7 @@ class Basic(deleteable.Deletable, Safe):
 
     def publicKeyString(self):
         
-        DEBUG and log.err("retrieving public key string for: " + self.fp.path)
+        DEBUG and log.debug("retrieving public key string for: " + self.fp.path)
         
         try:
             return self.get(elements.PublicKeyString)           
@@ -278,7 +280,7 @@ class Basic(deleteable.Deletable, Safe):
             # no key set yet -- maybe we have a key handy for signing?
             try:
                 keyString = self.secretKey.exportKey()
-                DEBUG and log.err("initializing public key to: " + keyString)
+                DEBUG and log.debug("initializing public key to: " + keyString)
                 return self.getOrSet(elements.PublicKeyString, keyString) 
             finally:
                 raise HTTPError(responsecode.FORBIDDEN, 
@@ -292,7 +294,7 @@ class Basic(deleteable.Deletable, Safe):
         """
         try:
             sm = "".join([self.getXml(key) for key in elements.signedKeys])
-            DEBUG and log.err("signable meta data for " + self.fp.path + ":" + sm)
+            DEBUG and log.debug("signable meta data for " + self.fp.path + ":" + sm)
             return sm
         except Exception, e:
             log.err("Basic: invalid meta data: " + `e`)
@@ -311,7 +313,7 @@ class Basic(deleteable.Deletable, Safe):
     def renderDirectory(self, req):
         if req.uri[-1] != "/":
             # Redirect to include trailing '/' in URI
-            DEBUG and log.err("redirecting")
+            DEBUG and log.debug("redirecting")
             return http.RedirectResponse(req.unparseURL(path=req.path+'/'))
         
         # is there an index file?
@@ -363,9 +365,9 @@ class Basic(deleteable.Deletable, Safe):
 
     def renderFile(self):
         
-        DEBUG and log.err("running renderFile")
+        DEBUG and log.debug("running renderFile")
         
         response = self.getResponse()
         response.stream = self.getResponseStream()
-        DEBUG and log.err("done running renderFile")
+        DEBUG and log.debug("done running renderFile")
         return response
