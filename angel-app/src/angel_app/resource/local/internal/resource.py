@@ -9,7 +9,7 @@ from angel_app.resource.local.basic import Basic
 from ezPyCrypto import key as ezKey
 from angel_app.config import internal as config
 
-DEBUG = True
+DEBUG = False
 
 log = getLogger()
 # DO NOT EXPOSE THIS KEY!!!!
@@ -44,7 +44,6 @@ class Crypto(
         """
         Set all required properties to a syntactically meaningful default value, if not already set.
         """
-        DEBUG and log.debug("_initProperties for " + self.fp.path)
         dp = self.deadProperties()
         for element in elements.requiredKeys:
             if not dp.contains(element.qname()):
@@ -55,7 +54,6 @@ class Crypto(
                 
                 DEBUG and log.debug("initializing " + element.sname() + " of " + self.fp.path + " to " + ee.toxml())
                 dp.set(ee)
-        DEBUG and log.debug("done _initProperties for: " + self.fp.path)
                     
         
     def _inheritClones(self):
@@ -89,12 +87,12 @@ class Crypto(
         plainText = myFile.read()
         myFile.close()
         cypherText = self.secretKey.encString(plainText)
-        DEBUG and log.error("encrypting file: " + self.fp.path)
+        DEBUG and log.debug("encrypting file: " + self.fp.path)
         myFile = self.fp.open("w") 
         myFile.write(cypherText)
         myFile.flush()
         myFile.close()
-        DEBUG and log.error(cypherText)  
+        DEBUG and log.debug(cypherText)  
 
     def sign(self):
         """
@@ -102,7 +100,7 @@ class Crypto(
         If the secretKey is 
         """
         
-        DEBUG and log.error("signing file: " + self.fp.path)
+        DEBUG and log.debug("signing file: " + self.fp.path)
         
         # TODO: this sucks, too
         if self.fp.isdir(): 
@@ -127,7 +125,7 @@ class Crypto(
         Increase the revision number by one, if it not initialized, set it to 1.
         """
         nn = self.revisionNumber() + 1
-        DEBUG and log.error("revision number for " + self.fp.path +" now at: " + `nn`)
+        DEBUG and log.debug("revision number for " + self.fp.path +" now at: " + `nn`)
         self.deadProperties().set(elements.Revision.fromString(`nn`))
         return int(nn)
 
@@ -142,11 +140,11 @@ class Crypto(
         @returns True if the location is writable, False otherwise
         """
         
-        DEBUG and log.error("testing for writability of: " + self.fp.path)
+        DEBUG and log.debug("testing for writability of: " + self.fp.path)
         
         if not self.secretKey:
             # we don't even have a private key
-            DEBUG and log.error("Crypto: no key available")
+            DEBUG and log.debug("Crypto: no key available")
             return False
 
         
@@ -158,7 +156,7 @@ class Crypto(
                 return False
             
             if not self.parent().exists():
-                DEBUG and log.error("this is not the root, but the parent directory does not exist")
+                DEBUG and log.debug("this is not the root, but the parent directory does not exist")
                 return False
             else:
                 return self.parent().isWritableFile()
@@ -166,7 +164,7 @@ class Crypto(
                 
         myKeyString = self.secretKey.exportKey()    
         fileKeyString = self.getOrSet(elements.PublicKeyString, myKeyString)
-        DEBUG and log.error("public key for " + self.fp.path + ": " + fileKeyString)
+        DEBUG and log.debug("public key for " + self.fp.path + ": " + fileKeyString)
         return fileKeyString == myKeyString
 
 
@@ -180,14 +178,14 @@ class Crypto(
         See also: L{ezPyCrypto.key}
         """
         
-        DEBUG and log.error("Crypto: sealing " + self.fp.path)
-        DEBUG and log.error("Crypto: signable data: " + self.signableMetadata())
+        DEBUG and log.debug("Crypto: sealing " + self.fp.path)
+        DEBUG and log.debug("Crypto: signable data: " + self.signableMetadata())
         signature = self.secretKey.signString(self.signableMetadata())
         self.deadProperties().set(elements.MetaDataSignature.fromString(signature))
         #storedsignature = self.getOrSet(elements.MetaDataSignature, "0")
         #log.error(signature)
         #log.error(storedsignature)
-        DEBUG and log.error("Crypto: signature is " + signature)
+        DEBUG and log.debug("Crypto: signature is " + signature)
         return signature
     
     def updateParent(self, recursionLimit = 0):
@@ -197,72 +195,46 @@ class Crypto(
 
     def _deRegisterWithParent(self):
 
-        DEBUG and log.error("entering _deRegisterWithParent for: " + self.fp.path)
+        DEBUG and log.debug("entering _deRegisterWithParent for: " + self.fp.path)
         
-        DEBUG and log.error(`self.parent()`)
+        DEBUG and log.debug(`self.parent()`)
         pdp = self.parent().deadProperties()
         
         oc = pdp.get(elements.Children.qname()).children
-        DEBUG and log.error(len(oc))
+        DEBUG and log.debug(len(oc))
         
-        DEBUG and log.error("resourceName: " + self.resourceName())     
+        DEBUG and log.debug("resourceName: " + self.resourceName())     
         nc = [cc for cc in oc if not str(cc.childOfType(rfc2518.HRef)) == self.resourceName()]
         
         pdp.set(elements.Children(*nc))
-        DEBUG and log.error("exiting _deRegisterWithParent")
+        DEBUG and log.debug("exiting _deRegisterWithParent")
     
     def _registerWithParent(self):
 
-        DEBUG and log.error("entering _registerWithParent for " + self.fp.path)
+        DEBUG and log.debug("entering _registerWithParent for " + self.fp.path)
 
-        DEBUG and log.error("make sure the required properties are initialized")
         self._initProperties()
         
         pdp = self.parent().deadProperties()
         
         oc = pdp.get(elements.Children.qname()).children
-        DEBUG and log.error(len(oc))
-        
-        DEBUG and log.error("resourceName: " + self.resourceName())  
-        log.error("foo")   
-        DEBUG and log.error("resourceID: " + `self.resourceID()`)    
+           
         for cc in oc:
-            DEBUG and log.error("child: " + str(cc.childOfType(rfc2518.HRef)))
             if str(cc.childOfType(rfc2518.HRef)) == self.resourceName():
-                DEBUG and log.error(self.fp.path + ": this resource is already registered with the parent")
+                DEBUG and log.debug(self.fp.path + ": this resource is already registered with the parent")
                 return
-        
-        DEBUG and log.error("foo")
+
         ic = elements.Child(*[
                          rfc2518.HRef(self.resourceName()),
                          elements.PublicKeyString(self.parent().publicKeyString()),
                          self.resourceID()
                          ])
-        DEBUG and log.error("bar")
 
         
         nc = [cc for cc in oc] + [ic]
-        
-        log.error(nc)
         ce = elements.Children(*nc)
-        log.error(ce.toxml())
-        log.error(`pdp`)
-        log.error("foobar")
-        
-        try:
-            log.error(self.parent().exists())
-            pdp.set(ce)
-            log.error("foobar2")
-        except:
-            import sys, traceback
-            msg = apply(traceback.format_exception,sys.exc_info())
-            log.error(msg)
-            errorMessage = "Unable to update child elements."
-            log.error(errorMessage)
-            raise
-            
-            
-        log.error("exiting _registerWithParent")
+        pdp.set(ce)            
+        DEBUG and log.debug("exiting _registerWithParent")
     
         
         
@@ -277,7 +249,7 @@ class Crypto(
             self._deRegisterWithParent()
             
             destination_uri = request.headers.getHeader("destination")
-            DEBUG and log.error("changeRegister: " + `self.__class__`)
+            DEBUG and log.debug("changeRegister: " + `self.__class__`)
             destination = resourceFromURI(destination_uri, self.__class__)
             destination._registerWithParent()
         
@@ -288,25 +260,25 @@ class Crypto(
     
     def update(self, recursionLimit = 0):
         
-        DEBUG and log.error("called update on: " + self.fp.path)
+        DEBUG and log.debug("called update on: " + self.fp.path)
         
         if not self.isWritableFile(): 
             raise "not authorized to perform update of signed meta data"
 
-        DEBUG and log.error("encrypting " + self.fp.path + "?")
+        DEBUG and log.debug("encrypting " + self.fp.path + "?")
         if self.isEncrypted():
-            DEBUG and log.error("encrypting " + self.fp.path)
+            DEBUG and log.debug("encrypting " + self.fp.path)
             self.encrypt()
-        DEBUG and log.error("signing " + self.fp.path)
+        DEBUG and log.debug("signing " + self.fp.path)
         self.sign()
-        DEBUG and log.error("bumping revision number for " + self.fp.path)
+        DEBUG and log.debug("bumping revision number for " + self.fp.path)
         self.bumpRevisionNumber()
 
         
-        DEBUG and log.error("sealing " + self.fp.path)
+        DEBUG and log.debug("sealing " + self.fp.path)
         self.seal()
 
-        DEBUG and log.error("Verifying " + self.fp.path)
+        DEBUG and log.debug("Verifying " + self.fp.path)
         DEBUG and self.verify()
         
         # certainly not going to hurt if we do this:
@@ -321,7 +293,7 @@ class Crypto(
         """
         @see Basic.getResponseStream
         """
-        DEBUG and log.error("rendering file in plaintext: " + self.fp.path)
+        DEBUG and log.debug("rendering file in plaintext: " + self.fp.path)
         if self.isEncrypted():
             
             fileContents = self.secretKey.decString(self.fp.open().read())
