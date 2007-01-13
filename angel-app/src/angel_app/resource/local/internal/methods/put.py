@@ -10,8 +10,11 @@ from twisted.web2.stream import readIntoFile
 from twisted.web2.dav.http import statusForFailure
 
 from twisted.web2.dav.fileop import checkResponse
+from angel_app.log import getLogger
 
 DEBUG = True
+
+log = getLogger()
 
 class Putable(object):
     """
@@ -19,18 +22,18 @@ class Putable(object):
     """
     def _put(self, stream): 
        
-        not self.fp.exists() and DEBUG and log.err("adding new file at: " + self.fp.path)
+        not self.fp.exists() and DEBUG and log.debug("adding new file at: " + self.fp.path)
 
         if not self.isWritableFile():
-            log.err("http_PUT: not authorized to put file: " + self.fp.path)
+            log.error("http_PUT: not authorized to put file: " + self.fp.path)
             raise HTTPError(responsecode.UNAUTHORIZED)
         
-        DEBUG and log.err("_put: deleting file at: " + self.fp.path)
+        DEBUG and log.debug("_put: deleting file at: " + self.fp.path)
         
         response = waitForDeferred(deferredGenerator(self.__putDelete)())
         yield response
         response = response.getResult()
-        DEBUG and log.err("_put: return code for deleting file: " + `response`)
+        DEBUG and log.debug("_put: return code for deleting file: " + `response`)
         
         xx  = waitForDeferred(deferredGenerator(self.__putFile)(stream))
         yield xx
@@ -41,7 +44,7 @@ class Putable(object):
         xx = waitForDeferred(deferredGenerator(self._updateMetadata)())
         yield xx
         
-        DEBUG and log.err("return code for updating meta data: " + `response`)
+        DEBUG and log.debug("return code for updating meta data: " + `response`)
         
         yield response
         
@@ -76,7 +79,7 @@ class Putable(object):
         
         if self.fp.exists():
             response = self.delete()
-            DEBUG and log.err("__putDelete: " + `response`)
+            DEBUG and log.debug("__putDelete: " + `response`)
             checkResponse(response, "delete", responsecode.NO_CONTENT)
             success_code = responsecode.NO_CONTENT
         else:
@@ -92,7 +95,7 @@ class Putable(object):
         try:
             resource_file = self.fp.open("w")
         except:
-            DEBUG and log.err("failed to open file: " + self.fp.path)
+            DEBUG and log.debug("failed to open file: " + self.fp.path)
             raise HTTPError(statusForFailure(
                                              Failure(),
                 "opening file for writing: %s" % (self.fp.path,)
@@ -102,15 +105,15 @@ class Putable(object):
             x = waitForDeferred(readIntoFile(stream, resource_file))
             yield x
             x.getResult()
-            DEBUG and log.err("__putFile: read stream into file into: " + self.fp.path)
+            DEBUG and log.debug("__putFile: read stream into file into: " + self.fp.path)
         except:
-            DEBUG and log.err("failed to write to file: " + self.fp.path)
+            DEBUG and log.debug("failed to write to file: " + self.fp.path)
             raise HTTPError(statusForFailure(
                                              Failure(),
                 "writing to file: %s" % (self.fp.path,)
                 ))
         
-        DEBUG and log.err("__putFile: done putting file stream: " + self.fp.path)
+        DEBUG and log.debug("__putFile: done putting file stream: " + self.fp.path)
         yield None
             
             
