@@ -308,7 +308,7 @@ class Basic(deleteable.Deletable, Safe):
             DEBUG and log.debug("signable meta data for " + self.fp.path + ":" + sm)
             return sm
         except Exception, e:
-            log.err("Basic: invalid meta data: " + `e`)
+            log.error("Basic: invalid meta data: " + `e`)
             raise ValueError
 
     def render(self, req):
