@@ -142,6 +142,11 @@ class Clones (WebDAVElement):
         (dav_namespace, "clone"): (0, None),
         }
 
+class UUID (WebDAVTextElement):
+    """
+    Well, a Universally Unique Identifier
+    """
+    name = "uuid"
 
 
 # the above keys are _required_ for the angel-app to be (even conceptually)
