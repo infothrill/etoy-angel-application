@@ -37,7 +37,11 @@ configuring them ...<br/>
 Logfiles are in $HOME/.angel_app/log/<br/>
 The directory $HOME/.angel_app/log/ will automatically get created if needed.
 <p>
-See the documentation of the python logging module for more information.
+See the documentation of the  
+<a href="http://docs.python.org/lib/module-logging.html">python logging module</a>
+and  
+<a href="http://twistedmatrix.com/projects/core/documentation/howto/logging.html">twisted.log</a>
+for more information.
 </p>
 """
 
@@ -48,11 +52,6 @@ from twisted.python import log as twistedlog
 from twisted.python.filepath import FilePath
 from os import environ, path, mkdir, linesep
 
-# twisted logging:
-#http://twistedmatrix.com/projects/core/documentation/howto/logging.html
-
-# python logging:
-# http://docs.python.org/lib/module-logging.html
 
 def getLogger(area = ""):
 	"""
@@ -77,19 +76,23 @@ def getAngelHomePath():
 	from angel_app.config.defaults import getAngelHomePath
 	return getAngelHomePath()
 
+
 def getAngelLogPath():
 	logPath = path.join(getAngelHomePath(), "log")
 	return logPath
+
 
 def getAngelLogFilename():
 	from angel_app.config.defaults import appname
 	return path.join(getAngelLogPath(), appname + ".log")
 
+
 from logging import Filter
 class AngelLogFilter(Filter):
 	def filter(self, record):
-		record.msg = record.msg.replace("\n","\\n") # TODO: this is not safe enough, there might be control chars, and record.args also can contain bad data
+		record.msg = record.msg.replace("\n", "\\n") # TODO: this is not safe enough, there might be control chars, and record.args also can contain bad data
 		return 1
+
 
 def setup():
 	"""
@@ -103,6 +106,7 @@ def setup():
 	angelLogPath = FilePath(getAngelLogPath())
 	if not angelLogPath.exists():
 		mkdir(angelLogPath.path, 0750)
+
 
 def enableHandler(handlername):
 	if handlername == "console":
@@ -157,57 +161,62 @@ def logTwisted(dict):
 	else:
 		ourTwistedLogger.info(text)
 
+
 def __configLoggerBasic():
 	# leave this as is. It is the default root logger and goes to /dev/null
-	logging.basicConfig(level=logging.DEBUG,
+    logging.basicConfig(level=logging.DEBUG, format='%(message)s', filename='/dev/null', filemode='w')
 					#format='%(name)s %(asctime)s %(levelname)-8s %(message)s',
-					format='%(message)s',
-                    filename='/dev/null',
-                    filemode='w')
-
-def __addConsoleHandler(area = ""):
-	# define a console Handler:
-	console = logging.StreamHandler()
-	console.setLevel(logging.DEBUG) # for the console logger, we always use DEBUG!
-	# set a format which is simpler for console use
-	formatter = logging.Formatter('%(name)s %(levelname)-6s %(filename)s:%(lineno)d %(message)s')
-	# tell the handler to use this format
-	console.setFormatter(formatter)
-	# add the handler to the app's logger
-	#console.addFilter(__getFilter())
-	getLogger(area).addHandler(console)
+					
 
 def __getConfiguredLogLevel():
 	AngelConfig = angel_app.config.config.getConfig()
 	loglevel = AngelConfig.get('common', 'loglevel')
-	logging._levelNames[loglevel] # this is a bit ugly, we need to map a configured string to a loglevel int
+	return logging._levelNames[loglevel] # this is a bit ugly, we need to map a configured string to a loglevel int
+
 
 def __getConfiguredLogFormat():
 	AngelConfig = angel_app.config.config.getConfig()
 	return AngelConfig.get('common', 'logformat', True)
 
-def __addRotatingFileHandler(area = ""):
-	import logging.handlers # needed to instiate the RotatingFileHandler
-	# define a file Handler:
-	from angel_app.config.defaults import log_maxbytes, log_backupcount
-	fileHandler = logging.handlers.RotatingFileHandler(getAngelLogFilename(), 'a', log_maxbytes, log_backupcount)
-	fileHandler.setLevel(__getConfiguredLogLevel())
-	# set a format which is simpler for console use
-	formatter = logging.Formatter(__getConfiguredLogFormat())
-	# tell the handler to use this format
-	fileHandler.setFormatter(formatter)	
-	fileHandler.addFilter(AngelLogFilter())
-	# add the handler to the app's logger
-	getLogger(area).addHandler(fileHandler)
 
-def __addSocketHandler(area = ""):
-	import logging.handlers # needed to instiate the SocketHandler
-	# define a socket Handler:
-	socketHandler = logging.handlers.SocketHandler('localhost',
-                    logging.handlers.DEFAULT_TCP_LOGGING_PORT)
-	socketHandler.setLevel(__getConfiguredLogLevel())
-	# don't bother with a formatter, since a socket handler sends the event as
-	# an unformatted pickle
-	# add the handler to the app's logger
-	getLogger(area).addHandler(socketHandler)
+def __addConsoleHandler():
+    # define a console Handler:
+    console = logging.StreamHandler()
+    console.setLevel(logging.DEBUG) # for the console logger, we always use DEBUG!
+    # set a format which is simpler for console use
+    formatter = logging.Formatter('%(name)s %(levelname)-6s %(filename)s:%(lineno)d %(message)s')
+    # tell the handler to use this format
+    console.setFormatter(formatter)
+    #console.addFilter(AngelLogFilter())
+    # add the handler to the app's logger
+    logging.getLogger().addHandler(console)
+    #getLogger().addHandler(console)
+
+
+def __addRotatingFileHandler():
+    import logging.handlers # needed to instiate the RotatingFileHandler
+    # define a file Handler:
+    from angel_app.config.defaults import log_maxbytes, log_backupcount
+    fileHandler = logging.handlers.RotatingFileHandler(getAngelLogFilename(), 'a', log_maxbytes, log_backupcount)
+    fileHandler.setLevel(__getConfiguredLogLevel())
+    # set a format which is simpler for console use
+    formatter = logging.Formatter(__getConfiguredLogFormat())
+    # tell the handler to use this format
+    fileHandler.setFormatter(formatter)	
+    fileHandler.addFilter(AngelLogFilter())
+    # add the handler to the app's logger
+    logging.getLogger().addHandler(fileHandler)
+    #getLogger().addHandler(fileHandler)
+
+
+def __addSocketHandler():
+    import logging.handlers # needed to instiate the SocketHandler
+    # define a socket Handler:
+    socketHandler = logging.handlers.SocketHandler('localhost', logging.handlers.DEFAULT_TCP_LOGGING_PORT)
+    socketHandler.setLevel(__getConfiguredLogLevel())
+    # don't bother with a formatter, since a socket handler sends the event as
+    # an unformatted pickle
+    # add the handler to the app's logger
+    logging.getLogger().addHandler(socketHandler)
+    #getLogger().addHandler(socketHandler)
 
