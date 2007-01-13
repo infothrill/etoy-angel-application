@@ -21,7 +21,7 @@ from angel_app.contrib import uuid
 
 log = getLogger()
 
-DEBUG = False
+DEBUG = True
 
 # get config:
 from angel_app.config import config
@@ -257,6 +257,7 @@ class Basic(deleteable.Deletable, Safe):
         @rtype [Basic] 
         @return The children of this resource as specified in the resource metadata.
         """
+        DEBUG and log.debug("Basic.metaDataChildren")
         if not self.isCollection(): return []
         
         children = self.deadProperties().get(elements.Children.qname()).children
@@ -264,9 +265,7 @@ class Basic(deleteable.Deletable, Safe):
         validatedChildren = []
         for child in children:
             sf = self.createSimilarFile(self.fp.path + os.sep + str(child.childOfType(davxml.HRef)))
-            log.debug("foo " + `sf.keyCheckSum()`)
-            log.debug("bar " + `child.childOfType(elements.UUID)`)
-            if sf.fp.exists() and sf.keyCheckSum() == child.childOfType(elements.UUID):
+            if sf.fp.exists() and str(sf.keyUUID()) == str(child.childOfType(elements.UUID).children[0]):
                 validatedChildren.append(sf)
             
         return validatedChildren
