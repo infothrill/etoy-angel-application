@@ -7,7 +7,7 @@ from urlparse import urlsplit
 import urllib
 import os 
 
-DEBUG = False
+DEBUG = True
 
 # get config:
 from angel_app.config import config
@@ -93,7 +93,6 @@ def getLocalCloneURLList(af):
             if not cc.path[-1] == "/":
                 cc.path = cc.path + "/"
     
-    for cc in clones: cc.checkForRedirect()
     return clones
     #return [str(clone.children[0].children[0]) for clone in clones]
 
@@ -227,7 +226,7 @@ def storeClones(af, goodClones, unreachableClones):
         clonesToBeStored += unreachableClones
     
     # make sure the local clone is stored
-    localClone = Clone("localhost", 9999, af.relativePath())
+    localClone = Clone("localhost", 9999, os.sep.join(map(urllib.quote, af.relativePath().split(os.sep))))
     if localClone not in clonesToBeStored:
         clonesToBeStored = [localClone] + clonesToBeStored
     
@@ -305,6 +304,7 @@ def iterateClones(cloneSeedList, publicKeyString, resourceID):
         
         # pop the next clone from the queue
         cc = toVisit[0]
+        cc.checkForRedirect()
         DEBUG and log.err("inspecting clone: " + `cc`)
         toVisit = toVisit[1:]
         
