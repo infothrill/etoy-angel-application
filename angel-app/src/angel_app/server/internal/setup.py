@@ -37,7 +37,8 @@ def setupRootMetaData():
                 elements.Revision("0"),
                 elements.Encrypted("0")
                 ]:
-        angelRoot.deadProperties().set(item)
+        if not angelRoot.hasDeadProperty(item.qname()):
+            angelRoot.deadProperties().set(item)
     
     # update all remaining metadata
     angelRoot.update()
