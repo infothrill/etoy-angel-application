@@ -4,6 +4,7 @@ from angel_app import elements
 from angel_app.resource.local.basic import Basic
 from angel_app.resource.remote.clone import Clone
 from urlparse import urlsplit
+import urllib
 
 DEBUG = True
 
@@ -171,7 +172,7 @@ def getResourceID(resource):
         # TODO: our current xml metdatata model sucks rocks. possibly elementTree to the rescue?
         children = resource.parent().deadProperties().get(elements.Children.qname()).children
         for child in children:
-            if str(child.childOfType(rfc2518.HRef.qname())) == resource.resourceName():
+            if str(child.childOfType(rfc2518.HRef.qname())) == urllib.quote(resource.resourceName()):
                 xx = child.childOfType(elements.ResourceID.qname())
                 #log.err("ASDF" + `xx` + xx.toxml())
                 resourceID = "".join(str(cc) for cc in child.childOfType(elements.ResourceID.qname()).children)

@@ -9,6 +9,8 @@ from angel_app.resource.local.basic import Basic
 from ezPyCrypto import key as ezKey
 from angel_app.config import internal as config
 
+import urllib
+
 DEBUG = True
 
 log = getLogger()
@@ -203,7 +205,7 @@ class Crypto(
         oc = pdp.get(elements.Children.qname()).children
         
         DEBUG and log.debug("resourceName: " + self.resourceName())     
-        nc = [cc for cc in oc if not str(cc.childOfType(rfc2518.HRef)) == self.resourceName()]
+        nc = [cc for cc in oc if not str(cc.childOfType(rfc2518.HRef)) == urllib.quot(self.resourceName())]
         
         pdp.set(elements.Children(*nc))
         DEBUG and log.debug("exiting _deRegisterWithParent")
@@ -219,12 +221,12 @@ class Crypto(
         oc = pdp.get(elements.Children.qname()).children
            
         for cc in oc:
-            if str(cc.childOfType(rfc2518.HRef)) == self.resourceName():
+            if str(cc.childOfType(rfc2518.HRef)) == urllib.quote(self.resourceName()):
                 DEBUG and log.debug(self.fp.path + ": this resource is already registered with the parent")
                 return
 
         ic = elements.Child(*[
-                         rfc2518.HRef(self.resourceName()),
+                         rfc2518.HRef(urllib.quote(self.resourceName())),
                          elements.UUID(str(self.parent().keyUUID())),
                          self.resourceID()
                          ])
