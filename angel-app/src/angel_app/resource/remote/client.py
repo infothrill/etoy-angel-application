@@ -5,6 +5,7 @@ from angel_app.resource.local.basic import Basic
 from angel_app.resource.remote.clone import Clone
 from urlparse import urlsplit
 import urllib
+import os 
 
 DEBUG = True
 
@@ -53,7 +54,10 @@ def getLocalCloneURLList(af):
             #pclones = af.parent().deadProperties().get(elements.Clones.qname()).children
             #DEBUG and log.err("foo: " + `af.parent().deadProperties().get(elements.Clones.qname()).children`)
             DEBUG and log.err(pclones[0].__class__)
-            for pc in pclones: pc.path = af.relativePath()
+            for pc in pclones: pc.path = os.sep.join(
+                                                     map(urllib.quote,
+                                                         af.relativePath().split(os.sep)
+                                                         ))
             log.err("clones with parent resource: " + `pclones`)
             clones += pclones
         except:
