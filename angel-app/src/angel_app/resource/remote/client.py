@@ -66,6 +66,13 @@ def getLocalCloneURLList(af):
             log.err(traceback.print_exc())
             pass    
     
+    # make sure that collections are terminated with a "/", because
+    # twisted redirects requests to collections that lack it...
+    if af.isCollection():
+        for cc in clones:
+            if not cc.path[-1] == "/":
+                cc.path = cc.path + "/"
+    
     return clones
     #return [str(clone.children[0].children[0]) for clone in clones]
 
