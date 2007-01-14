@@ -188,12 +188,20 @@ def storeClones(af, goodClones, unreachableClones):
         # if we have too few good clones, keep some of the unreachable and bad clones,
         # just in case ...  
         clonesToBeStored += unreachableClones
-    clonesToBeStored = (len(clonesToBeStored) > 3 and clonesToBeStored[:3] or clonesToBeStored)
+    
+    # make sure the local clone is stored
+    localClone = Clone("localhost", 9999, af.relativePath())
+    if localClone not in clonesToBeStored:
+        clonesToBeStored = [localClone] + clonesToBeStored
+    
+    # now make sure we're not getting DOSed
+    
+    clonesToBeStored = (len(clonesToBeStored) > 5 and clonesToBeStored[:5] or clonesToBeStored)
+    
     DEBUG and log.err("storing clones: " + `clonesToBeStored`)
     newClones = elements.Clones(*[
                     elements.Clone(rfc2518.HRef(`cc`)) for cc in clonesToBeStored
                     ])
-    log.err("in xml: " + newClones.toxml())
     af.deadProperties().set(newClones)
 
 def inspectResource(path = repository):
