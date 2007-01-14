@@ -28,7 +28,7 @@ class Safe(DAVFile):
         """
         return ("1", "2")
 
-    def http_MKCOL(self, request):
+    def precondition_MKCOL(self, request):
         """
         Disallowed.
         """
