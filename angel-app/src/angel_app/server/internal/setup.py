@@ -29,11 +29,13 @@ def setupRootMetaData():
     YOU ONLY NEED THIS IF YOU WANT TO SET UP A NEW ROOT DIRECTORY -- NOT VERY LIKELY,
     I THINK.
     """
+    
     angelRoot = Crypto(repository)
     DEBUG and log.err("public key: " + rootDefaults.publicKey)
    
     # we want to make sure we take ownership of the root directory
     angelRoot.deadProperties().set(elements.PublicKeyString(rootDefaults.publicKey))
+    angelRoot.deadProperties().set(elements.ResourceID(rootDefaults.resourceID))
     
     # update all remaining metadata
     angelRoot.update()
