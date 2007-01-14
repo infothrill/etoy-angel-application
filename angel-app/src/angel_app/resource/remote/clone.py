@@ -268,7 +268,7 @@ def makePushBody(localClone):
     """
     
     for el in elements.requiredKeys:
-        log.err("makePushBody: " + `el.qname()`)
+        DEBUG and log.err("makePushBody: " + localClone.deadProperties().get(el.qname()).toxml())
     pList = [
              rfc2518.Set(
                          rfc2518.PropertyContainer(

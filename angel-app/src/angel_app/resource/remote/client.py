@@ -42,9 +42,8 @@ def getLocalCloneURLList(af):
     try:
         log.err("getting clones from resource: " + af.fp.path)
         clones += [cloneFromGunk(splitParse(str(cc.children[0].children[0]))) for cc in af.deadProperties().get(elements.Clones.qname()).children]
-        log.err("clones with resource: " + clones)
     except:
-        # we have no clones on this file
+        log.err("no clones with resource: " + af.fp.path)
         pass
 
     if af.parent():
@@ -116,17 +115,21 @@ def _ensureLocalValidity(resource, referenceClone):
     if not resource.verify() or (referenceClone.revision() > resource.revisionNumber()):
         # then update the metadata
         
-        log.err("updating metadata for invalid local resource: " + resource.fp.path)
-        rp = referenceClone.propertiesDocument(elements.signedKeys)
+        keysToBeUpdated = elements.signedKeys + [elements.MetaDataSignature]
+        
+        DEBUG and log.err("updating metadata for invalid local resource: " + resource.fp.path)
+        rp = referenceClone.propertiesDocument(keysToBeUpdated)
         re = rp.root_element.childOfType(rfc2518.Response
                      ).childOfType(rfc2518.PropertyStatus
                    ).childOfType(rfc2518.PropertyContainer)
         
-        for sk in elements.signedKeys:
+        for sk in keysToBeUpdated:
             dd = re.childOfType(sk)
             resource.deadProperties().set(dd)
             
         DEBUG and log.err("_ensureLocalValidity, local clone's signed keys are now: " + resource.signableMetadata())   
+    
+    DEBUG and log.err("resource is now valid: " + `resource.verify()`)
         
     resource.familyPlanning()
                 
@@ -228,7 +231,7 @@ def inspectResource(path = repository):
 
     standin = af.exists() and af or af.parent()
     pubKey = standin.publicKeyString()
-    startingClones = getLocalCloneList(standin)
+    startingClones = getLocalCloneList(af)
     resourceID = getResourceID(af)
     DEBUG and log.err("starting out iteration with: " + `startingClones`)
     goodClones, badClones, unreachableClones = iterateClones(startingClones, pubKey, resourceID)
@@ -239,7 +242,7 @@ def inspectResource(path = repository):
     
     DEBUG and log.err("inspectResource: valid clones: " + `goodClones`)
     
-    # the valid clones should all be identical, pick any one for future reference
+    # the valid clones should all be identical, pick any one that exists for future reference
     rc = goodClones[0]
     
     DEBUG and log.err("reference clone: " + `rc` + " local path " + af.fp.path)

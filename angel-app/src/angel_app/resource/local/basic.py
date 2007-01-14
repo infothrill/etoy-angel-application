@@ -152,11 +152,7 @@ class Basic(deleteable.Deletable, Safe):
         publicKey = ezKey()
         publicKey.importKey(pk)
 
-        contentSignature = self.get(elements.ContentSignature)
-        #DEBUG and log.debug("verify(): signature: " + contentSignature)
-        dataIsCorrect = publicKey.verifyString(
-                                  self.contentAsString(),
-                                  cs)
+        dataIsCorrect = publicKey.verifyString(self.contentAsString(), cs)
         DEBUG and log.debug("data signature for file " + self.fp.path + " is correct: " + `dataIsCorrect`)
         
         DEBUG and log.debug(ms)
@@ -263,13 +259,15 @@ class Basic(deleteable.Deletable, Safe):
         
         children = self.deadProperties().get(elements.Children.qname()).children
 
-        validatedChildren = []
-        for child in children:
-            sf = self.createSimilarFile(self.fp.path + os.sep + urllib.unquote(str(child.childOfType(davxml.HRef))))
-            if sf.fp.exists(): # and str(sf.keyUUID()) == str(child.childOfType(elements.UUID).children[0]):
-                validatedChildren.append(sf)
+        #validatedChildren = []
+        #for child in children:
+        #    sf = self.createSimilarFile(self.fp.path + os.sep + urllib.unquote(str(child.childOfType(davxml.HRef))))
+        #    if sf.fp.exists(): # and str(sf.keyUUID()) == str(child.childOfType(elements.UUID).children[0]):
+        #        validatedChildren.append(sf)
             
-        return validatedChildren
+        #return validatedChildren
+        return [self.createSimilarFile(self.fp.path + os.sep + urllib.unquote(str(child.childOfType(davxml.HRef))))
+                for child in children]
 
 
     def publicKeyString(self):
