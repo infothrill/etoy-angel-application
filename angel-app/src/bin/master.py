@@ -290,7 +290,9 @@ def startProcessesWithProcessManager(procManager):
 	procManager.registerDelayedStarter(reactor.callLater) 
 	
 	executable = "python" # TODO: get exact python binary!
-	binpath = os.path.join(os.getcwd(),"bin") # TODO: where are the scripts?
+	binpath = os.getcwd() #os.path.join(os.getcwd(),"bin") # TODO: where are the scripts?
+	
+	os.environ["PYTHONPATH"] += os.sep.join(os.sep.split(binpath)[:-1])
 
 	presenterProcess = ExternalProcess()
 	presenterProcess.setProtocol(PresenterProtocol())
