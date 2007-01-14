@@ -77,7 +77,7 @@ class ProppatchMixin:
             # but we are going to be careful, aren't we?
             return True
         goodID = (rid == __get(elements.ResourceID))
-        log.debug("resource ID for PROPPATCH is valid: " + `goodID`)
+        log.err("resource ID for PROPPATCH is valid: " + `goodID`)
         if not goodID: return False
         
         sig = __both(elements.MetaDataSignature)
@@ -94,7 +94,7 @@ class ProppatchMixin:
         pubKey = ezPyCrypto.key()
         pubKey.importKey(keyString)
         isValid = pubKey.verifyString(signable, sig)
-        log.debug(isValid)
+        log.err(isValid)
         return isValid
         
             
