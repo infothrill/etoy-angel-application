@@ -43,8 +43,11 @@ def runServer():
     
     assert(Basic(repository).exists()), "Root directory (%s) not found." % repository
     
-    for ii in graphWalker(repository, getChildren, toEvaluate):
-        continue
+    while 1:
+    	import time
+    	for ii in graphWalker(repository, getChildren, toEvaluate):
+    		time.sleep(10)
+        	continue
             
 if __name__ == "__main__":
     bootInit()
