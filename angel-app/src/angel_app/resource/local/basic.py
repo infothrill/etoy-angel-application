@@ -265,7 +265,7 @@ class Basic(deleteable.Deletable, Safe):
         validatedChildren = []
         for child in children:
             sf = self.createSimilarFile(self.fp.path + os.sep + str(child.childOfType(davxml.HRef)))
-            if sf.fp.exists() and str(sf.keyUUID()) == str(child.childOfType(elements.UUID).children[0]):
+            if sf.fp.exists(): # and str(sf.keyUUID()) == str(child.childOfType(elements.UUID).children[0]):
                 validatedChildren.append(sf)
             
         return validatedChildren
