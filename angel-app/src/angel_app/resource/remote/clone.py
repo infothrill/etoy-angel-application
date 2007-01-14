@@ -30,6 +30,13 @@ class Clone(object):
         self.port = port
         self.path = path
     
+    def checkForRedirect(self):
+
+        response = self.__performRequest(method = "HEAD", body = "")
+        if response.status == responsecode.MOVED_PERMANENTLY:
+            self.path = response.getheader("location")
+            log.err("clone received redirect: " + `self`)
+    
     def __eq__(self, clone):
         """
         @rtype boolean

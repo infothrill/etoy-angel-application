@@ -23,7 +23,7 @@ def splitParse(cloneUri):
     if len(fragments) > 1:
         return host, port, "/" + "/".join(fragments[1:])
     
-    return host, port
+    return (host, port)
 
 def cloneFromGunk(gunk):
     assert len(gunk) > 1
@@ -49,14 +49,35 @@ def getLocalCloneURLList(af):
     if af.parent():
         try:
             DEBUG and log.err("getting clones from parent resource " + af.parent().fp.path)
-            pclones = [cloneFromGunk(splitParse(str(cc.children[0].children[0]))) for cc in af.parent().deadProperties().get(elements.Clones.qname()).children]
-            #pclones = af.parent().deadProperties().get(elements.Clones.qname()).children
-            #DEBUG and log.err("foo: " + `af.parent().deadProperties().get(elements.Clones.qname()).children`)
-            DEBUG and log.err(pclones[0].__class__)
-            for pc in pclones: pc.path = os.sep.join(
-                                                     map(urllib.quote,
-                                                         af.relativePath().split(os.sep)
-                                                         ))
+            
+            def assertTrailingSlash(path):
+                return path[-1] == "/" and path or path + "/"
+            
+            def urlPathFromPath(path):
+                return os.sep.join(
+                            map(
+                                urllib.quote, 
+                                path.split(os.sep)))
+            def quotedName():
+                return urllib.quote(af.resourceName())
+            
+            pathGuess = assertTrailingSlash(
+                                            urlPathFromPath(af.relativePath())
+                                            ) + quotedName()
+            
+            def cloneFromParentClone(cc):
+                cloneInfo = splitParse(str(cc.children[0].children[0]))
+                assert len(cloneInfo) in range(2, 4)
+                if len(cloneInfo) == 2:
+                    host, port = cloneInfo
+                    path = pathGuess
+                else:
+                    host, port, path = cloneInfo
+                    path = assertTrailingSlash(path) + quotedName()
+                    
+                return Clone(host, port, path)
+            
+            pclones = [cloneFromParentClone(cc) for cc in af.parent().deadProperties().get(elements.Clones.qname()).children]
             log.err("clones with parent resource: " + `pclones`)
             clones += pclones
         except:
@@ -72,6 +93,7 @@ def getLocalCloneURLList(af):
             if not cc.path[-1] == "/":
                 cc.path = cc.path + "/"
     
+    for cc in clones: cc.checkForRedirect()
     return clones
     #return [str(clone.children[0].children[0]) for clone in clones]
 
