@@ -31,14 +31,9 @@ def setupRootMetaData():
     """
     angelRoot = Crypto(repository)
     DEBUG and log.err("public key: " + rootDefaults.publicKey)
-       
-    for item in [
-                elements.PublicKeyString(rootDefaults.publicKey),
-                elements.Revision("0"),
-                elements.Encrypted("0")
-                ]:
-        if not angelRoot.hasDeadProperty(item.qname()):
-            angelRoot.deadProperties().set(item)
+   
+    # we want to make sure we take ownership of the root directory
+    angelRoot.deadProperties().set(elements.PublicKeyString(rootDefaults.publicKey))
     
     # update all remaining metadata
     angelRoot.update()
