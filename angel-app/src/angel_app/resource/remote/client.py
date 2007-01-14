@@ -7,7 +7,7 @@ from urlparse import urlsplit
 import urllib
 import os 
 
-DEBUG = True
+DEBUG = False
 
 # get config:
 from angel_app.config import config

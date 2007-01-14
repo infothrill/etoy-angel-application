@@ -8,7 +8,7 @@ from angel_app.resource import IResource
 from zope.interface import implements
 from ezPyCrypto import key
 
-DEBUG = True
+DEBUG = False
 
 from httplib import HTTPConnection
 
@@ -123,8 +123,6 @@ class Clone(object):
         """
         try:
             response = self.__performRequest(method = "HEAD", body = "")
-            log.err(response.status)
-            log.err(responsecode.OK)
             return response.status == responsecode.OK
         except:
             return False       
@@ -231,6 +229,7 @@ class Clone(object):
         remote parent clone via a PROPPATCH request.
         """
         resp = self.__performRequest(method = "MKCOL", body = "")
+        DEBUG and log.msg("response on MKCOL: " + `resp.status`)
 
 
     def performPushRequest(self, localClone):
