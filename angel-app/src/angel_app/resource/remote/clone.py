@@ -7,7 +7,6 @@ from angel_app.resource.remote import util
 from angel_app.resource import IResource
 from zope.interface import implements
 from ezPyCrypto import key
-import urllib
 
 DEBUG = True
 
@@ -49,7 +48,7 @@ class Clone(object):
         conn = HTTPConnection(self.host, self.port)        
         conn.request(
                  method, 
-                 urllib.quote(self.path),
+                 self.path,
                  headers = headers,
                  body = body
                  )
@@ -124,6 +123,8 @@ class Clone(object):
         """
         try:
             response = self.__performRequest(method = "HEAD", body = "")
+            log.err(response.status)
+            log.err(responsecode.OK)
             return response.status == responsecode.OK
         except:
             return False       
