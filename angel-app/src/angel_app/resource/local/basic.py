@@ -22,7 +22,7 @@ from angel_app.contrib import uuid
 
 log = getLogger()
 
-DEBUG = True
+DEBUG = False
 
 # get config:
 from angel_app.config import config

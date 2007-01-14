@@ -11,7 +11,7 @@ from angel_app.config import internal as config
 
 import urllib
 
-DEBUG = True
+DEBUG = False
 
 log = getLogger()
 # DO NOT EXPOSE THIS KEY!!!!
