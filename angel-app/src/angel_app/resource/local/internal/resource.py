@@ -205,7 +205,7 @@ class Crypto(
         oc = pdp.get(elements.Children.qname()).children
         
         DEBUG and log.debug("resourceName: " + self.resourceName())     
-        nc = [cc for cc in oc if not str(cc.childOfType(rfc2518.HRef)) == urllib.quot(self.resourceName())]
+        nc = [cc for cc in oc if not str(cc.childOfType(rfc2518.HRef)) == urllib.quote(self.resourceName())]
         
         pdp.set(elements.Children(*nc))
         DEBUG and log.debug("exiting _deRegisterWithParent")
