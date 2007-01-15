@@ -319,7 +319,13 @@ def startProcessesWithProcessManager(procManager):
 #	testProcess.setArgs(args = ["/sw/bin/sleep", '5']) 
 #	procManager.startServicing(testProcess)
 #	reactor.callLater(4, procManager.restartServicing, presenterProcess)
-	
+
+def py2appletWorkaroundIgnoreMe():
+	"""
+	Import the other binaries, so py2applet takes them along in the packaging process.
+	"""
+	import maintainer, presenter, provider
+		
 
 if __name__ == "__main__":
 	bootInit()
