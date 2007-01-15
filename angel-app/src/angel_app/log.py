@@ -164,9 +164,17 @@ def logTwisted(dict):
 
 def __configLoggerBasic():
 	# leave this as is. It is the default root logger and goes to /dev/null
-    logging.basicConfig(level=logging.DEBUG, format='%(message)s', filename='/dev/null', filemode='w')
-					#format='%(name)s %(asctime)s %(levelname)-8s %(message)s',
-					
+    # the way to call basicConfig() changed from version 2.3 to version 2.4
+    # to be able to run in 2.3 (although with slightly messy logging), we detect this here:
+    from platform import python_version_tuple
+    (major,minor,patchlevel) = python_version_tuple()
+    major = int(major)
+    minor = int(minor)
+    if (major >=2 and minor > 3 ):
+        logging.basicConfig(level=logging.DEBUG, format='%(message)s', filename='/dev/null', filemode='w')
+        #format='%(name)s %(asctime)s %(levelname)-8s %(message)s',
+    else:
+        logging.basicConfig()
 
 def __getConfiguredLogLevel():
 	AngelConfig = angel_app.config.config.getConfig()
