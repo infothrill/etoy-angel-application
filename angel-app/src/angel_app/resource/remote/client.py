@@ -304,7 +304,6 @@ def iterateClones(cloneSeedList, publicKeyString, resourceID):
         
         # pop the next clone from the queue
         cc = toVisit[0]
-        cc.checkForRedirect()
         DEBUG and log.err("inspecting clone: " + `cc`)
         toVisit = toVisit[1:]
         
@@ -320,6 +319,8 @@ def iterateClones(cloneSeedList, publicKeyString, resourceID):
             DEBUG and log.err("iterateClones: clone " + `cc` + " no reachable, ignoring")
             unreachable.append(cc)
             continue
+        
+        cc.checkForRedirect()
         
         if not cc.exists():
             DEBUG and log.err("iterateClones: resource " + `cc.path` + " not found on host " + `cc`)
