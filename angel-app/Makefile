@@ -8,17 +8,19 @@ angelApp: virtual-python setupToolsBootStrap twisted ezPyCrypto xattr
 
 zope-interface: virtual-python
 	cd ${installLocation} && \
-	wget http://www.zope.org/Products/ZopeInterface/3.0.1final/ZopeInterface-3.0.1.tgz && \
-	tar xvfz ZopeInterface-3.0.1.tgz && \
-	cd ZopeInterface-3.0.1 && ${vPython} setup.py install
+	wget http://www.zope.org/Products/ZopeInterface/3.3.0/zope.interface-3.3.0.tar.gz && \
+	tar xvfz zope.interface-3.3.0.tar.gz && \
+	cd zope.interface-3.3.0 && ${vPython} setup.py install
 	
 
 xattr: setupToolsBootStrap
-	cd ${installLocation} && svn co http://svn.red-bean.com/bob/xattr/trunk/ xattr && cd xattr && ${vPython} setup.py build && ${vPython} setup.py install
+	cd ${installLocation} && svn co http://svn.red-bean.com/bob/xattr/trunk/ xattr && \
+	cd xattr && ${vPython} setup.py build && ${vPython} setup.py install
 
 ezPyCrypto: pyCrypto
 	cd ${installLocation} && \
-	wget -O ezPyCrypto-0.1.1_lite.tgz "http://angelapp.missioneternity.org/index.py/Documentation/Install?action=AttachFile&do=get&target=ezPyCrypto-0.1.1_lite.tgz" && \
+	wget -O ezPyCrypto-0.1.1_lite.tgz \
+	"http://angelapp.missioneternity.org/index.py/Documentation/Install?action=AttachFile&do=get&target=ezPyCrypto-0.1.1_lite.tgz" && \
 	tar xvzf ezPyCrypto-0.1.1_lite.tgz && \
 	cd ezPyCrypto-0.1.1 && \
 	${vPython} setup.py install
