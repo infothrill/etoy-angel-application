@@ -5,11 +5,13 @@ ez_setup.use_setuptools()
 
 from setuptools import setup #, Extension
 
+import pkg_resources 
+
 from pkg_resources import require 
 require("xattr>=0.3")
 require("zope.interface>=3.3.0")
 require("pycrypto>=2.0.1")
-require("Twisted>=2.5")
+#require("twisted>=2.5")
 
 VERSION = '0.1'
 DESCRIPTION = "The angel-app distributed file system."
@@ -44,6 +46,8 @@ setup(
     packages=['angel_app'],
     platforms=['MacOS X', 'Linux', 'FreeBSD'],
     package_dir={'angel_app': 'src/angel_app'},
+    #install_requires = ["xattr>=0.3", "zope.interface>=3.3.0", "pycrypto>=2.0.1", "Twisted>=2.5"],
+    install_requires = ["xattr>=0.3", "zope.interface>=3.3.0", "pycrypto>=2.0.1"],
 #    ext_modules=[
 #        Extension("xattr._xattr", ["Modules/xattr/_xattr.c"]),
 #    ],
