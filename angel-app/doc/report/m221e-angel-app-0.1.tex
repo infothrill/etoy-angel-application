@@ -319,7 +319,7 @@ We therefore require that additionally at least one of the following constraints
 \end{itemize}
 The implementation (and implementability) of such a locking mechanism obviously greatly depends on the usage patterns, network topology and the local structure of the resource graph, and a specification for the angel-app has therefore so far not been attempted. However, the following observation should serve as a significant simplification when attempting such an implementation: nodes that share a secret key may generally be assumed to be able to trust each other.
 
-The former approach (currently taken, required, but not enforced by the angel-app) has the additional property that \textt{resource-id}'s can be easily generated: if the creation of a resource on a given node corresponds to the creation of an actual file on the node's file system (\emph{i.e.} is associated with a specific path), and the corresponding file can only be created on this specific node (since secret keys are not shared), the combination of creation time, creation path, and public key is guaranteed to form a globally unique identifier, as required by Section \ref{maintain}.
+The former approach (currently taken, required, but not enforced by the angel-app) has the additional property that \texttt{resource-id}'s can be easily generated: if the creation of a resource on a given node corresponds to the creation of an actual file on the node's file system (\emph{i.e.} is associated with a specific path), and the corresponding file can only be created on this specific node (since secret keys are not shared), the combination of creation time, creation path, and public key is guaranteed to form a globally unique identifier, as required by Section \ref{maintain}.
 
 \section{Practical Implementation Considerations}
 
@@ -346,8 +346,6 @@ The resulting proposed structure of an angel-app node is displayed in Figure \re
 
 It seems worthwhile to note that the angel-app can thus be cleanly separated into a number of different processes. An ``internal'' server (with access to the user's secret key, and typically listening only for connections from the machine the node is hosted on) and a (also locally running) configuration interface handle authenticated user input. The communication channels that are exposed to the outside network have read/write access to the locally stored resources, but no signing capability. Unauthorized access to the secret keys is therefore easy to avoid.
 
-
-\newpage
 \subsection{Peer Visibility}
 
 The wide-spread use of network-address-translation (NAT) and firewalling techniques make the deployment of the angel-app on wide area networks (WAN's) somewhat difficult. Nodes running the angel-app may be unable to send messages to each other, even if they are in principle ``online''. A definitive solution for this problem should require the use of one or more of the following, and is the scope of future work:
