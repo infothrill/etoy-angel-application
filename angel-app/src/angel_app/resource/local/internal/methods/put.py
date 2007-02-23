@@ -2,7 +2,6 @@ from twisted.python import log
 from twisted.web2 import responsecode
 from twisted.web2.http import HTTPError
 from angel_app import elements
-from angel_app.resource.remote.client import inspectResource
 
 
 from twisted.python.failure import Failure
@@ -126,16 +125,6 @@ class Putable(object):
         """
         #return self.put(request.stream)
         #return deferredGenerator(self._put)(request.stream).addCallback(inspectResource, self.fp.path)
-    
-        def inspectWithResponse(response):
-            try:
-                inspectResource(self.parent().fp.path)
-                inspectResource(self.fp.path)
-            except:
-                log.warn("failed to update clones on PUT for " + self.fp.path)
-                
-            return response
-    
         return deferredGenerator(self._put)(request.stream).addCallback(inspectWithResponse)
         #response = waitForDeferred(deferredGenerator(self._put)(request.stream))
         #yield response

@@ -8,6 +8,7 @@ from angel_app.resource.local.internal.methods import copy, delete, lock, mkcol,
 from angel_app.resource.local.basic import Basic
 from angel_app.contrib.ezPyCrypto import key as ezKey
 from angel_app.config import internal as config
+from angel_app.resource.remote.client import inspectResource
 
 import urllib
 
@@ -131,11 +132,12 @@ class Crypto(
         network first. This is conveniently done by a call to inspectResource, after which we can safely
         return the response.
         """
+        log.msg("inspecting: " + self.fp.path)
         try:
             inspectResource(self.parent().fp.path)
             inspectResource(self.fp.path)
         except:
-            log.warn("failed to update clones after processing request for " + self.fp.path)
+            log.msg("failed to update clones after processing request for " + self.fp.path)
                 
         return response
 

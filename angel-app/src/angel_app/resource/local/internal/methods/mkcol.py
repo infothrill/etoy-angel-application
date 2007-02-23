@@ -36,7 +36,6 @@ from twisted.web2.http import HTTPError, StatusResponse
 from twisted.web2.dav.fileop import mkcollection
 from twisted.web2.dav.util import noDataFromStream, parentForURL
 from angel_app import elements
-from angel_app.resource.remote.client import inspectResource
 
 
 DEBUG = True
@@ -103,17 +102,6 @@ class mkcolMixin:
         """
         Respond to a MKCOL request. (RFC 2518, section 8.3)
         """     
-        log.err("received MKCOL request for " + self.fp.path)
-    
-    
-        def inspectWithResponse(response):
-            try:
-                inspectResource(self.parent().fp.path)
-                inspectResource(self.fp.path)
-            except:
-                log.warn("failed to update clones on MKCOL for " + self.fp.path)
-                
-            return response
     
         return deferredGenerator(self.__mkcol)(request).addCallback(inspectWithResponse)
     

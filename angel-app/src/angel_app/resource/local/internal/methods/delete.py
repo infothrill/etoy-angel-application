@@ -18,11 +18,12 @@ class Deletable(object):
         """
         Respond to a DELETE request. (RFC 2518, section 8.6)
         """
+        DEBUG and log.err("http_DELETE starting ")
 
         foo = self.delete(
                        request.uri, 
                        request.headers.getHeader("depth", "infinity")
-                       )
+                       ).addCallback(inspectWithResponse)
         DEBUG and log.err("http_DELETE: " + `type(foo)`)
         return foo
 
