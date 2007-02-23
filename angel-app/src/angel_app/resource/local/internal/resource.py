@@ -122,6 +122,23 @@ class Crypto(
         return signature
 
 
+    
+    
+    def inspectWithResponse(response):
+        """
+        When we have processed a modifying WebDAV request (such as PUT, MKCOL, DELETE) successfully,
+        rather than returning immediately we may in many cases want to propagate the changes through the
+        network first. This is conveniently done by a call to inspectResource, after which we can safely
+        return the response.
+        """
+        try:
+            inspectResource(self.parent().fp.path)
+            inspectResource(self.fp.path)
+        except:
+            log.warn("failed to update clones after processing request for " + self.fp.path)
+                
+        return response
+
     def bumpRevisionNumber(self):
         """
         Increase the revision number by one, if it not initialized, set it to 1.
