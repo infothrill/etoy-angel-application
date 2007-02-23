@@ -13,7 +13,7 @@ from angel_app.resource.local.external.methods.proppatch import ProppatchMixin
 from angel_app.resource.local.resourceMixins import deleteable
 from angel_app.log import getLogger
 from angel_app.contrib import uuid
-from contrib.ezPyCrypto import key as ezKey
+from angel_app.contrib.ezPyCrypto import key as ezKey
 import os
 import sha
 import urllib
