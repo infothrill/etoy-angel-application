@@ -3,15 +3,7 @@
 import ez_setup
 ez_setup.use_setuptools()
 
-from setuptools import setup, find_packages #, Extension
-
-import pkg_resources 
-
-from pkg_resources import require 
-require("xattr>=0.3")
-require("zope.interface>=3.3.0")
-require("pycrypto>=2.0.1")
-#require("twisted>=2.5")
+from setuptools import setup, find_packages
 
 VERSION = '0.1'
 DESCRIPTION = "The angel-app distributed file system."
@@ -43,23 +35,15 @@ setup(
     author_email="vincent@etoy.com",
     url="http://angelapp.missioneternity.org/",
     license="MIT License",
-    packages=find_packages('src'),#['angel_app', "twisted"],
+    packages=find_packages('src'),
     platforms=['MacOS X', 'Linux', 'FreeBSD'],
     package_dir={
                  'angel_app' : 'src/angel_app'
-                 #'angel_app': 'src/angel_app',
-                 #"twisted": "src/contrib/twisted"
                  },
-    #install_requires = ["xattr>=0.3", "zope.interface>=3.3.0", "pycrypto>=2.0.1", "Twisted>=2.5"],
-    install_requires = ["xattr>=0.3", "zope.interface>=3.3.0", "pycrypto>=2.0.1"],
-#    ext_modules=[
-#        Extension("xattr._xattr", ["Modules/xattr/_xattr.c"]),
-#    ],
-#    entry_points={
-#        'console_scripts': [
-#            "xattr = xattr.tool:main",
-#        ],
-#    },
+    install_requires = ["xattr>=0.3", "zope.interface>=3.3.0", "pycrypto>=2.0.1", "ezPyCrypto"],
+    dependency_links = [
+        "http://angelapp.missioneternity.org/index.py/Documentation/Install?action=AttachFile&do=get&target=ezPyCrypto.py#egg=ezPyCrypto-0.1"
+    ],
     zip_safe=False,
 )
 
@@ -74,64 +58,11 @@ setup(
     author_email="vincent@etoy.com",
     url="http://angelapp.missioneternity.org/",
     license="MIT License",
-    packages=find_packages('contrib'),#['angel_app', "twisted"],
+    packages=find_packages('contrib'),
     platforms=['MacOS X', 'Linux', 'FreeBSD'],
     package_dir={
                  'twisted' : 'contrib/twisted'
-                 #'angel_app': 'src/angel_app',
-                 #"twisted": "src/contrib/twisted"
                  },
-    #install_requires = ["xattr>=0.3", "zope.interface>=3.3.0", "pycrypto>=2.0.1", "Twisted>=2.5"],
     install_requires = ["xattr>=0.3", "zope.interface>=3.3.0", "pycrypto>=2.0.1"],
-#    ext_modules=[
-#        Extension("xattr._xattr", ["Modules/xattr/_xattr.c"]),
-#    ],
-#    entry_points={
-#        'console_scripts': [
-#            "xattr = xattr.tool:main",
-#        ],
-#    },
     zip_safe=False,
 )
-setup(
-    name="ezPyCrypto",
-    version=0.1,
-    description="twisted matrix",
-    long_description="ezPyCrypto - easy Python API for strong encryption",
-    author="twisted crew",
-    author_email="vincent@etoy.com",
-    url="http://angelapp.missioneternity.org/",
-    license="MIT License",
-    packages=find_packages('contrib'),#['angel_app', "twisted"],
-    platforms=['MacOS X', 'Linux', 'FreeBSD'],
-    package_dir={
-                 'twisted' : 'contrib/twisted'
-                 #'angel_app': 'src/angel_app',
-                 #"twisted": "src/contrib/twisted"
-                 },
-    #install_requires = ["xattr>=0.3", "zope.interface>=3.3.0", "pycrypto>=2.0.1", "Twisted>=2.5"],
-    install_requires = ["xattr>=0.3", "zope.interface>=3.3.0", "pycrypto>=2.0.1"],
-#    ext_modules=[
-#        Extension("xattr._xattr", ["Modules/xattr/_xattr.c"]),
-#    ],
-#    entry_points={
-#        'console_scripts': [
-#            "xattr = xattr.tool:main",
-#        ],
-#    },
-    zip_safe=False,
-)
-
-setup(name='ezPyCrypto',
-      version = '0.1',
-      author="David McNab",
-      license="GPL",
-      description = 'ezPyCrypto - easy Python API for strong encryption',
-      #py_modules = ['ezPyCrypto']
-      packages=find_packages('contrib'),
-      package_dir={
-                 'ezPyCrypto' : 'contrib/ezPyCrypto'
-                 #'angel_app': 'src/angel_app',
-                 #"twisted": "src/contrib/twisted"
-                 },
-      )
