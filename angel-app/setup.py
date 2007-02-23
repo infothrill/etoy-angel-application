@@ -3,7 +3,7 @@
 import ez_setup
 ez_setup.use_setuptools()
 
-from setuptools import setup #, Extension
+from setuptools import setup, find_packages #, Extension
 
 import pkg_resources 
 
@@ -43,11 +43,13 @@ setup(
     author_email="vincent@etoy.com",
     url="http://angelapp.missioneternity.org/",
     license="MIT License",
-    packages=['angel_app', "twisted"],
+    packages=find_packages('src') + find_packages('contrib'),#['angel_app', "twisted"],
     platforms=['MacOS X', 'Linux', 'FreeBSD'],
     package_dir={
-                 'angel_app': 'src/angel_app',
-                 "twisted": "src/contrib/twisted"
+                 'angel_app' : 'src',
+                 'twisted' : 'contrib'
+                 #'angel_app': 'src/angel_app',
+                 #"twisted": "src/contrib/twisted"
                  },
     #install_requires = ["xattr>=0.3", "zope.interface>=3.3.0", "pycrypto>=2.0.1", "Twisted>=2.5"],
     install_requires = ["xattr>=0.3", "zope.interface>=3.3.0", "pycrypto>=2.0.1"],
