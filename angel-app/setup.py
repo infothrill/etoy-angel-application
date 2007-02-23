@@ -130,7 +130,7 @@ setup(name='ezPyCrypto',
       #py_modules = ['ezPyCrypto']
       packages=find_packages('contrib'),
       package_dir={
-                 'twisted' : 'contrib/ezPyCrypto'
+                 'ezPyCrypto' : 'contrib/ezPyCrypto'
                  #'angel_app': 'src/angel_app',
                  #"twisted": "src/contrib/twisted"
                  },
