@@ -26,6 +26,8 @@ legalMatters = """
 
 author = """Vincent Kraeutler, 2006"""
 
+from twisted.python import log
+from angel_app.resource.remote.client import inspectResource
 import time
 
 def makeResourceID(relativePath = ""):
@@ -40,6 +42,7 @@ def inspectWithResponse(resource):
     return the response.
     """
 
+    log.err("foo")
     # higher-order foo-nctions
     def foo(response):
         log.msg("inspecting: " + resource.fp.path)
