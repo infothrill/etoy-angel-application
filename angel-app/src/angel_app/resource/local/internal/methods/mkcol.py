@@ -36,7 +36,7 @@ from twisted.web2.http import HTTPError, StatusResponse
 from twisted.web2.dav.fileop import mkcollection
 from twisted.web2.dav.util import noDataFromStream, parentForURL
 from angel_app import elements
-
+from angel_app.resource.local.internal.resource import inspectWithResponse
 
 DEBUG = True
 
@@ -103,7 +103,7 @@ class mkcolMixin:
         Respond to a MKCOL request. (RFC 2518, section 8.3)
         """     
     
-        return deferredGenerator(self.__mkcol)(request).addCallback(self.inspectWithResponse)
+        return deferredGenerator(self.__mkcol)(request).addCallback(inspectWithResponse(self))
     
         #return self.put(request.stream)
         #return deferredGenerator(self.__mkcol)(request)
