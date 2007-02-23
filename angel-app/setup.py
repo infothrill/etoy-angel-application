@@ -43,11 +43,41 @@ setup(
     author_email="vincent@etoy.com",
     url="http://angelapp.missioneternity.org/",
     license="MIT License",
-    packages=find_packages('src') + find_packages('contrib'),#['angel_app', "twisted"],
+    packages=find_packages('src'),#['angel_app', "twisted"],
     platforms=['MacOS X', 'Linux', 'FreeBSD'],
     package_dir={
-                 'angel_app' : 'src',
-                 'twisted' : 'contrib'
+                 'angel_app' : 'src/angel_app'
+                 #'angel_app': 'src/angel_app',
+                 #"twisted": "src/contrib/twisted"
+                 },
+    #install_requires = ["xattr>=0.3", "zope.interface>=3.3.0", "pycrypto>=2.0.1", "Twisted>=2.5"],
+    install_requires = ["xattr>=0.3", "zope.interface>=3.3.0", "pycrypto>=2.0.1"],
+#    ext_modules=[
+#        Extension("xattr._xattr", ["Modules/xattr/_xattr.c"]),
+#    ],
+#    entry_points={
+#        'console_scripts': [
+#            "xattr = xattr.tool:main",
+#        ],
+#    },
+    zip_safe=False,
+)
+
+print "installing twisted"
+setup(
+    name="twisted",
+    version=2.5,
+    description="twisted matrix",
+    long_description="components of twisted used by angel-app, with minor modifications",
+    classifiers=CLASSIFIERS,
+    author="twisted crew",
+    author_email="vincent@etoy.com",
+    url="http://angelapp.missioneternity.org/",
+    license="MIT License",
+    packages=find_packages('contrib'),#['angel_app', "twisted"],
+    platforms=['MacOS X', 'Linux', 'FreeBSD'],
+    package_dir={
+                 'twisted' : 'contrib/twisted'
                  #'angel_app': 'src/angel_app',
                  #"twisted": "src/contrib/twisted"
                  },
