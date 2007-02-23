@@ -6,7 +6,7 @@ from twisted.web2.dav.element import rfc2518
 from angel_app import elements
 from angel_app.resource.local.internal.methods import copy, delete, lock, mkcol, move, put
 from angel_app.resource.local.basic import Basic
-from ezPyCrypto import key as ezKey
+from contrib.ezPyCrypto import key as ezKey
 from angel_app.config import internal as config
 
 import urllib

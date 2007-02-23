@@ -1,7 +1,7 @@
 port = 9998
 interface = "127.0.0.1"
 
-from ezPyCrypto import key as ezKey
+from contrib.ezPyCrypto import key as ezKey
 from os import sep, environ
 
 keyBase = sep.join([

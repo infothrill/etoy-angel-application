@@ -6,7 +6,7 @@ from angel_app import elements
 from angel_app.resource.remote import util
 from angel_app.resource import IResource
 from zope.interface import implements
-from ezPyCrypto import key
+from contrib.ezPyCrypto import key
 
 DEBUG = False
 

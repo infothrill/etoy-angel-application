@@ -37,7 +37,7 @@ from twisted.web2.dav import davxml
 from twisted.web2.dav.http import MultiStatusResponse, PropertyStatusResponseQueue
 from twisted.internet.defer import deferredGenerator, waitForDeferred
 from angel_app import elements
-import ezPyCrypto
+import contrib.ezPyCrypto
 
 class ProppatchMixin:
     
@@ -91,7 +91,7 @@ class ProppatchMixin:
         log.err(signable)
         #sig = requestProperties.childOfType(elements.MetaDataSignature)
         log.err(sig)
-        pubKey = ezPyCrypto.key()
+        pubKey = contrib.ezPyCrypto.key()
         pubKey.importKey(keyString)
         isValid = pubKey.verifyString(signable, sig)
         log.err(isValid)
