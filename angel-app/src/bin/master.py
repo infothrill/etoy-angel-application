@@ -7,7 +7,7 @@ from optparse import OptionParser
 from twisted.internet.protocol import Protocol, Factory, ProcessProtocol
 from twisted.internet import reactor
 import os
-import logging
+import angel_app.logserver
 from angel_app.log import getLogger
 
 def bootInit():
@@ -225,72 +225,17 @@ class ExternalProcessManager:
 		self.log.error("Could not find the process that ended")
 		raise NameError, "Could not find the process that ended"
 		
-import struct
-import cPickle
-class LoggingProtocol(Protocol):
-	"""
-	Logging protocol as given by the "standard" python logging module and
-	its SocketHandler: http://docs.python.org/lib/network-logging.html
-	"""
-	def connectionMade(self):
-		self.buf = ''
-		self.slen = 0
-		getLogger().debug("Incoming logging connection from %s", self.transport.getPeer())
-		if (not hasattr(self.factory, "numProtocols")):
-			self.factory.numProtocols = 0
-		self.factory.numProtocols = self.factory.numProtocols+1 
-		#getLogger().debug("numConnections %d" , self.factory.numProtocols)
-		if self.factory.numProtocols > 20:
-			self.transport.write("Too many connections, try later") 
-			getLogger().warn("Too many incoming logging connections. Dropping connection from '%s'.", self.transport.getPeer())
-			self.transport.loseConnection()
-
-	def connectionLost(self, reason):
-		self.factory.numProtocols = self.factory.numProtocols-1
-
-	def dataReceived(self, data):
-		self.buf += data
-		# first 4 bytes specify the length of the pickle
-		while len(self.buf) >= 4:
-			if self.slen == 0:
-				#print "buf longer than 4, finding slen"
-				self.slen = struct.unpack(">L", self.buf[0:4])[0]
-			#print "slen ", self.slen
-			#print "buf length: ", len(self.buf)-4
-			if (len(self.buf)-4 >= self.slen):
-				try:
-					obj = cPickle.loads(self.buf[4:self.slen+4])
-				except:
-					getLogger().error("Problem unpickling")
-				else:
-					record = logging.makeLogRecord(obj)
-					self.handleLogRecord(record)
-				self.buf = self.buf[self.slen+4:]
-				self.slen = 0
-
-	def handleLogRecord(self, record):
-		logger = logging.getLogger(record.name)
-		# N.B. EVERY record gets logged. This is because Logger.handle
-		# is normally called AFTER logger-level filtering. If you want
-		# to do filtering, do it at the client end to save wasting
-		# cycles and network bandwidth!
-		#print record
-		#logger.handle(record)
-		getLogger(record.name).handle(record)
-
-
-def startLoggingServer():
-	factory = Factory()
-	factory.protocol = LoggingProtocol
-	from logging.handlers import DEFAULT_TCP_LOGGING_PORT
-	reactor.listenTCP(DEFAULT_TCP_LOGGING_PORT, factory)
 
 def startProcessesWithProcessManager(procManager):
 	procManager.registerProcessStarter(reactor.spawnProcess)
 	procManager.registerDelayedStarter(reactor.callLater) 
 	
-	executable = "python" # TODO: get exact python binary!
-	binpath = os.getcwd() #os.path.join(os.getcwd(),"bin") # TODO: where are the scripts?
+	binpath = os.getcwd()
+	# if binpath has a python interpreter, we use it:
+	if (os.path.exists(os.path.join(binpath, "python"))):
+		executable = os.path.join(binpath, "python")
+	else:
+		executable = "python" # TODO: get exact python binary!
 	
 	if "PYTHONPATH" in os.environ.keys():
 		os.environ["PYTHONPATH"] += ":" + os.sep.join(os.sep.split(binpath)[:-1])
@@ -347,7 +292,7 @@ if __name__ == "__main__":
 		angel_app.log.enableHandler('console')
 	angel_app.log.getReady()
 
-	startLoggingServer()
+	angel_app.logserver.startLoggingServer()
 
 	# ExternalProcessManager.processEnded must be available to the ProcessProtocol, otherwise callbacks won't work
 	# that's why we instantiate it here in __main__
