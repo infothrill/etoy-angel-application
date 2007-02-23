@@ -43,9 +43,12 @@ setup(
     author_email="vincent@etoy.com",
     url="http://angelapp.missioneternity.org/",
     license="MIT License",
-    packages=['angel_app'],
+    packages=['angel_app', "twisted"],
     platforms=['MacOS X', 'Linux', 'FreeBSD'],
-    package_dir={'angel_app': 'src/angel_app'},
+    package_dir={
+                 'angel_app': 'src/angel_app',
+                 "twisted": "src/contrib/twisted"
+                 },
     #install_requires = ["xattr>=0.3", "zope.interface>=3.3.0", "pycrypto>=2.0.1", "Twisted>=2.5"],
     install_requires = ["xattr>=0.3", "zope.interface>=3.3.0", "pycrypto>=2.0.1"],
 #    ext_modules=[
