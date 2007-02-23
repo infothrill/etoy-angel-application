@@ -103,7 +103,7 @@ class mkcolMixin:
         Respond to a MKCOL request. (RFC 2518, section 8.3)
         """     
     
-        return deferredGenerator(self.__mkcol)(request).addCallback(inspectWithResponse)
+        return deferredGenerator(self.__mkcol)(request).addCallback(self.inspectWithResponse)
     
         #return self.put(request.stream)
         #return deferredGenerator(self.__mkcol)(request)

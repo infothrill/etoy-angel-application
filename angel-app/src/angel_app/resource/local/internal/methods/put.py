@@ -125,7 +125,7 @@ class Putable(object):
         """
         #return self.put(request.stream)
         #return deferredGenerator(self._put)(request.stream).addCallback(inspectResource, self.fp.path)
-        return deferredGenerator(self._put)(request.stream).addCallback(inspectWithResponse)
+        return deferredGenerator(self._put)(request.stream).addCallback(self.inspectWithResponse)
         #response = waitForDeferred(deferredGenerator(self._put)(request.stream))
         #yield response
         #response = response.getResult()
