@@ -292,7 +292,10 @@ def startProcessesWithProcessManager(procManager):
 	executable = "python" # TODO: get exact python binary!
 	binpath = os.getcwd() #os.path.join(os.getcwd(),"bin") # TODO: where are the scripts?
 	
-	os.environ["PYTHONPATH"] += os.sep.join(os.sep.split(binpath)[:-1])
+	if "PYTHONPATH" in os.environ.keys():
+		os.environ["PYTHONPATH"] += ":" + os.sep.join(os.sep.split(binpath)[:-1])
+	else:
+		os.environ["PYTHONPATH"] = os.sep.join(os.sep.split(binpath)[:-1])
 
 	presenterProcess = ExternalProcess()
 	presenterProcess.setProtocol(PresenterProtocol())
