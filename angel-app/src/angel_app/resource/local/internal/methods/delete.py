@@ -23,7 +23,9 @@ class Deletable(object):
         foo = self.delete(
                        request.uri, 
                        request.headers.getHeader("depth", "infinity")
-                       ).addCallback(inspectWithResponse(self))
+                       )
+        
+        inspectWithResponse(self)
         DEBUG and log.err("http_DELETE: " + `type(foo)`)
         return foo
 
