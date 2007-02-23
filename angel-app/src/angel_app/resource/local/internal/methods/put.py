@@ -123,9 +123,9 @@ class Putable(object):
         """
         Respond to a PUT request. (RFC 2518, section 8.7)
         """
-    
+        from angel_app.resource.remote.client import inspectResource
         #return self.put(request.stream)
-        return deferredGenerator(self._put)(request.stream)
+        return deferredGenerator(self._put)(request.stream).addCallback(inspectResource, self.fp.path)
         #return self.put(request.stream)
         #put = deferredGenerator(self.put)
         #return put(request.stream)
