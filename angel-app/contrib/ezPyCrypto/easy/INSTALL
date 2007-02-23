@@ -1,0 +1,36 @@
+To install this software, you'll need Python 2.2 or later - available from:
+http://www.python.org
+
+Step By Step Instructions:
+
+1) Ensure you have Python 2.2 or later installed
+
+2) Install the PyCrypto backend. You can do this in 3 ways:
+
+   (i)   If running windoze, and Python 2.2, just run the
+         installer - pycrypto-1.9a4.win32-py2.2.exe, OR
+
+   (ii)  If running Debian GNU/Linux, log in as root and
+         type 'apt-get install python-crypto', OR
+
+   (iii) Go into the directory 'pycrypto-1.9a4', log in with
+         admin privilege, then type:
+
+              python setup.py install
+
+         (you'll need to have a suitable C compiler installed)
+
+3) Now install ezPyCrypto. In the top level directory (where
+   this INSTALL file is residing), log in with admin privileges
+   and type:
+
+      python setup.py install
+
+From now, you can just run the example programs,
+read the manual, and be up and running in minutes.
+
+When running the examples, make sure you run them in strict
+order. Some later examples use files created by earlier examples.
+
+Bugs, queries, feedback, patches, requests, gifts, abuse etc to:
+  David McNab <david@freenet.org.nz>

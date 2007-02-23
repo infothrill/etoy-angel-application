@@ -1,0 +1,195 @@
+Common subdirectories: ezPyCrypto-0.1.1/build and ezPyCrypto-dev/build
+Common subdirectories: ezPyCrypto-0.1.1/doc and ezPyCrypto-dev/doc
+diff -c ezPyCrypto-0.1.1/ezPyCrypto.py ezPyCrypto-dev/ezPyCrypto.py
+*** ezPyCrypto-0.1.1/ezPyCrypto.py	Sat Mar 15 00:44:04 2003
+--- ezPyCrypto-dev/ezPyCrypto.py	Fri Apr 18 14:31:58 2003
+***************
+*** 201,217 ****
+  		 1. If new keys are desired:
+  		     - key size in bits (int), default 512 - advise at least 1536
+  		     - algoPub - either 'RSA' or 'ElGamal' (default 'RSA')
+- 		     - algoSess - one of 'ARC2', 'Blowfish', 'CAST', 'DES3', 'IDEA', 'RC5',
+- 			   (default 'Blowfish')
+  		 2. If importing an existing key or keypair:
+  		     - keyobj (string) - result of a prior exportKey() call
+  		Keywords:
+  		 - passphrase - default '':
+  		    - If creating new keypair, this passphrase is used to encrypt privkey when
+  		      exporting.
+  		    - If importing a new keypair, the passphrase is used to authenticate and
+  			  grant/deny access to private key
+  		"""
+  		passphrase = kwds.get('passphrase', '')
+  	
+  		if type(something) is types.IntType:
+--- 201,220 ----
+  		 1. If new keys are desired:
+  		     - key size in bits (int), default 512 - advise at least 1536
+  		     - algoPub - either 'RSA' or 'ElGamal' (default 'RSA')
+  		 2. If importing an existing key or keypair:
+  		     - keyobj (string) - result of a prior exportKey() call
++ 		 3. In either case: 
++ 		     - algoSess - one of 'ARC2', 'Blowfish', 'CAST', 'DES3', 'IDEA', 'RC5',
++ 			   (default 'Blowfish')
+  		Keywords:
+  		 - passphrase - default '':
+  		    - If creating new keypair, this passphrase is used to encrypt privkey when
+  		      exporting.
+  		    - If importing a new keypair, the passphrase is used to authenticate and
+  			  grant/deny access to private key
++ 		 - verify - set to true to verify output (requires private key to be loaded)
+  		"""
++ 		self.verify = kwds.get('verify', 0)
+  		passphrase = kwds.get('passphrase', '')
+  	
+  		if type(something) is types.IntType:
+***************
+*** 226,240 ****
+  			self.algoPname = algoPub
+  	
+  			# which session key algorithm?
+! 			if algoSess == None:
+! 				algoSess = 'Blowfish'
+! 			algoS = self._algosSes.get(algoSess, None)
+! 			if algoS == None:
+! 				# Whoops - don't know that session algorithm
+! 				raise Exception("AlgoSess must be one of AES/ARC2/Blowfish/CAST/DES/DES3/IDEA/RC5")
+! 			self.algoSes = algoS
+! 			self.algoSname = algoSess
+! 	
+  			# organise random data pool
+  			self.randpool = RandomPool()
+  			self.randfunc = self.randpool.get_bytes
+--- 229,236 ----
+  			self.algoPname = algoPub
+  	
+  			# which session key algorithm?
+! 			self._setAlgoSess(algoSess)
+! 
+  			# organise random data pool
+  			self.randpool = RandomPool()
+  			self.randfunc = self.randpool.get_bytes
+***************
+*** 245,251 ****
+  		elif type(something) is types.StringType:
+  			if algoPub != None:
+  				raise Exception("Don't specify algoPub if importing a key")
+! 			if self.importKey(something, passphrase=passphrase) == False:
+  				raise CryptoKeyError(
+  					"Attempted to import invalid key, or passphrase is bad")
+  			self.randpool = RandomPool()
+--- 241,247 ----
+  		elif type(something) is types.StringType:
+  			if algoPub != None:
+  				raise Exception("Don't specify algoPub if importing a key")
+! 			if self.importKey(something, passphrase=passphrase, algoSess=algoSess) == False:
+  				raise CryptoKeyError(
+  					"Attempted to import invalid key, or passphrase is bad")
+  			self.randpool = RandomPool()
+***************
+*** 253,258 ****
+--- 249,267 ----
+  		else:
+  			raise Exception("Must pass keysize or importable keys")
+  	
++ 	def _setAlgoSess(self, algoSess=None): 
++ 		# which session key algorithm?
++ 		if algoSess == None:
++ 			algoSess = 'Blowfish'
++ 		algoS = self._algosSes.get(algoSess, None)
++ 		if algoS == None:
++ 			# Whoops - don't know that session algorithm
++ 			algos = self._algosSes.keys()
++ 			algos.sort()
++ 			raise Exception("AlgoSess (%s) must be one of %s" % (algoSess, '/'.join(algos)))
++ 		self.algoSes = algoS
++ 		self.algoSname = algoSess
++ 	
+  	#@-body
+  	#@-node:2::__init__
+  	#@+node:3::makeNewKeys()
+***************
+*** 302,308 ****
+  	#@-node:3::makeNewKeys()
+  	#@+node:4::importKey()
+  	#@+body
+! 	def importKey(self, keystring, **kwds):
+  		"""
+  		Imports a public key or private/public key pair.
+  	
+--- 311,317 ----
+  	#@-node:3::makeNewKeys()
+  	#@+node:4::importKey()
+  	#@+body
+! 	def importKey(self, keystring, algoSess=None, **kwds):
+  		"""
+  		Imports a public key or private/public key pair.
+  	
+***************
+*** 314,319 ****
+--- 323,330 ----
+  		   L{exportKey} or L{exportKeyPrivate}
+  		Keywords:
+  		 - passphrase - string (default '', meaning 'try to import without passphrase')
++ 		 - algoSess - one of 'ARC2', 'Blowfish', 'CAST', 'DES3', 'IDEA', 'RC5',
++ 		   (default 'Blowfish')
+  		Returns:
+  		 - True if import successful, False if failed
+  	
+***************
+*** 359,370 ****
+  			self.algoPname, self.k = pickle.loads(keyobj)
+  			self.algoPub = self._algosPub[self.algoPname]
+  	
+  			#raise Exception("Tried to import Invalid Key")
+  			self._calcPubBlkSize()
+  			self.passphrase = passphrase
+  			return True
+  		except:
+! 			return False
+  	
+  	#@-body
+  	#@-node:4::importKey()
+--- 370,383 ----
+  			self.algoPname, self.k = pickle.loads(keyobj)
+  			self.algoPub = self._algosPub[self.algoPname]
+  	
++ 			self._setAlgoSess(algoSess)
++ 
+  			#raise Exception("Tried to import Invalid Key")
+  			self._calcPubBlkSize()
+  			self.passphrase = passphrase
+  			return True
+  		except:
+! 			raise # return False
+  	
+  	#@-body
+  	#@-node:4::importKey()
+***************
+*** 1166,1176 ****
+  		self.randpool.stir()
+  		k = getPrime(128, self.randfunc)
+  		s = self.k.encrypt(raw, k)
+! 		d = self.k.decrypt(s)
+! 		if d != raw:
+! 			#print "_encRawPub: decrypt verify fail"
+! 			return None
+! 	
+  		#trace()
+  	
+  		# format this tuple into <len><nitems><item1len><item1bytes><item2len><item2bytes>...
+--- 1179,1190 ----
+  		self.randpool.stir()
+  		k = getPrime(128, self.randfunc)
+  		s = self.k.encrypt(raw, k)
+! 		if self.verify and hasattr(self.k, 'd'): 
+! 			d = self.k.decrypt(s)
+! 			if d != raw:
+! 				#print "_encRawPub: decrypt verify fail"
+! 				return None
+! 				
+  		#trace()
+  	
+  		# format this tuple into <len><nitems><item1len><item1bytes><item2len><item2bytes>...
+Only in ezPyCrypto-dev: ezPyCrypto.pyc
+Common subdirectories: ezPyCrypto-0.1.1/pycrypto-1.9a5 and ezPyCrypto-dev/pycrypto-1.9a5

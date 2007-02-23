@@ -1,0 +1,1295 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+          "DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <title>ezPyCrypto.key</title>
+  <link rel="stylesheet" href="epydoc.css" type="text/css"></link>
+</head>
+<body bgcolor="white" text="black" link="blue" vlink="#204080"
+      alink="#204080">
+
+<!-- =========== START OF NAVBAR =========== -->
+<table class="navbar" border="0" width="100%" cellpadding="0" bgcolor="#a0c0ff" cellspacing="0">
+  <tr valign="center">
+    <th class="navbar">&nbsp;&nbsp;&nbsp;<a class="navbar" href="ezPyCrypto-module.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
+    <th class="navbar">&nbsp;&nbsp;&nbsp;<a class="navbar" href="trees.html">Trees</a>&nbsp;&nbsp;&nbsp;</th>
+    <th class="navbar">&nbsp;&nbsp;&nbsp;<a class="navbar" href="indices.html">Index</a>&nbsp;&nbsp;&nbsp;</th>
+    <th class="navbar">&nbsp;&nbsp;&nbsp;<a class="navbar" href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
+  </tr>
+</table>
+<table width="100%" cellpadding="0" cellspacing="0">
+  <tr valign="top">
+    <td width="100%">
+<font size="-1"><b class="breadcrumbs">
+  <a href="ezPyCrypto-module.html">Module&nbsp;ezPyCrypto</a> ::
+  Class&nbsp;key</b></font></br>
+    </td>
+    <td><table cellpadding="0" cellspacing="0">
+      <tr><td align="right"><font size="-2">[show&nbsp;private&nbsp;|&nbsp;<a href="../public/ezPyCrypto.key-class.html">hide&nbsp;private</a>]</font></td></tr>
+      <tr><td align="right"><font size="-2">[<a href="frames.html"target="_top">frames</a>&nbsp;|&nbsp;<a href="ezPyCrypto.key-class.html" target="_top">no&nbsp;frames</a>]</font></td></tr>
+    </table></td></tr></table>
+
+<!-- =========== START OF CLASS DESCRIPTION =========== -->
+<h2 class="class">Class key</h2>
+
+<hr/>
+<p>This may well be the only crypto class for Python that you'll ever 
+need. Think of this class, and the ezPyCrypto module, as 'cryptography 
+for the rest of us'.</p>
+<p>Designed to strike the optimal balance between ease of use, features 
+and performance.</p>
+Basic High-level methods:
+<ul>
+  <li>
+    <a href="ezPyCrypto.key-class.html#encString" 
+    class="link"><code>encString</code></a> - encrypt a string
+  </li>
+  <li>
+    <a href="ezPyCrypto.key-class.html#decString" 
+    class="link"><code>decString</code></a> - decrypt a string
+  </li>
+  <li>
+    <a href="ezPyCrypto.key-class.html#encStringToAscii" 
+    class="link"><code>encStringToAscii</code></a> - encrypt a string to 
+    a printable, mailable format
+  </li>
+  <li>
+    <a href="ezPyCrypto.key-class.html#decStringFromAscii" 
+    class="link"><code>decStringFromAscii</code></a> - decrypt an 
+    ascii-format encrypted string
+  </li>
+  <li>
+    <a href="ezPyCrypto.key-class.html#signString" 
+    class="link"><code>signString</code></a> - produce ascii-format 
+    signature of a string
+  </li>
+  <li>
+    <a href="ezPyCrypto.key-class.html#verifyString" 
+    class="link"><code>verifyString</code></a> - verify a string against 
+    a signature
+  </li>
+  <li>
+    <a href="ezPyCrypto.key-class.html#importKey" 
+    class="link"><code>importKey</code></a> - import public key (and 
+    possibly private key too)
+  </li>
+  <li>
+    <a href="ezPyCrypto.key-class.html#exportKey" 
+    class="link"><code>exportKey</code></a> - export public key only, as 
+    printable mailable string
+  </li>
+  <li>
+    <a href="ezPyCrypto.key-class.html#exportKeyPrivate" 
+    class="link"><code>exportKeyPrivate</code></a> - same, but export 
+    private key as well
+  </li>
+  <li>
+    <a href="ezPyCrypto.key-class.html#makeNewKeys" 
+    class="link"><code>makeNewKeys</code></a> - generate a new, random 
+    private/public key pair
+  </li>
+</ul>
+Middle-level (stream-oriented) methods:
+<ul>
+  <li>
+    <a href="ezPyCrypto.key-class.html#encStart" 
+    class="link"><code>encStart</code></a> - start a stream encryption 
+    session
+  </li>
+  <li>
+    <a href="ezPyCrypto.key-class.html#encNext" 
+    class="link"><code>encNext</code></a> - encrypt another piece of 
+    data
+  </li>
+  <li>
+    <a href="ezPyCrypto.key-class.html#encEnd" 
+    class="link"><code>encEnd</code></a> - finalise stream encryption 
+    session
+  </li>
+  <li>
+    <a href="ezPyCrypto.key-class.html#decStart" 
+    class="link"><code>decStart</code></a> - start a stream decryption 
+    session
+  </li>
+  <li>
+    <a href="ezPyCrypto.key-class.html#decNext" 
+    class="link"><code>decNext</code></a> - decrypt the next piece of 
+    available data
+  </li>
+  <li>
+    <a href="ezPyCrypto.key-class.html#decEnd" 
+    class="link"><code>decEnd</code></a> - finalise stream decryption 
+    session
+  </li>
+</ul>
+Low-level methods:
+<ul>
+  <li>
+    refer to the source code
+  </li>
+</ul>
+Principle of operation:
+<ul>
+  <li>
+    Data is encrypted with choice of symmetric block-mode session cipher 
+    (or default Blowfish if user doesn't care)
+  </li>
+  <li>
+    CFB block chaining is used for added security - each next block's key 
+    is affected by the previous block
+  </li>
+  <li>
+    The session key and initial value (IV) are encrypted against an RSA or 
+    ElGamal public key (user's choice, default RSA)
+  </li>
+  <li>
+    Each block in the stream is prepended with a 'length' byte, indicating 
+    how many bytes in the decrypted block are significant - needed when 
+    total data len mod block size is non-zero
+  </li>
+  <li>
+    Format of encrypted data is:
+    <ul>
+      <li>
+        public key len - 2 bytes, little-endian - size of public key in 
+        bytes
+      </li>
+    </ul>
+    <ul>
+      <li>
+        public key - public key of recipient
+      </li>
+      <li>
+        block cipher len - unencrypted length byte - size of block cipher in 
+        bytes
+      </li>
+      <li>
+        block cipher - encrypted against public key, index into array of 
+        session algorithms
+      </li>
+      <li>
+        block key len - unencrypted length byte - size of block key in 
+        bytes
+      </li>
+      <li>
+        block key - encrypted against public key
+      </li>
+      <li>
+        block IV len - unencrypted length of block cipher IV - IV length in 
+        bytes
+      </li>
+      <li>
+        block cipher IV - encrypted against public key, prefixed 1-byte 
+        length
+      </li>
+      <li>
+        block1 len - 1 byte - number of significant chars in block1 *
+      </li>
+      <li>
+        block1 data - always 8 bytes, encrypted against session key
+      </li>
+      <li>
+        ...
+      </li>
+      <li>
+        blockn len
+      </li>
+      <li>
+        blockn data
+      </li>
+      <li>
+        If last data block is of the same size as the session cipher 
+        blocksize, a final byte 0x00 is sent.
+      </li>
+    </ul>
+  </li>
+</ul>
+
+
+<hr/>
+
+
+<!-- =========== START OF METHOD SUMMARY =========== -->
+<table class="summary" border="1" cellpadding="3" cellspacing="0" width="100%" bgcolor="white">
+<tr bgcolor="#70b0f0" class="summary">
+  <th colspan="2">Method Summary</th></tr>
+<tr><td align="right" valign="top" width="15%"><font size="-1">&nbsp;</font></td>
+  <td><code><span class=summary-sig><a href="ezPyCrypto.key-class.html#__init__" class="summary-sig-name"><code>__init__</code></a>(<span class=summary-sig-arg>self</span>,
+               <span class=summary-sig-arg>something</span>,
+               <span class=summary-sig-arg>algoPub</span>,
+               <span class=summary-sig-arg>algoSess</span>,
+               <span class=summary-sig-kwarg>**kwds</span>)</span></code>
+<br />Constructor.</td></tr>
+<tr><td align="right" valign="top" width="15%"><font size="-1">&nbsp;</font></td>
+  <td><code><span class=summary-sig><a href="ezPyCrypto.key-class.html#decEnd" class="summary-sig-name"><code>decEnd</code></a>(<span class=summary-sig-arg>self</span>)</span></code>
+<br />Ends a stream decryption session.</td></tr>
+<tr><td align="right" valign="top" width="15%"><font size="-1">&nbsp;</font></td>
+  <td><code><span class=summary-sig><a href="ezPyCrypto.key-class.html#decNext" class="summary-sig-name"><code>decNext</code></a>(<span class=summary-sig-arg>self</span>,
+               <span class=summary-sig-arg>chunk</span>)</span></code>
+<br />Decrypt the next piece of incoming stream data.</td></tr>
+<tr><td align="right" valign="top" width="15%"><font size="-1">&nbsp;</font></td>
+  <td><code><span class=summary-sig><a href="ezPyCrypto.key-class.html#decStart" class="summary-sig-name"><code>decStart</code></a>(<span class=summary-sig-arg>self</span>)</span></code>
+<br />Start a stream decryption session.</td></tr>
+<tr><td align="right" valign="top" width="15%"><font size="-1">&nbsp;</font></td>
+  <td><code><span class=summary-sig><a href="ezPyCrypto.key-class.html#decString" class="summary-sig-name"><code>decString</code></a>(<span class=summary-sig-arg>self</span>,
+               <span class=summary-sig-arg>enc</span>)</span></code>
+<br />Decrypts a previously encrypted string.</td></tr>
+<tr><td align="right" valign="top" width="15%"><font size="-1">&nbsp;</font></td>
+  <td><code><span class=summary-sig><a href="ezPyCrypto.key-class.html#decStringFromAscii" class="summary-sig-name"><code>decStringFromAscii</code></a>(<span class=summary-sig-arg>self</span>,
+               <span class=summary-sig-arg>enc</span>)</span></code>
+<br />Decrypts a previously encrypted string in ASCII (base64) format, as 
+created by encryptAscii()</td></tr>
+<tr><td align="right" valign="top" width="15%"><font size="-1">&nbsp;</font></td>
+  <td><code><span class=summary-sig><a href="ezPyCrypto.key-class.html#encEnd" class="summary-sig-name"><code>encEnd</code></a>(<span class=summary-sig-arg>self</span>)</span></code>
+<br />Called to terminate a stream session.</td></tr>
+<tr><td align="right" valign="top" width="15%"><font size="-1">&nbsp;</font></td>
+  <td><code><span class=summary-sig><a href="ezPyCrypto.key-class.html#encNext" class="summary-sig-name"><code>encNext</code></a>(<span class=summary-sig-arg>self</span>,
+               <span class=summary-sig-arg>raw</span>)</span></code>
+<br />Encrypt the next piece of data in a stream.</td></tr>
+<tr><td align="right" valign="top" width="15%"><font size="-1">&nbsp;</font></td>
+  <td><code><span class=summary-sig><a href="ezPyCrypto.key-class.html#encStart" class="summary-sig-name"><code>encStart</code></a>(<span class=summary-sig-arg>self</span>)</span></code>
+<br />Starts a stream encryption session Sets up internal buffers for 
+accepting ad-hoc data.</td></tr>
+<tr><td align="right" valign="top" width="15%"><font size="-1">&nbsp;</font></td>
+  <td><code><span class=summary-sig><a href="ezPyCrypto.key-class.html#encString" class="summary-sig-name"><code>encString</code></a>(<span class=summary-sig-arg>self</span>,
+               <span class=summary-sig-arg>raw</span>)</span></code>
+<br />Encrypt a string of data</td></tr>
+<tr><td align="right" valign="top" width="15%"><font size="-1">&nbsp;</font></td>
+  <td><code><span class=summary-sig><a href="ezPyCrypto.key-class.html#encStringToAscii" class="summary-sig-name"><code>encStringToAscii</code></a>(<span class=summary-sig-arg>self</span>,
+               <span class=summary-sig-arg>raw</span>)</span></code>
+<br />Encrypts a string of data to printable ASCII format</td></tr>
+<tr><td align="right" valign="top" width="15%"><font size="-1">&nbsp;</font></td>
+  <td><code><span class=summary-sig><a href="ezPyCrypto.key-class.html#exportKey" class="summary-sig-name"><code>exportKey</code></a>(<span class=summary-sig-arg>self</span>)</span></code>
+<br />Exports the public key as a printable string.</td></tr>
+<tr><td align="right" valign="top" width="15%"><font size="-1">&nbsp;</font></td>
+  <td><code><span class=summary-sig><a href="ezPyCrypto.key-class.html#exportKeyPrivate" class="summary-sig-name"><code>exportKeyPrivate</code></a>(<span class=summary-sig-arg>self</span>,
+               <span class=summary-sig-kwarg>**kwds</span>)</span></code>
+<br />Exports public/private key pair as a printable string.</td></tr>
+<tr><td align="right" valign="top" width="15%"><font size="-1">&nbsp;</font></td>
+  <td><code><span class=summary-sig><a href="ezPyCrypto.key-class.html#importKey" class="summary-sig-name"><code>importKey</code></a>(<span class=summary-sig-arg>self</span>,
+               <span class=summary-sig-arg>keystring</span>,
+               <span class=summary-sig-kwarg>**kwds</span>)</span></code>
+<br />Imports a public key or private/public key pair.</td></tr>
+<tr><td align="right" valign="top" width="15%"><font size="-1">&nbsp;</font></td>
+  <td><code><span class=summary-sig><a href="ezPyCrypto.key-class.html#makeNewKeys" class="summary-sig-name"><code>makeNewKeys</code></a>(<span class=summary-sig-arg>self</span>,
+               <span class=summary-sig-arg>keysize</span>,
+               <span class=summary-sig-kwarg>**kwds</span>)</span></code>
+<br />Creates a new keypair in cipher object, and a new session key</td></tr>
+<tr><td align="right" valign="top" width="15%"><font size="-1">&nbsp;</font></td>
+  <td><code><span class=summary-sig><a href="ezPyCrypto.key-class.html#signString" class="summary-sig-name"><code>signString</code></a>(<span class=summary-sig-arg>self</span>,
+               <span class=summary-sig-arg>raw</span>)</span></code>
+<br />Sign a string using private key</td></tr>
+<tr><td align="right" valign="top" width="15%"><font size="-1">&nbsp;</font></td>
+  <td><code><span class=summary-sig><a href="ezPyCrypto.key-class.html#test" class="summary-sig-name"><code>test</code></a>(<span class=summary-sig-arg>self</span>,
+               <span class=summary-sig-arg>raw</span>)</span></code>
+<br />Encrypts, then decrypts a string.</td></tr>
+<tr><td align="right" valign="top" width="15%"><font size="-1">&nbsp;</font></td>
+  <td><code><span class=summary-sig><a href="ezPyCrypto.key-class.html#testAscii" class="summary-sig-name"><code>testAscii</code></a>(<span class=summary-sig-arg>self</span>,
+               <span class=summary-sig-arg>raw</span>)</span></code>
+<br />Encrypts, then decrypts a string.</td></tr>
+<tr><td align="right" valign="top" width="15%"><font size="-1">&nbsp;</font></td>
+  <td><code><span class=summary-sig><a href="ezPyCrypto.key-class.html#verifyString" class="summary-sig-name"><code>verifyString</code></a>(<span class=summary-sig-arg>self</span>,
+               <span class=summary-sig-arg>raw</span>,
+               <span class=summary-sig-arg>signature</span>)</span></code>
+<br />Verifies a string against a signature.</td></tr>
+<tr><td align="right" valign="top" width="15%"><font size="-1">&nbsp;</font></td>
+  <td><code><span class=summary-sig><a href="ezPyCrypto.key-class.html#_calcPubBlkSize" class="summary-sig-name"><code>_calcPubBlkSize</code></a>(<span class=summary-sig-arg>self</span>)</span></code>
+<br />Determine size of public key</td></tr>
+<tr><td align="right" valign="top" width="15%"><font size="-1">&nbsp;</font></td>
+  <td><code><span class=summary-sig><a href="ezPyCrypto.key-class.html#_calcSesBlkSize" class="summary-sig-name"><code>_calcSesBlkSize</code></a>(<span class=summary-sig-arg>self</span>)</span></code>
+<br />Determine size of session blocks</td></tr>
+<tr><td align="right" valign="top" width="15%"><font size="-1">&nbsp;</font></td>
+  <td><code><span class=summary-sig><a href="ezPyCrypto.key-class.html#_decRawPub" class="summary-sig-name"><code>_decRawPub</code></a>(<span class=summary-sig-arg>self</span>,
+               <span class=summary-sig-arg>enc</span>)</span></code>
+<br />Decrypt a public-key encrypted block, and return the decrypted 
+string</td></tr>
+<tr><td align="right" valign="top" width="15%"><font size="-1">&nbsp;</font></td>
+  <td><code><span class=summary-sig><a href="ezPyCrypto.key-class.html#_encRawPub" class="summary-sig-name"><code>_encRawPub</code></a>(<span class=summary-sig-arg>self</span>,
+               <span class=summary-sig-arg>raw</span>)</span></code>
+<br />Encrypt a small raw string using the public key algorithm.</td></tr>
+<tr><td align="right" valign="top" width="15%"><font size="-1">&nbsp;</font></td>
+  <td><code><span class=summary-sig><a href="ezPyCrypto.key-class.html#_genNewSessKey" class="summary-sig-name"><code>_genNewSessKey</code></a>(<span class=summary-sig-arg>self</span>)</span></code>
+<br />Generate a new random session key</td></tr>
+<tr><td align="right" valign="top" width="15%"><font size="-1">&nbsp;</font></td>
+  <td><code><span class=summary-sig><a href="ezPyCrypto.key-class.html#_initBlkCipher" class="summary-sig-name"><code>_initBlkCipher</code></a>(<span class=summary-sig-arg>self</span>)</span></code>
+<br />Create a new block cipher object, set up with a new session key and 
+IV</td></tr>
+<tr><td align="right" valign="top" width="15%"><font size="-1">&nbsp;</font></td>
+  <td><code><span class=summary-sig><a href="ezPyCrypto.key-class.html#_padToPubBlkSize" class="summary-sig-name"><code>_padToPubBlkSize</code></a>(<span class=summary-sig-arg>self</span>,
+               <span class=summary-sig-arg>raw</span>)</span></code>
+<br />padToPubBlkSize - pad a string to max size encryptable by public 
+key</td></tr>
+<tr><td align="right" valign="top" width="15%"><font size="-1">&nbsp;</font></td>
+  <td><code><span class=summary-sig><a href="ezPyCrypto.key-class.html#_rawPubKey" class="summary-sig-name"><code>_rawPubKey</code></a>(<span class=summary-sig-arg>self</span>)</span></code>
+<br />Returns a binary-encoded string of public key</td></tr>
+<tr><td align="right" valign="top" width="15%"><font size="-1">&nbsp;</font></td>
+  <td><code><span class=summary-sig><a href="ezPyCrypto.key-class.html#_testPubKey" class="summary-sig-name"><code>_testPubKey</code></a>(<span class=summary-sig-arg>self</span>,
+               <span class=summary-sig-arg>k</span>)</span></code>
+<br />Checks if binary-encoded key matches this object's pubkey</td></tr>
+<tr><td align="right" valign="top" width="15%"><font size="-1">&nbsp;</font></td>
+  <td><code><span class=summary-sig><a href="ezPyCrypto.key-class.html#_unwrap" class="summary-sig-name"><code>_unwrap</code></a>(<span class=summary-sig-arg>self</span>,
+               <span class=summary-sig-arg>type</span>,
+               <span class=summary-sig-arg>msg</span>)</span></code>
+<br />Unwraps a previously _wrap()'ed message.</td></tr>
+<tr><td align="right" valign="top" width="15%"><font size="-1">&nbsp;</font></td>
+  <td><code><span class=summary-sig><a href="ezPyCrypto.key-class.html#_wrap" class="summary-sig-name"><code>_wrap</code></a>(<span class=summary-sig-arg>self</span>,
+               <span class=summary-sig-arg>type</span>,
+               <span class=summary-sig-arg>msg</span>)</span></code>
+<br />Encodes message as base64 and wraps with 
+&lt;StartPyCryptoname&gt;/&lt;EndPycryptoname&gt; Args:</td></tr>
+</table><br />
+
+
+<!-- =========== START OF CLASS VARIABLE SUMMARY =========== -->
+<table class="summary" border="1" cellpadding="3" cellspacing="0" width="100%" bgcolor="white">
+<tr bgcolor="#70b0f0" class="summary">
+  <th colspan="2">Class Variable Summary</th></tr>
+<tr><td align="right" valign="top" width="15%"><font size="-1"><code>dict</code></font></td>
+  <td><code><b><a href="#_algosPub">_algosPub</a></b></code>
+  </td></tr>
+<tr><td align="right" valign="top" width="15%"><font size="-1"><code>dict</code></font></td>
+  <td><code><b><a href="#_algosPub1">_algosPub1</a></b></code>
+  </td></tr>
+<tr><td align="right" valign="top" width="15%"><font size="-1"><code>dict</code></font></td>
+  <td><code><b><a href="#_algosSes">_algosSes</a></b></code>
+  </td></tr>
+<tr><td align="right" valign="top" width="15%"><font size="-1"><code>dict</code></font></td>
+  <td><code><b><a href="#_algosSes1">_algosSes1</a></b></code>
+  </td></tr>
+<tr><td align="right" valign="top" width="15%"><font size="-1"><code>list</code></font></td>
+  <td><code><b><a href="#_algosSes2">_algosSes2</a></b></code>
+  </td></tr>
+<tr><td align="right" valign="top" width="15%"><font size="-1"><code>dict</code></font></td>
+  <td><code><b><a href="#_algosSes3">_algosSes3</a></b></code>
+  </td></tr>
+<tr><td align="right" valign="top" width="15%"><font size="-1"><code>str</code></font></td>
+  <td><code><b><a href="#_encBuf">_encBuf</a></b></code>
+  </td></tr>
+<tr><td align="right" valign="top" width="15%"><font size="-1"><code>str</code></font></td>
+  <td><code><b><a href="#_passIV">_passIV</a></b></code>
+  </td></tr>
+</table><br />
+
+
+<!-- =========== START OF METHOD DETAILS =========== -->
+<table class="details" border="1" cellpadding="3" cellspacing="0" width="100%" bgcolor="white">
+<tr bgcolor="#70b0f0" class="details">
+  <th colspan="2">Method Details</th></tr>
+</table>
+
+<a name="__init__"></a>
+<table width="100%" class="func-details" bgcolor="#e0e0e0"><tr><td>
+  <h3><span class=sig><span class=sig-name>__init__</span>(<span class=sig-arg>self</span>,
+               <span class=sig-arg>something</span>=<span class=sig-default>512</span>,
+               <span class=sig-arg>algoPub</span>=<span class=sig-default>None</span>,
+               <span class=sig-arg>algoSess</span>=<span class=sig-default>None</span>,
+               <span class=sig-kwarg>**kwds</span>)</span>
+    <br /><i>(Constructor)</i>
+  </h3>
+  <p>Constructor. Creates a key object</p>
+  This constructor, when creating the key object, does one of two 
+  things:
+  <ol start="1">
+    <li>
+      Creates a completely new keypair, OR
+    </li>
+    <li>
+      Imports an existing keypair
+    </li>
+  </ol>
+  Arguments:
+  <ol start="1">
+    <li>
+      If new keys are desired:
+      <ul>
+        <li>
+          key size in bits (int), default 512 - advise at least 1536
+        </li>
+        <li>
+          algoPub - either 'RSA' or 'ElGamal' (default 'RSA')
+        </li>
+        <li>
+          algoSess - one of 'ARC2', 'Blowfish', 'CAST', 'DES3', 'IDEA', 'RC5', 
+          (default 'Blowfish')
+        </li>
+      </ul>
+    </li>
+    <li>
+      If importing an existing key or keypair:
+      <ul>
+        <li>
+          keyobj (string) - result of a prior exportKey() call
+        </li>
+      </ul>
+    </li>
+  </ol>
+  Keywords:
+  <ul>
+    <li>
+      passphrase - default '':
+      <ul>
+        <li>
+          If creating new keypair, this passphrase is used to encrypt privkey 
+          when exporting.
+        </li>
+        <li>
+          If importing a new keypair, the passphrase is used to authenticate and 
+          grant/deny access to private key
+        </li>
+      </ul>
+    </li>
+  </ul>
+  <dl><dt></dt><dd>
+  </dd></dl>
+</td></tr></table>
+
+<a name="decEnd"></a>
+<table width="100%" class="func-details" bgcolor="#e0e0e0"><tr><td>
+  <h3><span class=sig><span class=sig-name>decEnd</span>(<span class=sig-arg>self</span>)</span>
+  </h3>
+  Ends a stream decryption session.
+  <dl><dt></dt><dd>
+  </dd></dl>
+</td></tr></table>
+
+<a name="decNext"></a>
+<table width="100%" class="func-details" bgcolor="#e0e0e0"><tr><td>
+  <h3><span class=sig><span class=sig-name>decNext</span>(<span class=sig-arg>self</span>,
+               <span class=sig-arg>chunk</span>)</span>
+  </h3>
+  <p>Decrypt the next piece of incoming stream data.</p>
+  Arguments:
+  <ul>
+    <li>
+      chunk - some more of the encrypted stream
+    </li>
+  </ul>
+  Returns (depending on state)
+  <ul>
+    <li>
+      '' - no more decrypted data available just yet
+    </li>
+    <li>
+      data - the next available piece of decrypted data
+    </li>
+    <li>
+      None - session is complete - no more data available
+    </li>
+  </ul>
+  <dl><dt></dt><dd>
+  </dd></dl>
+</td></tr></table>
+
+<a name="decStart"></a>
+<table width="100%" class="func-details" bgcolor="#e0e0e0"><tr><td>
+  <h3><span class=sig><span class=sig-name>decStart</span>(<span class=sig-arg>self</span>)</span>
+  </h3>
+  <p>Start a stream decryption session.</p>
+  <p>Call this method first, then feed in pieces of stream data into 
+  decNext until there's no more data to decrypt</p>
+  Arguments:
+  <ul>
+    <li>
+      None
+    </li>
+  </ul>
+  Returns:
+  <ul>
+    <li>
+      None
+    </li>
+  </ul>
+  <dl><dt></dt><dd>
+  </dd></dl>
+</td></tr></table>
+
+<a name="decString"></a>
+<table width="100%" class="func-details" bgcolor="#e0e0e0"><tr><td>
+  <h3><span class=sig><span class=sig-name>decString</span>(<span class=sig-arg>self</span>,
+               <span class=sig-arg>enc</span>)</span>
+  </h3>
+  <p>Decrypts a previously encrypted string.</p>
+  Arguments:
+  <ul>
+    <li>
+      enc - string, previously encrypted in binary mode with encString
+    </li>
+  </ul>
+  Returns:
+  <ul>
+    <li>
+      dec - raw decrypted string
+    </li>
+  </ul>
+  <dl><dt></dt><dd>
+  </dd></dl>
+</td></tr></table>
+
+<a name="decStringFromAscii"></a>
+<table width="100%" class="func-details" bgcolor="#e0e0e0"><tr><td>
+  <h3><span class=sig><span class=sig-name>decStringFromAscii</span>(<span class=sig-arg>self</span>,
+               <span class=sig-arg>enc</span>)</span>
+  </h3>
+  <p>Decrypts a previously encrypted string in ASCII (base64) format, as 
+  created by encryptAscii()</p>
+  Arguments:
+  <ul>
+    <li>
+      enc - ascii-encrypted string, as previously encrypted with 
+      encStringToAscii()
+    </li>
+  </ul>
+  Returns:
+  <ul>
+    <li>
+      dec - decrypted string
+    </li>
+  </ul>
+  <p>May generate an exception if the public key of the encrypted string 
+  doesn't match the public/private keypair in this key object.</p>
+  <p>To work around this problem, either instantiate a key object with the 
+  saved keypair, or use the importKey() function.</p>
+  Exception will also occur if this object is not holding a private key 
+  (which can happen if you import a key which was previously exported via 
+  exportKey(). If you get this problem, use exportKeyPrivate() instead to 
+  export your keypair.
+  <dl><dt></dt><dd>
+  </dd></dl>
+</td></tr></table>
+
+<a name="encEnd"></a>
+<table width="100%" class="func-details" bgcolor="#e0e0e0"><tr><td>
+  <h3><span class=sig><span class=sig-name>encEnd</span>(<span class=sig-arg>self</span>)</span>
+  </h3>
+  <p>Called to terminate a stream session. Encrypts any remaining data in 
+  buffer.</p>
+  Arguments:
+  <ul>
+    <li>
+      None
+    </li>
+  </ul>
+  Returns - one of:
+  <ul>
+    <li>
+      last block of data, as a string
+    </li>
+  </ul>
+  <dl><dt></dt><dd>
+  </dd></dl>
+</td></tr></table>
+
+<a name="encNext"></a>
+<table width="100%" class="func-details" bgcolor="#e0e0e0"><tr><td>
+  <h3><span class=sig><span class=sig-name>encNext</span>(<span class=sig-arg>self</span>,
+               <span class=sig-arg>raw</span>=<span class=sig-default>''</span>)</span>
+  </h3>
+  <p>Encrypt the next piece of data in a stream.</p>
+  Arguments:
+  <ul>
+    <li>
+      raw - raw piece of data to encrypt
+    </li>
+  </ul>
+  Returns - one of:
+  <ul>
+    <li>
+      '' - not enough data to encrypt yet - stored for later
+    </li>
+    <li>
+      encdata - string of encrypted data
+    </li>
+  </ul>
+  <dl><dt></dt><dd>
+  </dd></dl>
+</td></tr></table>
+
+<a name="encStart"></a>
+<table width="100%" class="func-details" bgcolor="#e0e0e0"><tr><td>
+  <h3><span class=sig><span class=sig-name>encStart</span>(<span class=sig-arg>self</span>)</span>
+  </h3>
+  <p>Starts a stream encryption session Sets up internal buffers for 
+  accepting ad-hoc data.</p>
+  No arguments needed, nothing returned.
+  <dl><dt></dt><dd>
+  </dd></dl>
+</td></tr></table>
+
+<a name="encString"></a>
+<table width="100%" class="func-details" bgcolor="#e0e0e0"><tr><td>
+  <h3><span class=sig><span class=sig-name>encString</span>(<span class=sig-arg>self</span>,
+               <span class=sig-arg>raw</span>)</span>
+  </h3>
+  <p>Encrypt a string of data</p>
+  <p>High-level func. encrypts an entire string of data, returning the 
+  encrypted string as binary.</p>
+  Arguments:
+  <ul>
+    <li>
+      raw string to encrypt
+    </li>
+  </ul>
+  Returns:
+  <ul>
+    <li>
+      encrypted string as binary
+    </li>
+  </ul>
+  Note - the encrypted string can be stored in files, but I'd suggest 
+  not emailing them - use <a 
+  href="ezPyCrypto.key-class.html#encStringToAscii" 
+  class="link"><code>encStringToAscii</code></a> instead. The sole 
+  advantage of this method is that it produces more compact data, and 
+  works a bit faster.
+  <dl><dt></dt><dd>
+  </dd></dl>
+</td></tr></table>
+
+<a name="encStringToAscii"></a>
+<table width="100%" class="func-details" bgcolor="#e0e0e0"><tr><td>
+  <h3><span class=sig><span class=sig-name>encStringToAscii</span>(<span class=sig-arg>self</span>,
+               <span class=sig-arg>raw</span>)</span>
+  </h3>
+  <p>Encrypts a string of data to printable ASCII format</p>
+  <p>Use this method instead of <a 
+  href="ezPyCrypto.key-class.html#encString" 
+  class="link"><code>encString</code></a>, unless size and speed are 
+  major issues.</p>
+  <p>This method returns encrypted data in bracketed base64 format, safe 
+  for sending in email.</p>
+  Arguments:
+  <ul>
+    <li>
+      raw - string to encrypt
+    </li>
+  </ul>
+  Returns:
+  <ul>
+    <li>
+      enc - encrypted string, text-wrapped and Base-64 encoded, safe for 
+      mailing.
+    </li>
+  </ul>
+  There's an overhead with base64-encoding. It costs size, bandwidth and 
+  speed. Unless you need ascii-safety, use encString() instead.
+  <dl><dt></dt><dd>
+  </dd></dl>
+</td></tr></table>
+
+<a name="exportKey"></a>
+<table width="100%" class="func-details" bgcolor="#e0e0e0"><tr><td>
+  <h3><span class=sig><span class=sig-name>exportKey</span>(<span class=sig-arg>self</span>)</span>
+  </h3>
+  <p>Exports the public key as a printable string.</p>
+  <p>Exported keys can be imported elsewhere into MyCipher instances with 
+  the <a href="ezPyCrypto.key-class.html#importKey" 
+  class="link"><code>importKey</code></a> method.</p>
+  <p>Note that this object contains only the public key. If you want to 
+  export the private key as well, call <a 
+  href="ezPyCrypto.key-class.html#exportKeyPrivate" 
+  class="link"><code>exportKeyPrivate</code></a> instaead.</p>
+  <p>Note also that the exported string is Base64-encoded, and safe for 
+  sending in email.</p>
+  Arguments:
+  <ul>
+    <li>
+      None
+    </li>
+  </ul>
+  Returns:
+  <ul>
+    <li>
+      a base64-encoded string containing an importable key
+    </li>
+  </ul>
+  <dl><dt></dt><dd>
+  </dd></dl>
+</td></tr></table>
+
+<a name="exportKeyPrivate"></a>
+<table width="100%" class="func-details" bgcolor="#e0e0e0"><tr><td>
+  <h3><span class=sig><span class=sig-name>exportKeyPrivate</span>(<span class=sig-arg>self</span>,
+               <span class=sig-kwarg>**kwds</span>)</span>
+  </h3>
+  <p>Exports public/private key pair as a printable string.</p>
+  <p>This string is a binary string consisting of a pickled key object, 
+  that can be imported elsewhere into MyCipher instances with the <a 
+  href="ezPyCrypto.key-class.html#importKey" 
+  class="link"><code>importKey</code></a> method.</p>
+  <p>Note that this object contains the public AND PRIVATE keys. Don't EVER 
+  email any keys you export with this function (unless you know what 
+  you're doing, and you encrypt the exported keys against another key). 
+  When in doubt, use <a href="ezPyCrypto.key-class.html#exportKey" 
+  class="link"><code>exportKey</code></a> instead.</p>
+  <p>Keep your private keys safe at all times. You have been warned.</p>
+  <p>Note also that the exported string is Base64-encoded, and safe for 
+  sending in email.</p>
+  Arguments:
+  <ul>
+    <li>
+      None
+    </li>
+  </ul>
+  Keywords:
+  <ul>
+    <li>
+      passphrase - default (None) to using existing passphrase. Set to '' to 
+      export without passphrase (if this is really what you want to 
+      do!)
+    </li>
+  </ul>
+  Returns:
+  <ul>
+    <li>
+      a base64-encoded string containing an importable key
+    </li>
+  </ul>
+  <dl><dt></dt><dd>
+  </dd></dl>
+</td></tr></table>
+
+<a name="importKey"></a>
+<table width="100%" class="func-details" bgcolor="#e0e0e0"><tr><td>
+  <h3><span class=sig><span class=sig-name>importKey</span>(<span class=sig-arg>self</span>,
+               <span class=sig-arg>keystring</span>,
+               <span class=sig-kwarg>**kwds</span>)</span>
+  </h3>
+  <p>Imports a public key or private/public key pair.</p>
+  <p>(as previously exported from this object with the <a 
+  href="ezPyCrypto.key-class.html#exportKey" 
+  class="link"><code>exportKey</code></a> or <a 
+  href="ezPyCrypto.key-class.html#exportKeyPrivate" 
+  class="link"><code>exportKeyPrivate</code></a> methods.)</p>
+  Arguments:
+  <ul>
+    <li>
+      keystring - a string previously imported with <a 
+      href="ezPyCrypto.key-class.html#exportKey" 
+      class="link"><code>exportKey</code></a> or <a 
+      href="ezPyCrypto.key-class.html#exportKeyPrivate" 
+      class="link"><code>exportKeyPrivate</code></a>
+    </li>
+  </ul>
+  Keywords:
+  <ul>
+    <li>
+      passphrase - string (default '', meaning 'try to import without 
+      passphrase')
+    </li>
+  </ul>
+  Returns:
+  <ul>
+    <li>
+      True if import successful, False if failed
+    </li>
+  </ul>
+  <p>You don't have to call this if you instantiate your key object in 
+  'import' mode - ie, by calling it with a previously exported key.</p>
+  Note - you shouldn't give a 'passphrase' when importing a public 
+  key.
+  <dl><dt></dt><dd>
+  </dd></dl>
+</td></tr></table>
+
+<a name="makeNewKeys"></a>
+<table width="100%" class="func-details" bgcolor="#e0e0e0"><tr><td>
+  <h3><span class=sig><span class=sig-name>makeNewKeys</span>(<span class=sig-arg>self</span>,
+               <span class=sig-arg>keysize</span>=<span class=sig-default>512</span>,
+               <span class=sig-kwarg>**kwds</span>)</span>
+  </h3>
+  <p>Creates a new keypair in cipher object, and a new session key</p>
+  Arguments:
+  <ul>
+    <li>
+      keysize (default 512), advise at least 1536
+    </li>
+  </ul>
+  Returns:
+  <ul>
+    <li>
+      None
+    </li>
+  </ul>
+  Keywords:
+  <ul>
+    <li>
+      passphrase - used to secure exported private key - default '' (no 
+      passphrase)
+    </li>
+  </ul>
+  <p>Keypair gets stored within the key object. Refer <a 
+  href="ezPyCrypto.key-class.html#exportKey" 
+  class="link"><code>exportKey</code></a>, <a 
+  href="ezPyCrypto.key-class.html#exportKeyPrivate" 
+  class="link"><code>exportKeyPrivate</code></a> and <a 
+  href="ezPyCrypto.key-class.html#importKey" 
+  class="link"><code>importKey</code></a>.</p>
+  Generally no need to call this yourself, since the constructor calls 
+  this in cases where you aren't instantiating with an importable 
+  key.
+  <dl><dt></dt><dd>
+  </dd></dl>
+</td></tr></table>
+
+<a name="signString"></a>
+<table width="100%" class="func-details" bgcolor="#e0e0e0"><tr><td>
+  <h3><span class=sig><span class=sig-name>signString</span>(<span class=sig-arg>self</span>,
+               <span class=sig-arg>raw</span>)</span>
+  </h3>
+  <p>Sign a string using private key</p>
+  Arguments:
+  <ul>
+    <li>
+      raw - string to be signed
+    </li>
+  </ul>
+  Returns:
+  <ul>
+    <li>
+      wrapped, base-64 encoded string of signature
+    </li>
+  </ul>
+  Note - private key must already be present in the key object. Call <a 
+  href="ezPyCrypto.key-class.html#importKey" 
+  class="link"><code>importKey</code></a> for the right private key first 
+  if needed.
+  <dl><dt></dt><dd>
+  </dd></dl>
+</td></tr></table>
+
+<a name="test"></a>
+<table width="100%" class="func-details" bgcolor="#e0e0e0"><tr><td>
+  <h3><span class=sig><span class=sig-name>test</span>(<span class=sig-arg>self</span>,
+               <span class=sig-arg>raw</span>)</span>
+  </h3>
+  <p>Encrypts, then decrypts a string. What you get back should be the same 
+  as what you put in.</p>
+  This is totally useless - it just gives a way to test if this API is 
+  doing what it should.
+  <dl><dt></dt><dd>
+  </dd></dl>
+</td></tr></table>
+
+<a name="testAscii"></a>
+<table width="100%" class="func-details" bgcolor="#e0e0e0"><tr><td>
+  <h3><span class=sig><span class=sig-name>testAscii</span>(<span class=sig-arg>self</span>,
+               <span class=sig-arg>raw</span>)</span>
+  </h3>
+  <p>Encrypts, then decrypts a string. What you get back should be the same 
+  as what you put in.</p>
+  This is totally useless - it just gives a way to test if this API is 
+  doing what it should.
+  <dl><dt></dt><dd>
+  </dd></dl>
+</td></tr></table>
+
+<a name="verifyString"></a>
+<table width="100%" class="func-details" bgcolor="#e0e0e0"><tr><td>
+  <h3><span class=sig><span class=sig-name>verifyString</span>(<span class=sig-arg>self</span>,
+               <span class=sig-arg>raw</span>,
+               <span class=sig-arg>signature</span>)</span>
+  </h3>
+  <p>Verifies a string against a signature.</p>
+  <p>Object must first have the correct public key loaded. (see <a 
+  href="ezPyCrypto.key-class.html#importKey" 
+  class="link"><code>importKey</code></a>). An exception will occur if 
+  this is not the case.</p>
+  Arguments:
+  <ul>
+    <li>
+      raw - string to be verified
+    </li>
+    <li>
+      signature - as produced when key is signed with <a 
+      href="ezPyCrypto.key-class.html#signString" 
+      class="link"><code>signString</code></a>
+    </li>
+  </ul>
+  Returns:
+  <ul>
+    <li>
+      True if signature is authentic, or False if not
+    </li>
+  </ul>
+  <dl><dt></dt><dd>
+  </dd></dl>
+</td></tr></table>
+
+<a name="_calcPubBlkSize"></a>
+<table width="100%" class="func-details" bgcolor="#e0e0e0"><tr><td>
+  <h3><span class=sig><span class=sig-name>_calcPubBlkSize</span>(<span class=sig-arg>self</span>)</span>
+  </h3>
+  Determine size of public key
+  <dl><dt></dt><dd>
+  </dd></dl>
+</td></tr></table>
+
+<a name="_calcSesBlkSize"></a>
+<table width="100%" class="func-details" bgcolor="#e0e0e0"><tr><td>
+  <h3><span class=sig><span class=sig-name>_calcSesBlkSize</span>(<span class=sig-arg>self</span>)</span>
+  </h3>
+  Determine size of session blocks
+  <dl><dt></dt><dd>
+  </dd></dl>
+</td></tr></table>
+
+<a name="_decRawPub"></a>
+<table width="100%" class="func-details" bgcolor="#e0e0e0"><tr><td>
+  <h3><span class=sig><span class=sig-name>_decRawPub</span>(<span class=sig-arg>self</span>,
+               <span class=sig-arg>enc</span>)</span>
+  </h3>
+  <p>Decrypt a public-key encrypted block, and return the decrypted 
+  string</p>
+  Arguments:
+  <ul>
+    <li>
+      enc - the encrypted string, in the format as created by 
+      _encRawPub()
+    </li>
+  </ul>
+  Returns:
+  <ul>
+    <li>
+      decrypted block
+    </li>
+  </ul>
+  <dl><dt></dt><dd>
+  </dd></dl>
+</td></tr></table>
+
+<a name="_encRawPub"></a>
+<table width="100%" class="func-details" bgcolor="#e0e0e0"><tr><td>
+  <h3><span class=sig><span class=sig-name>_encRawPub</span>(<span class=sig-arg>self</span>,
+               <span class=sig-arg>raw</span>)</span>
+  </h3>
+  <p>Encrypt a small raw string using the public key algorithm. Input must 
+  not exceed the allowable block size.</p>
+  Arguments:
+  <ul>
+    <li>
+      raw - small raw bit of string to encrypt
+    </li>
+  </ul>
+  Returns:
+  <ul>
+    <li>
+      binary representation of encrypted chunk, or None if verify failed
+    </li>
+  </ul>
+  <dl><dt></dt><dd>
+  </dd></dl>
+</td></tr></table>
+
+<a name="_genNewSessKey"></a>
+<table width="100%" class="func-details" bgcolor="#e0e0e0"><tr><td>
+  <h3><span class=sig><span class=sig-name>_genNewSessKey</span>(<span class=sig-arg>self</span>)</span>
+  </h3>
+  Generate a new random session key
+  <dl><dt></dt><dd>
+  </dd></dl>
+</td></tr></table>
+
+<a name="_initBlkCipher"></a>
+<table width="100%" class="func-details" bgcolor="#e0e0e0"><tr><td>
+  <h3><span class=sig><span class=sig-name>_initBlkCipher</span>(<span class=sig-arg>self</span>)</span>
+  </h3>
+  Create a new block cipher object, set up with a new session key and 
+  IV
+  <dl><dt></dt><dd>
+  </dd></dl>
+</td></tr></table>
+
+<a name="_padToPubBlkSize"></a>
+<table width="100%" class="func-details" bgcolor="#e0e0e0"><tr><td>
+  <h3><span class=sig><span class=sig-name>_padToPubBlkSize</span>(<span class=sig-arg>self</span>,
+               <span class=sig-arg>raw</span>)</span>
+  </h3>
+  <p>padToPubBlkSize - pad a string to max size encryptable by public 
+  key</p>
+  <p>Defence against factoring attacks that can uplift a session key when 
+  that key is encrypted by itself against public key</p>
+  Arguments:
+  <ul>
+    <li>
+      raw - string to pad with random bytes
+    </li>
+  </ul>
+  returns:
+  <ul>
+    <li>
+      padded string. Note - it is the responsibility of the decryption code 
+      to know how much of the string to extract once decrypted.
+    </li>
+  </ul>
+  <dl><dt></dt><dd>
+  </dd></dl>
+</td></tr></table>
+
+<a name="_rawPubKey"></a>
+<table width="100%" class="func-details" bgcolor="#e0e0e0"><tr><td>
+  <h3><span class=sig><span class=sig-name>_rawPubKey</span>(<span class=sig-arg>self</span>)</span>
+  </h3>
+  Returns a binary-encoded string of public key
+  <dl><dt></dt><dd>
+  </dd></dl>
+</td></tr></table>
+
+<a name="_testPubKey"></a>
+<table width="100%" class="func-details" bgcolor="#e0e0e0"><tr><td>
+  <h3><span class=sig><span class=sig-name>_testPubKey</span>(<span class=sig-arg>self</span>,
+               <span class=sig-arg>k</span>)</span>
+  </h3>
+  Checks if binary-encoded key matches this object's pubkey
+  <dl><dt></dt><dd>
+  </dd></dl>
+</td></tr></table>
+
+<a name="_unwrap"></a>
+<table width="100%" class="func-details" bgcolor="#e0e0e0"><tr><td>
+  <h3><span class=sig><span class=sig-name>_unwrap</span>(<span class=sig-arg>self</span>,
+               <span class=sig-arg>type</span>,
+               <span class=sig-arg>msg</span>)</span>
+  </h3>
+  Unwraps a previously _wrap()'ed message.
+  <dl><dt></dt><dd>
+  </dd></dl>
+</td></tr></table>
+
+<a name="_wrap"></a>
+<table width="100%" class="func-details" bgcolor="#e0e0e0"><tr><td>
+  <h3><span class=sig><span class=sig-name>_wrap</span>(<span class=sig-arg>self</span>,
+               <span class=sig-arg>type</span>,
+               <span class=sig-arg>msg</span>)</span>
+  </h3>
+  Encodes message as base64 and wraps with 
+  &lt;StartPyCryptoname&gt;/&lt;EndPycryptoname&gt; Args:
+  <ul>
+    <li>
+      type - string to use in header/footer - eg 'Key', 'Message'
+    </li>
+    <li>
+      msg - binary string to wrap
+    </li>
+  </ul>
+  <dl><dt></dt><dd>
+  </dd></dl>
+</td></tr></table>
+<br />
+
+
+<!-- =========== START OF CLASS VARIABLE DETAILS =========== -->
+<table class="details" border="1" cellpadding="3" cellspacing="0" width="100%" bgcolor="white">
+<tr bgcolor="#70b0f0" class="details">
+  <th colspan="2">Class Variable Details</th></tr>
+</table><table width="100%" class="var-details" bgcolor="#e0e0e0"><tr><td>
+<a name="_algosPub"></a>
+<h3>_algosPub</h3>
+<dl>
+  <dt></dt>
+  <dd>
+    <dl>
+      <dt><b>Type:</b></dt>
+      <dd>
+          <code>dict</code>
+
+      </dd>
+      <dt><b>Value:</b></dt>
+      <dd><table><tr><td>
+<pre class="variable">
+{'ElGamal': &lt;module 'Crypto.PublicKey.ElGamal' from '/usr/lib/python2.<span class="variable-linewrap">\</span>
+2/site-packages/Crypto/PublicKey/ElGamal.pyc'&gt;,
+ 'RSA': &lt;module 'Crypto.PublicKey.RSA' from '/usr/lib/python2.2/site-p<span class="variable-linewrap">\</span>
+ackages/Crypto/PublicKey/RSA.pyc'&gt;}                                    </pre>
+        </td></tr></table></dd>
+    </dl>
+  </dd>
+</dl></td></tr></table>
+<table width="100%" class="var-details" bgcolor="#e0e0e0"><tr><td>
+<a name="_algosPub1"></a>
+<h3>_algosPub1</h3>
+<dl>
+  <dt></dt>
+  <dd>
+    <dl>
+      <dt><b>Type:</b></dt>
+      <dd>
+          <code>dict</code>
+
+      </dd>
+      <dt><b>Value:</b></dt>
+      <dd><table><tr><td>
+<pre class="variable">
+{&lt;module 'Crypto.PublicKey.ElGamal' from '/usr/lib/python2.2/site-pack<span class="variable-linewrap">\</span>
+ages/Crypto/PublicKey/ElGamal.pyc'&gt;: 'ElGamal',
+ &lt;module 'Crypto.PublicKey.RSA' from '/usr/lib/python2.2/site-packages<span class="variable-linewrap">\</span>
+/Crypto/PublicKey/RSA.pyc'&gt;: 'RSA'}                                    </pre>
+        </td></tr></table></dd>
+    </dl>
+  </dd>
+</dl></td></tr></table>
+<table width="100%" class="var-details" bgcolor="#e0e0e0"><tr><td>
+<a name="_algosSes"></a>
+<h3>_algosSes</h3>
+<dl>
+  <dt></dt>
+  <dd>
+    <dl>
+      <dt><b>Type:</b></dt>
+      <dd>
+          <code>dict</code>
+
+      </dd>
+      <dt><b>Value:</b></dt>
+      <dd><table><tr><td>
+<pre class="variable">
+{'ARC2': &lt;module 'Crypto.Cipher.ARC2' from '/usr/lib/python2.2/site-pa<span class="variable-linewrap">\</span>
+ckages/Crypto/Cipher/ARC2.so'&gt;,
+ 'Blowfish': &lt;module 'Crypto.Cipher.Blowfish' from '/usr/lib/python2.2<span class="variable-linewrap">\</span>
+/site-packages/Crypto/Cipher/Blowfish.so'&gt;,
+ 'CAST': &lt;module 'Crypto.Cipher.CAST' from '/usr/lib/python2.2/site-pa<span class="variable-linewrap">\</span>
+ckages/Crypto/Cipher/CAST.so'&gt;,
+ 'DES3': &lt;module 'Crypto.Cipher.DES3' from '/usr/lib/python2.2/site-pa<span class="variable-linewrap">\</span>
+ckages/Crypto/Cipher/DES3.so'&gt;,
+<span class="variable-ellipsis">...</span>                                                                    </pre>
+        </td></tr></table></dd>
+    </dl>
+  </dd>
+</dl></td></tr></table>
+<table width="100%" class="var-details" bgcolor="#e0e0e0"><tr><td>
+<a name="_algosSes1"></a>
+<h3>_algosSes1</h3>
+<dl>
+  <dt></dt>
+  <dd>
+    <dl>
+      <dt><b>Type:</b></dt>
+      <dd>
+          <code>dict</code>
+
+      </dd>
+      <dt><b>Value:</b></dt>
+      <dd><table><tr><td>
+<pre class="variable">
+{'CAST': 2, 'Blowfish': 1, 'ARC2': 0, 'RC5': 5, 'IDEA': 4, 'DES3': 3}  </pre>
+        </td></tr></table></dd>
+    </dl>
+  </dd>
+</dl></td></tr></table>
+<table width="100%" class="var-details" bgcolor="#e0e0e0"><tr><td>
+<a name="_algosSes2"></a>
+<h3>_algosSes2</h3>
+<dl>
+  <dt></dt>
+  <dd>
+    <dl>
+      <dt><b>Type:</b></dt>
+      <dd>
+          <code>list</code>
+
+      </dd>
+      <dt><b>Value:</b></dt>
+      <dd><table><tr><td>
+<pre class="variable">
+[&lt;module 'Crypto.Cipher.ARC2' from '/usr/lib/python2.2/site-packages/C<span class="variable-linewrap">\</span>
+rypto/Cipher/ARC2.so'&gt;,
+ &lt;module 'Crypto.Cipher.Blowfish' from '/usr/lib/python2.2/site-packag<span class="variable-linewrap">\</span>
+es/Crypto/Cipher/Blowfish.so'&gt;,
+ &lt;module 'Crypto.Cipher.CAST' from '/usr/lib/python2.2/site-packages/C<span class="variable-linewrap">\</span>
+rypto/Cipher/CAST.so'&gt;,
+ &lt;module 'Crypto.Cipher.DES3' from '/usr/lib/python2.2/site-packages/C<span class="variable-linewrap">\</span>
+rypto/Cipher/DES3.so'&gt;,
+<span class="variable-ellipsis">...</span>                                                                    </pre>
+        </td></tr></table></dd>
+    </dl>
+  </dd>
+</dl></td></tr></table>
+<table width="100%" class="var-details" bgcolor="#e0e0e0"><tr><td>
+<a name="_algosSes3"></a>
+<h3>_algosSes3</h3>
+<dl>
+  <dt></dt>
+  <dd>
+    <dl>
+      <dt><b>Type:</b></dt>
+      <dd>
+          <code>dict</code>
+
+      </dd>
+      <dt><b>Value:</b></dt>
+      <dd><table><tr><td>
+<pre class="variable">
+{&lt;module 'Crypto.Cipher.ARC2' from '/usr/lib/python2.2/site-packages/C<span class="variable-linewrap">\</span>
+rypto/Cipher/ARC2.so'&gt;: 'ARC2',
+ &lt;module 'Crypto.Cipher.IDEA' from '/usr/lib/python2.2/site-packages/C<span class="variable-linewrap">\</span>
+rypto/Cipher/IDEA.so'&gt;: 'IDEA',
+ &lt;module 'Crypto.Cipher.DES3' from '/usr/lib/python2.2/site-packages/C<span class="variable-linewrap">\</span>
+rypto/Cipher/DES3.so'&gt;: 'DES3',
+ &lt;module 'Crypto.Cipher.RC5' from '/usr/lib/python2.2/site-packages/Cr<span class="variable-linewrap">\</span>
+ypto/Cipher/RC5.so'&gt;: 'RC5',
+<span class="variable-ellipsis">...</span>                                                                    </pre>
+        </td></tr></table></dd>
+    </dl>
+  </dd>
+</dl></td></tr></table>
+<table width="100%" class="var-details" bgcolor="#e0e0e0"><tr><td>
+<a name="_encBuf"></a>
+<h3>_encBuf</h3>
+<dl>
+  <dt></dt>
+  <dd>
+    <dl>
+      <dt><b>Type:</b></dt>
+      <dd>
+          <code>str</code>
+
+      </dd>
+      <dt><b>Value:</b></dt>
+      <dd><table><tr><td>
+<pre class="variable">
+<span class="variable-quote">'</span><span class="variable-quote">'</span>                                                                     </pre>
+        </td></tr></table></dd>
+    </dl>
+  </dd>
+</dl></td></tr></table>
+<table width="100%" class="var-details" bgcolor="#e0e0e0"><tr><td>
+<a name="_passIV"></a>
+<h3>_passIV</h3>
+<dl>
+  <dt></dt>
+  <dd>
+    <dl>
+      <dt><b>Type:</b></dt>
+      <dd>
+          <code>str</code>
+
+      </dd>
+      <dt><b>Value:</b></dt>
+      <dd><table><tr><td>
+<pre class="variable">
+<span class="variable-quote">"</span>w8Z4(51fKH#p{!29Q05HWcb@K 6(1qdyv{9|4=+gvji$chw!9$38^2cyGK#;}'@DHx%3)<span class="variable-linewrap">\</span>
+q_skvh4#0*=<span class="variable-quote">"</span>                                                           </pre>
+        </td></tr></table></dd>
+    </dl>
+  </dd>
+</dl></td></tr></table>
+<br />
+<!-- =========== START OF NAVBAR =========== -->
+<table class="navbar" border="0" width="100%" cellpadding="0" bgcolor="#a0c0ff" cellspacing="0">
+  <tr valign="center">
+    <th class="navbar">&nbsp;&nbsp;&nbsp;<a class="navbar" href="ezPyCrypto-module.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
+    <th class="navbar">&nbsp;&nbsp;&nbsp;<a class="navbar" href="trees.html">Trees</a>&nbsp;&nbsp;&nbsp;</th>
+    <th class="navbar">&nbsp;&nbsp;&nbsp;<a class="navbar" href="indices.html">Index</a>&nbsp;&nbsp;&nbsp;</th>
+    <th class="navbar">&nbsp;&nbsp;&nbsp;<a class="navbar" href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
+  </tr>
+</table>
+
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+  <tr>
+    <td align="left"><font size="-2">Generated by Epydoc 1.1 on Thu Jul 24 11:15:07 2003</font></td>
+    <td align="right"><a href="http://epydoc.sourceforge.net"
+                      ><font size="-2">http://epydoc.sf.net</font></a></td>
+  </tr>
+</table>
+</body>
+</html>

@@ -1,0 +1,7 @@
+March 14, 2003 - Released v0.1.1
+
+- added random chaff padding to session key info in
+  stream header, as defence against RSA/ElGamal factoring attacks
+- Increased stream length headers to 2 bytes, overcoming the problem of
+  crashes with larger (>2000bit) keysizes
+

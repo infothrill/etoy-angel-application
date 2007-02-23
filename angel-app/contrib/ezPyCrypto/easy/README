@@ -1,0 +1,30 @@
+This directory contains ezPyCrypto - Python Cryptography
+reduced to absolute simplicity.
+
+To use ezPyCrypto, you'll first need to install PyCrypto.
+
+To simplify this step, I've included  PyCrypto 1.9a4 with
+this distribution (invoking my rights under the GNU
+General Public License).
+
+Source code for PyCrypto is in the 'pycrypto-1.9a4' directory.
+(I've also included a Windows installer EXE for PyCrypto,
+in case you're on Windows and don't have a suitable compiler,
+or are just feeling lazy).
+
+If you feel untrusting (good attitude in this field!), you
+might want to get the official PyCrypto for yourself, just
+go to the PyCrypto website:
+http://www.amk.ca/python/code/crypto.html
+
+If you've got Python 2.2 or later installed, and PyCrypto
+installed properly as well, you should be able to just
+run each of the examples IN ORDER.
+
+Note that when you get your Python application working, you
+can bundle it into a standalone EXE file fit for distribution,
+that doesn't need anything else (not even Python). To create
+such an EXE file, vist:
+ http://www.mcmillan-inc.com/install5_ann.html
+
+Refer to the INSTALL file for more info.
