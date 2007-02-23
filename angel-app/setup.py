@@ -47,7 +47,6 @@ setup(
     zip_safe=False,
 )
 
-print "installing twisted"
 setup(
     name="twisted",
     version=2.5,
