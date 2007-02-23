@@ -7,17 +7,24 @@ import os
 os.mkdir(INSTALL_LOCATION)
 
 import commands
-run = commands.getstatusoutput
+def run(command, description):  
+  print description
+  print command + ":" + commands.getstatusoutput(command)[1]
 
-# create virtual python installation
-run("python ./virtual-python.py " + INSTALL_LOCATION)
+run(
+  "python ./virtual-python.py --prefix=" + INSTALL_LOCATION,
+  "create virtual python installation")
 
-# use virtual python installation from now on
-os.environ["PATH"] = os.environ["PATH"] + ":" + INSTALL_LOCATION + "/bin"
+print "use virtual python installation from now on"
+os.environ["PATH"] = INSTALL_LOCATION + "/bin"  + ":" + os.environ["PATH"] 
+print os.environ["PATH"]
 
-# install ez_setup
-run("python ./ez_setup.py")
+run("python ./ez_setup.py",
+  "install ez_setup")
 
-# install angel-app libraries
-run("which python")
+run("python ./setup.py install",
+ "install angel-app libraries")
+
+run("cp src/bin/* " + INSTALL_LOCATION + "/bin",
+  "installing angel-app binaries")
 
