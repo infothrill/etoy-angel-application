@@ -286,8 +286,8 @@ if __name__ == "__main__":
 
 	angel_app.log.enableHandler('file')
 	if len(options.daemon) > 0:
-		from angel_app import proc
-		proc.startstop(action=options.daemon, stdout='master.stdout', stderr='master.stderr', pidfile='master.pid')
+		from angel_app import daemonizer
+		daemonizer.startstop(action=options.daemon, stdout='master.stdout', stderr='master.stderr', pidfile='master.pid')
 	else:
 		angel_app.log.enableHandler('console')
 	angel_app.log.getReady()

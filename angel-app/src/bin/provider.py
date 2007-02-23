@@ -46,8 +46,8 @@ if __name__ == "__main__":
 	angel_app.log.enableHandler('file')
 	if len(options.daemon) > 0:
 		angel_app.log.enableHandler('socket')
-		from angel_app import proc
-		proc.startstop(action=options.daemon, stdout='provider.stdout', stderr='provider.stderr', pidfile='provider.pid')
+		from angel_app import daemonizer
+		daemonizer.startstop(action=options.daemon, stdout='provider.stdout', stderr='provider.stderr', pidfile='provider.pid')
 	else:
 		if (options.networklogging):
 			angel_app.log.enableHandler('socket')
