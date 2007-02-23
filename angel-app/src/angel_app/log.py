@@ -108,20 +108,27 @@ def setup():
 		mkdir(angelLogPath.path, 0750)
 
 
-def enableHandler(handlername):
-	if handlername == "console":
-		__addConsoleHandler()
-	if handlername == "socket":
-		__addSocketHandler()
-	if handlername == "file":
-		__addRotatingFileHandler()
-
+def enableHandler(handlername, handler = None):
+    if handlername == "console":
+        __addConsoleHandler()
+    if handlername == "socket":
+        __addSocketHandler()
+    if handlername == "file":
+        __addRotatingFileHandler()
+    if handlername == "wx":
+        handler.setLevel(logging.DEBUG) # for the console logger, we always use DEBUG!
+        # set a format which is simpler for console use
+        formatter = logging.Formatter('%(name)s %(levelname)-6s %(filename)s:%(lineno)d %(message)s')
+        # tell the handler to use this format
+        handler.setFormatter(formatter)
+        #console.addFilter(AngelLogFilter())
+        logging.getLogger().addHandler(handler)
 
 def getReady():
 	"""
 	must be called after setup() and after enabling handlers with enableHandler()
 	"""
-	twistedlog.startLoggingWithObserver(logTwisted, setStdout=1)
+	twistedlog.startLoggingWithObserver(logTwisted, setStdout=0)
 
 
 def logTwisted(dict):
