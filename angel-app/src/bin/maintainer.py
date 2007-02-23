@@ -35,11 +35,7 @@ def runServer():
         return children
     
     def toEvaluate(foo, bar):
-        #try:
-            return (client.inspectResource(foo), None)
-        #except:
-        #    log.err("Inspection loop failed for resource: " + `foo`)
-        #    raise StopIteration
+    	return (client.inspectResource(foo), None)
     
     assert(Basic(repository).exists()), "Root directory (%s) not found." % repository
     

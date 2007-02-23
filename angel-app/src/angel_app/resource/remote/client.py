@@ -250,7 +250,8 @@ def inspectResource(path = repository):
     # been inspected before
 
 
-    standin = af.exists() and af or af.parent()
+    standin = af.exists() and af or afn.parent().exists() and af.parent() or None
+    if standin == None: raise StopIteration
     pubKey = standin.publicKeyString()
     startingClones = getLocalCloneList(af)
     resourceID = getResourceID(af)
