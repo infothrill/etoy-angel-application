@@ -11,7 +11,7 @@ from twisted.web2.dav.http import statusForFailure
 
 from twisted.web2.dav.fileop import checkResponse
 from angel_app.log import getLogger
-from angel_app.resource.local.internal.resource import inspectWithResponse
+from angel_app.resource.local.internal.util import inspectWithResponse
 
 DEBUG = True
 

@@ -36,7 +36,7 @@ from twisted.web2.http import HTTPError, StatusResponse
 from twisted.web2.dav.fileop import mkcollection
 from twisted.web2.dav.util import noDataFromStream, parentForURL
 from angel_app import elements
-from angel_app.resource.local.internal.resource import inspectWithResponse
+from angel_app.resource.local.internal.util import inspectWithResponse
 
 DEBUG = True
 

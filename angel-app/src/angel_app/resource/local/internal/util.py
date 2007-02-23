@@ -31,3 +31,24 @@ import time
 def makeResourceID(relativePath = ""):
     return relativePath + `time.gmtime()`
 
+    
+def inspectWithResponse(resource):
+    """
+    When we have processed a modifying WebDAV request (such as PUT, MKCOL, DELETE) successfully,
+    rather than returning immediately we may in many cases want to propagate the changes through the
+    network first. This is conveniently done by a call to inspectResource, after which we can safely
+    return the response.
+    """
+
+    # higher-order foo-nctions
+    def foo(response):
+        log.msg("inspecting: " + resource.fp.path)
+        try:
+            inspectResource(resource.parent().fp.path)
+            inspectResource(resource.fp.path)
+        except:
+            log.msg("failed to update clones after processing request for " + resource.fp.path)
+                
+        return response
+    
+    return foo
