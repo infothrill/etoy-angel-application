@@ -20,7 +20,9 @@ class Safe(DAVFile):
         DAVFile.__init__(self, path, defaultType, indexNames)
         
     def __eq__(self, other):
-        return self.fp.path == other.fp.path  
+        try:
+            return self.fp.path == other.fp.path
+        except: return False
 
     def davComplianceClasses(self):
         """
