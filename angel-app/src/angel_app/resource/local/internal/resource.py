@@ -12,7 +12,7 @@ from angel_app.resource.remote.client import inspectResource
 
 import urllib
 
-DEBUG = True
+DEBUG = False
 
 log = getLogger()
 # DO NOT EXPOSE THIS KEY!!!!
