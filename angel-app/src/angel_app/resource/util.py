@@ -39,10 +39,10 @@ def urlPathFromPath(path):
     """
     URL-quote a file system path
     """
-    return os.sep.join(
+    return sep.join(
                        map(
-                           urllib.quote, 
-                           path.split(os.sep)))
+                           quote, 
+                           path.split(sep)))
     
 def pathFromAbsoluteURI(uri):
     """
