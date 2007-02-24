@@ -1,1 +1,1 @@
-all = ["basic", "local", "remote"]
+all = ["basic", "local", "remote", "util"]

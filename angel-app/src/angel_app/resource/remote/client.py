@@ -3,7 +3,7 @@ from twisted.web2.dav.element import rfc2518
 from angel_app import elements
 from angel_app.resource.local.basic import Basic
 from angel_app.resource.remote.clone import Clone
-from urlparse import urlsplit
+from angel_app.resource.util import urlPathFromPath
 import urllib
 import os 
 
@@ -52,17 +52,12 @@ def getLocalCloneURLList(af):
             
             def assertTrailingSlash(path):
                 return path[-1] == "/" and path or path + "/"
-            
-            def urlPathFromPath(path):
-                return os.sep.join(
-                            map(
-                                urllib.quote, 
-                                path.split(os.sep)))
+                
             def quotedName():
                 return urllib.quote(af.resourceName())
             
             pathGuess = assertTrailingSlash(
-                                            urlPathFromPath(af.relativePath())
+                                            urlPathFromPath(af.parent().relativePath())
                                             ) + quotedName()
             
             def cloneFromParentClone(cc):
@@ -157,7 +152,7 @@ def _ensureLocalValidity(resource, referenceClone):
 def _updateBadClone(af, bc):  
     """
     attempts to update a bad clone using the (supposedly good)
-    local resource. returns a list of all clones for which this update was successfull.
+    local resource. returns a list of all clones for which this update was successful.
     
     @param af the local resource
     @param bc the bad clones
