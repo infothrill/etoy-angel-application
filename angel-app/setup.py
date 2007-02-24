@@ -31,7 +31,7 @@ setup(
     description=DESCRIPTION,
     long_description=LONG_DESCRIPTION,
     classifiers=CLASSIFIERS,
-    author="Vincent Kraeutler, etoy.VENTURE ASSOCIATION",
+    author="Vincent Kraeutler and Paul Kremer, etoy.VENTURE ASSOCIATION",
     author_email="vincent@etoy.com",
     url="http://angelapp.missioneternity.org/",
     license="MIT License",
