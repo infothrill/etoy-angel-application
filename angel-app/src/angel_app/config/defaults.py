@@ -18,6 +18,15 @@ The name of the currently running application. This must be set during bootstrap
 appname = "defaultAppname"
 
 """
+This is the path leading to the individual programs of angel-app, e.g.
+presenter, provider and maintainer. This config key should be set during
+bootstrap, and _before_ switching to daemon mode, so that the master
+process can find the programs.
+"""
+
+binpath = ""
+
+"""
 Defaults for the logging backend (RotatingFileHandler)
 """
 log_maxbytes = 1024 * 1024 # each logfile has a max of 1 MB

@@ -18,19 +18,18 @@ def bootInit():
 	"""
 	import angel_app.config.defaults
 	angel_app.config.defaults.appname = "master"
+	angel_app.config.defaults.binpath = os.getcwd()
 
 
-
-def startProcessesWithProcessManager(procManager):
+def startProcessesWithProcessManager(procManager, binpath = os.getcwd()):
 	procManager.registerProcessStarter(reactor.spawnProcess)
 	procManager.registerDelayedStarter(reactor.callLater) 
 	
-	binpath = os.getcwd()
 	# if binpath has a python interpreter, we use it:
 	if (os.path.exists(os.path.join(binpath, "python"))):
 		executable = os.path.join(binpath, "python")
 	else:
-		executable = "python" # TODO: get exact python binary!
+		executable = "python" # system installation (must be in environ.PATH)
 	
 	if "PYTHONPATH" in os.environ.keys():
 		os.environ["PYTHONPATH"] += ":" + os.sep.join(os.sep.split(binpath)[:-1])
@@ -92,6 +91,6 @@ if __name__ == "__main__":
 	# ExternalProcessManager.processEnded must be available to the ProcessProtocol, otherwise callbacks won't work
 	# that's why we instantiate it here in __main__
 	procManager = angel_app.procmanager.ExternalProcessManager()
-	startProcessesWithProcessManager(procManager)
+	startProcessesWithProcessManager(procManager, angel_app.config.defaults.binpath)
 
 	reactor.run()
