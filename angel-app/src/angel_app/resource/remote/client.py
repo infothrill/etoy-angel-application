@@ -51,6 +51,7 @@ def getLocalCloneURLList(af):
             DEBUG and log.err("getting clones from parent resource " + af.parent().fp.path)
             
             def assertTrailingSlash(path):
+                if len(path) == 0: path = '/' # catch the situation when looking for parent == repository dir
                 return path[-1] == "/" and path or path + "/"
                 
             def quotedName():
