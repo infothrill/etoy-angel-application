@@ -47,7 +47,9 @@ def inspectWithResponse(resource):
     def foo(response):
         log.msg("inspecting: " + resource.fp.path)
         try:
-            inspectResource(resource.parent().fp.path)
+            # if we're not the root resource, inspect the parent
+            if None != resource.parent():
+                inspectResource(resource.parent().fp.path)
             inspectResource(resource.fp.path)
         except:
             log.msg("failed to update clones after processing request for " + resource.fp.path)
