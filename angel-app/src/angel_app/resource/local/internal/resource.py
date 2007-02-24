@@ -199,9 +199,14 @@ class Crypto(
     def _deRegisterWithParent(self):
 
         DEBUG and log.debug("entering _deRegisterWithParent for: " + self.fp.path)
+
+        pp = self.parent()
         
+        if None == pp:
+            log.msg("Can not deregister root resource with parent.")
+               
         DEBUG and log.debug(`self.parent()`)
-        pdp = self.parent().deadProperties()
+        pdp = pp.deadProperties()
         
         oc = pdp.get(elements.Children.qname()).children
         
@@ -209,6 +214,7 @@ class Crypto(
         nc = [cc for cc in oc if not str(cc.childOfType(rfc2518.HRef)) == urllib.quote(self.resourceName())]
         
         pdp.set(elements.Children(*nc))
+        pp.seal()
         DEBUG and log.debug("exiting _deRegisterWithParent")
     
     def _registerWithParent(self):
@@ -216,8 +222,13 @@ class Crypto(
         DEBUG and log.debug("entering _registerWithParent for " + self.fp.path)
 
         self._initProperties()
+
+        pp = self.parent()
         
-        pdp = self.parent().deadProperties()
+        if None == pp:
+            log.msg("Can not register root resource with parent.")
+        
+        pdp = pp.deadProperties()
         
         oc = pdp.get(elements.Children.qname()).children
            
@@ -234,7 +245,8 @@ class Crypto(
         
         nc = [cc for cc in oc] + [ic]
         ce = elements.Children(*nc)
-        pdp.set(ce)            
+        pdp.set(ce)  
+        pp.seal()          
         DEBUG and log.debug("exiting _registerWithParent")
     
         
