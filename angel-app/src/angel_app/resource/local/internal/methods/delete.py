@@ -7,6 +7,7 @@ from twisted.web2.http import HTTPError, StatusResponse
 from twisted.web2.dav.http import ResponseQueue, statusForFailure
 from angel_app import elements
 from angel_app.resource.local.internal.util import inspectWithResponse
+
 DEBUG = True
 
 class Deletable(object):
@@ -25,7 +26,7 @@ class Deletable(object):
                        request.headers.getHeader("depth", "infinity")
                        )
         
-        inspectWithResponse(self)
+        inspectWithResponse(self)(foo)
         DEBUG and log.err("http_DELETE: " + `type(foo)`)
         return foo
 
