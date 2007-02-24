@@ -1,4 +1,3 @@
-from twisted.python import log
 from twisted.web2 import responsecode
 from twisted.web2.http import HTTPError
 from angel_app import elements

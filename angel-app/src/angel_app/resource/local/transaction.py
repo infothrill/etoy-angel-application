@@ -1,5 +1,4 @@
 from twisted.web2.dav.static import DAVFile
-from twisted.python import log
 from twisted.web2 import responsecode, dirlist
 from twisted.web2.http import HTTPError
 from twisted.web2 import http, stream

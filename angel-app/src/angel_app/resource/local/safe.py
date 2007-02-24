@@ -1,11 +1,12 @@
 from twisted.web2.dav.static import DAVFile
-from twisted.python import log
 from twisted.web2 import responsecode, dirlist
 from twisted.web2.http import HTTPError
 from twisted.web2 import http, stream
 from twisted.web2.dav.xattrprops import xattrPropertyStore
 from angel_app import elements
+from angel_app.log import getLogger
 
+log = getLogger("safe")
 DEBUG = False
 
 class Safe(DAVFile):
@@ -34,47 +35,47 @@ class Safe(DAVFile):
         """
         Disallowed.
         """
-        log.err("Denying MKCOL request.")
+        log.warn("Denying MKCOL request.")
         return responsecode.FORBIDDEN
     
     def http_DELETE(self, request):
         """
         Disallowed.
         """
-        log.err("Denying DELETE request.")
+        log.warn("Denying DELETE request.")
         return responsecode.FORBIDDEN
 
     def http_COPY(self, request):
         """
         Disallowed.
         """
-        log.err("Denying COPY request.")
+        log.warn("Denying COPY request.")
         return responsecode.FORBIDDEN
     
     def http_LOCK(self, request):
         """
         Disallowed.
         """
-        log.err("Denying LOCK request.")
+        log.warn("Denying LOCK request.")
         return responsecode.FORBIDDEN  
 
     def http_MOVE(self, request):
         """
         Disallowed.
         """
-        log.err("Denying MOVE request.")
+        log.warn("Denying MOVE request.")
         return responsecode.FORBIDDEN  
     
     def http_PROPPATCH(self, request):
         """
         Disallowed.
         """
-        log.err("Denying PROPPATCH request.")
+        log.warn("Denying PROPPATCH request.")
         return responsecode.FORBIDDEN  
            
     def http_UNLOCK(self, request):
         """
         Disallowed.
         """
-        log.err("Denying UNLOCK request.")
+        log.warn("Denying UNLOCK request.")
         return responsecode.FORBIDDEN  

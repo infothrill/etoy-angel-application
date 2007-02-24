@@ -26,9 +26,11 @@ legalMatters = """
 
 author = """Vincent Kraeutler, 2006"""
 
-from twisted.python import log
+from angel_app.log import getLogger
 from angel_app.resource.remote.client import inspectResource
 import time
+
+log = getLogger()
 
 def makeResourceID(relativePath = ""):
     return relativePath + `time.gmtime()`
@@ -42,17 +44,17 @@ def inspectWithResponse(resource):
     return the response.
     """
 
-    log.err("foo")
+    log.error("foo")
     # higher-order foo-nctions
     def foo(response):
-        log.msg("inspecting: " + resource.fp.path)
+        log.info("inspecting: " + resource.fp.path)
         try:
             # if we're not the root resource, inspect the parent
             if None != resource.parent():
                 inspectResource(resource.parent().fp.path)
             inspectResource(resource.fp.path)
         except:
-            log.msg("failed to update clones after processing request for " + resource.fp.path)
+            log.warn("failed to update clones after processing request for " + resource.fp.path)
                 
         return response
     

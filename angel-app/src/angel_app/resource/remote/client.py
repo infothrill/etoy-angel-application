@@ -9,7 +9,6 @@ from angel_app.log import getLogger
 
 log = getLogger("client")
 DEBUG = True
-DEBUG and log.debug("client module loaded")
 
 # get config:
 from angel_app.config import config

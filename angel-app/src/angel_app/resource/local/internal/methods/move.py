@@ -31,7 +31,6 @@ DEBUG = True
 
 __all__ = ["http_MOVE"]
 
-from twisted.python import log
 from twisted.web2.dav.method.copymove import http_MOVE as hm
 
 

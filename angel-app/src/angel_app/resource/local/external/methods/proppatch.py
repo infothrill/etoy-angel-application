@@ -28,7 +28,6 @@ WebDAV PROPPATCH method.
 
 __all__ = ["http_PROPPATCH"]
 
-from twisted.python import log
 from twisted.python.failure import Failure
 from twisted.web2 import responsecode
 from twisted.web2.http import HTTPError, StatusResponse
@@ -38,13 +37,16 @@ from twisted.web2.dav.http import MultiStatusResponse, PropertyStatusResponseQue
 from twisted.internet.defer import deferredGenerator, waitForDeferred
 from angel_app import elements
 import angel_app.contrib.ezPyCrypto
+from angel_app.log import getLogger
+
+log = getLogger("deleteable")
 
 class ProppatchMixin:
     
     def __proppatchPreconditions(self, request):
         
         if not self.fp.exists():
-            log.err("File not found: %s" % (self.fp.path,))
+            log.error("File not found: %s" % (self.fp.path,))
             raise HTTPError(responsecode.NOT_FOUND)
         
         yield request
@@ -77,7 +79,7 @@ class ProppatchMixin:
             # but we are going to be careful, aren't we?
             return True
         goodID = (rid == __get(elements.ResourceID))
-        log.err("resource ID for PROPPATCH is valid: " + `goodID`)
+        log.info("resource ID for PROPPATCH is valid: " + `goodID`)
         if not goodID: return False
         
         sig = __both(elements.MetaDataSignature)
@@ -88,13 +90,13 @@ class ProppatchMixin:
                     ])
         #sm = "".join([requestProperties.childOfType(key) for key in elements.requiredKeys])
         #sm = "".join(requestProperties[1])
-        log.err(signable)
+        log.info(signable)
         #sig = requestProperties.childOfType(elements.MetaDataSignature)
-        log.err(sig)
+        log.info(sig)
         pubKey = angel_app.contrib.ezPyCrypto.key()
         pubKey.importKey(keyString)
         isValid = pubKey.verifyString(signable, sig)
-        log.err(isValid)
+        log.info(isValid)
         return isValid
         
             
@@ -109,7 +111,7 @@ class ProppatchMixin:
         dp = self.deadProperties()
         
         for property in requestProperties:
-            log.err("proppatch applying: " + property.toxml())
+            log.info("proppatch applying: " + property.toxml())
             try:
                 dp.set(property)
             except ValueError, err:
@@ -168,12 +170,12 @@ def readRequestBody(request):
         yield doc
         doc = doc.getResult()
     except ValueError, e:
-        log.err("Error while handling PROPPATCH body: %s" % (e,))
+        log.error("Error while handling PROPPATCH body: %s" % (e,))
         raise HTTPError(StatusResponse(responsecode.BAD_REQUEST, str(e)))
 
     if doc is None:
         error = "Request XML body is required."
-        log.err(error)
+        log.error(error)
         raise HTTPError(StatusResponse(responsecode.BAD_REQUEST, error))
 
     yield doc
@@ -190,7 +192,7 @@ def getRequestProperties(doc):
                  ]
             
     for child in childList:
-            log.err(child.name)
+            log.info(child.name)
             
     return dict([
                  (child.name, child)
@@ -205,7 +207,7 @@ def validateBodyXML(doc):
     if not isinstance(update, davxml.PropertyUpdate):
         error = ("Request XML body must be a propertyupdate element."
                  % (davxml.PropertyUpdate.sname(),))
-        log.err(error)
+        log.error(error)
         raise HTTPError(StatusResponse(responsecode.BAD_REQUEST, error))
     
     for child in update.children:

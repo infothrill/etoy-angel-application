@@ -10,7 +10,6 @@ from angel_app.log import getLogger
 
 log = getLogger("clone")
 DEBUG = False
-DEBUG and log.debug("clone module loaded")
 
 from httplib import HTTPConnection
 

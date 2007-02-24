@@ -1,5 +1,4 @@
 import os
-#from twisted.python import log
 from angel_app.log import getLogger
 from twisted.web2 import stream
 from twisted.web2.dav.element import rfc2518

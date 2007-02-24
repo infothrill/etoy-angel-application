@@ -6,7 +6,6 @@ from angel_app.log import getLogger
 
 log = getLogger("util")
 DEBUG = True
-DEBUG and log.debug("util module loaded")
 
 def validateMulistatusResponseBody(rawData = ""):
     """

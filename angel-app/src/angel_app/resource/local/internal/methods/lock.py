@@ -11,7 +11,7 @@ from twisted.web2 import responsecode
 
 __all__ = ["http_LOCK"]
 
-from twisted.python import log
+from angel_app.log import getLogger
 from twisted.internet.defer import deferredGenerator, waitForDeferred, maybeDeferred
 from twisted.web2 import responsecode, stream, http_headers
 from twisted.web2.http import HTTPError, Response, StatusResponse
@@ -21,6 +21,7 @@ from twisted.web2.dav.element.rfc2518 import LockInfo
 
 from angel_app.contrib.uuid import uuid4
 
+log = getLogger("lock")
 
 
 def parseLockRequest(stream):
@@ -43,7 +44,7 @@ def parseLockRequest(stream):
         # No request body makes no sense.
         # this is actually not quite correct, 
         error = "Empty LOCK request."
-        log.err(error)
+        log.error(error)
         raise HTTPError(StatusResponse(responsecode.BAD_REQUEST, error)) 
    
     if not isinstance(document.root_element, LockInfo):
@@ -159,7 +160,7 @@ def processLockRequest(resource, request):
     requestStream = request.stream
     depth = getDepth(request.headers)
     
-    #log.err(request.headers.getRawHeaders("X-Litmus")[0])
+    #log.error(request.headers.getRawHeaders("X-Litmus")[0])
     
     # generate DAVDocument from request body
     lockInfo = waitForDeferred(deferredGenerator(parseLockRequest)(requestStream))
@@ -255,7 +256,7 @@ class Lockable(object):
         if il is True:
 
             error = "Resource is locked and you don't have the proper token handy."
-            log.err(error)
+            log.error(error)
             raise HTTPError(StatusResponse(responsecode.LOCKED, error))
         
         # we must forward the request to possible callbacks
@@ -381,7 +382,7 @@ class Lockable(object):
             # assert that the destination exists
             if not destination_uri:
                 msg = "No destination header in %s request." % (request.method,)
-                log.err(msg)
+                log.error(msg)
                 raise HTTPError(StatusResponse(responsecode.BAD_REQUEST, msg))
 
             # assert that the destination is not locked

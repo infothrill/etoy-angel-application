@@ -29,7 +29,6 @@ WebDAV MKCOL method
 
 __all__ = ["http_MKCOL"]
 
-from twisted.python import log
 from twisted.internet.defer import deferredGenerator, waitForDeferred
 from twisted.web2 import responsecode
 from twisted.web2.http import HTTPError, StatusResponse
@@ -37,22 +36,24 @@ from twisted.web2.dav.fileop import mkcollection
 from twisted.web2.dav.util import noDataFromStream, parentForURL
 from angel_app import elements
 from angel_app.resource.local.internal.util import inspectWithResponse
+from angel_app.log import getLogger
 
+log = getLogger("mkcol")
 DEBUG = True
 
 class mkcolMixin:
 
   def __checkSpot(self):
 
-      DEBUG and log.err("calling __checkSpot")
+      DEBUG and log.debug("calling __checkSpot")
 
       if self.fp.exists():
-          log.err("Attempt to create collection where file exists: %s"
+          log.error("Attempt to create collection where file exists: %s"
                 % (self.fp.path,))
           raise HTTPError(responsecode.NOT_ALLOWED)
 
       if not self.parent().isCollection():
-          log.err("Attempt to create collection with non-collection parent: %s"
+          log.error("Attempt to create collection with non-collection parent: %s"
                 % (parent.fp.path,))
           raise HTTPError(StatusResponse(
             responsecode.CONFLICT,
@@ -60,14 +61,14 @@ class mkcolMixin:
             ))
 
       if not self.parent() or not self.parent().isCollection():
-          log.err("Attempt to create collection with no parent directory: %s"
+          log.error("Attempt to create collection with no parent directory: %s"
                 % (self.fp.path,))
           raise HTTPError(StatusResponse(
             responsecode.INTERNAL_SERVER_ERROR,
             "The requested resource is not backed by a parent directory."
             ))
           
-      DEBUG and log.err("done __checkSpot")
+      DEBUG and log.debug("done __checkSpot")
         
 
   def __mkcol(self, request):
@@ -82,20 +83,20 @@ class mkcolMixin:
     try:
         x.getResult()
     except ValueError, e:
-        log.err("Error while handling MKCOL body: %s" % (e,))
+        log.error("Error while handling MKCOL body: %s" % (e,))
         raise HTTPError(responsecode.UNSUPPORTED_MEDIA_TYPE)
 
     ignored = waitForDeferred(mkcollection(self.fp))  
     yield ignored
     ignored = ignored.getResult()
 
-    DEBUG and log.err("__mkcol registering with parent")
+    DEBUG and log.debug("__mkcol registering with parent")
     self._registerWithParent()
     
-    DEBUG and log.err("__mkcol updating metadata")
+    DEBUG and log.debug("__mkcol updating metadata")
     self._updateMetadata()
     
-    DEBUG and log.err("done MKCOL request")   
+    DEBUG and log.debug("done MKCOL request")   
     yield responsecode.CREATED
 
   def http_MKCOL(self, request):

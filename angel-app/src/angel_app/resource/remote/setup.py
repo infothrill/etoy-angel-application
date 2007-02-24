@@ -7,7 +7,6 @@ from angel_app.log import getLogger
 
 log = getLogger("setup")
 DEBUG = True
-DEBUG and log.debug("setup module loaded")
 
 # get config:
 from angel_app.config import config
