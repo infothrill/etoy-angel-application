@@ -269,7 +269,7 @@ def inspectResource(path = repository):
 
     # update all invalid clones with the meta data of the reference clone,
     # we need at least an empty clone list locally, so the updates can be performed
-    storeClones(af, goodClones, [])   
+    storeClones(af, goodClones, unreachableClones)   
     for bc in badClones: 
         if _updateBadClone(af, bc):
             goodClones.append(bc)
