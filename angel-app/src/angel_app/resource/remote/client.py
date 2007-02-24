@@ -266,8 +266,10 @@ def inspectResource(path = repository):
     DEBUG and log.err("reference clone: " + `rc` + " local path " + af.fp.path)
 
     _ensureLocalValidity(af, rc)
-   
-    # update all invalid clones with the meta data of the reference clone
+
+    # update all invalid clones with the meta data of the reference clone,
+    # we need at least an empty clone list locally, so the updates can be performed
+    storeClones(af, goodClones, [])   
     for bc in badClones: 
         if _updateBadClone(af, bc):
             goodClones.append(bc)
