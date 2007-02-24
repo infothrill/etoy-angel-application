@@ -121,30 +121,6 @@ class Crypto(
                                   )
         return signature
 
-    def signOLD(self):
-        """
-        Sign the file contents and store the public key and signature in the metadata.
-        """
-        
-        DEBUG and log.debug("signing file: " + self.fp.path)
-        
-        # TODO: this sucks, too
-        if self.fp.isdir(): 
-            signature = self.secretKey.signString("directory")
-        else:
-            myFile = self.fp.open()
-            fileContents = myFile.read()
-            myFile.close()
-            signature = self.secretKey.signString(fileContents)
-        #signedKeys["contentSignature"].data = signature
-        self.deadProperties().set(
-                                  elements.ContentSignature.fromString(signature)
-                                  )
-        self.deadProperties().set(
-                                  elements.PublicKeyString.fromString(self.secretKey.exportKey())
-                                  )
-        return signature
-
 
     def bumpRevisionNumber(self):
         """
