@@ -125,7 +125,10 @@ class Config:
 									}, 
                          "presenter": { "listenport": "9998", "listeninterface": "127.0.0.1" }, 
 						 "provider" : { "listenport": "9999" }, 
-						 "maintainer" : { "peers": "localhost:9999" }
+						 "maintainer" : {
+                                         "peers": "localhost:9999" ,
+                                         "sleep": "100"
+                                         }
                          }
         if k not in defaultValues[s]:
             return False
