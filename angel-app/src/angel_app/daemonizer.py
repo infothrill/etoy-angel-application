@@ -49,7 +49,7 @@ def setup():
 	if not angelVarPath.exists():
 		mkdir(angelVarPath.path, 0750)
 
-def daemonize(stdout='/dev/null', stderr=None, stdin='/dev/null',
+def daemonize(stdout=os.devnull, stderr=None, stdin=os.devnull,
               pidfile=None, startmsg = 'started with pid %s' ):
     '''
         This forks the current process into a daemon.
@@ -70,9 +70,9 @@ def daemonize(stdout='/dev/null', stderr=None, stdin='/dev/null',
         sys.exit(1)
         
     # Decouple from parent environment.
-    os.chdir("/") 
+    os.chdir("/")
     os.umask(0) 
-    os.setsid() 
+    os.setsid()
     
 	# interestingly enough, we MUST open STDOUT explicitly before we
 	# fork the second time.
@@ -103,7 +103,7 @@ def daemonize(stdout='/dev/null', stderr=None, stdin='/dev/null',
     os.dup2(so.fileno(), sys.stdout.fileno())
     os.dup2(se.fileno(), sys.stderr.fileno())
 
-def startstop(action=None, stdout='/dev/null', stderr=None, stdin='/dev/null',
+def startstop(action=None, stdout=os.devnull, stderr=None, stdin=os.devnull,
               pidfile='pid.txt', startmsg = 'started with pid %s' ):
 	'''
 		This is the "front-end"method for starting the daemon, stopping
