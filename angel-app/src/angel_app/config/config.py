@@ -121,7 +121,9 @@ class Config:
                          "common" : {
 									"repository": path.join(self.cfgvars["angelhome"], "repository"),
 									"loglevel": "DEBUG",
-									"logformat": '%(name)-20s %(asctime)s %(levelname)-6s %(filename)s:%(lineno)d %(message)s',
+                                    # FIXME: %(funcName)s is only available in Python 2.5 ;-(
+                                    "logformat": '%(asctime)s %(levelname)-6s %(name)-20s - %(filename)s:%(lineno)d - %(message)s',
+                                    "consolelogformat": '%(levelname)-6s %(name)-20s - %(filename)s:%(lineno)d - %(message)s',
 									}, 
                          "presenter": { "listenport": "9998", "listeninterface": "127.0.0.1" }, 
 						 "provider" : { "listenport": "9999" }, 
