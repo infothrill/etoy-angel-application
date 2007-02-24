@@ -19,6 +19,10 @@ print "use virtual python installation from now on"
 os.environ["PATH"] = INSTALL_LOCATION + "/bin"  + ":" + os.environ["PATH"] 
 print os.environ["PATH"]
 
+run(
+  "python ./ez_setup.py",
+  "running ez_setup.py")
+
 run("python ./setup.py install",
  "install angel-app libraries")
 
