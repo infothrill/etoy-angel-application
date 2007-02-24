@@ -1,0 +1,41 @@
+OVERVIEW
+--------
+See http://angelapp.missioneternity.org/
+
+INSTALLATION
+------------
+See the file 'INSTALL'
+
+RUNNING angel-app
+------------------
+Background: angel-app currently consists of 3 main programs, called
+- maintainer (does the network maintenance loop)
+- presenter  (provides local, private repository access)
+- provider   (public network server)
+
+To easily run all of these programs, angel-app currently provides
+a wrapper program that controls the different parts. This program is
+called 'master.py'.
+
+To interactively run it, you usually to:
+$ cd angel-app/bin
+$ ./python ./master.py
+
+This leaves you with a very cluttered terminal. To start angel-app in the
+background (daemon mode), master.py provides an interface for starting, stopping
+and also restarting:
+$ cd angel-app/bin
+$ ./python ./master.py -d start|stop|restart
+
+
+LOGGING
+-------
+In the default setup, angel-app logs all its output to $HOME/.angel-app/log/*.log
+Each process has its own logfile called respectively presenter|provider|maintainer[.log]
+If angel-app is started with master.py, there is an overall logfile, which contains
+all messages from all components of angel-app. This logfile is called master.log.
+
+
+LICENSE
+-------
+See the file 'LICENSE'
