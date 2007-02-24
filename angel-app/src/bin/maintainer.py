@@ -27,7 +27,7 @@ def runServer():
 
     def getChildren(path):
         children = [cc.fp.path for cc in Basic(path).metaDataChildren()]
-        DEBUG and log.err("children of " + path + " are " + `children`)
+        DEBUG and getLogger().debug("children of " + path + " are " + `children`)
         return children
     
     def toEvaluate(foo, bar):
