@@ -189,17 +189,14 @@ def __getConfiguredLogLevel():
 	return logging._levelNames[loglevel] # this is a bit ugly, we need to map a configured string to a loglevel int
 
 
-def __getConfiguredLogFormat():
-	AngelConfig = angel_app.config.config.getConfig()
-	return AngelConfig.get('common', 'logformat', True)
-
-
 def __addConsoleHandler():
     # define a console Handler:
     console = logging.StreamHandler()
     console.setLevel(logging.DEBUG) # for the console logger, we always use DEBUG!
     # set a format which is simpler for console use
-    formatter = logging.Formatter('%(name)s %(levelname)-6s %(filename)s:%(lineno)d %(message)s')
+    AngelConfig = angel_app.config.config.getConfig()
+    formatstring = AngelConfig.get('common', 'consolelogformat', True)
+    formatter = logging.Formatter(formatstring)
     # tell the handler to use this format
     console.setFormatter(formatter)
     #console.addFilter(AngelLogFilter())
@@ -215,7 +212,9 @@ def __addRotatingFileHandler():
     fileHandler = logging.handlers.RotatingFileHandler(getAngelLogFilename(), 'a', log_maxbytes, log_backupcount)
     fileHandler.setLevel(__getConfiguredLogLevel())
     # set a format which is simpler for console use
-    formatter = logging.Formatter(__getConfiguredLogFormat())
+    AngelConfig = angel_app.config.config.getConfig()
+    formatstring = AngelConfig.get('common', 'logformat', True)
+    formatter = logging.Formatter(formatstring)
     # tell the handler to use this format
     fileHandler.setFormatter(formatter)	
     fileHandler.addFilter(AngelLogFilter())
