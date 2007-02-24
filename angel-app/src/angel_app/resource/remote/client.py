@@ -41,7 +41,7 @@ def getLocalCloneURLList(af):
     
     try:
         log.err("getting clones from resource: " + af.fp.path)
-        clones += [cloneFromGunk(splitParse(str(cc.children[0].children[0]))) for cc in af.deadProperties().get(elements.Clones.qname()).children]
+        clones += [cloneFromGunk(splitParse(str(cc.children[0].children[0]))) for cc in af.clones().children]
     except:
         log.err("no clones with resource: " + af.fp.path)
         pass
@@ -72,7 +72,7 @@ def getLocalCloneURLList(af):
                     
                 return Clone(host, port, path)
             
-            pclones = [cloneFromParentClone(cc) for cc in af.parent().deadProperties().get(elements.Clones.qname()).children]
+            pclones = [cloneFromParentClone(cc) for cc in af.parent().clones().children]
             log.err("clones with parent resource: " + `pclones`)
             clones += pclones
         except:

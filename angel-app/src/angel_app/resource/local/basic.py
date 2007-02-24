@@ -238,6 +238,12 @@ class Basic(deleteable.Deletable, Safe):
                                   self.fp.parent().path
                                   )
 
+    def clones(self):
+        """
+        Return the list of clones stored with this resource.
+        """
+        return self.deadProperties().get(elements.Clones.qname())
+
     def metaDataChildren(self):
         """
         The children of this resource as specified in the resource metadata.
