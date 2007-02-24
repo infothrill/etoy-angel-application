@@ -12,7 +12,7 @@ from angel_app.resource.remote.client import inspectResource
 
 import urllib
 
-DEBUG = False
+DEBUG = True
 
 log = getLogger()
 # DO NOT EXPOSE THIS KEY!!!!
@@ -99,8 +99,31 @@ class Crypto(
 
     def sign(self):
         """
+        Create a cryptographic checksum of the file contents and store
+        the public key and checksum in the metadata.
+
+        IMPORTANT: signing of files and directories differs by design:
+        directories always have the same signature, because each node
+        in the tree can be referenced by another one (Unix mount analogy).
+        Therefore, it is not possible to use a directory's name as the 
+        value to be signed.
+        """
+        from angel_app.resource.local.util import getHexDigestForFile
+
+        DEBUG and log.debug("signing file: " + self.fp.path)
+
+        signature = getHexDigestForFile(self.fp)
+        self.deadProperties().set(
+                                  elements.ContentSignature.fromString(signature)
+                                  )
+        self.deadProperties().set(
+                                  elements.PublicKeyString.fromString(self.secretKey.exportKey())
+                                  )
+        return signature
+
+    def signOLD(self):
+        """
         Sign the file contents and store the public key and signature in the metadata.
-        If the secretKey is 
         """
         
         DEBUG and log.debug("signing file: " + self.fp.path)

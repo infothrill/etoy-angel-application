@@ -135,6 +135,7 @@ class Basic(deleteable.Deletable, Safe):
         return False
     
     def verify(self):
+        from angel_app.resource.local.util import getHexDigestForFile
         
         if not self.exists():
             DEBUG and log.debug("Basic.verify(): False, file does not exist")
@@ -149,11 +150,15 @@ class Basic(deleteable.Deletable, Safe):
             DEBUG and log.debug("Basic.verify(): False, invalid metadata")
             return False
         
+        dataIsCorrect = False
+        if cs == getHexDigestForFile(self.fp):
+            dataIsCorrect = True
+            DEBUG and log.debug("data signature for file '%s' is correct: %s" % (self.fp.path, cs) )
+        else:
+            log.info("data signature for file '%s' is incorrect: %s" % (self.fp.path, cs) )
+        
         publicKey = ezKey()
         publicKey.importKey(pk)
-
-        dataIsCorrect = publicKey.verifyString(self.contentAsString(), cs)
-        DEBUG and log.debug("data signature for file " + self.fp.path + " is correct: " + `dataIsCorrect`)
         
         DEBUG and log.debug(ms)
         DEBUG and log.debug(sm)

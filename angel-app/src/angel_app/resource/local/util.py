@@ -44,3 +44,38 @@ def resourceFromURI(uri, resourceClass):
     path = repository + sep + sep.join(segments)
     return resourceClass(path)
 
+def getHashObject():
+    """
+    Returns an object that can create SHA-1 hash values when feeded with data
+    using the update() method.
+    This method exists solely for python version compatibility.
+    """
+    from platform import python_version_tuple
+    (major,minor,patchlevel) = python_version_tuple()
+    major = int(major)
+    minor = int(minor)
+    if (major >=2 and minor < 5 ):
+        import sha
+        obj = sha.new()
+    else:
+        import hashlib
+        obj = hashlib.sha1()
+    return obj
+
+def getHexDigestForFile(fp):
+    hash = getHashObject()
+    if fp.isdir(): 
+        hash.update("directory") # directories always have the same signature
+    else:
+        myFile = fp.open()
+        bufsize = 4096 # 4 kB
+        while True:
+            buf = myFile.read(bufsize)
+            if len(buf) == 0:
+                break
+            hash.update(buf)
+        myFile.close()
+    return hash.hexdigest()
+
+
+
