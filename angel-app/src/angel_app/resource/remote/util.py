@@ -1,12 +1,12 @@
 from twisted.python.filepath import FilePath
-from twisted.python import log
 from twisted.web2.dav import davxml
-
 from os import sep
-
 from angel_app import elements
+from angel_app.log import getLogger
 
+log = getLogger("util")
 DEBUG = True
+DEBUG and log.debug("util module loaded")
 
 def validateMulistatusResponseBody(rawData = ""):
     """
@@ -27,12 +27,12 @@ def syncClones(angelFile, clonesB):
     try:
         clones = dp.get(elements.Clones.qname())
     except:
-        log.err("root directory has no clones -- initializing.")
+        log.error("root directory has no clones -- initializing.")
         clones = elements.Clones()
 
     cc = [child for child in clones.children]
     for peer in clonesB.children:
         if peer not in cc:
             cc.append(peer)
-    log.err("util: " + `elements.Clones(*cc)`)
+    log.info("util: " + `elements.Clones(*cc)`)
     dp.set(elements.Clones(*cc))

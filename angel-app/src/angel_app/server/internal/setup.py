@@ -4,9 +4,11 @@ from os import mkdir
 from angel_app.resource.local.internal.resource import Crypto
 from angel_app import elements
 from angel_app.config import rootDefaults
-from twisted.python import log
+from angel_app.log import getLogger
 
+log = getLogger("setup")
 DEBUG = True
+DEBUG and log.debug("setup module loaded")
 
 # get config:
 from angel_app.config import config
@@ -31,7 +33,7 @@ def setupRootMetaData():
     """
     
     angelRoot = Crypto(repository)
-    DEBUG and log.err("public key: " + rootDefaults.publicKey)
+    DEBUG and log.debug("public key: " + rootDefaults.publicKey)
    
     # we want to make sure we take ownership of the root directory
     angelRoot.deadProperties().set(elements.PublicKeyString(rootDefaults.publicKey))

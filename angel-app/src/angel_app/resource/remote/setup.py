@@ -1,12 +1,13 @@
 from angel_app.resource.local.basic import Basic
 from angel_app import elements
 from twisted.web2.dav.element.rfc2518 import HRef
-from twisted.python import log
 from angel_app.config import defaults
-#from angel_app.config import rootDefaults
-
 from angel_app.resource.remote.util import syncClones
+from angel_app.log import getLogger
+
+log = getLogger("setup")
 DEBUG = True
+DEBUG and log.debug("setup module loaded")
 
 # get config:
 from angel_app.config import config
@@ -45,5 +46,5 @@ def setupDefaultPeers():
     to one or more default peers. Once we have copied those over, the
     maintenance loop will do the rest.
     """
-    DEBUG and log.err("running setupDefaultPeers")
+    DEBUG and log.debug("running setupDefaultPeers")
     syncClones(repository, defaultPeers())

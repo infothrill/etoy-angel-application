@@ -1,14 +1,16 @@
 from twisted.web2 import responsecode
 from twisted.web2.dav.element import rfc2518
 from twisted.web2.dav import davxml
-from twisted.python import log
 from angel_app import elements
 from angel_app.resource.remote import util
 from angel_app.resource import IResource
 from zope.interface import implements
 from angel_app.contrib.ezPyCrypto import key
+from angel_app.log import getLogger
 
+log = getLogger("clone")
 DEBUG = False
+DEBUG and log.debug("clone module loaded")
 
 from httplib import HTTPConnection
 
@@ -35,7 +37,7 @@ class Clone(object):
         response = self.__performRequest(method = "HEAD", body = "")
         if response.status == responsecode.MOVED_PERMANENTLY:
             self.path = response.getheader("location")
-            log.err("clone received redirect: " + `self`)
+            log.info("clone received redirect: " + `self`)
     
     def __eq__(self, clone):
         """
@@ -51,7 +53,7 @@ class Clone(object):
         return `self`.__hash__()
 
     def __performRequest(self, method = "GET", headers = {}, body = ""):
-        DEBUG and log.err("attempting " + method + " connection to: " + self.host + ":" + `self.port` + " " + self.path)   
+        DEBUG and log.debug("attempting " + method + " connection to: " + self.host + ":" + `self.port` + " " + self.path)   
         conn = HTTPConnection(self.host, self.port)        
         conn.request(
                  method, 
@@ -75,7 +77,7 @@ class Clone(object):
         @rtype string
         @return the raw XML body of the multistatus response corresponding to the respective PROPFIND request.
         """  
-        #DEBUG and log.err("running PROPFIND on clone " + `self` + " for properties " + `properties` + " with body " + self.__makePropfindRequestBody(properties))
+        #DEBUG and log.debug("running PROPFIND on clone " + `self` + " for properties " + `properties` + " with body " + self.__makePropfindRequestBody(properties))
         resp = self.__performRequest(
                               method = "PROPFIND", 
                               headers = {"Depth" : 0}, 
@@ -83,12 +85,12 @@ class Clone(object):
                               )
 
         if resp.status != responsecode.MULTI_STATUS:
-            DEBUG and log.err("bad response: " + `resp.status`)
+            DEBUG and log.debug("bad response: " + `resp.status`)
             raise "must receive a MULTI_STATUS response for PROPFIND, otherwise something's wrong, got: " + `resp.status` +\
                 resp.read()
         
         data = resp.read()
-        #DEBUG and log.err("PROPFIND body: " + data)
+        #DEBUG and log.debug("PROPFIND body: " + data)
         return data
     
     def propertiesDocument(self, properties):
@@ -116,7 +118,7 @@ class Clone(object):
         @return the body of a property consisting of just PCDATA.
         """
         
-        DEBUG and log.err("returned for property "  + `property.qname()` + ": " + self.propertiesDocument([property]).toxml())
+        DEBUG and log.debug("returned for property "  + `property.qname()` + ": " + self.propertiesDocument([property]).toxml())
         # points to the first dav "prop"-element
         properties = self.propertiesDocument([property]
                                              ).root_element.children[0].children[1].children[0]
@@ -146,7 +148,7 @@ class Clone(object):
             return False  
 
     def isCollection(self):
-         DEBUG and log.err("isCollection(): " + self.propertyFindBody(rfc2518.ResourceType) + " " + rfc2518.Collection.sname())
+         DEBUG and log.debug("isCollection(): " + self.propertyFindBody(rfc2518.ResourceType) + " " + rfc2518.Collection.sname())
          return self.propertyFindBody(rfc2518.ResourceType) == rfc2518.Collection.sname()
     
     
@@ -162,7 +164,7 @@ class Clone(object):
         try:
             return int(self.propertyFindBody(elements.Revision))
         except:
-            log.err("no revision found on clone: " + `self`)
+            log.warn("no revision found on clone: " + `self`)
             return -1
     
     def publicKeyString(self):
@@ -186,7 +188,7 @@ class Clone(object):
                                 for element in elements.signedKeys
                                 ])
         
-        #DEBUG and log.err("Clone: " + toBeVerified)
+        #DEBUG and log.debug("Clone: " + toBeVerified)
         
         pubKey = key()
         try:
@@ -198,7 +200,7 @@ class Clone(object):
                                    self.propertyFindBody(
                                                      elements.MetaDataSignature))
         except Exception, e:
-            log.err(`self` + ": validation failed. Exception: " + `e`)
+            log.error(`self` + ": validation failed. Exception: " + `e`)
             return False
         
         
@@ -214,7 +216,7 @@ class Clone(object):
                                        [elements.Clones]
                                        ).root_element.children[0].children[1].children[0]
                                        
-            DEBUG and log.err(`prop`)
+            DEBUG and log.debug(`prop`)
             return [splitParse(
                            str(clone.children[0].children[0].children[0]))
                 for clone in prop.children if len(prop.children[0].children) > 0]
@@ -244,7 +246,7 @@ class Clone(object):
         Push the relevant properties of a local clone to the remote clone via a PROPPATCH request.
         """
         pb = makePushBody(localClone)
-        DEBUG and log.err("pushing metadata:" + pb)
+        DEBUG and log.debug("pushing metadata:" + pb)
         resp = self.__performRequest(
                                      method = "PROPPATCH", 
                                      body = pb
@@ -275,7 +277,7 @@ def makePushBody(localClone):
     """
     
     for el in elements.requiredKeys:
-        DEBUG and log.err("makePushBody: " + localClone.deadProperties().get(el.qname()).toxml())
+        DEBUG and log.debug("makePushBody: " + localClone.deadProperties().get(el.qname()).toxml())
     pList = [
              rfc2518.Set(
                          rfc2518.PropertyContainer(
@@ -284,7 +286,7 @@ def makePushBody(localClone):
              in elements.requiredKeys + [elements.Clones]
              ]
     
-    DEBUG and log.err(`pList`)
+    DEBUG and log.debug(`pList`)
     
     pu = davxml.PropertyUpdate(*pList)
     return pu.toxml()
