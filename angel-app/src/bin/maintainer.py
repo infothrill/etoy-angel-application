@@ -1,16 +1,7 @@
 from optparse import OptionParser
 from angel_app.log import getLogger
-
-from angel_app.resource.remote import client, setup
-from angel_app.graph import graphWalker
-from twisted.python import log
-from angel_app.resource.local.basic import Basic
-
-setup.setupDefaultPeers()
-
 from angel_app.config import config
 AngelConfig = config.getConfig()
-repository = AngelConfig.get("common", "repository")
 
 def bootInit():
 	"""
@@ -20,14 +11,19 @@ def bootInit():
 	import angel_app.config.defaults
 	angel_app.config.defaults.appname = "maintainer"
 	
-	
 	# TODO: ugly twisted workaround to provide angel_app xml elements
 	from twisted.web2.dav.element import parser
 	from angel_app import elements
 	parser.registerElements(elements)
 
 def runServer():
-    log.err("starting inspection loop at: " + repository)
+    from angel_app.resource.remote import client, setup
+    from angel_app.graph import graphWalker
+    from angel_app.resource.local.basic import Basic
+
+    repository = AngelConfig.get("common", "repository")
+    getLogger().info("starting inspection loop at: " + repository)
+    setup.setupDefaultPeers()
 
     def getChildren(path):
         children = [cc.fp.path for cc in Basic(path).metaDataChildren()]
