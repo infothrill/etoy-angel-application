@@ -30,11 +30,38 @@ from angel_app.log import getLogger
 from angel_app.resource.remote.client import inspectResource
 import time
 
+from twisted.internet import reactor
 log = getLogger()
+
+def identity(something): yield something
 
 def makeResourceID(relativePath = ""):
     return relativePath + `time.gmtime()`
 
+def orderedInspection(resource):
+    """
+    Returns a generator that first triggers an inspection of the resource's parent, followed
+    by an inspection of the resource proper.
+    """
+    def inspector():
+        log.error("inspecting foo: " + resource.fp.path)
+        try:
+            # if we're not the root resource, inspect the parent
+            if None != resource.parent():
+                yield inspectResource(resource.parent().fp.path)
+            yield inspectResource(resource.fp.path)
+        except:
+            log.msg("failed to update clones after processing request for " + resource.fp.path)
+            
+    return inspector
+        
+def nonblockingInspection(resource):
+    
+    log.error("nonblockingInspection: foo")
+    #inspectionDelay = 2
+    #reactor.callLater(inspectionDelay, orderedInspection(resource))
+    
+    return identity
     
 def inspectWithResponse(resource):
     """
@@ -44,7 +71,6 @@ def inspectWithResponse(resource):
     return the response.
     """
 
-    log.error("foo")
     # higher-order foo-nctions
     def foo(response):
         log.info("inspecting: " + resource.fp.path)

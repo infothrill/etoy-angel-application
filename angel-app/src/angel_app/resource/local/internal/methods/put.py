@@ -10,7 +10,7 @@ from twisted.web2.dav.http import statusForFailure
 
 from twisted.web2.dav.fileop import checkResponse
 from angel_app.log import getLogger
-from angel_app.resource.local.internal.util import inspectWithResponse
+from angel_app.resource.local.internal.util import nonblockingInspection
 
 DEBUG = True
 
@@ -125,7 +125,8 @@ class Putable(object):
         """
         #return self.put(request.stream)
         #return deferredGenerator(self._put)(request.stream).addCallback(inspectResource, self.fp.path)
-        return deferredGenerator(self._put)(request.stream).addCallback(inspectWithResponse(self))
+        #return deferredGenerator(self._put)(request.stream).addCallback(inspectWithResponse(self))
+        return deferredGenerator(self._put)(request.stream).addCallback(nonblockingInspection(self))
         #response = waitForDeferred(deferredGenerator(self._put)(request.stream))
         #yield response
         #response = response.getResult()
