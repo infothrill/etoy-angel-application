@@ -463,7 +463,7 @@ class DAVResource (DAVPropertyMixIn, StaticRenderMixin):
 
         # FIXME: Learn how to use twisted logging facility, wsanchez
         protocol = "HTTP/%s.%s" % request.clientproto
-        log.err("%s %s %s" % (request.method, urllib.unquote(request.uri), protocol))
+        log.msg("%s %s %s" % (request.method, urllib.unquote(request.uri), protocol))
 
         #
         # If this is a collection and the URI doesn't end in "/", redirect.
