@@ -113,7 +113,7 @@ class DirectoryLister(resource.Resource):
         s= """<html><head><title>%s</title>
         <link href="http://missioneternity.org/files/m221e.css" rel="stylesheet" type="text/css" media="all" />
         <style>
-          th, .even td, .odd td { padding-right: 0.5em; font-family: monospace}
+          th, .even td, .odd td { padding-right: 0.5em;}
           .even-dir { background-color: #efe0ef }
           .even { background-color: #eee }
           .odd-dir {background-color: #f0d0ef }
