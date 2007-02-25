@@ -110,10 +110,9 @@ class ProppatchMixin:
         
         dp = self.deadProperties()
         
-        for property in requestProperties:
-            log.info("proppatch applying: " + property.toxml())
+        def defaultHandler(property, store, responses):
             try:
-                dp.set(property)
+                store.set(property)
             except ValueError, err:
                 responses.add(
                         Failure(
@@ -122,6 +121,31 @@ class ProppatchMixin:
                                    responsecode.FORBIDDEN, str(e)))),
                         property
                     )
+                
+        def cloneHandler(property, store, request, responses):
+            from angel_app.resource.remote.clone import clonesFromElement, clonesToElement
+            import sets
+            try:
+                residentClones = set.Set(clonesFromElement(dp.get(elements.Clones)))
+            except:
+                residentClones = set.Set([])
+            newClones = residentClones.difference(clonesFromElement(property))
+            for clone in newClones:
+                # TODO -- eliminate this magic number
+                if len(residentClones) > 5: break
+                
+                if clone.host == "localhost":
+                    clone.host = str(request.remoteAddr.host)
+                    
+            defaultHandler(clonesToElement(residentClones), store, responses)
+        
+        for property in requestProperties:
+            log.info("proppatch applying: " + property.toxml())
+            try:
+                if property.__class__ == elements.Clones:
+                    cloneHandler(property, dp, request, responses)
+                else:
+                    defaultHandler(property, dp, responses)
             except:
                 responses.add(Failure(), property)
             else:
@@ -153,7 +177,7 @@ class ProppatchMixin:
                        responsecode.FORBIDDEN, "The PROPPATCH certificate is not valid."))
         
         # apply the changes
-        yield self.apply(requestProperties.values(), request.uri)
+        yield self.apply(requestProperties.values(), request, request.uri)
 
 
         

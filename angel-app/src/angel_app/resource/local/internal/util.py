@@ -81,6 +81,8 @@ def inspectWithResponse(resource):
             inspectResource(resource.fp.path)
         except:
             log.warn("failed to update clones after processing request for " + resource.fp.path)
+            import traceback
+            log.warn(traceback.print_exc())
                 
         return response
     

@@ -1,7 +1,7 @@
 from twisted.web2.dav.element import rfc2518
 from angel_app import elements
 from angel_app.resource.local.basic import Basic
-from angel_app.resource.remote.clone import Clone, splitParse, cloneFromElement
+from angel_app.resource.remote.clone import Clone, splitParse, cloneFromElement, clonesFromElement
 from angel_app.resource.util import urlPathFromPath
 import urllib
 import os 
@@ -214,6 +214,7 @@ def storeClones(af, goodClones, unreachableClones):
     
     # now make sure we're not getting DOSed
     
+    # TODO -- eliminate this magic number
     clonesToBeStored = (len(clonesToBeStored) > 5 and clonesToBeStored[:5] or clonesToBeStored)
     
     DEBUG and log.debug("storing clones: " + `clonesToBeStored`)
@@ -355,6 +356,7 @@ def iterateClones(cloneSeedList, publicKeyString, resourceID):
         # we only arrive here if the clone is valid and sufficiently new
         good.append(cc)
         DEBUG and log.debug("iterateClones: adding good clone: " + `cc`)
+        DEBUG and log.debug(`cc.cloneList()`)
         toVisit += [Clone(host, port) for host, port in cc.cloneList()]
         
         

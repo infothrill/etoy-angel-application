@@ -9,7 +9,7 @@ from angel_app.contrib.ezPyCrypto import key
 from angel_app.log import getLogger
 
 log = getLogger("clone")
-DEBUG = False
+DEBUG = True
 
 from httplib import HTTPConnection
 
@@ -216,9 +216,10 @@ class Clone(object):
                                        ).root_element.children[0].children[1].children[0]
                                        
             DEBUG and log.debug(`prop`)
-            return [splitParse(
-                           str(clone.children[0].children[0].children[0]))
-                for clone in prop.children if len(prop.children[0].children) > 0]
+            return clonesFromElement(prop)
+            #return [splitParse(
+            #               str(clone.children[0].children[0].children[0]))
+            #    for clone in prop.children if len(prop.children[0].children) > 0]
         except:
             return []
 
@@ -345,3 +346,19 @@ def cloneFromElement(cc):
     Takes an child element of the Clones element and returns a Clone instance.
     """
     return cloneFromGunk(splitParse(str(cc.children[0].children[0])))
+
+
+def clonesFromElement(cloneElement):
+    """
+    Takes a Clone element and returns a list of corresponding Clone instances
+    """
+    return [cloneFromElement(cc) for cc in af.clones().children]
+
+def clonesToElement(cloneList):
+    """
+    Takes a list of clones and generates a Clones element from it.
+    """
+    return elements.Clones(*[
+                    elements.Clone(rfc2518.HRef(`cc`)) for cc in clonesToBeStored
+                    ])
+    
