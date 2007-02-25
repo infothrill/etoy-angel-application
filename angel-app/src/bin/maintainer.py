@@ -43,9 +43,13 @@ def runServer():
     while 1:
     	log.info("sleep timeout between resource inspections is: " + `sleeptime`)
     	startTime = int(time.time())
-    	for ii in graphWalker(repository, getChildren, toEvaluate):
-    		time.sleep(sleeptime)
-        	continue
+    	try:
+     		for ii in graphWalker(repository, getChildren, toEvaluate):
+     			time.sleep(sleeptime)
+     			continue
+        except:
+        	log.warn("an error occured while traversing the tree -- restarting")
+        
         elapsedTime = int(time.time()) - startTime
         if elapsedTime > traversalTime:
         	sleepTime = sleepTime / 2
