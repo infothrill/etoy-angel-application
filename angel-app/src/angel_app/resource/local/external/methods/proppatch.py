@@ -141,14 +141,17 @@ class ProppatchMixin:
             defaultHandler(clonesToElement(residentClones + [newClone]), store, responses)
         
         for property in requestProperties:
-            log.info("proppatch applying: " + property.toxml())
+            DEBUG and log.debug("proppatch applying: " + property.toxml())
             try:
                 if property.__class__ == elements.Clones:
                     cloneHandler(property, dp, request, responses)
+                    DEBUG and log.debug("OK")
                 elif property.__class__ in elements.requiredKeys:
                     defaultHandler(property, dp, responses)
+                    DEBUG and log.debug("OK")
                 else: # we don't generally accept unsigned material
                     responses.add(responsecode.UNAUTHORIZED, property)
+                    DEBUG and log.debug("UNAUTHORIZED")
             except:
                 responses.add(Failure(), property)
             else:
