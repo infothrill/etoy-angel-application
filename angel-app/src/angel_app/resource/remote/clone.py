@@ -9,7 +9,7 @@ from angel_app.contrib.ezPyCrypto import key
 from angel_app.log import getLogger
 
 log = getLogger("clone")
-DEBUG = True
+DEBUG = False
 
 from httplib import HTTPConnection
 
