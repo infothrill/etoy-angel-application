@@ -129,7 +129,9 @@ class Config:
 						 "provider" : { "listenport": "9999" }, 
 						 "maintainer" : {
                                          "peers": "localhost:9999" ,
-                                         "sleep": "100"
+                                         "initialsleep": "100",
+                                         # we want a tree traversal to take about one day after the initial synch
+                                         "treetraversaltime" : str(24 * 3600)
                                          }
                          }
         if k not in defaultValues[s]:

@@ -34,13 +34,21 @@ def runServer():
     	return (client.inspectResource(foo), None)
     
     assert(Basic(repository).exists()), "Root directory (%s) not found." % repository
-    
+
+    import time   
+    sleeptime = AngelConfig.getint("maintainer", "initialsleep")
+    traversalTime = AngelConfig.getint("maintainer", "treetraversaltime")
     while 1:
-    	import time
+    	startTime = int(time.time())
     	for ii in graphWalker(repository, getChildren, toEvaluate):
-    		sleeptime = AngelConfig.getint("maintainer", "sleep")
     		time.sleep(sleeptime)
         	continue
+        elapsedTime = int(time.time()) - startTime
+        if elapsedTime > traversalTime:
+        	sleepTime = sleepTime / 2
+        else:
+        	sleepTime = sleepTime * 2 + 1
+        
             
 if __name__ == "__main__":
     bootInit()
