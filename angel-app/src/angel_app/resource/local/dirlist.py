@@ -102,9 +102,9 @@ class DirectoryLister(resource.Resource):
               padding: 0.1em;
               }
             
-          body { border: 0; padding: 0; margin: 0; background-color: #efefef;}
+          body { border: 0; padding: 0; margin:}
           h1 {padding: 0.1em; background-color: #777; color: white; border-bottom: thin white dashed;}
-</style></head><body><div class="directory-listing"><h1>%s</h1>""" % (title,title)
+</style></head><body><div id="container"><div class="directory-listing"><h1>%s</h1>""" % (title,title)
         s+="<table>"
         s+="<tr><th>Filename</th><th>Size</th><th>Last Modified</th><th>File Type</th></tr>"
         even = False
@@ -113,7 +113,7 @@ class DirectoryLister(resource.Resource):
             s+='<td><a href="%(link)s">%(linktext)s</a></td><td align="right">%(size)s</td><td>%(lastmod)s</td><td>%(type)s</td></tr>' % row
             even = not even
                 
-        s+="</table></div></body></html>"
+        s+="</table></div></div></body></html>"
         response = http.Response(200, {}, s)
         response.headers.setHeader("content-type", http_headers.MimeType('text', 'html'))
         return response
