@@ -89,9 +89,10 @@ def getAngelLogFilename():
 
 from logging import Filter
 class AngelLogFilter(Filter):
-	def filter(self, record):
-		record.msg = record.msg.replace("\n", "\\n") # TODO: this is not safe enough, there might be control chars, and record.args also can contain bad data
-		return 1
+    def filter(self, record):
+        stringobj = str(record.msg) # this enables us to log all sorts of types, by using their string representation
+        record.msg = stringobj.replace("\n", "\\n") # TODO: this is not safe enough, there might be control chars, and record.args also can contain bad data
+        return 1
 
 
 def setup():
