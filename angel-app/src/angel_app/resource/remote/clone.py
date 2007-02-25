@@ -353,7 +353,7 @@ def clonesFromElement(cloneElement):
     """
     Takes a Clone element and returns a list of corresponding Clone instances
     """
-    return [cloneFromElement(cc) for cc in af.clones().children]
+    return [cloneFromElement(cc) for cc in cloneElement.children]
 
 def clonesToElement(cloneList):
     """
