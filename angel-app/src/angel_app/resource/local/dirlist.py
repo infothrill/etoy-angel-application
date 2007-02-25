@@ -135,7 +135,7 @@ class DirectoryLister(resource.Resource):
         even = False
         for row in self.data_listing(request, None):
             s+='<tr class="%s">' % (even and 'even' or 'odd',)
-            s+='<td><a href="%(link)s">%(linktext)s</a></td><td align="right">%(size)s</td><td>%(lastmod)s</td><td>%(type)s</td><td>%(clones)s</td></tr>' % row
+            s+='\n<td><a href="%(link)s">%(linktext)s</a></td><td align="right">%(size)s</td><td>%(lastmod)s</td><td>%(type)s</td><td>%(clones)s</td></tr>' % row
             even = not even
                 
         s+="</table></div></div></body></html>"
