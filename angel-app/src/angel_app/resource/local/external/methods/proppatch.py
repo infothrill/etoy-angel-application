@@ -140,12 +140,14 @@ class ProppatchMixin:
             address = str(request.remoteAddr.host)
             try:
                 newClone = clonesFromElement(property)[0]
+                newClone.host = address
+                defaultHandler(clonesToElement(residentClones + [newClone]), store, responses)
             except:
                 log.warn("received malformed clone:" + `property`)
                 log.warn("from host:" + `address`)
-            newClone.host = address
+            
                     
-            defaultHandler(clonesToElement(residentClones + [newClone]), store, responses)
+            
         
         for property in requestProperties:
             DEBUG and log.debug("proppatch applying: " + property.toxml())
