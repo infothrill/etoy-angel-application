@@ -232,7 +232,7 @@ class Clone(object):
                                    self.propertyFindBody(
                                                      elements.MetaDataSignature))
         except Exception, e:
-            log.error(`self` + ": validation failed. Exception: " + `e`)
+            log.warn(`self` + ": validation failed. Exception: " + `e`)
             return False
         
         
@@ -360,7 +360,6 @@ def getMostCurrentClones(clonesList):
 
 
 def splitParse(cloneUri):
-    log.info(cloneUri)
     host, rest = cloneUri.split(":")
     fragments = rest.split("/")
     port = int(fragments[0])
