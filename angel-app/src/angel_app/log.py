@@ -132,41 +132,42 @@ def getReady():
 
 
 def logTwisted(dict):
-	"""
-	callback for the twisted logging engine
-	"""
-	# TODO : beautify more... see twisted.python.log for details on how to implement that
-	ourTwistedLogger = getLogger("twisted")
-	del dict['time'] # we don't need to see the time twice in the log... the accuracy should not be a problem
-	# according to the twisted doc, the dict always has the 'isError' key set to indicate wether it is an error or not
-	isError = dict['isError']
-	del dict['isError']
-	# buggy twisted: sometimes it also has the dict-key isErr:
-	if dict.has_key('printed'):
-		del dict['printed']
-	if dict.has_key('isErr'):
-		isError = dict['isErr']
-		del dict['isErr']
-	if dict.has_key('why') and dict['why'] == None:
-		del dict['why']
+    """
+    callback for the twisted logging engine
+    """
+    # TODO : beautify more... see twisted.python.log for details on how to implement that
+    ourTwistedLogger = getLogger("twisted")
+    del dict['time'] # we don't need to see the time twice in the log... the accuracy should not be a problem
+    # according to the twisted doc, the dict always has the 'isError' key set to indicate wether it is an error or not
+    isError = dict['isError']
+    del dict['isError']
+    # buggy twisted: sometimes it also has the dict-key isErr:
+    if dict.has_key('printed'):
+    	del dict['printed']
+    if dict.has_key('isErr'):
+    	isError = dict['isErr']
+    	del dict['isErr']
+    if dict.has_key('why') and dict['why'] == None:
+    	del dict['why']
 
-	errortext = None
-	if isError == 1 and dict.has_key('failure'):
-		errortext = ((dict.get('why') or 'Unhandled Error')
-				+ os.linesep + dict['failure'].getTraceback())
+    errortext = None
+    if dict.has_key('failure'):
+        isError = 1
+        errortext = ((dict.get('why') or 'Unhandled Error')
+                + os.linesep + dict['failure'].getTraceback())
 
-	text = ""
-	if dict.has_key("system"):
-		text = dict["system"] + ": "
-	if dict.has_key("message"):
-		text += " ".join([str(m) for m in dict["message"]])
-	
-	if isError == 1:
-		ourTwistedLogger.error(text)
-		if not errortext == None:
-			ourTwistedLogger.critical(errortext)
-	else:
-		ourTwistedLogger.info(text)
+    text = ""
+    if dict.has_key("system"):
+    	text = dict["system"] + ": "
+    if dict.has_key("message"):
+    	text += " ".join([str(m) for m in dict["message"]])
+    
+    if isError == 1:
+    	ourTwistedLogger.error(text)
+    	if not errortext == None:
+    		ourTwistedLogger.critical(errortext)
+    else:
+    	ourTwistedLogger.info(text)
 
 
 def __configLoggerBasic():
