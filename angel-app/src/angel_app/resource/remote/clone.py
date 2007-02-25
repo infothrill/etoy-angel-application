@@ -33,6 +33,20 @@ class Clone(object):
         self.host = host
         self.port = port
         self.path = path
+        
+        self.propertyCache = {}
+        
+    def updateCache(self):
+        response = self.propertiesDocument(elements.signedKeys)
+        properties = response.root_element.childOfType(
+                                       rfc2518.Response
+                                       ).childOfType(
+                                         rfc2518.PropertyStatus
+                                         ).childOfType(
+                                           rfc2518.PropertyContainer).children
+        for property in properties:
+            self.propertyCache[property.qname()] = property                            
+        
     
     def checkForRedirect(self):
 
@@ -113,8 +127,10 @@ class Clone(object):
         """
         return self.propertiesDocument([property]
                          ).root_element.children[0].children[1].children[0].children[0].toxml()
+
+
     
-    def propertyFindBody(self, property):
+    def uncachedPropertyFindBody(self, property):
         """
         @rtype string
         @return the body of a property consisting of just PCDATA.
@@ -126,6 +142,20 @@ class Clone(object):
                                              ).root_element.children[0].children[1].children[0]
         
         return "".join([str(ee) for ee in properties.children[0].children])
+    
+    def propertyFindBody(self, property):
+        """
+        @rtype string
+        @return the body of a property consisting of just PCDATA.
+        
+        TODO: this caching scheme could be much improved.
+        """
+        
+        if property.qname() in self.propertyCache.keys():
+            properties = self.propertyCache[property.qname()]   
+            return "".join([str(ee) for ee in properties.children])
+        else:
+            return self.uncachedPropertyFindBody(property)
     
 
     def exists(self): 
