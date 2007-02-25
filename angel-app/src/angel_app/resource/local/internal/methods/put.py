@@ -123,22 +123,6 @@ class Putable(object):
         """
         Respond to a PUT request. (RFC 2518, section 8.7)
         """
-        #return self.put(request.stream)
-        #return deferredGenerator(self._put)(request.stream).addCallback(inspectResource, self.fp.path)
-        #return deferredGenerator(self._put)(request.stream).addCallback(inspectWithResponse(self))
-        return deferredGenerator(self._put)(request.stream).addCallback(nonblockingInspection(self))
-        #response = waitForDeferred(deferredGenerator(self._put)(request.stream))
-        #yield response
-        #response = response.getResult()
-        #yield response
-        #try:
-        #    inspectResource(self.parent().fp.path)
-        #    inspectResource(self.fp.path)
-        #except:
-        #    log.warn("failed to update clones on PUT for " + self.fp.path)
-        
-        #yield response
-        #return self.put(request.stream)
-        #put = deferredGenerator(self.put)
-        #return put(request.stream)
+        return deferredGenerator(self._put)(request.stream).addCallback(inspectWithResponse(self))
+        #return deferredGenerator(self._put)(request.stream).addCallback(nonblockingInspection(self))
         
