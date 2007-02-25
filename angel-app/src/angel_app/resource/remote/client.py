@@ -213,7 +213,7 @@ def storeClones(af, goodClones, unreachableClones):
             
         # guard against DOS and xattr overflow
         # TODO: eliminate this magic number at some point
-        if len(clonesToBeStored > 5): break
+        if len(clonesToBeStored) > 5: break
     
     newClones = elements.Clones(*[
                     elements.Clone(rfc2518.HRef(`cc`)) for cc in clonesToBeStored
