@@ -229,6 +229,12 @@ class Basic(deleteable.Deletable, Safe):
 
     def relativePath(self):
         return self.fp.path.split(repository)[1]
+    
+    def relativeURL(self):
+        return os.sep.join(
+                           map(
+                               urllib.quote, 
+                               self.relativePath().split(os.sep)))
 
     def parent(self):
         """

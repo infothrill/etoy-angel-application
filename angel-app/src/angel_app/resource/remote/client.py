@@ -199,25 +199,22 @@ def getResourceID(resource):
     return resourceID
 
 def storeClones(af, goodClones, unreachableClones):
-    
 
-    clonesToBeStored = goodClones
-    if len(clonesToBeStored) < 3:
-        # if we have too few good clones, keep some of the unreachable and bad clones,
-        # just in case ...  
-        clonesToBeStored += unreachableClones
+    # fill in only non-duplicates    
+    clonesToBeStored = []
     
-    # make sure the local clone is stored
-    localClone = Clone("localhost", 9999, os.sep.join(map(urllib.quote, af.relativePath().split(os.sep))))
-    if localClone not in clonesToBeStored:
-        clonesToBeStored = [localClone] + clonesToBeStored
+    # in decreasing order of how much we like them:
+    clonesWeMightStore = goodClones +  [Clone("localhost", 9999, af.relativeURL())]  + unreachableClones
     
-    # now make sure we're not getting DOSed
+    for clone in clonesWeMightStore:
+        # take only non-duplicates
+        if clone not in clonesToBeStored:
+            clonesToBeStored.append(clone)
+            
+        # guard against DOS and xattr overflow
+        # TODO: eliminate this magic number at some point
+        if len(clonesToBeStored > 5): break
     
-    # TODO -- eliminate this magic number
-    clonesToBeStored = (len(clonesToBeStored) > 5 and clonesToBeStored[:5] or clonesToBeStored)
-    
-    DEBUG and log.debug("storing clones: " + `clonesToBeStored`)
     newClones = elements.Clones(*[
                     elements.Clone(rfc2518.HRef(`cc`)) for cc in clonesToBeStored
                     ])
