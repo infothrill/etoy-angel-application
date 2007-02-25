@@ -96,7 +96,7 @@ class DirectoryLister(resource.Resource):
                     'size': formatFileSize(filesize),
                     'type': mimetype,
                     'lastmod': time.strftime("%Y-%b-%d %H:%M", time.localtime(st.st_mtime)),
-                    'clones': formatClones(path)
+                    'clones': formatClones(fullpath)
                     })
 
         return files
