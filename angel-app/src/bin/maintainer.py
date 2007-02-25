@@ -42,19 +42,22 @@ def runServer():
     traversalTime = AngelConfig.getint("maintainer", "treetraversaltime")
     while 1:
     	log.info("sleep timeout between resource inspections is: " + `sleeptime`)
-    	startTime = int(time.time())
+    	
     	try:
+    		startTime = int(time.time())
      		for ii in graphWalker(repository, getChildren, toEvaluate):
      			time.sleep(sleeptime)
      			continue
+     		    		        
+        	elapsedTime = int(time.time()) - startTime
+         	if elapsedTime > traversalTime:
+         		sleepTime = sleepTime / 2
+           	else:
+        	    sleepTime = sleepTime * 2 + 1
+        	    
         except:
         	log.warn("an error occured while traversing the tree -- restarting")
-        
-        elapsedTime = int(time.time()) - startTime
-        if elapsedTime > traversalTime:
-        	sleepTime = sleepTime / 2
-        else:
-        	sleepTime = sleepTime * 2 + 1
+
         
             
 if __name__ == "__main__":
