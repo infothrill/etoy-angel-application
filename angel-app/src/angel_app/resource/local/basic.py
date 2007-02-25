@@ -1,10 +1,11 @@
-from twisted.web2 import responsecode, dirlist
+from twisted.web2 import responsecode
 from twisted.web2.http import HTTPError
 from twisted.web2 import http, stream
 from twisted.web2.dav.xattrprops import xattrPropertyStore
 from twisted.web2.dav.element import rfc2518
 from twisted.web2.dav import davxml
 from angel_app import elements
+from angel_app.resource.local import dirlist
 
 from zope.interface import implements
 from angel_app.resource import IResource

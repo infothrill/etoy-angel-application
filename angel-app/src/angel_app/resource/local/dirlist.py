@@ -86,7 +86,9 @@ class DirectoryLister(resource.Resource):
     def render(self, request):
         title = "Directory listing for %s" % urllib.unquote(request.path)
     
-        s= """<html><head><title>%s</title><style>
+        s= """<html><head><title>%s</title>
+        <link href="http://missioneternity.org/files/m221e.css" rel="stylesheet" type="text/css" media="all" />
+        <style>
           th, .even td, .odd td { padding-right: 0.5em; font-family: monospace}
           .even-dir { background-color: #efe0ef }
           .even { background-color: #eee }
@@ -99,7 +101,7 @@ class DirectoryLister(resource.Resource):
               width: 50%%;
               padding: 0.1em;
               }
-
+            
           body { border: 0; padding: 0; margin: 0; background-color: #efefef;}
           h1 {padding: 0.1em; background-color: #777; color: white; border-bottom: thin white dashed;}
 </style></head><body><div class="directory-listing"><h1>%s</h1>""" % (title,title)
