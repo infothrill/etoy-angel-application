@@ -98,7 +98,7 @@ class ProppatchMixin:
         pubKey = angel_app.contrib.ezPyCrypto.key()
         pubKey.importKey(keyString)
         isValid = pubKey.verifyString(signable, sig)
-        log.info(`isValid`)
+        log.info("PROPPATCH request is valid: " + `isValid`)
         return isValid
         
             
@@ -144,6 +144,7 @@ class ProppatchMixin:
         
         for property in requestProperties:
             DEBUG and log.debug("proppatch applying: " + property.toxml())
+            DEBUG and log.debug("proppatch applying: " + `property.__class__`)
             try:
                 if property.__class__ == elements.Clones:
                     cloneHandler(property, dp, request, responses)
