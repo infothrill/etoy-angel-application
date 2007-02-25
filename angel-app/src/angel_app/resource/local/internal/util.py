@@ -33,7 +33,7 @@ import time
 from twisted.internet import reactor
 log = getLogger()
 
-def identity(something): yield something
+def identity(something): return something
 
 def makeResourceID(relativePath = ""):
     return relativePath + `time.gmtime()`
