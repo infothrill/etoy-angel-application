@@ -3,8 +3,6 @@ from angel_app.log import getLogger
 from angel_app.config import config
 AngelConfig = config.getConfig()
 
-log = getLogger("maintainer")
-
 def bootInit():
 	"""
 	Method to be called in __main__ before anything else. This method cannot rely on any
@@ -23,13 +21,15 @@ def runServer():
     from angel_app.graph import graphWalker
     from angel_app.resource.local.basic import Basic
 
+    log = getLogger("maintainer")
+   
     repository = AngelConfig.get("common", "repository")
-    getLogger().info("starting inspection loop at: " + repository)
+    log.info("starting inspection loop at: " + repository)
     setup.setupDefaultPeers()
 
     def getChildren(path):
         children = [cc.fp.path for cc in Basic(path).metaDataChildren()]
-        DEBUG and getLogger().debug("children of " + path + " are " + `children`)
+        DEBUG and log.debug("children of " + path + " are " + `children`)
         return children
     
     def toEvaluate(foo, bar):
