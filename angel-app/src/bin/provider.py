@@ -16,6 +16,11 @@ def bootInit():
 	"""
 	import angel_app.config.defaults
 	angel_app.config.defaults.appname = "provider"
+	
+	# TODO: ugly twisted workaround to provide angel_app xml elements
+	from twisted.web2.dav.element import parser
+	from angel_app import elements
+	parser.registerElements(elements)
 
 def runServer():
 	from angel_app.config import config
