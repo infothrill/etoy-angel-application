@@ -38,15 +38,15 @@ def runServer():
     assert(Basic(repository).exists()), "Root directory (%s) not found." % repository
 
     import time   
-    sleeptime = AngelConfig.getint("maintainer", "initialsleep")
+    sleepTime = AngelConfig.getint("maintainer", "initialsleep")
     traversalTime = AngelConfig.getint("maintainer", "treetraversaltime")
     while 1:
-    	log.info("sleep timeout between resource inspections is: " + `sleeptime`)
+    	log.info("sleep timeout between resource inspections is: " + `sleepTime`)
     	startTime = int(time.time())
     	try:
 
      		for ii in graphWalker(repository, getChildren, toEvaluate):
-     			time.sleep(sleeptime)
+     			time.sleep(sleepTime)
      			continue
      		    		        
 
