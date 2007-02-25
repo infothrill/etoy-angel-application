@@ -312,6 +312,9 @@ def iterateClones(cloneSeedList, publicKeyString, resourceID):
             bad.append(cc)
             continue
         
+        # cache all interesting properties
+        cc.updateCache()
+        
         if cc.resourceID() != resourceID:
             # an invalid clone
             DEBUG and log.debug("iterateClones: " + `cc` + " wrong resource ID")
