@@ -8,7 +8,7 @@ import os
 from angel_app.log import getLogger
 
 log = getLogger("client")
-DEBUG = True
+DEBUG = False
 
 # get config:
 from angel_app.config import config
@@ -60,7 +60,7 @@ def getLocalCloneURLList(af):
                 return Clone(host, port, path)
             
             pclones = [cloneFromParentClone(cc) for cc in af.parent().clones().children]
-            log.info("clones with parent resource: " + `pclones`)
+            DEBUG and log.debug("clones with parent resource: " + `pclones`)
             clones += pclones
         except:
             # we have no clones on this file
@@ -108,7 +108,7 @@ def _ensureLocalValidity(resource, referenceClone):
             open(resource.fp.path, "w").write(referenceClone.stream().read())
                     
             # update the file contents, if necessary
-            log.info("_ensureLocalValidity: updating file contents for " + 
+            DEBUG and log.debug("_ensureLocalValidity: updating file contents for " + 
                               resource.fp.path + " " + `resource.exists()`
                               + " " + `referenceClone.revision()` + " " + `resource.revisionNumber()`
                               + " " + `resource.verify()`)
@@ -153,7 +153,7 @@ def _updateBadClone(af, bc):
         # the remote clone is unreachable, ignore for now
         return
         
-    log.info("updating invalid clone: " + `bc`)
+    DEBUG and log.debug("updating invalid clone: " + `bc`)
         
     # push the resource
     if not af.isCollection():
@@ -162,7 +162,7 @@ def _updateBadClone(af, bc):
         # it's a collection, which by definition does not have "contents",
         # instead, just make sure it exists:
         if not bc.exists():
-            DEBUG and log.debug("remote collection resource does not exist yet, creating collection")
+            log.info("remote collection resource does not exist yet, creating collection")
             bc.mkCol()
     
     # push the resource metadata
