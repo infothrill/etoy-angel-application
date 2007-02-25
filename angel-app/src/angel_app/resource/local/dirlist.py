@@ -34,7 +34,7 @@ def formatClones(path):
         return aa
     
     try:
-        return "Clones: " + " ".join([              
+        return "Clones: " + ", ".join([              
                    '<a href="http://' + `clone`+ '">' + clone.host + '</a>'
                    #`cloneFromElement(clone)`
                    #`clone`
