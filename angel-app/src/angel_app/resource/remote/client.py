@@ -356,7 +356,7 @@ def iterateClones(cloneSeedList, publicKeyString, resourceID):
         good.append(cc)
         DEBUG and log.debug("iterateClones: adding good clone: " + `cc`)
         DEBUG and log.debug(`cc.cloneList()`)
-        toVisit += [Clone(host, port) for host, port in cc.cloneList()]
+        toVisit += cc.cloneList()
         
         
 
