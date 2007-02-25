@@ -22,6 +22,28 @@ def formatFileSize(size):
     else:
         return '%iG' % (size / (1024**3))
 
+def formatClones(path):
+    from angel_app.resource.local import basic
+    from angel_app.resource.remote.clone import cloneFromElement
+    
+    def links(clone):
+        
+        return `clone`
+        aa =  '<a href="http://' + `clone`+ '%(clone)s">' + clone.host + '</a>'# % clone
+        log.info(aa)
+        return aa
+    
+    try:
+        return "Clones: " + " ".join([              
+                   '<a href="http://' + `clone`+ '">' + clone.host + '</a>'
+                   #`cloneFromElement(clone)`
+                   #`clone`
+                   for clone in [
+                                 cloneFromElement(cc) for cc in basic.Basic(path).clones().children]])
+    except:
+        return ""
+    
+
 class DirectoryLister(resource.Resource):
     def __init__(self, pathname, dirs=None,
                  contentTypes={},
@@ -58,7 +80,8 @@ class DirectoryLister(resource.Resource):
                     'linktext': path + "/",
                     'size': '',
                     'type': '-',
-                    'lastmod': time.strftime("%Y-%b-%d %H:%M", time.localtime(st.st_mtime))
+                    'lastmod': time.strftime("%Y-%b-%d %H:%M", time.localtime(st.st_mtime)),
+                    'clones': formatClones(path)
                     })
             else:
                 from twisted.web2.static import getTypeAndEncoding
@@ -72,7 +95,8 @@ class DirectoryLister(resource.Resource):
                     'linktext': path,
                     'size': formatFileSize(filesize),
                     'type': mimetype,
-                    'lastmod': time.strftime("%Y-%b-%d %H:%M", time.localtime(st.st_mtime))
+                    'lastmod': time.strftime("%Y-%b-%d %H:%M", time.localtime(st.st_mtime)),
+                    'clones': formatClones(path)
                     })
 
         return files
@@ -105,12 +129,13 @@ class DirectoryLister(resource.Resource):
           body { border: 0; padding: 0; margin:}
           h1 {padding: 0.1em; background-color: #777; color: white; border-bottom: thin white dashed;}
 </style></head><body><div id="container"><div class="directory-listing"><h1>%s</h1>""" % (title,title)
+        s += "<div>" + formatClones(self.path) + "</div>"
         s+="<table>"
-        s+="<tr><th>Filename</th><th>Size</th><th>Last Modified</th><th>File Type</th></tr>"
+        s+="<tr><th>Filename</th><th>Size</th><th>Last Modified</th><th>File Type</th><th>Clones</th></tr>"
         even = False
         for row in self.data_listing(request, None):
             s+='<tr class="%s">' % (even and 'even' or 'odd',)
-            s+='<td><a href="%(link)s">%(linktext)s</a></td><td align="right">%(size)s</td><td>%(lastmod)s</td><td>%(type)s</td></tr>' % row
+            s+='<td><a href="%(link)s">%(linktext)s</a></td><td align="right">%(size)s</td><td>%(lastmod)s</td><td>%(type)s</td><td>%(clones)s</td></tr>' % row
             even = not even
                 
         s+="</table></div></div></body></html>"

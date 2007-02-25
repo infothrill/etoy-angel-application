@@ -1,7 +1,7 @@
 from twisted.web2.dav.element import rfc2518
 from angel_app import elements
 from angel_app.resource.local.basic import Basic
-from angel_app.resource.remote.clone import Clone
+from angel_app.resource.remote.clone import Clone, splitParse, cloneFromElement
 from angel_app.resource.util import urlPathFromPath
 import urllib
 import os 
@@ -15,22 +15,6 @@ from angel_app.config import config
 AngelConfig = config.getConfig()
 repository = AngelConfig.get("common","repository")
 
-def splitParse(cloneUri):
-    log.info(cloneUri)
-    host, rest = cloneUri.split(":")
-    fragments = rest.split("/")
-    port = int(fragments[0])
-    
-    if len(fragments) > 1:
-        return host, port, "/" + "/".join(fragments[1:])
-    
-    return (host, port)
-
-def cloneFromGunk(gunk):
-    assert len(gunk) > 1
-    assert len(gunk) < 4
-    if len(gunk) == 2: return Clone(gunk[0], gunk[1])
-    else: return Clone(gunk[0], gunk[1], gunk[2])
 
 
 def getLocalCloneURLList(af):
@@ -41,8 +25,9 @@ def getLocalCloneURLList(af):
     clones = []
     
     try:
-        log.info("getting clones from resource: " + af.fp.path)
-        clones += [cloneFromGunk(splitParse(str(cc.children[0].children[0]))) for cc in af.clones().children]
+        DEBUG and log.debug("getting clones from resource: " + af.fp.path)
+        clones += [cloneFromElement(cc) for cc in af.clones().children]
+        #clones += [cloneFromGunk(splitParse(str(cc.children[0].children[0]))) for cc in af.clones().children]
     except:
         log.warn("no clones with resource: " + af.fp.path)
         pass

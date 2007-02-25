@@ -320,3 +320,28 @@ def getMostCurrentClones(clonesList):
     """
     newest = max([clone.revision() for clone in clonesList])    
     return [clone for clone in clonesList if clone.revision() == newest]
+
+
+def splitParse(cloneUri):
+    log.info(cloneUri)
+    host, rest = cloneUri.split(":")
+    fragments = rest.split("/")
+    port = int(fragments[0])
+    
+    if len(fragments) > 1:
+        return host, port, "/" + "/".join(fragments[1:])
+    
+    return (host, port)
+
+def cloneFromGunk(gunk):
+    assert len(gunk) > 1
+    assert len(gunk) < 4
+    if len(gunk) == 2: return Clone(gunk[0], gunk[1])
+    else: return Clone(gunk[0], gunk[1], gunk[2])
+    
+    
+def cloneFromElement(cc):
+    """
+    Takes an child element of the Clones element and returns a Clone instance.
+    """
+    return cloneFromGunk(splitParse(str(cc.children[0].children[0])))
