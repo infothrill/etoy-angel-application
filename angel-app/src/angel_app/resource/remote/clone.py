@@ -276,15 +276,16 @@ def makePushBody(localClone):
     Generate the DAVDocument representation of the required properties of the local clone.
     """
     
+    def makeSetElement(elements):
+        return rfc2518.Set(
+                         rfc2518.PropertyContainer(element))
+    
+    
     for el in elements.requiredKeys:
         DEBUG and log.debug("makePushBody: " + localClone.deadProperties().get(el.qname()).toxml())
-    pList = [
-             rfc2518.Set(
-                         rfc2518.PropertyContainer(
-                                      localClone.deadProperties().get(el.qname())))
-             for el 
-             in elements.requiredKeys + [elements.Clones]
-             ]
+    pList = [makeSetElement(element) for element in
+             [localClone.deadProperties().get(el.qname()) for el in elements.requiredKeys]
+              + [clonesToElement([localClone])]]
     
     DEBUG and log.debug(`pList`)
     
@@ -359,6 +360,6 @@ def clonesToElement(cloneList):
     Takes a list of clones and generates a Clones element from it.
     """
     return elements.Clones(*[
-                    elements.Clone(rfc2518.HRef(`cc`)) for cc in clonesToBeStored
+                    elements.Clone(rfc2518.HRef(`cc`)) for cc in cloneList
                     ])
     

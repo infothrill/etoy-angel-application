@@ -101,7 +101,7 @@ class ProppatchMixin:
         
             
 
-    def apply(self, requestProperties, uri):
+    def apply(self, requestProperties, request, uri):
 
         responses = PropertyStatusResponseQueue(
                                     "PROPPATCH", 
@@ -123,29 +123,32 @@ class ProppatchMixin:
                     )
                 
         def cloneHandler(property, store, request, responses):
+            """
+            The host from which the request originates must have access to a local clone,
+            store if we want.
+            """
             from angel_app.resource.remote.clone import clonesFromElement, clonesToElement
-            import sets
             try:
-                residentClones = set.Set(clonesFromElement(dp.get(elements.Clones)))
+                residentClones = clonesFromElement(dp.get(elements.Clones))
             except:
-                residentClones = set.Set([])
-            newClones = residentClones.difference(clonesFromElement(property))
-            for clone in newClones:
-                # TODO -- eliminate this magic number
-                if len(residentClones) > 5: break
-                
-                if clone.host == "localhost":
-                    clone.host = str(request.remoteAddr.host)
+                residentClones = []
+            # TODO -- eliminate this magic number
+            if len(residentClones) > 5: return
+            
+            newClone = clonesFromElement(property)[0]
+            newClone.host = str(request.remoteAddr.host)
                     
-            defaultHandler(clonesToElement(residentClones), store, responses)
+            defaultHandler(clonesToElement(residentClones + [newClone]), store, responses)
         
         for property in requestProperties:
             log.info("proppatch applying: " + property.toxml())
             try:
                 if property.__class__ == elements.Clones:
                     cloneHandler(property, dp, request, responses)
-                else:
+                elif property.__class__ in elements.requiredKeys:
                     defaultHandler(property, dp, responses)
+                else: # we don't generally accept unsigned material
+                    responses.add(responsecode.UNAUTHORIZED, property)
             except:
                 responses.add(Failure(), property)
             else:
