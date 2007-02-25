@@ -13,6 +13,9 @@ DEBUG = True
 
 from httplib import HTTPConnection
 
+from angel_app.config import config
+AngelConfig = config.getConfig()
+providerport = AngelConfig.getint("provider","listenPort")
 
 class Clone(object):
     """
@@ -22,7 +25,7 @@ class Clone(object):
     """
     implements(IResource.IAngelResource)
     
-    def __init__(self, host = "localhost", port = 9999, path = "/"):
+    def __init__(self, host = "localhost", port = providerport, path = "/"):
         """
         @rtype Clone
         @return a new clone
@@ -283,9 +286,11 @@ def makePushBody(localClone):
     
     for el in elements.requiredKeys:
         DEBUG and log.debug("makePushBody: " + localClone.deadProperties().get(el.qname()).toxml())
+        
+    cc = Clone("localhost", providerport, "/" + localClone.relativePath())
     pList = [makeSetElement(element) for element in
              [localClone.deadProperties().get(el.qname()) for el in elements.requiredKeys]
-              + [clonesToElement([localClone])]]
+              + [clonesToElement([cc])]]
     
     DEBUG and log.debug(`pList`)
     
