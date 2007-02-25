@@ -11,11 +11,15 @@ def graphWalker(node, getChildren, toEvaluate, backPack = None):
     
     @see walkTest() for an example.
     """
-    rr = toEvaluate(node, backPack)
-    yield rr[0]
-    for child in getChildren(node):
-        for result in graphWalker(child, getChildren, toEvaluate, rr[1]):
-            yield result
+    try:
+        rr = toEvaluate(node, backPack)
+        yield rr[0]
+        for child in getChildren(node):
+            for result in graphWalker(child, getChildren, toEvaluate, rr[1]):
+                yield result
+    except:
+        log.warn("graph walker failed on node: " + `node`)
+        raise StopIteration
 
 
 """
