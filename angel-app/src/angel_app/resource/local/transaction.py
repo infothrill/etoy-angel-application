@@ -1,5 +1,5 @@
 from twisted.web2.dav.static import DAVFile
-from twisted.web2 import responsecode, dirlist
+from twisted.web2 import responsecode
 from twisted.web2.http import HTTPError
 from twisted.web2 import http, stream
 from twisted.web2.dav.xattrprops import xattrPropertyStore

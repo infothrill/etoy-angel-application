@@ -10,7 +10,7 @@ from twisted.web2.dav.http import statusForFailure
 
 from twisted.web2.dav.fileop import checkResponse
 from angel_app.log import getLogger
-from angel_app.resource.local.internal.util import nonblockingInspection
+from angel_app.resource.local.internal.util import inspectWithResponse
 
 DEBUG = True
 
@@ -123,6 +123,9 @@ class Putable(object):
         """
         Respond to a PUT request. (RFC 2518, section 8.7)
         """
+        #log.error("XXX:" + `request`)
+        #log.error("XXX:" + str(request.remoteAddr))
+        #log.error("XXX:" + str(request.remoteAddr.host))
         return deferredGenerator(self._put)(request.stream).addCallback(inspectWithResponse(self))
         #return deferredGenerator(self._put)(request.stream).addCallback(nonblockingInspection(self))
         
