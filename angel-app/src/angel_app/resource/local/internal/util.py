@@ -48,8 +48,8 @@ def orderedInspection(resource):
         try:
             # if we're not the root resource, inspect the parent
             if None != resource.parent():
-                yield inspectResource(resource.parent().fp.path)
-            yield inspectResource(resource.fp.path)
+                inspectResource(resource.parent().fp.path)
+            inspectResource(resource.fp.path)
         except:
             log.msg("failed to update clones after processing request for " + resource.fp.path)
             
@@ -58,8 +58,8 @@ def orderedInspection(resource):
 def nonblockingInspection(resource):
     
     log.error("nonblockingInspection: foo")
-    #inspectionDelay = 2
-    #reactor.callLater(inspectionDelay, orderedInspection(resource))
+    inspectionDelay = 0
+    reactor.callLater(inspectionDelay, orderedInspection(resource))
     
     return identity
     
