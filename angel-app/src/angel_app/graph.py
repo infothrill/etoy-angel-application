@@ -1,3 +1,5 @@
+log = getLogger("maintainer")
+
 def graphWalker(node, getChildren, toEvaluate, backPack = None):
     """
     A generator that (lazily, recursively) applies an operation to a directed graph structure.
