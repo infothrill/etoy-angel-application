@@ -39,6 +39,7 @@ def runServer():
     sleeptime = AngelConfig.getint("maintainer", "initialsleep")
     traversalTime = AngelConfig.getint("maintainer", "treetraversaltime")
     while 1:
+    	log.info("sleep timeout between resource inspections is: " + `sleeptime`)
     	startTime = int(time.time())
     	for ii in graphWalker(repository, getChildren, toEvaluate):
     		time.sleep(sleeptime)
