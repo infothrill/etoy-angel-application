@@ -90,13 +90,13 @@ class ProppatchMixin:
                     ])
         #sm = "".join([requestProperties.childOfType(key) for key in elements.requiredKeys])
         #sm = "".join(requestProperties[1])
-        log.info(signable)
+        log.info(`signable`)
         #sig = requestProperties.childOfType(elements.MetaDataSignature)
-        log.info(sig)
+        log.info(`sig`)
         pubKey = angel_app.contrib.ezPyCrypto.key()
         pubKey.importKey(keyString)
         isValid = pubKey.verifyString(signable, sig)
-        log.info(isValid)
+        log.info(`isValid`)
         return isValid
         
             
