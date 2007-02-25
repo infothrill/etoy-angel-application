@@ -123,6 +123,7 @@ class Putable(object):
         """
         Respond to a PUT request. (RFC 2518, section 8.7)
         """
-        return deferredGenerator(self._put)(request.stream).addCallback(inspectWithResponse(self))
+        return deferredGenerator(self._put)(request.stream)
+        #return deferredGenerator(self._put)(request.stream).addCallback(inspectWithResponse(self))
         #return deferredGenerator(self._put)(request.stream).addCallback(nonblockingInspection(self))
         

@@ -27,7 +27,7 @@ class Deletable(object):
                        request.headers.getHeader("depth", "infinity")
                        )
         
-        inspectWithResponse(self)(foo)
+        #inspectWithResponse(self)(foo)
         DEBUG and log.debug("http_DELETE: " + `type(foo)`)
         return foo
 
