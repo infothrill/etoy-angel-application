@@ -40,6 +40,8 @@ import angel_app.contrib.ezPyCrypto
 from angel_app.log import getLogger
 
 log = getLogger("deleteable")
+DEBUG = True
+
 
 class ProppatchMixin:
     
