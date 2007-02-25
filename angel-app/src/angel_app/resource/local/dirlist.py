@@ -34,7 +34,7 @@ def formatClones(path):
         return aa
     
     try:
-        return "Clones: " + ", ".join([              
+        return ", ".join([              
                    '<a href="http://' + `clone`+ '">' + clone.host + '</a>'
                    #`cloneFromElement(clone)`
                    #`clone`
@@ -129,7 +129,7 @@ class DirectoryLister(resource.Resource):
           body { border: 0; padding: 0; margin:}
           h1 {padding: 0.1em; background-color: #777; color: white; border-bottom: thin white dashed;}
 </style></head><body><div id="container"><div class="directory-listing"><h1>%s</h1>""" % (title,title)
-        s += "<div>" + formatClones(self.path) + "</div>"
+        s += "<div> Clones: " + formatClones(self.path) + "</div>"
         s+="<table>"
         s+="<tr><th>Filename</th><th>Size</th><th>Last Modified</th><th>File Type</th><th>Clones</th></tr>"
         even = False
