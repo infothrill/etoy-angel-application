@@ -3,6 +3,8 @@ from angel_app.log import getLogger
 from angel_app.config import config
 AngelConfig = config.getConfig()
 
+log = getLogger("maintainer")
+
 def bootInit():
 	"""
 	Method to be called in __main__ before anything else. This method cannot rely on any
