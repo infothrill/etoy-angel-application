@@ -137,8 +137,13 @@ class ProppatchMixin:
             # TODO -- eliminate this magic number
             if len(residentClones) > 5: return
             
-            newClone = clonesFromElement(property)[0]
-            newClone.host = str(request.remoteAddr.host)
+            address = str(request.remoteAddr.host)
+            try:
+                newClone = clonesFromElement(property)[0]
+            except:
+                log.warn("received malformed clone:" + `property`)
+                log.warn("from host:" + `address`)
+            newClone.host = address
                     
             defaultHandler(clonesToElement(residentClones + [newClone]), store, responses)
         
