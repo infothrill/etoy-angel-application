@@ -21,7 +21,8 @@ def bootInit():
 	angel_app.config.defaults.binpath = os.getcwd()
 
 
-def startProcessesWithProcessManager(procManager, binpath = os.getcwd()):
+def startProcesses(binpath = os.getcwd()):
+	procManager = angel_app.procmanager.ExternalProcessManager()
 	procManager.registerProcessStarter(reactor.spawnProcess)
 	procManager.registerDelayedStarter(reactor.callLater) 
 	
@@ -88,9 +89,6 @@ if __name__ == "__main__":
 
 	angel_app.logserver.startLoggingServer()
 
-	# ExternalProcessManager.processEnded must be available to the ProcessProtocol, otherwise callbacks won't work
-	# that's why we instantiate it here in __main__
-	procManager = angel_app.procmanager.ExternalProcessManager()
-	startProcessesWithProcessManager(procManager, angel_app.config.defaults.binpath)
+	startProcesses(angel_app.config.defaults.binpath)
 
 	reactor.run()

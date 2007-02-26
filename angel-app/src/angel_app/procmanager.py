@@ -93,6 +93,7 @@ class ExternalProcessManager:
         to stay alive.
         """
         processObj.wantDown = False
+        processObj.protocol.setProcManager(self)
         self.log.info("startServicing %s", processObj.protocol)
         if not self.procDict.has_key(processObj):
             self.log.debug("process is not known")
@@ -216,6 +217,15 @@ class ExternalProcessProtocol(ProcessProtocol):
     def __init__(self):
         self.log = getLogger(self.__class__.__name__)
 
+    def setProcManager(self, procManager):
+        """
+        ExternalProcessManager.processEnded must be available to
+        the ExternalProcessProtocol
+        This is slightly bad, because ExternalProcess/Manager and
+        Protocol respectively have cyclic references.
+        """    
+        self.procManager = procManager
+
     def connectionMade(self):
         self.transport.closeStdin()
 
@@ -227,7 +237,7 @@ class ExternalProcessProtocol(ProcessProtocol):
 
     def processEnded(self, reason):
         self.log.info("external Process with protocol '%s' ended with reason: '%s'" , self.__class__.__name__, reason.getErrorMessage())
-        procManager.endedProcess(self, reason)
+        self.procManager.endedProcess(self, reason)
 
 """
 the next 3 classes are merely here for providing a specific class name for each external process we run
