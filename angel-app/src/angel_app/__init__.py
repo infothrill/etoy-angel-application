@@ -1,1 +1,1 @@
-all = ["config", "contrib", "elements", "graph", "resource", "server", "log", "proc"]
+all = ["config", "contrib", "elements", "graph", "resource", "server", "log", "procmanger", "logserver", "singlefiletransaction"]
