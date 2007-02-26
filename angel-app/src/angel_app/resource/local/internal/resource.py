@@ -13,7 +13,7 @@ import urllib
 
 DEBUG = False
 
-log = getLogger()
+log = getLogger("local.internal")
 # DO NOT EXPOSE THIS KEY!!!!
 from angel_app.config.internal import loadKeysFromFile
 
@@ -80,21 +80,25 @@ class Crypto(
         is None.
         </p>
 
-        TODO: this implementation is dog slow and non-atomic. Revamp.
+        TODO: this uses in-memory encryption, revamp to streams
         """
         
         if self.fp.isdir() or self.secretKey == None: return
-        
+
+        DEBUG and log.debug("encrypting file: " + self.fp.path)
         myFile = self.fp.open() 
         plainText = myFile.read()
         myFile.close()
         cypherText = self.secretKey.encString(plainText)
-        DEBUG and log.debug("encrypting file: " + self.fp.path)
-        myFile = self.fp.open("w") 
-        myFile.write(cypherText)
-        myFile.flush()
-        myFile.close()
         DEBUG and log.debug(cypherText)  
+
+        import angel_app.singlefiletransaction
+        t = SingleFileTransaction()
+        safe = t.open(self.fp, 'wb')
+        safe.write(cypherText)
+        safe.close()
+        t.commit()
+
 
     def sign(self):
         """
