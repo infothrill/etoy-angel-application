@@ -81,7 +81,7 @@ class DirectoryLister(resource.Resource):
                     'size': '',
                     'type': '-',
                     'lastmod': time.strftime("%Y-%b-%d %H:%M", time.localtime(st.st_mtime)),
-                    'clones': formatClones(path)
+                    'clones': formatClones(fullpath)
                     })
             else:
                 from twisted.web2.static import getTypeAndEncoding
@@ -110,27 +110,23 @@ class DirectoryLister(resource.Resource):
     def render(self, request):
         title = "Directory listing for %s" % urllib.unquote(request.path)
     
-        s= """<html><head><title>%s</title>
+        s= """<html><head><title>angel-app: %s</title>
         <link href="http://missioneternity.org/files/m221e.css" rel="stylesheet" type="text/css" media="all" />
         <style>
-          th, .even td, .odd td { padding-right: 0.5em;}
-          .even-dir { background-color: #efe0ef }
-          .even { background-color: #eee }
-          .odd-dir {background-color: #f0d0ef }
-          .odd { background-color: #dedede }
-          .icon { text-align: center }
-          .listing {
-              margin-left: auto;
-              margin-right: auto;
-              width: 50%%;
-              padding: 0.1em;
-              }
-            
-          body { border: 0; padding: 0; margin:}
-          h1 {padding: 0.1em; background-color: #777; color: white; border-bottom: thin white dashed;}
-</style></head><body><div id="container"><div class="directory-listing"><h1>%s</h1>""" % (title,title)
+          .even-dir { background-color: #eeeeee }
+          .even { background-color: #eeeeee }
+          .odd-dir {background-color: #ffffff }
+          .odd { background-color: #ffffff }
+          th { white-space:nowrap; text-align:left; padding-right: 20px;}
+          div { margin-top: 20px; }
+        </style>
+        </head><body style="margin-bottom: 50px;">
+        <div id="container"  style="width:650px; padding:30px 0px 0px 0px;">
+        <div style="text-align:right"><a href="http://www.missioneternity.org/"><img style="border:0;" src="http://angelapp.missioneternity.org/moin/share/moin/htdocs/rightsidebar/img/m221e-batch-logo.jpg" alt="MISSION ETERNITY"></a></div>
+        <div class="directory-listing">       
+        <h1><a href="http://angelapp.missioneternity.org/">angel-app</a>: %s</h1>""" % (title,title)
         s += "<div> Clones: " + formatClones(self.path) + "</div>"
-        s+="<table>"
+        s+="<div><table>"
         s+="<tr><th>Filename</th><th>Size</th><th>Last Modified</th><th>File Type</th><th>Clones</th></tr>"
         even = False
         for row in self.data_listing(request, None):
@@ -138,7 +134,8 @@ class DirectoryLister(resource.Resource):
             s+='\n<td><a href="%(link)s">%(linktext)s</a></td><td align="right">%(size)s</td><td>%(lastmod)s</td><td>%(type)s</td><td>%(clones)s</td></tr>' % row
             even = not even
                 
-        s+="</table></div></div></body></html>"
+        s+="""</table></div>
+        </div></div></body></html>"""
         response = http.Response(200, {}, s)
         response.headers.setHeader("content-type", http_headers.MimeType('text', 'html'))
         return response
