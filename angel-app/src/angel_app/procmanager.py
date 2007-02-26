@@ -220,10 +220,10 @@ class ExternalProcessProtocol(ProcessProtocol):
         self.transport.closeStdin()
 
     def outReceived(self, data):
-        self.log.debug("STDOUT from '%s': %s", self.__class__.__name__, data)
+        self.log.info("STDOUT from '%s': %s", self.__class__.__name__, data)
 
     def errReceived(self, data):
-        self.log.debug("STDERR from '%s': %s", self.__class__.__name__, data)
+        self.log.warn("STDERR from '%s': %s", self.__class__.__name__, data)
 
     def processEnded(self, reason):
         self.log.info("external Process with protocol '%s' ended with reason: '%s'" , self.__class__.__name__, reason.getErrorMessage())
