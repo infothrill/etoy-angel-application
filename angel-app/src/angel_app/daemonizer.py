@@ -25,7 +25,7 @@
 '''
 import sys, os, time
 from twisted.python.filepath import FilePath
-from signal import SIGTERM
+from signal import SIGTERM, SIGKILL
 
 def getAngelHomePath():
 	from angel_app.config.defaults import getAngelHomePath
@@ -132,9 +132,19 @@ def startstop(action=None, stdout=os.devnull, stderr=None, stdin=os.devnull,
 				sys.stderr.write(mess % (pidfile, os.linesep))
 				sys.exit(1)
 			try:
+				countSIGTERM = 0
+				sleepTime = 1
 				while 1:
-					os.kill(pid,SIGTERM)
-					time.sleep(1)
+					if countSIGTERM > 3:
+						sys.stderr.write("Process not responding, sending SIGKILL to process with PID %i.%s" % (pid, os.linesep))
+						os.kill(pid,SIGKILL)
+					else:
+						os.kill(pid,SIGTERM)
+					countSIGTERM += 1
+					time.sleep(sleepTime)
+					# send signal 0 straight away, no need to re-enter the loop
+					os.kill(pid, 0)
+					sleepTime = sleepTime + 1
 			except OSError, err:
 				err = str(err)
 				if err.find("No such process") > 0:
