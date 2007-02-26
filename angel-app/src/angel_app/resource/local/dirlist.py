@@ -26,13 +26,6 @@ def formatClones(path):
     from angel_app.resource.local import basic
     from angel_app.resource.remote.clone import cloneFromElement
     
-    def links(clone):
-        
-        return `clone`
-        aa =  '<a href="http://' + `clone`+ '%(clone)s">' + clone.host + '</a>'# % clone
-        log.info(aa)
-        return aa
-    
     try:
         return ", ".join([              
                    '<a href="http://' + `clone`+ '">' + clone.host + '</a>'
@@ -126,7 +119,7 @@ class DirectoryLister(resource.Resource):
         <div class="directory-listing">       
         <h1><a href="http://angelapp.missioneternity.org/">angel-app</a>: %s</h1>""" % (title,title)
         s += "<div> Clones: " + formatClones(self.path) + "</div>"
-        s+="<div><table>"
+        s+='<div><table width="100%">'
         s+="<tr><th>Filename</th><th>Size</th><th>Last Modified</th><th>File Type</th><th>Clones</th></tr>"
         even = False
         for row in self.data_listing(request, None):
