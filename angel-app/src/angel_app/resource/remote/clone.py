@@ -70,7 +70,9 @@ class Clone(object):
 
     def __performRequest(self, method = "GET", headers = {}, body = ""):
         DEBUG and log.debug("attempting " + method + " connection to: " + self.host + ":" + `self.port` + " " + self.path)   
-        conn = HTTPConnection(self.host, self.port)        
+        conn = HTTPConnection(self.host, self.port)
+        conn.connect() # connect manually, so we can set a timeout on the socket
+        conn.sock.settimeout(10.0) # TODO: make this a config value
         conn.request(
                  method, 
                  self.path,
