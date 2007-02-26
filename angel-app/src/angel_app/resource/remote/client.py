@@ -105,14 +105,17 @@ def _ensureLocalValidity(resource, referenceClone):
     else:
         if (not resource.exists()) or (referenceClone.revision() > resource.revisionNumber()):
 
-            open(resource.fp.path, "w").write(referenceClone.stream().read())
-                    
             # update the file contents, if necessary
             DEBUG and log.debug("_ensureLocalValidity: updating file contents for " + 
                               resource.fp.path + " " + `resource.exists()`
                               + " " + `referenceClone.revision()` + " " + `resource.revisionNumber()`
                               + " " + `resource.verify()`)
 
+            import angel_app.singlefiletransaction
+            t = SingleFileTransaction()
+            t.open(resource.fp.path, 'wb').write(referenceClone.stream().read())
+            t.commit()
+            #open(resource.fp.path, "w").write(referenceClone.stream().read()) #old
             
            
     if not resource.verify() or (referenceClone.revision() > resource.revisionNumber()):
