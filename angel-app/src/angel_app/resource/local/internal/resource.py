@@ -93,7 +93,7 @@ class Crypto(
         DEBUG and log.debug(cypherText)  
 
         import angel_app.singlefiletransaction
-        t = SingleFileTransaction()
+        t = angel_app.singlefiletransaction.SingleFileTransaction()
         safe = t.open(self.fp, 'wb')
         safe.write(cypherText)
         safe.close()

@@ -112,7 +112,7 @@ def _ensureLocalValidity(resource, referenceClone):
                               + " " + `resource.verify()`)
 
             import angel_app.singlefiletransaction
-            t = SingleFileTransaction()
+            t = angel_app.singlefiletransaction.SingleFileTransaction()
             t.open(resource.fp.path, 'wb').write(referenceClone.stream().read())
             t.commit()
             #open(resource.fp.path, "w").write(referenceClone.stream().read()) #old
