@@ -17,6 +17,15 @@ from angel_app.config import config
 AngelConfig = config.getConfig()
 providerport = AngelConfig.getint("provider","listenPort")
 
+class CloneError(Exception):
+    def __init__(self,value):
+        self.parameter=value
+    def __str__(self):
+        return repr(self.parameter)
+
+class CloneNotFoundError(CloneError):
+    pass
+
 class Clone(object):
     """
     Provides methods for transparent access to frequently used clone meta data.
@@ -69,10 +78,13 @@ class Clone(object):
         return `self`.__hash__()
 
     def __performRequest(self, method = "GET", headers = {}, body = ""):
+        # for now, we set a default socket timeout, this impacts ALL socket connections, not only HTTPConnections
+        import socket
+        socket.setdefaulttimeout(5) # FIXME: remove this when we can set it selectivly for HTTPConnection
         DEBUG and log.debug("attempting " + method + " connection to: " + self.host + ":" + `self.port` + " " + self.path)   
         conn = HTTPConnection(self.host, self.port)
         conn.connect() # connect manually, so we can set a timeout on the socket
-        conn.sock.settimeout(10.0) # TODO: make this a config value
+#        conn.sock.settimeout(60.0) # TODO: make this a config value
         conn.request(
                  method, 
                  self.path,
@@ -102,12 +114,15 @@ class Clone(object):
                               body = makePropfindRequestBody(properties)
                               )
 
-        if resp.status != responsecode.MULTI_STATUS:
-            DEBUG and log.debug("bad response: " + `resp.status`)
-            raise "must receive a MULTI_STATUS response for PROPFIND, otherwise something's wrong, got: " + `resp.status` +\
-                resp.read()
-        
         data = resp.read()
+
+        if resp.status != responsecode.MULTI_STATUS:
+            if resp.status == responsecode.NOT_FOUND:
+                raise CloneNotFoundError("Clone %s not found, response code is: %s, data is %s" % (self, `resp.status`, data) )
+            else:
+                raise CloneError("must receive a MULTI_STATUS response for PROPFIND, otherwise something's wrong, got: " + `resp.status` +\
+                    data)
+
         #DEBUG and log.debug("PROPFIND body: " + data)
         return data
     
@@ -116,9 +131,8 @@ class Clone(object):
         @rtype WebDAVDocument
         @return the properties as a davxml document tree.
         """
-        return davxml.WebDAVDocument.fromString(
-                                               self.propFindAsXml(
-                                                                  properties))
+        xmlProps = self.propFindAsXml(properties)
+        return davxml.WebDAVDocument.fromString(xmlProps)
 
 
     def propertyFindBodyXml(self, property):
@@ -289,11 +303,12 @@ class Clone(object):
         
         # we probably ignore the returned data, but who knows
         data = resp.read()
-        print data
         if resp.status != responsecode.MULTI_STATUS:
-            raise "must receive a MULTI_STATUS response for PROPPATCH (received " + \
-                `resp.status` + "), otherwise something's wrong"
-
+            if resp.status == responsecode.NOT_FOUND:
+                raise CloneNotFoundError("Clone %s not found, response code is: %s, data is %s" % (self, `resp.status`, data) )
+            else:
+                raise CloneError("must receive a MULTI_STATUS response for PROPPATCH, otherwise something's wrong, got: " + `resp.status` +\
+                    data)
 
    
 def makePropfindRequestBody(properties):
