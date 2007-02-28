@@ -157,6 +157,7 @@ class Basic(deleteable.Deletable, Safe):
             DEBUG and log.debug("data signature for file '%s' is correct: %s" % (self.fp.path, cs) )
         else:
             log.info("data signature for file '%s' is incorrect: %s" % (self.fp.path, cs) )
+            return False
         
         publicKey = ezKey()
         publicKey.importKey(pk)
