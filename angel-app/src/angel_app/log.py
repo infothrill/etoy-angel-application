@@ -88,12 +88,22 @@ def getAngelLogFilename():
 
 
 from logging import Filter
+import re
 class AngelLogFilter(Filter):
     def filter(self, record):
         stringobj = str(record.msg) # this enables us to log all sorts of types, by using their string representation
         record.msg = stringobj.replace("\n", "\\n") # TODO: this is not safe enough, there might be control chars, and record.args also can contain bad data
-        return 1
+        return True
 
+class AngelLogTwistedFilter(Filter):
+    def __init__(self):
+        self.re = re.compile("HTTPChannel,\d+,.*: (PROPFIND )|(HEAD )\/.* HTTP\/1\.1")
+    def filter(self, record):
+        #DEBUG and getLogger().debug("TWISTED LOGFILTER")
+        if self.re.search(record.msg):
+            return False
+        else:
+            return True
 
 def setup():
 	"""
@@ -126,10 +136,12 @@ def enableHandler(handlername, handler = None):
         logging.getLogger().addHandler(handler)
 
 def getReady():
-	"""
-	must be called after setup() and after enabling handlers with enableHandler()
-	"""
-	twistedlog.startLoggingWithObserver(logTwisted, setStdout=0)
+    """
+    must be called after setup() and after enabling handlers with enableHandler()
+    """
+    ourTwistedLogger = getLogger("twisted")
+    ourTwistedLogger.addFilter( AngelLogTwistedFilter() )
+    twistedlog.startLoggingWithObserver(logTwisted, setStdout=0)
 
 
 def logTwisted(eventDict):
