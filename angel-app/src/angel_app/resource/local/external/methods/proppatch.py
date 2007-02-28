@@ -140,11 +140,26 @@ class ProppatchMixin:
             address = str(request.remoteAddr.host)
             try:
                 newClone = clonesFromElement(property)[0]
-                newClone.host = address
-                defaultHandler(clonesToElement(residentClones + [newClone]), store, responses)
+                newClone.host = address                
             except:
-                log.warn("received malformed clone:" + `property`)
-                log.warn("from host:" + `address`)
+                log.warn("received malformed clone:" + `property` + "from host:" + `address`)
+                return
+                
+            # verify that the clone is reachable ...
+            if not (newClone.ping() and newClone.exists()): return
+            
+            newClone.updateCache()
+            
+            # ... and good before adding it to the local store
+            # TODO: WARNING check: this may introduce a deadlock if a provider A tries to push a clone
+            # but the other provider B will not accept it until it verified the clone on A. do providers
+            # ever push resources? i think only presenters and maintainers do -- but verify!
+            if newClone.publicKeyString() == self.publicKeyString() and \
+                newClone.validate() and \
+                newClone.resourceID() == self.resourceID():
+                defaultHandler(clonesToElement(residentClones + [newClone]), store, responses)
+            else:
+                log.info("not adding unreachable or invalid clone: " + `newClone`)
             
                     
             
