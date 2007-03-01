@@ -7,6 +7,7 @@ from angel_app.resource import IResource
 from zope.interface import implements
 from angel_app.contrib.ezPyCrypto import key
 from angel_app.log import getLogger
+import urlparse
 
 log = getLogger("clone")
 DEBUG = False
@@ -61,8 +62,18 @@ class Clone(object):
 
         response = self.__performRequest(method = "HEAD", body = "")
         if response.status == responsecode.MOVED_PERMANENTLY:
-            self.path = response.getheader("location")
             log.info("clone received redirect: " + `self`)
+            try:
+                redirectURL = urlparse.urlparse(response.getheader("location"))
+                path = redirectURL[2]
+                assert path != ""
+                self.path = path
+                log.info("redirecting to: " + `path`)
+            except:
+                error = "redirection url invalid: " + `redirectUrl`
+                log.warn(error)
+                raise CloneNotFoundError(error)
+            
     
     def __eq__(self, clone):
         """
