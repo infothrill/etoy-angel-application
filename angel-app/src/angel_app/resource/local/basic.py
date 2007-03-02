@@ -16,7 +16,6 @@ from angel_app.log import getLogger
 from angel_app.contrib import uuid
 from angel_app.contrib.ezPyCrypto import key as ezKey
 import os
-import sha
 import urllib
 
 from angel_app.contrib import uuid
@@ -29,6 +28,8 @@ DEBUG = False
 from angel_app.config import config
 AngelConfig = config.getConfig()
 repository = AngelConfig.get("common","repository")
+
+REPR_DIRECTORY = "directory" #This is the string content representation of a directory
 
 class Basic(deleteable.Deletable, Safe):
     """
@@ -43,10 +44,18 @@ class Basic(deleteable.Deletable, Safe):
         self._dead_properties = xattrPropertyStore(self)
 
     def contentAsString(self):
-        if self.fp.isdir(): 
-            return "directory"
-        return self.fp.open().read()
-    
+        return self.open().read()
+
+    def open(self):
+        """
+        @return a stream-like object that has the read() and close() methods, to read the contents of the local resource
+        """
+        from angel_app.resource.local.util import StringReader
+        if self.fp.isdir():
+            return StringReader(REPR_DIRECTORY)
+        else:
+            return self.fp.open()
+
     def contentLength(self):
         if not self.isEncrypted():
             return super(Safe, self).contentLength()
@@ -136,8 +145,6 @@ class Basic(deleteable.Deletable, Safe):
         return False
     
     def verify(self):
-        from angel_app.resource.local.util import getHexDigestForFile
-        
         if not self.exists():
             DEBUG and log.debug("Basic.verify(): False, file does not exist")
             return False
@@ -152,7 +159,7 @@ class Basic(deleteable.Deletable, Safe):
             return False
         
         dataIsCorrect = False
-        if cs == getHexDigestForFile(self.fp):
+        if cs == self._computeContentHexDigest():
             dataIsCorrect = True
             DEBUG and log.debug("data signature for file '%s' is correct: %s" % (self.fp.path, cs) )
         else:
@@ -170,6 +177,22 @@ class Basic(deleteable.Deletable, Safe):
             
         return dataIsCorrect and metaDataIsCorrect
     
+    def _computeContentHexDigest(self):
+        """
+        @return hexdigest for content of self
+        """
+        from angel_app.resource.local.util import getHashObject
+        hash = getHashObject()
+        f = self.open()
+        bufsize = 4096 # 4 kB
+        while True:
+            buf = f.read(bufsize)
+            if len(buf) == 0:
+                break
+            hash.update(buf)
+        f.close()
+        return hash.hexdigest()
+
     def resourceID(self):
         """
         @see IResource
@@ -310,10 +333,8 @@ class Basic(deleteable.Deletable, Safe):
         @return a SHA checksum of the public key string. We only take the first 16 bytes to be convertible
         to a UUID>
         """
-        return uuid.UUID(
-                         sha.new(
-                                 self.publicKeyString()
-                         ).hexdigest()[:32])
+        from angel_app.resource.local.util import getHashObject
+        return uuid.UUID( getHashObject( self.publicKeyString() ).hexdigest() )
 
     def signableMetadata(self):
         """

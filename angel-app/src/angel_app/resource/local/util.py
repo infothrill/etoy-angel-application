@@ -44,10 +44,12 @@ def resourceFromURI(uri, resourceClass):
     path = repository + sep + sep.join(segments)
     return resourceClass(path)
 
-def getHashObject():
+def getHashObject(data = None):
     """
     Returns an object that can create SHA-1 hash values when feeded with data
     using the update() method.
+    Optional paramater data is passed to the constructor of the hash object,
+    and can be used for more condensed code.
     This method exists solely for python version compatibility.
     """
     from platform import python_version_tuple
@@ -56,10 +58,17 @@ def getHashObject():
     minor = int(minor)
     if (major >=2 and minor < 5 ):
         import sha
-        obj = sha.new()
+        if data:
+            obj = sha.new(data)
+        else:
+            obj = sha.new()            
     else:
         import hashlib
         obj = hashlib.sha1()
+        if data:
+            obj = hashlib.sha1(data)
+        else:
+            obj = hashlib.sha1()            
     return obj
 
 def getHexDigestForFile(fp):
@@ -78,4 +87,44 @@ def getHexDigestForFile(fp):
     return hash.hexdigest()
 
 
+class StringReader:
+    """
+    Class to read from a string in similar fashion to a file object,
+    using the method read()
+    """
+    def __init__(self, value):
+        self.value = value
+        self._offset = 0
+        self._len = len(value)
 
+    def read(self, size = -1):
+        if size < 0: # read all until EOF
+            size = self._len - self._offset
+        elif size == 0:
+            return ''
+        else: # size > 0
+            dataleft = self._len - self._offset
+            if dataleft <= 0:  # read all until EOF
+                size = self._len - self._offset
+        start = self._offset
+        end = self._offset + size
+        self._offset = end
+        return self.value[start:end]
+
+    def close(self):
+        self._offset = 0
+
+def testStringReader():
+        import sys
+        string = "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.\nThis is on a new line.\n"
+        str = StringReader(string)
+        bufsize = 5
+        while True:
+            buf = str.read(bufsize)
+            if len(buf) == 0:
+                break
+            else:
+                sys.stdout.write(buf)
+
+if __name__ == "__main__":
+    testStringReader()

@@ -111,19 +111,16 @@ class Crypto(
         Therefore, it is not possible to use a directory's name as the 
         value to be signed.
         """
-        from angel_app.resource.local.util import getHexDigestForFile
-
         DEBUG and log.debug("signing file: " + self.fp.path)
 
-        signature = getHexDigestForFile(self.fp)
+        signature = self._computeContentHexDigest()
         self.deadProperties().set(
-                                  elements.ContentSignature.fromString(signature)
+                                  elements.ContentSignature.fromString( signature )
                                   )
         self.deadProperties().set(
-                                  elements.PublicKeyString.fromString(self.secretKey.exportKey())
+                                  elements.PublicKeyString.fromString( self.secretKey.exportKey() )
                                   )
         return signature
-
 
     def bumpRevisionNumber(self):
         """
