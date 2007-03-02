@@ -1,17 +1,23 @@
-Unsafe install:
+Getting the latest source
+-------------------------
+$ svn co http://svn.gna.org/svn/angel-app/trunk angel-app
+This will download the latest development source tree (which might be broken)
 
-python setup.py install
+Installing
+----------
+
+Unsafe install:
+	$ python setup.py install
 
 Safe install:
-
-python bootstrap.py
+	$ python bootstrap.py
 
 the latter will install a virtual-python installation in 
 $PWD/angel-app and install the angel-app packages there. 
 this guarantees easy de-installation and avoidance of package conflicts.
 
 the angel-app may then be launched by
-$ cd angel-app/bin
-$ ./python ./master.py
+	$ cd angel-app/bin
+	$ ./python ./master.py
 
 see also the README file for alternative ways to start the angel-app.

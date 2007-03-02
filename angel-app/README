@@ -28,9 +28,15 @@ $ cd angel-app/bin
 $ ./python ./master.py -d start|stop|restart
 
 
+CONFIGURATION
+-------------
+angel-app can be configured through a central configuration file which can be found
+in $HOME/.angel_app/config. The file has is in the well known and widespread ini-style
+syntax.
+
 LOGGING
 -------
-In the default setup, angel-app logs all its output to $HOME/.angel-app/log/*.log
+In the default setup, angel-app logs all its output to $HOME/.angel_app/log/*.log
 Each process has its own logfile called respectively presenter|provider|maintainer[.log]
 If angel-app is started with master.py, there is an overall logfile, which contains
 all messages from all components of angel-app. This logfile is called master.log.
