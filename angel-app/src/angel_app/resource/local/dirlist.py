@@ -9,6 +9,8 @@ import urllib
 import stat
 import time
 
+DEBUG = True
+
 # twisted imports
 from twisted.web2 import iweb, resource, http, http_headers
 
@@ -29,8 +31,6 @@ def formatClones(path):
     try:
         return ", ".join([              
                    '<a href="http://' + `clone`+ '">' + clone.host + '</a>'
-                   #`cloneFromElement(clone)`
-                   #`clone`
                    for clone in [
                                  cloneFromElement(cc) for cc in basic.Basic(path).clones().children]])
     except:
@@ -102,6 +102,18 @@ class DirectoryLister(resource.Resource):
 
     def render(self, request):
         title = "Directory listing for %s" % urllib.unquote(request.path)
+        # TODO we need a better way to transform between url paths and file paths...
+        pathSegments = ["/"] + urllib.unquote(request.path.strip("/")).split(os.sep)
+        linkTargets = ["/"]
+        accumulated = "/"
+        for segment in pathSegments[1:]:
+            accumulated += urllib.quote(segment) + "/"
+            linkTargets.append(accumulated)
+        linkList = "Directory listing for " +'<a href="%s">%s</a>' % ("/", "/")  + \
+            "/".join(['<a href="%s">%s</a>' % (linkTarget, pathSegment) 
+                    for (linkTarget, pathSegment) in 
+                    zip(linkTargets[1:], pathSegments[1:])
+                    ]) + "/"
     
         s= """<html><head><title>angel-app: %s</title>
         <link href="http://missioneternity.org/files/m221e.css" rel="stylesheet" type="text/css" media="all" />
@@ -111,13 +123,14 @@ class DirectoryLister(resource.Resource):
           .odd-dir {background-color: #ffffff }
           .odd { background-color: #ffffff }
           th { white-space:nowrap; text-align:left; padding-right: 20px;}
+          td { vertical-align: top; }
           div { margin-top: 20px; }
         </style>
         </head><body style="margin-bottom: 50px;">
         <div id="container"  style="width:650px; padding:30px 0px 0px 0px;">
         <div style="text-align:right"><a href="http://www.missioneternity.org/"><img style="border:0;" src="http://angelapp.missioneternity.org/moin/share/moin/htdocs/rightsidebar/img/m221e-batch-logo.jpg" alt="MISSION ETERNITY"></a></div>
         <div class="directory-listing">       
-        <h1><a href="http://angelapp.missioneternity.org/">angel-app</a>: %s</h1>""" % (title,title)
+        <h1><a href="http://angelapp.missioneternity.org/">angel-app</a>: %s</h1>""" % (title, linkList)
         s += "<div> Clones: " + formatClones(self.path) + "</div>"
         s+='<div><table width="100%">'
         s+="<tr><th>Filename</th><th>Size</th><th>Last Modified</th><th>File Type</th><th>Clones</th></tr>"
