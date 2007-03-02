@@ -160,7 +160,6 @@ class Config:
         Commits the current values of the config object to the config file. This method is currently called automatically
         whenever a configuration value is changed through set/get. We do not implement this in the destructor, because
         in the destructor we cannot be sure about which stuff is already garbage collected during shutdown and so it might fail there.
-        TODO: this is _not_ fork/thread safe, as it does open/write/close on an unlocked file.
         """
         configfilePath = FilePath(self.cfgvars["mainconfigfile"])
         angelhomePath = FilePath(self.cfgvars["angelhome"])
@@ -169,6 +168,9 @@ class Config:
         if not configfilePath.exists():
             angel_app.log.getLogger("config").info("Creating a new, empty config file in '"+configfilePath.path+"'")
         angel_app.log.getLogger("config").info("committing the config file to '"+self.cfgvars["mainconfigfile"]+"'")
-        f = open(self.cfgvars["mainconfigfile"], 'w')
+        from angel_app.singlefiletransaction import SingleFileTransaction
+        t = SingleFileTransaction()
+        f = t.open(self.cfgvars["mainconfigfile"], 'w')
         self.config.write(f)
         f.close()
+        t.commit()
