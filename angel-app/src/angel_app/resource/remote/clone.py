@@ -89,13 +89,12 @@ class Clone(object):
         return `self`.__hash__()
 
     def __performRequest(self, method = "GET", headers = {}, body = ""):
-        # for now, we set a default socket timeout, this impacts ALL socket connections, not only HTTPConnections
-        import socket
-        socket.setdefaulttimeout(5) # FIXME: remove this when we can set it selectivly for HTTPConnection
+        # a default socket timeout leads to socket.error: (35, 'Resource temporarily unavailable'), so we disable it
+        #import socket
+        #socket.setdefaulttimeout(60)
         DEBUG and log.debug("attempting " + method + " connection to: " + self.host + ":" + `self.port` + " " + self.path)   
         conn = HTTPConnection(self.host, self.port)
-        conn.connect() # connect manually, so we can set a timeout on the socket
-#        conn.sock.settimeout(60.0) # TODO: make this a config value
+        conn.connect() # FIXME: implement a timeout on connect
         conn.request(
                  method, 
                  self.path,
