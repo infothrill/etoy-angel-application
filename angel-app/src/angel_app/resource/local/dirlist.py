@@ -113,7 +113,7 @@ class DirectoryLister(resource.Resource):
             "/".join(['<a href="%s">%s</a>' % (linkTarget, pathSegment) 
                     for (linkTarget, pathSegment) in 
                     zip(linkTargets[1:], pathSegments[1:])
-                    ]) + "/"
+                    ])
     
         s= """<html><head><title>angel-app: %s</title>
         <link href="http://missioneternity.org/files/m221e.css" rel="stylesheet" type="text/css" media="all" />
