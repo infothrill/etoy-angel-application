@@ -132,7 +132,8 @@ class Config:
                                          # it's nice to be fast on the first traversal
                                          "initialsleep": "1",
                                          # we want a tree traversal to take about one day after the initial synch
-                                         "treetraversaltime" : str(24 * 3600)
+                                         "treetraversaltime" : str(24 * 3600),
+                                         "maxsleeptime" : str(100)
                                          }
                          }
         if k not in defaultValues[s]:

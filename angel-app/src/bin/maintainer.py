@@ -40,6 +40,7 @@ def runServer():
     import time   
     sleepTime = AngelConfig.getint("maintainer", "initialsleep")
     traversalTime = AngelConfig.getint("maintainer", "treetraversaltime")
+    maxSleepTime = AngelConfig.getint("maintainer", "maxsleeptime")
     while 1:
     	log.info("sleep timeout between resource inspections is: " + `sleepTime`)
     	startTime = int(time.time())
@@ -59,6 +60,8 @@ def runServer():
         	sleepTime = sleepTime / 2
         else:
         	sleepTime = sleepTime * 2 + 1
+        	if sleepTime > maxSleepTime:
+        		sleepTime = maxSleepTime
 
         
             
