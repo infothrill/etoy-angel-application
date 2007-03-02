@@ -31,7 +31,7 @@ $ ./python ./master.py -d start|stop|restart
 CONFIGURATION
 -------------
 angel-app can be configured through a central configuration file which can be found
-in $HOME/.angel_app/config. The file has is in the well known and widespread ini-style
+in $HOME/.angel_app/config. The file uses the well known and widespread ini-style
 syntax.
 
 LOGGING
