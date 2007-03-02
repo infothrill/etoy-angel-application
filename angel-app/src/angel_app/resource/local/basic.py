@@ -334,7 +334,7 @@ class Basic(deleteable.Deletable, Safe):
         to a UUID>
         """
         from angel_app.resource.local.util import getHashObject
-        return uuid.UUID( getHashObject( self.publicKeyString() ).hexdigest() )
+        return uuid.UUID( getHashObject( self.publicKeyString() ).hexdigest()[:32] )
 
     def signableMetadata(self):
         """
