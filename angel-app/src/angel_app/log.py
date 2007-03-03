@@ -70,7 +70,7 @@ def getLogger(area = ""):
 	In logged messages, the area appears just behind the applicaton name, prepended with a dot:
 	"presenter.config" means the log message is from application presenter and area config.
 	"""
-	from angel_app.config.defaults import appname
+	from angel_app.config.globals import appname
 	if len(area) > 0:
 		return logging.getLogger(appname+ '.' + area)
 	else:
@@ -86,7 +86,7 @@ def getAngelLogPath():
 
 
 def getAngelLogFilename():
-	from angel_app.config.defaults import appname
+	from angel_app.config.globals import appname
 	return path.join(getAngelLogPath(), appname + ".log")
 
 
