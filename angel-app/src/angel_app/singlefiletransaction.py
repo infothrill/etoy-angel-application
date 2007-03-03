@@ -1,5 +1,13 @@
 """
-This module  provides atomic file operation facilities
+This module  provides atomic file operation facilities.
+Basically, all we do, is rely on python's os.mkstemp()
+function. This only provides wrapping for ease of use
+and also ensuring we stay on the same filesystem by
+restricting all operations to the angel-app homepath.
+
+Note: logging is not allowed in this class, because
+this class needs to run without facilities that might
+require safe file operations!
 """
 
 legalMatters = """
@@ -35,6 +43,41 @@ DEBUG = False
 import re
 import shutil
 import os
+import tempfile
+
+from angel_app.config.defaults import getAngelHomePath
+
+
+bootstrap = True
+
+def setup():
+    """
+    setup() creates the needed internal directory structure for safe
+    file  transactions (.angel_app/tmp/). It must be called once
+    during bootstrap.
+    """
+    path = getTmpPath()
+    if not os.path.exists(path):
+        os.mkdir(path)
+    elif not os.path.isdir(path):
+        raise "Filesystem entry '%s' occupied, cannot create directory here." % path
+
+def getTmpPath():
+    """
+    Returns the full path of the tmp directory to be used for safe
+    file operations. This method does not ensure the path is valid!
+    """
+    tmpPath = os.path.join(getAngelHomePath(), "tmp")
+    return tmpPath
+
+
+def purgeTmpPathAndSetup():
+    """
+    This function will empty the tmp path. It must only be called
+    during bootstrap and while no other process is using the tmp path!
+    """
+    shutil.rmtree(getTmpPath(), ignore_errors = True) # FIXME: do we want to catch errors here?
+    setup()
 
 class SingleFileTransaction:
     """
@@ -43,12 +86,15 @@ class SingleFileTransaction:
     regular file operations and hide away safety operations like
     creation of temporary files.
     """
+
     def __init__(self):
-        from angel_app.log import getLogger
-        self.log = getLogger("SingleFileTransaction")
-        self.needcopyregex = re.compile(".*[a|\+].*")
-        self.needemptyregex = re.compile(".*[w].*")
-        self.safe = None
+        """
+        Just set some attributes
+        """
+        self._needcopyregex = re.compile(".*[a|\+].*")
+        self._needemptyregex = re.compile(".*[w].*")
+        self._safe = None
+        self._basedir = getTmpPath()
     
     def open(self, name, mode = 'r', buffering = 0):
         """
@@ -61,31 +107,40 @@ class SingleFileTransaction:
         self.name = name
         self.mode = mode
         self.buffering = buffering
-        if not self.needcopyregex.match(self.mode) == None:
-            DEBUG and self.log.debug("we are in needcopy mode for file '%s'" % self.name)
-            (self.safe, self.safename) = self.__createTmpCopy()
-        elif not self.needemptyregex.match(self.mode) == None:
-            DEBUG and self.log.debug("we are in needempty mode for file '%s'" % self.name)
-            (self.safe, self.safename) = self.__createTmpEmpty()
+        if not self._needcopyregex.match(self.mode) == None:
+            if DEBUG: print "we are in needcopy mode for file '%s'" % self.name
+            (self._safe, self._safename) = self.__createTmpCopy()
+        elif not self._needemptyregex.match(self.mode) == None:
+            if DEBUG: print "we are in needempty mode for file '%s'" % self.name
+            (self._safe, self._safename) = self.__createTmpEmpty()
         else:
-            DEBUG and self.log.debug("we are in readonly mode for file '%s'" % self.name)
+            if DEBUG: print "we are in readonly mode for file '%s'" % self.name
             return open(self.name, self.mode, self.buffering)
-        return self.safe
+        return self._safe
 
     def commit(self):
         """
         Commits the changes made to the file atomically
         """
-        if not None == self.safe:
-            DEBUG and self.log.debug("we have a safe, so we need to commit!")
-            self.safe.close()
-            return os.rename(self.safename, self.name)
+        if not None == self._safe:
+            if DEBUG: "we have a safe, so we need to commit!"
+            self._safe.close()
+            return os.rename(self._safename, self.name)
 
     def __createTmpEmpty(self):
+        """
+        Creates an empty temp file
+        @return see __mkstemp()
+        """
         (safe, safename) = self.__mkstemp()
         return (safe, safename)
         
     def __createTmpCopy(self):
+        """
+        Creates a temp file, originally being a copy of the file
+        specified in open().
+        @return see __mkstemp()
+        """
         (safe, safename) = self.__mkstemp()
         try:
             originalfile = open(self.name, 'rb')
@@ -100,32 +155,16 @@ class SingleFileTransaction:
 
     def __mkstemp(self):
         """
-        Function to create a named temporary file. Returns an OS-level
-        handle to the file and the name, as a tuple. The file is readable
-        and writable only by the creating user, and executable by no one.
+        Function to create a named temporary file. Returns a tuple containing
+        the file object and the filename.
+        The file is readable and writable only by the creating user, and
+        executable by no one.
         """
-        from errno import EEXIST
-        import tempfile
+        import time
+        fd, safename = tempfile.mkstemp(suffix='.tmp', prefix='safe', dir=self._basedir)
+        safe = os.fdopen(fd, self.mode)
+        return (safe, safename)
 
-        if os.name == 'posix':
-            _bin_openflags = os.O_RDWR | os.O_CREAT | os.O_EXCL
-        else:
-            _bin_openflags = os.O_RDWR | os.O_CREAT | os.O_EXCL | os.O_BINARY
-            
-        flags = _bin_openflags
-    
-        while 1:
-            safename = tempfile.mktemp()
-            try:
-                #os.open(filename, os.O_RDWR | os.O_CREAT | os.O_EXCL, 0600)
-                fd = os.open(safename, flags, 0600)
-                safe = os.fdopen(fd, self.mode)
-                #return (fd, name)
-                return (safe, safename)
-            except OSError, e:
-                if e.errno == EEXIST:
-                    continue # try again
-                raise
 
 if __name__ == "__main__":
     """
@@ -133,9 +172,6 @@ if __name__ == "__main__":
     """
     DEBUG = True
     import os.path
-    import angel_app.log
-    angel_app.log.setup()
-    angel_app.log.enableHandler('console')
 
     import sys
     testfname = "test.data"
@@ -144,6 +180,8 @@ if __name__ == "__main__":
         print "Please remove file %s first" % testfname
         sys.exit()
 
+    setup()
+    purgeTmpPathAndSetup()
     t = SingleFileTransaction()
 
     print ">write test"
