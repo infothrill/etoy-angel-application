@@ -1,7 +1,6 @@
 from angel_app.resource.local.basic import Basic
 from angel_app import elements
 from twisted.web2.dav.element.rfc2518 import HRef
-from angel_app.config import defaults
 from angel_app.resource.remote.util import syncClones
 from angel_app.log import getLogger
 
@@ -13,6 +12,22 @@ from angel_app.config import config
 AngelConfig = config.getConfig()
 repository = Basic(AngelConfig.get("common","repository"))
 
+"""
+The listen port that we expect from *other* peers. Don't mistake this for our own listen port!
+"""
+publiclistenport = 9999
+
+"""
+the default clones of the local repository
+
+tuples of (host names  IP addresses, port numbers) of the master (default) nodes.
+the port numbers are optional and default publiclistenport
+"""
+defaultpeers = [
+           ("localhost", publiclistenport),
+           ("missioneternity.org", publiclistenport)
+           ]
+
 def cloneFromName(name = ("localhost", 90)):
     """
     Takes a node description in the form of a (hostname/ip-address, port number)
@@ -20,7 +35,7 @@ def cloneFromName(name = ("localhost", 90)):
     """
     hostname = name[0]
     if len(name) == 2: port = name[1]
-    else: port = config.defaults.publiclistenport # note: not using config file, but hardcoded default external port
+    else: port = publiclistenport
     
     return elements.Clone(
                           HRef.fromString(hostname + ":" + `port`))
@@ -33,7 +48,7 @@ def defaultPeers():
     return elements.Clones(
                     *[
                      cloneFromName(peer) 
-                     for peer in defaults.peers
+                     for peer in defaultpeers
                      ]
                     )
 
