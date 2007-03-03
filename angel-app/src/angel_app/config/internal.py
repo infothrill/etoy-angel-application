@@ -20,7 +20,8 @@ def loadKeysFromFile(fileName = sep.join([keyBase, "key.private"])):
                        fileName
                        ).read()
                        )    
-    return angelKey
+#    return angelKey
+    return {angelKey.exportKey() : angelKey}
 
 from angel_app import elements
 from angel_app.resource.local.internal import util

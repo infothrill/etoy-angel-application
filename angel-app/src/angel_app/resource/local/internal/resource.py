@@ -34,7 +34,9 @@ class Crypto(
     </p>
     """
     
-    secretKey = loadKeysFromFile()
+    secretKey = loadKeysFromFile().items()[0][1]
+#    keyRing = loadKeysFromFile().items()[0][1]
+
     
     def __init__(self, path,
                  defaultType="text/plain",
