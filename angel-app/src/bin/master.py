@@ -18,7 +18,6 @@ def bootInit():
 	"""
 	import angel_app.config.defaults
 	angel_app.config.defaults.appname = "master"
-	angel_app.config.defaults.binpath = os.getcwd()
 	# setup and cleanup our internal temporary path for files:
 	from angel_app import singlefiletransaction
 	singlefiletransaction.purgeTmpPathAndSetup()
@@ -95,6 +94,6 @@ if __name__ == "__main__":
 
 	# end bootsprapping, bring on the dancing girls!
 
-	startProcesses(angel_app.config.defaults.binpath)
+	startProcesses()
 
 	reactor.run()
