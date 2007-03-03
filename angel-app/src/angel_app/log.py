@@ -52,6 +52,11 @@ from twisted.python import log as twistedlog
 from twisted.python.filepath import FilePath
 from os import environ, path, mkdir, linesep
 
+"""
+Defaults for the logging backend (RotatingFileHandler)
+"""
+log_maxbytes = 1024 * 1024 # each logfile has a max of 1 MB
+log_backupcount = 7        # max 7 "rotated" logfiles
 
 def getLogger(area = ""):
 	"""
@@ -220,7 +225,6 @@ def __addConsoleHandler():
 def __addRotatingFileHandler():
     import logging.handlers # needed to instiate the RotatingFileHandler
     # define a file Handler:
-    from angel_app.config.defaults import log_maxbytes, log_backupcount
     fileHandler = logging.handlers.RotatingFileHandler(getAngelLogFilename(), 'a', log_maxbytes, log_backupcount)
     fileHandler.setLevel(__getConfiguredLogLevel())
     # set a format which is simpler for console use
