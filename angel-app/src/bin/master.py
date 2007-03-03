@@ -19,6 +19,9 @@ def bootInit():
 	import angel_app.config.defaults
 	angel_app.config.defaults.appname = "master"
 	angel_app.config.defaults.binpath = os.getcwd()
+	# setup and cleanup our internal temporary path for files:
+	from angel_app import singlefiletransaction
+	singlefiletransaction.purgeTmpPathAndSetup()
 
 
 def startProcesses(binpath = os.getcwd()):
@@ -76,6 +79,7 @@ if __name__ == "__main__":
 	parser.add_option("-d", "--daemon", dest="daemon", help="daemon mode?", default='')
 	(options, args) = parser.parse_args()
 
+	# setup/configure logging
 	import angel_app.log
 	angel_app.log.setup()
 
@@ -88,6 +92,8 @@ if __name__ == "__main__":
 	angel_app.log.getReady()
 
 	angel_app.logserver.startLoggingServer()
+
+	# end bootsprapping, bring on the dancing girls!
 
 	startProcesses(angel_app.config.defaults.binpath)
 

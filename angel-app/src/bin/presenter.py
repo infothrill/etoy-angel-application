@@ -14,7 +14,9 @@ def bootInit():
 	"""
 	import angel_app.config.defaults
 	angel_app.config.defaults.appname = "presenter"
-	
+	# setup our internal temporary path for files:
+	from angel_app import singlefiletransaction
+	singlefiletransaction.setup()	
 	
 	# TODO: ugly twisted workaround to provide angel_app xml elements
 	from twisted.web2.dav.element import parser
