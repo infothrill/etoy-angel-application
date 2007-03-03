@@ -45,8 +45,8 @@ import shutil
 import os
 import tempfile
 
-from angel_app.config.defaults import getAngelHomePath
-
+from angel_app.config.config import getConfig
+angelConfig = getConfig()
 
 bootstrap = True
 
@@ -67,7 +67,7 @@ def getTmpPath():
     Returns the full path of the tmp directory to be used for safe
     file operations. This method does not ensure the path is valid!
     """
-    tmpPath = os.path.join(getAngelHomePath(), "tmp")
+    tmpPath = os.path.join(angelConfig.get("common","angelhome"), "tmp")
     return tmpPath
 
 

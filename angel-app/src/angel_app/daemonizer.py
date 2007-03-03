@@ -28,8 +28,11 @@ from twisted.python.filepath import FilePath
 from signal import SIGTERM, SIGKILL
 
 def getAngelHomePath():
-	from angel_app.config.defaults import getAngelHomePath
-	return getAngelHomePath()
+    from angel_app.config.config import getConfig
+    angelConfig = getConfig()
+
+    angelHomePath = angelConfig.get("common", "angelhome")
+    return angelHomePath
 
 def getAngelVarPath():
 	from os import path
@@ -39,15 +42,15 @@ def getAngelVarPath():
 def setup():
 	"""
 	setup() creates the needed internal directory structure for var
-	(.angel_app/var/). It must be called at least once during bootstrap.
+	(.angel-app/var/). It must be called at least once during bootstrap.
 	"""
 	from os import path, mkdir
 	angelhomePath = FilePath(getAngelHomePath())
 	if not angelhomePath.exists():
-		mkdir(angelhomePath.path, 0750)
+		mkdir(angelhomePath.path)
 	angelVarPath = FilePath(getAngelVarPath())
 	if not angelVarPath.exists():
-		mkdir(angelVarPath.path, 0750)
+		mkdir(angelVarPath.path)
 
 def daemonize(stdout=os.devnull, stderr=None, stdin=os.devnull,
               pidfile=None, startmsg = 'started with pid %s' ):

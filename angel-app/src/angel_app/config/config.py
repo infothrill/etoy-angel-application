@@ -37,13 +37,13 @@ import angel_app.log
 
 configObject = None # holder for a Config object
 
-def getConfig():
+def getConfig(configfile = None):
 	"""
 	Returns an instance of Config()
 	"""
 	global configObject
 	if configObject == None:
-		configObject = Config()
+		configObject = Config(configfile)
 	return configObject
 
 class Config:
@@ -51,7 +51,7 @@ class Config:
     This is a basic configuration engine that provides access to the configuration
     file of angel-app. In case there is no config file, this class will create one
     with default values on __del__. The path to the config file is currently
-    restricted to $HOME/.angel_app/config
+    restricted to $HOME/.angelrc
     Comment lines in the config file will get stripped off if it is rewritten.
     The directory $HOME/.angel_app will automatically get created if needed.
 
@@ -66,19 +66,25 @@ class Config:
     </p>
     """
 
-    def __init__(self):
-		self.cfgvars = {}
-		from angel_app.config.defaults import getAngelHomePath
-		self.cfgvars["angelhome"] = getAngelHomePath()
-		self.cfgvars["mainconfigfile"] = path.join(self.cfgvars["angelhome"], "config")
+    def __init__(self, configfilepath = None):
+        self.cfgvars = {}
+        if configfilepath == None:
+            self.cfgvars["mainconfigfile"] = self.getDefaultConfigFilePath()
+        else:
+            self.cfgvars["mainconfigfile"] = configfilepath
 
-		self.config = SafeConfigParser()
-		self.config.read(self.cfgvars["mainconfigfile"])
+        self.config = SafeConfigParser()
+        self.config.read(self.cfgvars["mainconfigfile"])
+        self.bootstrapping = True
 		#dump entire config file (debug)
 		#for section in self.config.sections():
 		#	getLogger("config").debug(section)
 		#	for option in self.config.options(section):
 		#		getLogger("config").debug(" " + option + "=" + self.config.get(section, option))
+
+    def getDefaultConfigFilePath(self):
+        home = environ["HOME"]
+        return path.join(home, ".angelrc");
 
     def get(self, section, key, raw = False):
         self.__checkGetter(section, key)
@@ -119,7 +125,10 @@ class Config:
         k = key.lower()
         defaultValues = {
                          "common" : {
-									"repository": path.join(self.cfgvars["angelhome"], "repository"),
+                                    "angelhome": path.join(environ["HOME"], ".angel-app"),
+                                    "repository": path.join(environ["HOME"], ".angel-app", "repository"),
+                                    "keyring": path.join(environ["HOME"], ".angel-app", "keyring"),
+                                    "logdir": path.join(environ["HOME"], ".angel-app", "log"),
 									"loglevel": "DEBUG",
                                     # FIXME: %(funcName)s is only available in Python 2.5 ;-(
                                     "logformat": '%(asctime)s %(levelname)-6s %(name)-20s - %(filename)s:%(lineno)d - %(message)s',
@@ -162,10 +171,9 @@ class Config:
         whenever a configuration value is changed through set/get. We do not implement this in the destructor, because
         in the destructor we cannot be sure about which stuff is already garbage collected during shutdown and so it might fail there.
         """
+        if self.bootstrapping:
+            return
         configfilePath = FilePath(self.cfgvars["mainconfigfile"])
-        angelhomePath = FilePath(self.cfgvars["angelhome"])
-        if not angelhomePath.exists():
-            mkdir(angelhomePath.path, 0750)
         if not configfilePath.exists():
             angel_app.log.getLogger("config").info("Creating a new, empty config file in '"+configfilePath.path+"'")
         angel_app.log.getLogger("config").info("committing the config file to '"+self.cfgvars["mainconfigfile"]+"'")

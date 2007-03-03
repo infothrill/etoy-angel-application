@@ -19,6 +19,12 @@ def bootInit():
 	import angel_app.config.defaults
 	angel_app.config.defaults.appname = "master"
 	# setup and cleanup our internal temporary path for files:
+
+def postConfigInit():
+
+	from angel_app.admin.directories import makeDirectories
+	makeDirectories()
+
 	from angel_app import singlefiletransaction
 	singlefiletransaction.purgeTmpPathAndSetup()
 
@@ -76,7 +82,13 @@ if __name__ == "__main__":
 	bootInit()
 	parser = OptionParser()
 	parser.add_option("-d", "--daemon", dest="daemon", help="daemon mode?", default='')
+	parser.add_option("-c", "--config", dest="config", help="alternative config file", default=None)
 	(options, args) = parser.parse_args()
+
+	from angel_app.config.config import getConfig
+	angelConfig = getConfig(options.config) # TODO: use command line options
+	angelConfig.bootstrapping = False
+	postConfigInit()
 
 	# setup/configure logging
 	import angel_app.log

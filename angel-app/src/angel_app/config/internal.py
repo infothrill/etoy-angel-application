@@ -2,13 +2,13 @@ port = 9998
 interface = "127.0.0.1"
 
 from angel_app.contrib.ezPyCrypto import key as ezKey
-from os import sep, environ, listdir
+from os import sep, listdir
 
-keyBase = sep.join([
-                    environ["HOME"],
-                    ".angel_app",
-                    "keyring"
-                    ])
+from angel_app.config.config import getConfig
+
+angelConfig = getConfig() # todo: command line parameter?
+
+keyBase = angelConfig.get("common", "keyring")
 
 def loadKeysFromFile(keyDir = keyBase):
     """

@@ -77,14 +77,12 @@ def getLogger(area = ""):
 		return logging.getLogger(appname)
 
 
-def getAngelHomePath():
-	from angel_app.config.defaults import getAngelHomePath
-	return getAngelHomePath()
-
-
 def getAngelLogPath():
-	logPath = path.join(getAngelHomePath(), "log")
-	return logPath
+    from angel_app.config.config import getConfig
+    angelConfig = getConfig()
+    
+    angelLogPath = angelConfig.get("common", "logdir")
+    return angelLogPath
 
 
 def getAngelLogFilename():
@@ -111,18 +109,16 @@ class AngelLogTwistedFilter(Filter):
             return True
 
 def setup():
-	"""
-	setup() creates the needed internal directory structure for logging
-	(.angel_app/log/). It must be called once during bootstrap.
-	"""
-	__configLoggerBasic()
-	angelhomePath = FilePath(getAngelHomePath())
-	if not angelhomePath.exists():
-		mkdir(angelhomePath.path, 0750)
-	angelLogPath = FilePath(getAngelLogPath())
-	if not angelLogPath.exists():
-		mkdir(angelLogPath.path, 0750)
-
+    """
+    setup() creates the needed internal directory structure for logging
+    (.angel_app/log/). It must be called once during bootstrap.
+    """
+    __configLoggerBasic()
+    angelLogPath = getAngelLogPath()
+    if not path.exists(angelLogPath):
+        mkdir(angelLogPath)
+    elif not path.isdir(angelLogPath):
+        raise "Filesystem entry '%s' occupied, cannot create directory here." % angelLogPath
 
 def enableHandler(handlername, handler = None):
     if handlername == "console":
