@@ -81,7 +81,7 @@ def py2appletWorkaroundIgnoreMe():
     import maintainer, presenter, provider
         
 
-if __name__ == "__main__":
+def main():
     bootInit()
     parser = OptionParser()
     parser.add_option("-d", "--daemon", dest="daemon", help="daemon mode?", default='')
@@ -112,4 +112,7 @@ if __name__ == "__main__":
 
     startProcesses()
 
-    reactor.run()
+    reactor.run()    
+
+if __name__ == "__main__":
+    main()

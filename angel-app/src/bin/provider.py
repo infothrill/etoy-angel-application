@@ -50,7 +50,7 @@ def runServer():
     getLogger().info("Listening on port %d and serving content from %s", providerport, repository)
     reactor.run()
 
-if __name__ == "__main__":
+def main():
     bootInit()
     parser = OptionParser()
     parser.add_option("-d", "--daemon", dest="daemon", help="daemon mode?", default='')
@@ -79,3 +79,6 @@ if __name__ == "__main__":
             angel_app.log.enableHandler('console')
     angel_app.log.getReady()
     runServer()
+
+if __name__ == "__main__":
+    main()

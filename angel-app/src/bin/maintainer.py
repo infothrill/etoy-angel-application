@@ -74,9 +74,8 @@ def runServer():
             if sleepTime > maxSleepTime:
                 sleepTime = maxSleepTime
 
-        
-            
-if __name__ == "__main__":
+
+def main():
     bootInit()
     parser = OptionParser()
     parser.add_option("-d", "--daemon", dest="daemon", help="daemon mode?", default='')
@@ -106,3 +105,6 @@ if __name__ == "__main__":
     angel_app.log.getReady()
     DEBUG = True
     runServer()
+            
+if __name__ == "__main__":
+    main()
