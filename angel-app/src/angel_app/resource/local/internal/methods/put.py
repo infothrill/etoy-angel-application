@@ -11,6 +11,7 @@ from twisted.web2.dav.http import statusForFailure
 from twisted.web2.dav.fileop import checkResponse
 from angel_app.log import getLogger
 from angel_app.resource.local.internal.util import inspectWithResponse
+import angel_app.singlefiletransaction
 
 DEBUG = True
 
@@ -88,36 +89,32 @@ class Putable(object):
             success_code = responsecode.CREATED
         yield success_code
     
-    
     def __putFile(self, stream):
         """
          Write the contents of the request stream to resource's file
         """
 
+        t = angel_app.singlefiletransaction.SingleFileTransaction()
         try:
-            resource_file = self.fp.open("w")
-        except:
-            DEBUG and log.debug("failed to open file: " + self.fp.path)
-            raise HTTPError(statusForFailure(
-                                             Failure(),
-                "opening file for writing: %s" % (self.fp.path,)
-                ))
-
-        try:
-            x = waitForDeferred(readIntoFile(stream, resource_file))
+            safe = t.open(self.fp.path, 'wb')
+            x = waitForDeferred(readIntoFile(stream, safe))
             yield x
             x.getResult()
-            DEBUG and log.debug("__putFile: read stream into file into: " + self.fp.path)
+            DEBUG and log.debug("__putFile: read stream into tmpfile: " + safe.name)
         except:
-            DEBUG and log.debug("failed to write to file: " + self.fp.path)
+            DEBUG and log.debug("failed to write to tmpfile: " + safe.name)
             raise HTTPError(statusForFailure(
                                              Failure(),
-                "writing to file: %s" % (self.fp.path,)
+                "writing to tmpfile: %s" % (safe.path,)
                 ))
+
+        # it worked, commit the file:
+        DEBUG and log.debug("committing tmpfile %s to file %s" % (`safe.name`, `self.fp.path`))
+        t.commit() # TODO: catch exception here!
         
         DEBUG and log.debug("__putFile: done putting file stream: " + self.fp.path)
         yield None
-            
+
             
     def http_PUT(self, request):
         """
