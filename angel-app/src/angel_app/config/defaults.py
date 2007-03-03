@@ -17,6 +17,7 @@ from angel_app.config.config import getConfig
 
 angelConfig = getConfig() # todo: command line parameter?
 
-def getAngelHomePath():
+def getAngelHomePath(): # TODO: remove this function
+    print "angel_app/config/defaults.py:getAngelHomePath() DEPRECATED!"
     angelhome = angelConfig.get("common", "angelhome")
     pass

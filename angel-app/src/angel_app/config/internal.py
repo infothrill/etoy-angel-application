@@ -6,7 +6,7 @@ from os import sep, listdir
 
 from angel_app.config.config import getConfig
 
-angelConfig = getConfig() # todo: command line parameter?
+angelConfig = getConfig()
 
 keyBase = angelConfig.get("common", "keyring")
 

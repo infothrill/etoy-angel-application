@@ -24,7 +24,6 @@
       http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/66012
 '''
 import sys, os, time
-from twisted.python.filepath import FilePath
 from signal import SIGTERM, SIGKILL
 
 def getAngelHomePath():
@@ -45,12 +44,12 @@ def setup():
 	(.angel-app/var/). It must be called at least once during bootstrap.
 	"""
 	from os import path, mkdir
-	angelhomePath = FilePath(getAngelHomePath())
-	if not angelhomePath.exists():
+	angelhomePath = getAngelHomePath()
+	if not path.exists(angelhomePath):
 		mkdir(angelhomePath.path)
-	angelVarPath = FilePath(getAngelVarPath())
-	if not angelVarPath.exists():
-		mkdir(angelVarPath.path)
+	angelVarPath = getAngelVarPath()
+	if not path.exists(angelVarPath):
+		mkdir(angelVarPath)
 
 def daemonize(stdout=os.devnull, stderr=None, stdin=os.devnull,
               pidfile=None, startmsg = 'started with pid %s' ):
