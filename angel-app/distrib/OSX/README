@@ -1,0 +1,20 @@
+README file for deployment of a Mac OS X app bundle
+
+this file is based on the creation of such a bundle on OS X 10.4 with a 
+python2.4 framework package obtained from http://www.pythonmac.org/ and
+an svn checkout of the current source code (Revision 474, Sat Mar  3 16:39:49 2007) 
+of the angel-app.
+
+1. make sure you have a current version of py2app as described in 
+http://svn.pythonmac.org/py2app/py2app/trunk/doc/index.html#installation
+if you're using an older macpython framework install, you might have to uninstall
+your current py2app version (py2app-0.3.5 at the time of writing).
+
+2. go to the root directory of your angel-app checkout
+
+3. include the contrib and src directories in the python module search path
+$ export PYTHONPATH=$PWD/contrib/:$PWDsrc/angel_app/:$PYTHONPATH
+
+4. run py2app, giving it all the toplevel scripts as arguments
+$ py2applet ./src/bin/master.py ./src/bin/presenter.py ./src/bin/provider.py ./src/bin/maintainer.py
+
