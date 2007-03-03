@@ -34,8 +34,8 @@ class Crypto(
     </p>
     """
     
-    secretKey = loadKeysFromFile().items()[0][1]
-#    keyRing = loadKeysFromFile().items()[0][1]
+#    secretKey = loadKeysFromFile().items()[0][1]
+    keyRing = loadKeysFromFile()
 
     
     def __init__(self, path,
@@ -59,7 +59,22 @@ class Crypto(
                 DEBUG and log.debug("initializing " + element.sname() + " of " + self.fp.path + " to " + ee.toxml())
                 dp.set(ee)
                     
+    def secretKey(self):
         
+        pks = None
+        if self.exists():                
+            pks = self.publicKeyString()
+        elif self.parent().exists():
+            pks = self.parent().publicKeyString()
+        
+        if pks == None:
+            raise "Unable to look up public key for resource: " + self.fp.path
+        
+        if pks not in self.keyRing.keys():
+            raise "Unable to look up secret key for public key or resource: " + self.fp.path
+        
+        return self.keyRing[pks]
+  
     def _inheritClones(self):
         self.deadProperties().set(
                                   self.parent().deadProperties().get(
@@ -85,13 +100,13 @@ class Crypto(
         TODO: this uses in-memory encryption, revamp to streams
         """
         
-        if self.fp.isdir() or self.secretKey == None: return
+        if self.fp.isdir() or self.secretKey() == None: return
 
         DEBUG and log.debug("encrypting file: " + self.fp.path)
         myFile = self.fp.open() 
         plainText = myFile.read()
         myFile.close()
-        cypherText = self.secretKey.encString(plainText)
+        cypherText = self.secretKey().encString(plainText)
         DEBUG and log.debug(cypherText)  
 
         import angel_app.singlefiletransaction
@@ -120,7 +135,7 @@ class Crypto(
                                   elements.ContentSignature.fromString( signature )
                                   )
         self.deadProperties().set(
-                                  elements.PublicKeyString.fromString( self.secretKey.exportKey() )
+                                  elements.PublicKeyString.fromString( self.secretKey().exportKey() )
                                   )
         return signature
 
@@ -146,7 +161,7 @@ class Crypto(
         
         DEBUG and log.debug("testing for writability of: " + self.fp.path)
         
-        if not self.secretKey:
+        if not self.secretKey():
             # we don't even have a private key
             DEBUG and log.debug("Crypto: no key available")
             return False
@@ -166,7 +181,7 @@ class Crypto(
                 return self.parent().isWritableFile()
                 
                 
-        myKeyString = self.secretKey.exportKey()    
+        myKeyString = self.secretKey().exportKey()    
         fileKeyString = self.getOrSet(elements.PublicKeyString, myKeyString)
         DEBUG and log.debug("public key for " + self.fp.path + ": " + fileKeyString)
         return fileKeyString == myKeyString
@@ -184,7 +199,7 @@ class Crypto(
         
         DEBUG and log.debug("Crypto: sealing " + self.fp.path)
         DEBUG and log.debug("Crypto: signable data: " + self.signableMetadata())
-        signature = self.secretKey.signString(self.signableMetadata())
+        signature = self.secretKey().signString(self.signableMetadata())
         self.deadProperties().set(elements.MetaDataSignature.fromString(signature))
         #storedsignature = self.getOrSet(elements.MetaDataSignature, "0")
         #log.error(signature)
@@ -310,7 +325,7 @@ class Crypto(
         DEBUG and log.debug("rendering file in plaintext: " + self.fp.path)
         if self.isEncrypted():
             
-            fileContents = self.secretKey.decString(self.fp.open().read())
+            fileContents = self.secretKey().decString(self.fp.open().read())
             return stream.MemoryStream(fileContents, 0, len(fileContents))
         else:
             return Basic.getResponseStream(self)
