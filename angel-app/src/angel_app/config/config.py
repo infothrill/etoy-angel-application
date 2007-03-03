@@ -86,6 +86,9 @@ class Config:
         home = environ["HOME"]
         return path.join(home, ".angelrc");
 
+    def getConfigFilename(self):
+        return self.cfgvars["mainconfigfile"]
+
     def get(self, section, key, raw = False):
         self.__checkGetter(section, key)
         val = self.config.get(section, key, raw)
@@ -173,13 +176,13 @@ class Config:
         """
         if self.bootstrapping:
             return
-        configfilePath = FilePath(self.cfgvars["mainconfigfile"])
-        if not configfilePath.exists():
-            angel_app.log.getLogger("config").info("Creating a new, empty config file in '"+configfilePath.path+"'")
-        angel_app.log.getLogger("config").info("committing the config file to '"+self.cfgvars["mainconfigfile"]+"'")
+        configfilePath = self.cfgvars["mainconfigfile"]
+        if not path.exists(configfilePath):
+            angel_app.log.getLogger("config").info("Creating a new, empty config file in '"+configfilePath+"'")
+        angel_app.log.getLogger("config").info("committing the config file to '"+configfilePath+"'")
         from angel_app.singlefiletransaction import SingleFileTransaction
         t = SingleFileTransaction()
-        f = t.open(self.cfgvars["mainconfigfile"], 'w')
+        f = t.open(configfilePath, 'w')
         self.config.write(f)
         f.close()
         t.commit()
