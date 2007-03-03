@@ -18,7 +18,6 @@ def bootInit():
     """
     import angel_app.config.globals
     angel_app.config.globals.appname = "master"
-    # setup and cleanup our internal temporary path for files:
 
 def postConfigInit():
     """
