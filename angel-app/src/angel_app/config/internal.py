@@ -2,7 +2,7 @@ port = 9998
 interface = "127.0.0.1"
 
 from angel_app.contrib.ezPyCrypto import key as ezKey
-from os import sep, environ
+from os import sep, environ, listdir
 
 keyBase = sep.join([
                     environ["HOME"],
@@ -10,18 +10,21 @@ keyBase = sep.join([
                     "keyring"
                     ])
 
-def loadKeysFromFile(fileName = sep.join([keyBase, "key.private"])):
+def loadKeysFromFile(keyDir = keyBase):
     """
     Load the ***SECRET*** keys from the appropriate location in the angel-app directory.
     """
-    angelKey = ezKey()                                             
-    angelKey.importKey(
+    keyFiles = listdir(keyDir)
+    keyRing = {}
+    for fileName in keyFiles:
+        angelKey = ezKey()                                             
+        angelKey.importKey(
                      open(
-                       fileName
+                       keyDir + sep + fileName
                        ).read()
-                       )    
-#    return angelKey
-    return {angelKey.exportKey() : angelKey}
+                       ) 
+        keyRing[angelKey.exportKey()] = angelKey
+    return keyRing
 
 from angel_app import elements
 from angel_app.resource.local.internal import util
