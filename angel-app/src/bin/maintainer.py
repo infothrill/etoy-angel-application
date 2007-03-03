@@ -1,7 +1,6 @@
 from optparse import OptionParser
 from angel_app.log import getLogger
 from angel_app.config import config
-AngelConfig = config.getConfig()
 
 def bootInit():
     """
@@ -33,7 +32,7 @@ def runServer():
     from angel_app.resource.local.basic import Basic
 
     log = getLogger("maintainer")
-   
+    AngelConfig = config.getConfig()
     repository = AngelConfig.get("common", "repository")
     log.info("starting inspection loop at: " + repository)
     setup.setupDefaultPeers()
@@ -48,7 +47,7 @@ def runServer():
     
     assert(Basic(repository).exists()), "Root directory (%s) not found." % repository
 
-    import time   
+    import time
     sleepTime = AngelConfig.getint("maintainer", "initialsleep")
     traversalTime = AngelConfig.getint("maintainer", "treetraversaltime")
     maxSleepTime = AngelConfig.getint("maintainer", "maxsleeptime")
@@ -57,9 +56,9 @@ def runServer():
         startTime = int(time.time())
         try:
 
-	        for ii in graphWalker(repository, getChildren, toEvaluate):
-	             time.sleep(sleepTime)
-	             continue
+            for ii in graphWalker(repository, getChildren, toEvaluate):
+                 time.sleep(sleepTime)
+                 continue
                              
 
                 
@@ -103,8 +102,8 @@ def main():
         else:
             angel_app.log.enableHandler('console')
     angel_app.log.getReady()
-    DEBUG = True
     runServer()
             
 if __name__ == "__main__":
+    DEBUG = True
     main()

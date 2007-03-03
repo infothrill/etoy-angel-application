@@ -46,6 +46,8 @@ def startProcesses(binpath = os.getcwd()):
     else:
         os.environ["PYTHONPATH"] = os.sep.join(os.sep.split(binpath)[:-1])
 
+    from angel_app.config.config import getConfig
+    angelConfig = getConfig()
     cfg = angelConfig.getConfigFilename()
 
     presenterProcess = angel_app.procmanager.ExternalProcess()
