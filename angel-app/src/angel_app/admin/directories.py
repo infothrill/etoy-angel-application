@@ -4,15 +4,16 @@ Utilities for creating the default repository directory layout.
 
 import os
 from angel_app.config import config
-from twisted.python.filepath import FilePath
 
 AngelConfig = config.getConfig()
 
 def conditionalCreate(path):
-    rr = FilePath(path)
-    if not rr.exists():
-        os.mkdir(repository)
+    if not os.path.exists(path):
+        os.mkdir(path)
+    elif not os.path.isdir(path):
+        raise "Filesystem entry '%s' occupied, cannot create directory here." % path
         
 def makeDirectories():
     conditionalCreate(AngelConfig.get("common", "angelhome"))
     conditionalCreate(AngelConfig.get("common", "repository"))
+    conditionalCreate(AngelConfig.get("common", "keyring"))
