@@ -73,6 +73,7 @@ def setMountPoint(
     if not (cc.ping() and cc.exists()):
         # don't fail, just mount at next startup
         log.warn("Can not connect to %s. Can not initialize mount point." % URLToMount)
+        return
     
 
     # --- the local mount point can be initialized ---
