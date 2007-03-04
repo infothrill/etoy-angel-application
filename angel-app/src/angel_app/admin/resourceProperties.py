@@ -91,16 +91,22 @@ def setMountPoint(
     
     # initialize all required properties -- rubbish is ok for many of them,
     # as long as we clearly state that ${URLToMount} is the original:  
-    rr.deadProperties().set(
-                            elements.PublicKeyString(
+    dp = rr.deadProperties()
+    dp.set(elements.PublicKeyString(
                                  cc.publicKeyString()))
     
-    rr.deadProperties().set(
-                            elements.ResourceID(cc.resourceID()))
+    dp.set(elements.MetaDataSignature(
+                                 cc.metaDataSignature()))
+    
+    dp.set(elements.ContentSignature.fromString(
+                                                self._computeContentHexDigest() ))
+    
+    dp.set(elements.ResourceID(
+                               cc.resourceID()))
     
     rr._registerWithParent()
     
     # add the clone
     from angel_app.resource.remote.clone import clonesToElement
-    rr.deadProperties().set(clonesToElement([cc]))
+    dp.set(clonesToElement([cc]))
     
