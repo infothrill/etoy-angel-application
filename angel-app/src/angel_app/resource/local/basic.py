@@ -235,7 +235,7 @@ class Basic(deleteable.Deletable, Safe):
         
         childIDs = [str(child.childOfType(elements.UUID)) for child in pc]
         
-        if self.sigUUID() not in childIDs:
+        if str(self.sigUUID()) not in childIDs:
             log.info(self.fp.path + ": invalid signature")
             self._recursiveDelete(self.fp.path)
             return True
