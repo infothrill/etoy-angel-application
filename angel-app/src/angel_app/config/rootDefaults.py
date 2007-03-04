@@ -2,6 +2,8 @@
 
 Default metadata for the root directory.
 
+TODO: remove
+
 """
 
 """
