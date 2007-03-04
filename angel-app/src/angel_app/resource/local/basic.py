@@ -313,17 +313,7 @@ class Basic(deleteable.Deletable, Safe):
         
         DEBUG and log.debug("retrieving public key string for: " + self.fp.path)
         
-        try:
-            return self.get(elements.PublicKeyString)           
-        except:
-            # no key set yet -- maybe we have a key handy for signing?
-            try:
-                keyString = self.secretKey.exportKey()
-                DEBUG and log.debug("initializing public key to: " + keyString)
-                return self.getOrSet(elements.PublicKeyString, keyString) 
-            finally:
-                raise HTTPError(responsecode.FORBIDDEN, 
-                                "You don't have sufficient privileges to initialize unititialized resource " + self.relativePath())
+        return self.get(elements.PublicKeyString)
  
     def keyUUID(self):
         """
