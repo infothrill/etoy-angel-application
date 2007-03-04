@@ -30,11 +30,11 @@ def postConfigInit():
     from angel_app import singlefiletransaction
     singlefiletransaction.purgeTmpPathAndSetup()
 
-def startProcesses(privateMode = False):
+def startProcesses(binpath = os.getcwd(), privateMode = False):
     procManager = angel_app.procmanager.ExternalProcessManager()
     procManager.registerProcessStarter(reactor.spawnProcess)
     procManager.registerDelayedStarter(reactor.callLater) 
-    binpath = os.getcwd()
+
     import sys
     
     if "PYTHONPATH" in os.environ.keys():
@@ -87,6 +87,7 @@ def main():
     import angel_app.log
     angel_app.log.setup()
 
+    binpath = os.getcwd() # get the binpath before daemonizing (which switches to root directory of filessystem)
     angel_app.log.enableHandler('file')
     if len(options.daemon) > 0:
         from angel_app import daemonizer
@@ -99,7 +100,7 @@ def main():
 
     # end bootsprapping, bring on the dancing girls!
 
-    startProcesses(options.private)
+    startProcesses(binpath, options.private)
 
     reactor.run()    
 
