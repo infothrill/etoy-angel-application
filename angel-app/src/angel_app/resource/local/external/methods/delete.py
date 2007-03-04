@@ -39,7 +39,7 @@ class DeleteMixin:
         See also proppatch.
         """ 
         
-        if not self in self.parent().metaDataChildren():
+        if self in self.parent().metaDataChildren():
             raise HTTPError(
                     StatusResponse(
                        responsecode.FORBIDDEN, 
