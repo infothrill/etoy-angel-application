@@ -105,12 +105,12 @@ def setMountPoint(
                                cc.resourceID()))
     
     rr._registerWithParent()
-    
-    from angel_app.resource.remote.client import inspectResource
-    inspectResource(pp)
-    
+   
     # add the clone
     from angel_app.resource.remote.clone import clonesToElement
     # TODO: check that the resource is already registered -- might happen in special cases
     dp.set(clonesToElement([cc]))
+          
+    from angel_app.resource.remote.client import inspectResource
+    inspectResource(pp)
     
