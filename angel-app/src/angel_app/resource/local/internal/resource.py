@@ -17,6 +17,13 @@ log = getLogger("local.internal")
 # DO NOT EXPOSE THIS KEY!!!!
 from angel_app.config.internal import loadKeysFromFile
 
+keyRing = None
+
+def reloadKeys():   
+    keyRing = loadKeysFromFile()
+    
+reloadKeys()
+
 class Crypto(
              lock.Lockable,
              copy.copyMixin,

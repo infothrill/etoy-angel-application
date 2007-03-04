@@ -24,4 +24,7 @@ def createAtLeastOneKey():
     
     # make a key if we don't have any keys yet
     if keyFiles == []:
-        createKey()
+        createKey()        
+        # make sure the new key is globally visible
+        from angel_app.resource.local.internal import resource
+        resource.reloadKeys()
