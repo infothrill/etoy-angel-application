@@ -302,7 +302,7 @@ class Basic(deleteable.Deletable, Safe):
         if self.deadProperties().contains(elements.Clones.qname()):
             return self.deadProperties().get(elements.Clones.qname())
         else:
-            return []
+            return elements.Clones()
 
     def metaDataChildren(self):
         """
