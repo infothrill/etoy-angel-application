@@ -2,6 +2,7 @@
 Utility script to force resigning the repository root
 """
 
+import os
 from angel_app.resource.local.internal.resource import Crypto
 from angel_app.config import config
 AngelConfig = config.getConfig()
