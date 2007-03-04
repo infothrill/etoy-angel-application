@@ -17,4 +17,7 @@ def initializeRepository():
     
     from angel_app.admin.resourceProperties import setMountPoint
     log.info("mounting MISSION ETERNITY")
-    setMountPoint("MISSION ETERNITY", "http://missioneternity.org:9999")
+    from twisted.python.filepath import FilePath
+    from angel_app.admin.resourceProperties import absPath
+    if not FilePath(absPath("MISSION ETERNITY")).exists():
+        setMountPoint("MISSION ETERNITY", "http://missioneternity.org:9999")
