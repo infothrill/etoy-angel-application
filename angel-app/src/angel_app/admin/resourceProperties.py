@@ -45,7 +45,7 @@ def setMountPoint(
     
     pp = absPath(mountPoint)
     
-    assert not os.exits(pp), "Can't create mount point where resource exists: " + pp
+    assert not os.exists(pp), "Can't create mount point where resource exists: " + pp
     
     from angel_app.resource.remote import clone
     
