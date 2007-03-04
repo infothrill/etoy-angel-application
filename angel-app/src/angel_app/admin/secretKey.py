@@ -4,6 +4,7 @@ Utilities for creating the default repository directory layout.
 
 import os
 from angel_app.config import config
+from angel_app.contrib.ezPyCrypto import key as ezKey
 
 AngelConfig = config.getConfig()
 from angel_app.log import getLogger
