@@ -337,7 +337,7 @@ def makePropfindRequestBody(properties):
                       *[property() for property in properties]
                       )).toxml()
            
-def makePushBody(localClone):
+def makePushBody(localClone, elements = elements.requiredKeys):
     """
     Generate the DAVDocument representation of the required properties of the local clone.
     """
@@ -352,7 +352,7 @@ def makePushBody(localClone):
         
     cc = Clone("localhost", providerport, "/" + localClone.relativePath())
     pList = [makeSetElement(element) for element in
-             [localClone.deadProperties().get(el.qname()) for el in elements.requiredKeys]
+             [localClone.deadProperties().get(el.qname()) for el in elements]
               + [clonesToElement([cc])]]
     
     DEBUG and log.debug(`pList`)
