@@ -17,14 +17,6 @@ log = getLogger(__name__)
 # DO NOT EXPOSE THIS KEY!!!!
 from angel_app.config.internal import loadKeysFromFile
 
-
-def reloadKeys():  
-    log.info("reloading keys") 
-    Crypto.keyRing = loadKeysFromFile()
-    log.info("available keys: " + `Crypto.keyRing.keys()`)
-    
-reloadKeys()
-
 class Crypto(
              lock.Lockable,
              copy.copyMixin,
@@ -349,3 +341,12 @@ class Crypto(
         else:
             return Basic.getResponseStream(self)
 
+
+
+# TODO move key ring to separate module
+def reloadKeys():  
+    log.info("reloading keys") 
+    Crypto.keyRing = loadKeysFromFile()
+    log.info("available keys: " + `Crypto.keyRing.keys()`)
+    
+reloadKeys()
