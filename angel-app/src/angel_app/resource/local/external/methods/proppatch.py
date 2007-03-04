@@ -39,7 +39,7 @@ from angel_app import elements
 import angel_app.contrib.ezPyCrypto
 from angel_app.log import getLogger
 
-log = getLogger("deleteable")
+log = getLogger(__name__)
 DEBUG = True
 
 
@@ -56,10 +56,11 @@ class ProppatchMixin:
     def preconditions_PROPPATCH(self, request):
         return deferredGenerator(self.__proppatchPreconditions)(request)
 
-    def authenticate(self, requestProperties):
+    def authenticate(self, request, requestProperties):
         """
         A PROPPATCH request is accepted exactly if the signable meta data and 
-        the corresponding signature match.
+        the corresponding signature match, and the public key of the request is
+        the same as the public key of the local resource.
         """
         
         def __get(element):
@@ -86,6 +87,14 @@ class ProppatchMixin:
         
         sig = __both(elements.MetaDataSignature)
         keyString = __both(elements.PublicKeyString)
+        
+        if keyString != self.publicKeyString():
+            error = "denied attempt to PROPPATCH %s with wrong key from host %s " % \
+                (self.fp.path, str(request.remoteAddr.host))
+            log.info(error)
+            raise HTTPError(StatusResponse(
+                                   responsecode.UNAUTHORIZED, error))
+        
         signable = __string([
                      __xml(element)
                     for element in elements.signedKeys
@@ -98,7 +107,7 @@ class ProppatchMixin:
         pubKey = angel_app.contrib.ezPyCrypto.key()
         pubKey.importKey(keyString)
         isValid = pubKey.verifyString(signable, sig)
-        log.info("PROPPATCH request is valid: " + `isValid`)
+        log.info("PROPPATCH request is signature is valid: " + `isValid`)
         return isValid
         
             
@@ -202,7 +211,7 @@ class ProppatchMixin:
         requestProperties = getRequestProperties(doc)
         
         # authenticate
-        isValid = self.authenticate(requestProperties)
+        isValid = self.authenticate(request, requestProperties)
         if not isValid:
             raise HTTPError(StatusResponse(
                        responsecode.FORBIDDEN, "The PROPPATCH certificate is not valid."))
