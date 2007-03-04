@@ -13,7 +13,7 @@ from angel_app.config import internal
 secretKeys = internal.loadKeysFromFile()
 
 def absPath(relativePathInRepository):
-    return os.path.join(AngelConfig.get("common","angelhome"), relativePathInRepository)
+    return os.path.join(AngelConfig.get("common","repository"), relativePathInRepository)
             
 def reSign(path = ""):
     """
