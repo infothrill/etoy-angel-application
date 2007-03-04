@@ -2,7 +2,7 @@
 Utility script to force resigning the repository root
 """
 
-import angel_app.resource.local.internal.resource.Crypto as Crypto
+from angel_app.resource.local.internal.resource import Crypto
 from angel_app.config import config
 AngelConfig = config.getConfig()
 repository = AngelConfig.get("common", "repository")
