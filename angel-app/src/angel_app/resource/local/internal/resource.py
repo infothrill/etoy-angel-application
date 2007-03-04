@@ -213,7 +213,9 @@ class Crypto(
         pp and pp.update()
 
     def _deRegisterWithParent(self):
-
+        """
+        Remove this resource from its parent's child elements.
+        """
         DEBUG and log.debug("entering _deRegisterWithParent for: " + self.fp.path)
 
         pp = self.parent()
@@ -234,7 +236,9 @@ class Crypto(
         DEBUG and log.debug("exiting _deRegisterWithParent")
     
     def _registerWithParent(self):
-
+        """
+        Add this resource to its parent's child elements.
+        """
         DEBUG and log.debug("entering _registerWithParent for " + self.fp.path)
 
         self._initProperties()
@@ -253,9 +257,14 @@ class Crypto(
                 DEBUG and log.debug(self.fp.path + ": this resource is already registered with the parent")
                 return
 
+        try:
+            keyUUID = self.keyUUID()
+        except:
+            keyUUID = self.parent().keyUUID()
+
         ic = elements.Child(*[
                          rfc2518.HRef(urllib.quote(self.resourceName())),
-                         elements.UUID(str(self.parent().keyUUID())),
+                         elements.UUID(str(keyUUID)),
                          self.resourceID()
                          ])
         
