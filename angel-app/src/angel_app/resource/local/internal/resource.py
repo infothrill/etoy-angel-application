@@ -22,7 +22,7 @@ keyRing = None
 def reloadKeys():  
     log.info("reloading keys") 
     keyRing = loadKeysFromFile()
-    log.info("available keys: " + keyRing.keys())
+    log.info("available keys: " + `keyRing.keys()`)
     
 reloadKeys()
 
