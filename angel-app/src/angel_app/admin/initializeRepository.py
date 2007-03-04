@@ -13,4 +13,4 @@ def initializeRepository():
     
     # mount the MISSION ETERNITY root resource
     from angel_app.admin.resourceProperties import setMountPoint
-    setMountPoint("", "MISSION ETERNITY", "http://missioneternity.org:9999")
+    setMountPoint("MISSION ETERNITY", "http://missioneternity.org:9999")
