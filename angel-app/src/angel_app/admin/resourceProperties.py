@@ -107,7 +107,7 @@ def setMountPoint(
     rr._registerWithParent()
     
     from angel_app.resource.remote.client import inspectResource
-    inspectResource(pp.fp.path)
+    inspectResource(pp)
     
     # add the clone
     from angel_app.resource.remote.clone import clonesToElement
