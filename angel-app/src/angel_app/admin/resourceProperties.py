@@ -71,8 +71,8 @@ def setMountPoint(
     cc = clone.Clone(host, int(port), path)
     
     if not (cc.ping() and cc.exists()):
-        raise clone.CloneNotFoundError(
-                   "Can not connect to %s. Can not initialize mount point." % URLToMount)
+        # don't fail, just mount at next startup
+        log.warn("Can not connect to %s. Can not initialize mount point." % URLToMount)
     
 
     # --- the local mount point can be initialized ---
