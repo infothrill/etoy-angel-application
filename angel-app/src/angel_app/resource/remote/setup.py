@@ -24,9 +24,10 @@ tuples of (host names  IP addresses, port numbers) of the master (default) nodes
 the port numbers are optional and default publiclistenport
 """
 defaultpeers = [
-           ("localhost", publiclistenport),
-           ("missioneternity.org", publiclistenport)
+           ("localhost", publiclistenport)
            ]
+
+# TODO: add defaultpeers defined by the user in the config file
 
 def cloneFromName(name = ("localhost", 90)):
     """
