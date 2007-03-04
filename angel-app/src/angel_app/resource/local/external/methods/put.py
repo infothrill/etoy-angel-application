@@ -40,11 +40,11 @@ class PutMixin:
         See also proppatch.
         """ 
         
-        if not self.exists() and not self in self.parent().metaDataChildren():
+        if not self in self.parent().metaDataChildren():
             raise HTTPError(
                     StatusResponse(
                        responsecode.FORBIDDEN, 
-                       "PUT is forbidden on inexinstent unreferenced resources. Try a PROPPATCH first."
+                       "PUT is forbidden on unreferenced resources. Try a PROPPATCH on the parent first."
                        ))
                     
         if self.verify():
