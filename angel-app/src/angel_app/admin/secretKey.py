@@ -7,7 +7,7 @@ from angel_app.config import config
 
 AngelConfig = config.getConfig()
 from angel_app.log import getLogger
-log = getLogger("common")
+log = getLogger("master")
 
 def createKey(filePath = os.path.join(AngelConfig.get("common","keyring"), "default.key")):
     kk = ezKey()

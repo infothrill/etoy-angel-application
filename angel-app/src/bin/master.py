@@ -98,6 +98,9 @@ def main():
 
     angel_app.logserver.startLoggingServer()
 
+    from angel_app.admin import initializeRepository
+    initializeRepository.initializeRepository()
+
     # end bootsprapping, bring on the dancing girls!
 
     startProcesses(binpath, options.private)
