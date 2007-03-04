@@ -31,6 +31,8 @@ $ py2applet ./src/bin/master.py ./src/bin/presenter.py ./src/bin/provider.py ./s
       where the app folder is located seems to work) until it decides it wants to refresh the
       view of the app file.
       
+5. rename the app bundle from master.app to angel.app.
+      
 DONE!
         
 
