@@ -348,7 +348,7 @@ def makePushBody(localClone, elements = elements.requiredKeys):
                          rfc2518.PropertyContainer(element))
     
     
-    for el in elements.requiredKeys:
+    for el in elements:
         DEBUG and log.debug("makePushBody: " + localClone.deadProperties().get(el.qname()).toxml())
         
     cc = Clone("localhost", providerport, "/" + localClone.relativePath())
