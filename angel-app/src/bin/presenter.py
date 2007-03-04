@@ -38,8 +38,8 @@ def runServer():
     interface = AngelConfig.get("presenter","listenInterface")
     repository = AngelConfig.get("common","repository")
 
-    from angel_app.server.internal.setup import setupRoot
-    setupRoot()
+    #from angel_app.server.internal.setup import setupRoot
+    #setupRoot()
 
     from angel_app.resource.local.internal.resource import Crypto
     Crypto.rootDirectory = repository
