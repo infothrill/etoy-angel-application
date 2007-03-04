@@ -17,3 +17,5 @@ def makeDirectories():
     conditionalCreate(AngelConfig.get("common", "angelhome"))
     conditionalCreate(AngelConfig.get("common", "repository"))
     conditionalCreate(AngelConfig.get("common", "keyring"))
+    conditionalCreate(AngelConfig.get("common", "logdir"))
+    conditionalCreate(os.path.join(AngelConfig.get("common","angelhome"), "tmp"))
