@@ -96,5 +96,6 @@ def setMountPoint(
     rr._registerWithParent()
     
     # add the clone
+    from angel_app.resource.remote.clone import clonesToElement
     rr.deadProperties().set(clonesToElement([cc]))
     
