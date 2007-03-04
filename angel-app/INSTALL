@@ -1,6 +1,6 @@
 Getting the latest source
 -------------------------
-$ svn co http://svn.gna.org/svn/angel-app/trunk angel-app
+$ svn co http://svn.gna.org/svn/angel-app/trunk/angel-app
 This will download the latest development source tree (which might be broken)
 
 Installing
