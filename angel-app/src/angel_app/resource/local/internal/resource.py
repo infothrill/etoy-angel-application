@@ -44,7 +44,7 @@ class Crypto(
     """
     
 #    secretKey = loadKeysFromFile().items()[0][1]
-    keyRing = loadKeysFromFile()
+    #keyRing = loadKeysFromFile()
 
     
     def __init__(self, path,
