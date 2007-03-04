@@ -1,3 +1,4 @@
+from angel_app.log import getLogger
 log = getLogger("admin." + __name__)
 
 def initializeRepository():
