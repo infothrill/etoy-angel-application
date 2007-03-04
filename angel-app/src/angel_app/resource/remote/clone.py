@@ -232,6 +232,14 @@ class Clone(object):
         """
         return self.propertyFindBody(elements.PublicKeyString)
     
+    def metaDataSignature(self):
+        """
+        @rtype string
+        @return the public key string of the clone.
+        """
+        return self.propertyFindBody(elements.MetaDataSignature)
+    
+    
     def validate(self):
         """
         @rtype boolean
@@ -250,13 +258,11 @@ class Clone(object):
         
         pubKey = key()
         try:
-            pubKey.importKey(
-                         self.propertyFindBody(
-                                           elements.PublicKeyString))
+            pubKey.importKey(self.publicKeyString())
             return pubKey.verifyString(
                                    toBeVerified, 
-                                   self.propertyFindBody(
-                                                     elements.MetaDataSignature))
+                                   self.metaDataSignature())
+            
         except Exception, e:
             log.warn(`self` + ": validation failed. Exception: " + `e`)
             return False
