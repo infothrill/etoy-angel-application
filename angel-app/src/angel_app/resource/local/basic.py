@@ -299,7 +299,10 @@ class Basic(deleteable.Deletable, Safe):
         """
         Return the list of clones stored with this resource.
         """
-        return self.deadProperties().get(elements.Clones.qname())
+        if self.deadProperties().contains(elements.Clones.qname()):
+            return self.deadProperties().get(elements.Clones.qname())
+        else:
+            return []
 
     def metaDataChildren(self):
         """
