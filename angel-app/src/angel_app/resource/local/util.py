@@ -128,7 +128,7 @@ def testStringReader():
                 sys.stdout.write(buf)
 
 def uuidFromPublicKeyString(publicKey):    
-    return uuid.UUID( getHashObject( self.publicKeyString() ).hexdigest()[:32] )
+    return uuid.UUID( getHashObject(publicKey).hexdigest()[:32] )
 
 if __name__ == "__main__":
     testStringReader()
