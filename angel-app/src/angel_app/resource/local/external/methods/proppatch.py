@@ -83,7 +83,7 @@ class ProppatchMixin:
             return True
         rid = __get(elements.ResourceID)
         if not lid == rid:
-            log.info("resource ID's for PROPPATCH don't match. Local: %s, remote: " % (lid, rid))
+            log.info("resource ID's for PROPPATCH don't match. Local: %s, remote: %s" % (lid, rid))
             return False
         
         sig = __both(elements.MetaDataSignature)
