@@ -29,6 +29,7 @@ author = """Vincent Kraeutler, 2006"""
 from urllib import quote, unquote
 from urlparse import urlsplit
 from os import sep
+from angel_app.contrib import uuid
 
 # get config:
 from angel_app.config import config
@@ -125,6 +126,9 @@ def testStringReader():
                 break
             else:
                 sys.stdout.write(buf)
+
+def uuidFromPublicKeyString(publicKey):    
+    return uuid.UUID( getHashObject( self.publicKeyString() ).hexdigest()[:32] )
 
 if __name__ == "__main__":
     testStringReader()

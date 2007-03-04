@@ -17,8 +17,7 @@ from angel_app.contrib import uuid
 from angel_app.contrib.ezPyCrypto import key as ezKey
 import os
 import urllib
-
-from angel_app.contrib import uuid
+import angel_app.resource.local.util
 
 log = getLogger()
 
@@ -50,9 +49,8 @@ class Basic(deleteable.Deletable, Safe):
         """
         @return a stream-like object that has the read() and close() methods, to read the contents of the local resource
         """
-        from angel_app.resource.local.util import StringReader
         if self.fp.isdir():
-            return StringReader(REPR_DIRECTORY)
+            return util.StringReader(REPR_DIRECTORY)
         else:
             return self.fp.open()
 
@@ -181,8 +179,7 @@ class Basic(deleteable.Deletable, Safe):
         """
         @return hexdigest for content of self
         """
-        from angel_app.resource.local.util import getHashObject
-        hash = getHashObject()
+        hash = util.getHashObject()
         f = self.open()
         bufsize = 4096 # 4 kB
         while True:
@@ -333,8 +330,7 @@ class Basic(deleteable.Deletable, Safe):
         @return a SHA checksum of the public key string. We only take the first 16 bytes to be convertible
         to a UUID>
         """
-        from angel_app.resource.local.util import getHashObject
-        return uuid.UUID( getHashObject( self.publicKeyString() ).hexdigest()[:32] )
+        return util.uuidFromPublicKeyString(self.publicKeyString())
 
     def signableMetadata(self):
         """
