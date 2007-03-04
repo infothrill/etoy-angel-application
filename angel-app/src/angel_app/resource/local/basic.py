@@ -225,7 +225,7 @@ class Basic(deleteable.Deletable, Safe):
             return False
         
         if self.fp.exists() and not self.exists():
-            DEBUG and log.debug(self.fp.path + " not referenced by parent, deleting")
+            log.info(self.fp.path + " not referenced by parent, deleting")
             self._recursiveDelete(self.fp.path)
             return True
         
@@ -236,7 +236,7 @@ class Basic(deleteable.Deletable, Safe):
         childIDs = [str(child.childOfType(elements.UUID)) for child in pc]
         
         if self.sigUUID() not in childIDs:
-            DEBUG and log.debug(self.fp.path + ": invalid signature")
+            log.info(self.fp.path + ": invalid signature")
             self._recursiveDelete(self.fp.path)
             return True
         
