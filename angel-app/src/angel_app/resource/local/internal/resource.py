@@ -19,7 +19,8 @@ from angel_app.config.internal import loadKeysFromFile
 
 keyRing = None
 
-def reloadKeys():   
+def reloadKeys():  
+    log.info("reloading keys") 
     keyRing = loadKeysFromFile()
     
 reloadKeys()
