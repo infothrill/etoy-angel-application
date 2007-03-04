@@ -77,6 +77,7 @@ def setMountPoint(
     
 
     # --- the local mount point can be initialized ---
+    log.info("mount point and clone OK, proceeding to mount.")
     
     # create the mount point  
     from angel_app import elements      
