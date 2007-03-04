@@ -36,7 +36,7 @@ class PutMixin:
         A put operation from a non-authenticated source is allowed
         exactly if 
         -- the file does not exist, but is referenced in the parent resource
-        -- the file is is not in a consistent state.
+        -- or the file is is not in a consistent state.
         See also proppatch.
         """ 
         
@@ -47,7 +47,7 @@ class PutMixin:
                        "PUT is forbidden on unreferenced resources. Try a PROPPATCH on the parent first."
                        ))
                     
-        if self.verify():
+        if self.exists() and self.verify():
                 raise HTTPError(
                     StatusResponse(
                            responsecode.FORBIDDEN, 
