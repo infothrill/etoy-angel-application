@@ -306,11 +306,12 @@ class Clone(object):
         DEBUG and log.msg("response on MKCOL: " + `resp.status`)
 
 
-    def performPushRequest(self, localClone):
+    def performPushRequest(self, localClone, elements = elements.requiredKeys):
         """
         Push the relevant properties of a local clone to the remote clone via a PROPPATCH request.
+        @param elements is a list of property elements we want to push out to the remote clone
         """
-        pb = makePushBody(localClone)
+        pb = makePushBody(localClone, elements)
         DEBUG and log.debug("pushing metadata:" + pb)
         resp = self.__performRequest(
                                      method = "PROPPATCH", 
