@@ -17,7 +17,7 @@ from angel_app.contrib import uuid
 from angel_app.contrib.ezPyCrypto import key as ezKey
 import os
 import urllib
-import angel_app.resource.local.util
+import angel_app.resource.local.util as util
 
 log = getLogger()
 
