@@ -48,9 +48,8 @@ def setMountPoint(
     import os
     
     pp = absPath(mountPoint)
-    from twisted.python.filepath import FilePath
     
-    assert not FilePath(pp).exists(), "Can't create mount point where resource exists: " + pp
+    assert not os.path.exists(pp), "Can't create mount point where resource exists: " + pp
     
     from angel_app.resource.remote import clone
     
