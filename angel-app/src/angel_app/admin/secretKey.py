@@ -6,11 +6,14 @@ import os
 from angel_app.config import config
 
 AngelConfig = config.getConfig()
+from angel_app.log import getLogger
+log = getLogger("common")
 
 def createKey(filePath = os.path.join(AngelConfig.get("common","keyring"), "default.key")):
     kk = ezKey()
     # TODO: make key size configurable
     kk.makeNewKeys() 
+    log.info("creating new key in file: " + `filePath`)
     open(filePath, 'w').write(kk.exportKeyPrivate())
 
 def createAtLeastOneKey():
@@ -21,6 +24,8 @@ def createAtLeastOneKey():
     
     # the keys that already exist
     keyFiles = os.listdir(keyDirectory)
+    
+    log.info("current key files: " + `keyFiles`)
     
     # make a key if we don't have any keys yet
     if keyFiles == []:
