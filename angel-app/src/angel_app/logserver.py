@@ -97,4 +97,4 @@ def startLoggingServer():
     factory.protocol = LoggingProtocol
     from logging.handlers import DEFAULT_TCP_LOGGING_PORT
     reactor.listenTCP(DEFAULT_TCP_LOGGING_PORT, factory)
-    print "OGGIN STARTED"
+    print "LOGGING STARTED"
