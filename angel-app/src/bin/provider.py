@@ -61,8 +61,8 @@ def main():
     # setup/configure config system
     from angel_app.config.config import getConfig
     angelConfig = getConfig(options.config)
-    angelConfig.bootstrapping = False
     postConfigInit()
+    angelConfig.bootstrapping = False
 
     # setup/configure logging
     import angel_app.log
