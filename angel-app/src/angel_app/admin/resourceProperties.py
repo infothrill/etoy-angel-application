@@ -96,5 +96,5 @@ def setMountPoint(
     rr._registerWithParent()
     
     # add the clone
-    rr.deadProperties.set(clonesToElement([cc]))
+    rr.deadProperties().set(clonesToElement([cc]))
     
