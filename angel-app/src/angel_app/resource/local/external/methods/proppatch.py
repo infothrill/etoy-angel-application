@@ -156,7 +156,9 @@ class ProppatchMixin:
                 return
                 
             # verify that the clone is reachable ...
-            if not (newClone.ping() and newClone.exists()): return
+            if not (newClone.ping() and newClone.exists()): 
+                log.info("not adding unreachable clone: " + `newClone`)
+                return
             
             newClone.updateCache()
             
@@ -169,7 +171,7 @@ class ProppatchMixin:
                 newClone.resourceID() == self.resourceID():
                 defaultHandler(clonesToElement(residentClones + [newClone]), store, responses)
             else:
-                log.info("not adding unreachable or invalid clone: " + `newClone`)
+                log.info("not adding invalid clone: " + `newClone`)
             
                     
             
