@@ -73,7 +73,10 @@ class Crypto(
         DEBUG and log.debug("keys on key ring: " + " ".join[Crypto.keyRing])
         
         if pks not in Crypto.keyRing.keys():
-            raise "Unable to look up secret key for public key or resource: " + self.fp.path
+            error = "Unable to look up secret key for public key %s on resource: %s. Found: %s" \
+                % (pks, self.fp.path, `Crypto.keyRing.keys()`)
+            log.warn(error)
+            raise error
         
         return Crypto.keyRing[pks]
   
