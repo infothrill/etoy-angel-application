@@ -264,14 +264,9 @@ class Crypto(
                 DEBUG and log.debug(self.fp.path + ": this resource is already registered with the parent")
                 return
 
-        try:
-            keyUUID = self.keyUUID()
-        except:
-            keyUUID = self.parent().keyUUID()
-
         ic = elements.Child(*[
                          rfc2518.HRef(urllib.quote(self.resourceName())),
-                         elements.UUID(str(keyUUID)),
+                         elements.UUID(str(self.sigUUID())),
                          self.resourceID()
                          ])
         
