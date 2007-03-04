@@ -266,7 +266,7 @@ class Crypto(
 
         ic = elements.Child(*[
                          rfc2518.HRef(urllib.quote(self.resourceName())),
-                         elements.UUID(str(self.sigUUID())),
+                         elements.UUID(str(self.keyUUID())),
                          self.resourceID()
                          ])
         

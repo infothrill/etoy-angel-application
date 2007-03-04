@@ -235,9 +235,9 @@ class Basic(deleteable.Deletable, Safe):
         
         childIDs = [str(child.childOfType(elements.UUID)) for child in pc]
         
-        if str(self.sigUUID()) not in childIDs:
+        if str(self.keyUUID()) not in childIDs:
             log.info(self.fp.path + ": invalid signature")
-            log.info("did not find: " + str(self.sigUUID()) + " in " + `childIDs`)
+            log.info("did not find: " + str(self.keyUUID()) + " in " + `childIDs`)
             self._recursiveDelete(self.fp.path)
             return True
         
