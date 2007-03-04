@@ -4,19 +4,6 @@ Default metadata for the root directory.
 
 """
 
-
-
-"""
-the clones of the root directory
-
-tuples of (host names  IP addresses, port numbers) of the master (default) nodes.
-the port numbers are optional and default to the value defined in config.external.py
-"""
-peers = [
-           ("localhost", 9999),
-           ("missioneternity.org", 9999)
-           ]
-
 """
 the public key
 """
