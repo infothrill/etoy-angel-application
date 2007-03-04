@@ -237,7 +237,7 @@ class Basic(deleteable.Deletable, Safe):
         
         if str(self.sigUUID()) not in childIDs:
             log.info(self.fp.path + ": invalid signature")
-            log.debug("did not find: " + str(self.sigUUID()) + " in " + `childIDs`)
+            log.info("did not find: " + str(self.sigUUID()) + " in " + `childIDs`)
             self._recursiveDelete(self.fp.path)
             return True
         
