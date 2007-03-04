@@ -8,7 +8,7 @@ import os
 from angel_app.log import getLogger
 
 log = getLogger("client")
-DEBUG = False
+DEBUG = True
 
 # get config:
 from angel_app.config import config
