@@ -30,11 +30,11 @@ def postConfigInit():
     from angel_app import singlefiletransaction
     singlefiletransaction.purgeTmpPathAndSetup()
 
-def startProcesses(binpath = os.getcwd()):
+def startProcesses(privateMode = False):
     procManager = angel_app.procmanager.ExternalProcessManager()
     procManager.registerProcessStarter(reactor.spawnProcess)
     procManager.registerDelayedStarter(reactor.callLater) 
-    
+    binpath = os.getcwd()
     import sys
     
     if "PYTHONPATH" in os.environ.keys():
@@ -46,11 +46,14 @@ def startProcesses(binpath = os.getcwd()):
     angelConfig = getConfig()
     cfg = angelConfig.getConfigFilename()
 
-    for protocol, scriptName in [
-                             (angel_app.procmanager.PresenterProtocol(), "presenter.py"),
-                             (angel_app.procmanager.ProviderProtocol(), "provider.py"),
-                             (angel_app.procmanager.MaintainerProtocol(), "maintainer.py")
-                             ]:
+    apps = [
+         (angel_app.procmanager.ProviderProtocol(), "provider.py"),
+         (angel_app.procmanager.MaintainerProtocol(), "maintainer.py")
+         ]
+    if privateMode == False:
+         apps.append( (angel_app.procmanager.PresenterProtocol(), "presenter.py") )
+
+    for protocol, scriptName in apps:
         process = angel_app.procmanager.ExternalProcess()
         process.setProtocol(protocol)
         # always use the interpreter we were called with
@@ -71,13 +74,14 @@ def main():
     parser = OptionParser()
     parser.add_option("-d", "--daemon", dest="daemon", help="daemon mode?", default='')
     parser.add_option("-c", "--config", dest="config", help="alternative config file", default=None)
+    parser.add_option("-p", "--private", dest="private", help="private mode (no presenter)", action="store_true", default=False)
     (options, args) = parser.parse_args()
 
     # setup/configure config system
     from angel_app.config.config import getConfig
     angelConfig = getConfig(options.config)
-    angelConfig.bootstrapping = False
     postConfigInit()
+    angelConfig.bootstrapping = False
 
     # setup/configure logging
     import angel_app.log
@@ -95,7 +99,7 @@ def main():
 
     # end bootsprapping, bring on the dancing girls!
 
-    startProcesses()
+    startProcesses(options.private)
 
     reactor.run()    
 
