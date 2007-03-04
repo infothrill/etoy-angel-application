@@ -99,7 +99,7 @@ def setMountPoint(
                                  cc.metaDataSignature()))
     
     dp.set(elements.ContentSignature.fromString(
-                                                self._computeContentHexDigest() ))
+                                                rr._computeContentHexDigest() ))
     
     dp.set(elements.ResourceID(
                                cc.resourceID()))
