@@ -136,7 +136,7 @@ def _ensureLocalValidity(resource, referenceClone):
         DEBUG and log.debug("_ensureLocalValidity, local clone's signed keys are now: " + resource.signableMetadata())   
     
     # tell the referene clone we're now also hosting this resource
-    referenceClone.performPushRequest(resource, [])
+    referenceClone.performPushRequest(resource)
     DEBUG and log.debug("resource is now valid: " + `resource.verify()`)
         
     resource.familyPlanning()
