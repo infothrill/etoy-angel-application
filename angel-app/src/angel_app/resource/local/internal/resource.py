@@ -17,12 +17,11 @@ log = getLogger(__name__)
 # DO NOT EXPOSE THIS KEY!!!!
 from angel_app.config.internal import loadKeysFromFile
 
-keyRing = None
 
 def reloadKeys():  
     log.info("reloading keys") 
-    keyRing = loadKeysFromFile()
-    log.info("available keys: " + `keyRing.keys()`)
+    Crypto.keyRing = loadKeysFromFile()
+    log.info("available keys: " + `Crypto.keyRing.keys()`)
     
 reloadKeys()
 
@@ -44,7 +43,7 @@ class Crypto(
     """
     
 #    secretKey = loadKeysFromFile().items()[0][1]
-    #keyRing = loadKeysFromFile()
+    keyRing = loadKeysFromFile()
 
     
     def __init__(self, path,
@@ -79,12 +78,12 @@ class Crypto(
         if pks == None:
             raise "Unable to look up public key for resource: " + self.fp.path
         
-        DEBUG and log.debug("keys on key ring: " + " ".join[keyRing])
+        DEBUG and log.debug("keys on key ring: " + " ".join[Crypto.keyRing])
         
-        if pks not in keyRing.keys():
+        if pks not in Crypto.keyRing.keys():
             raise "Unable to look up secret key for public key or resource: " + self.fp.path
         
-        return keyRing[pks]
+        return Crypto.keyRing[pks]
   
     def _inheritClones(self):
         self.deadProperties().set(
