@@ -220,8 +220,23 @@ class Basic(deleteable.Deletable, Safe):
         @rtype boolean
         @return true if the resource was deleted, false otherwise
         """
+        if self.parent() == None:
+            # the root is never referenced
+            return False
+        
         if self.fp.exists() and not self.exists():
             DEBUG and log.debug(self.fp.path + " not referenced by parent, deleting")
+            self._recursiveDelete(self.fp.path)
+            return True
+        
+        # TODO: this is highly inefficient, since we do it once for every child, rather
+        # than just once for the parent.
+        pc = self.parent().deadProperties().get(elements.Children.qname()).children
+        
+        childIDs = [str(child.childOfType(elements.UUID)) for child in pc]
+        
+        if self.sigUUID() not in childIDs:
+            DEBUG and log.debug(self.fp.path + ": invalid signature")
             self._recursiveDelete(self.fp.path)
             return True
         
@@ -229,7 +244,7 @@ class Basic(deleteable.Deletable, Safe):
     
     def familyPlanning(self):
         """
-        Remove all direct children that are not referenced.
+        Remove all direct children that are not (properly) referenced.
         """
         self.findChildren("1")
 
