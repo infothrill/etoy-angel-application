@@ -77,10 +77,12 @@ class Crypto(
         if pks == None:
             raise "Unable to look up public key for resource: " + self.fp.path
         
-        if pks not in self.keyRing.keys():
+        DEBUG and log.debug("keys on key ring: " + " ".join[keyRing])
+        
+        if pks not in keyRing.keys():
             raise "Unable to look up secret key for public key or resource: " + self.fp.path
         
-        return self.keyRing[pks]
+        return keyRing[pks]
   
     def _inheritClones(self):
         self.deadProperties().set(
