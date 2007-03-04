@@ -322,6 +322,13 @@ class Basic(deleteable.Deletable, Safe):
         """
         return util.uuidFromPublicKeyString(self.publicKeyString())
 
+    def sigUUID(self):
+        """
+        @return a SHA checksum of the resource's signature. We only take the first 16 bytes to be convertible
+        to a UUID>
+        """
+        return util.uuidFromPublicKeyString(self.get(elements.MetaDataSignature))
+
     def signableMetadata(self):
         """
         Returns a string representation of the metadata that needs to
