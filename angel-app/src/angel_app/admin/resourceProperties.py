@@ -60,13 +60,16 @@ def setMountPoint(
     # so we have to
     url = urlparse.urlparse(URLToMount)
     host, path = url[1], url[2]
-    path, port = path.split(":")
+    if path == "":
+        path = "/"
+    
+    host, port = host.split(":")
     if port == "": 
         # TODO: check: does this give the default port (9999 <- we want this) 
         # or the port used on this host?
         port = providerport = AngelConfig.getint("provider","listenPort")
         
-    cc = clone.Clone(host, path, int(port))
+    cc = clone.Clone(host, int(port), path)
     
     if not (cc.ping() and cc.exists()):
         raise clone.CloneNotFoundError(
