@@ -30,11 +30,15 @@ def reSign(path = ""):
 def setKey(path = "", key = secretKeys.values()[0]):
     from angel_app.elements import PublicKeyString
     # first set the key -- this won't work with Crypto
-    r = Basic(absPath(path))
-    log.info("setting key for " + path + " to " + key.exportKey())
-    r.deadProperties().set(PublicKeyString(key.exportKey()))
-    # switch to crypto and sign
-    reSign(path)
+    rr = Basic(absPath(path))
+    try:
+        rr.publicKeyString()
+        return
+    except:
+        log.info("setting key for " + path + " to " + key.exportKey())
+        rr.deadProperties().set(PublicKeyString(key.exportKey()))
+        # switch to crypto and sign
+        reSign(path)
     
 def setMountPoint(
                   mountPoint = "MISSION ETERNITY", 
