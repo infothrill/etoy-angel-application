@@ -21,7 +21,7 @@ import angel_app.resource.local.util as util
 
 log = getLogger()
 
-DEBUG = True
+DEBUG = False
 
 # get config:
 from angel_app.config import config
@@ -235,9 +235,9 @@ class Basic(deleteable.Deletable, Safe):
         
         childIDs = [str(child.childOfType(elements.UUID)) for child in pc]
         
-        DEBUG and log.debug("looking for signature: " + str(self.sigUUID()) + " in " + `childIDs`)
         if str(self.sigUUID()) not in childIDs:
             log.info(self.fp.path + ": invalid signature")
+            log.debug("did not find: " + str(self.sigUUID()) + " in " + `childIDs`)
             self._recursiveDelete(self.fp.path)
             return True
         
