@@ -56,3 +56,14 @@ class PutMixin:
         
         # permission granted
         return request
+    
+    def http_PUT(self, request):
+        
+        from twisted.web2.dav.fileop import put
+        
+        # garbage-collect callback
+        def gc(response):
+            self.garbageCollect()
+            yield response
+        
+        return put(request.stream, self.fp).addCallback(gc)

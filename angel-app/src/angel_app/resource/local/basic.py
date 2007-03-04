@@ -242,6 +242,14 @@ class Basic(deleteable.Deletable, Safe):
         
         return False
     
+    def garbageCollect(self):
+        
+        self.removeIfUnreferenced()
+        
+        if not self.verify():
+            # empty the contents of the file, but retain the file itself for the metadata
+            open(self.fp.path, "w").close()
+    
     def familyPlanning(self):
         """
         Remove all direct children that are not (properly) referenced.
