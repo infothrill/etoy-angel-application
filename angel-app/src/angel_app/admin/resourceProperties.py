@@ -3,6 +3,7 @@ Utility script to force resigning the repository root
 """
 
 import os
+from angel_app.resource.local.basic import Basic
 from angel_app.resource.local.internal.resource import Crypto
 from angel_app.config import config
 AngelConfig = config.getConfig()
@@ -25,8 +26,10 @@ def reSign(path = ""):
 
 def setKey(path = "", key = secretKeys.values()[0]):
     from angel_app.elements import PublicKeyString
-    r = Crypto(absPath(path))
+    # first set the key -- this won't work with Crypto
+    r = Basic(absPath(path))
     r.deadProperties().set(PublicKeyString(key.exportKey()))
+    # switch to crypto and sign
     reSign(path)
     
 def setMountPoint(
