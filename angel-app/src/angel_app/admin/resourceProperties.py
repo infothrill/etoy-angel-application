@@ -2,6 +2,9 @@
 Utility script to force resigning the repository root
 """
 
+from angel_app.log import getLogger
+log = getLogger(__name__)
+
 import os
 from angel_app.resource.local.basic import Basic
 from angel_app.resource.local.internal.resource import Crypto
@@ -38,7 +41,8 @@ def setMountPoint(
     """
     @param path is the resource that we want to use as a mount point
     @param pointsTo is the URL of the resource that we want to mount
-    """
+    """       
+    log.info("attempting to mount: " + URLToMount + " at " + mountPoint)
     import urlparse
     
     import os
@@ -50,6 +54,7 @@ def setMountPoint(
     
     from angel_app.resource.remote import clone
     
+
     # TODO:
     # urlparse is unfortunately still kind of broken in 2.4 (2.5 is fine),
     # so we have to
