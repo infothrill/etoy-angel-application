@@ -13,7 +13,7 @@ import urllib
 
 DEBUG = False
 
-log = getLogger("local.internal")
+log = getLogger(__name__)
 # DO NOT EXPOSE THIS KEY!!!!
 from angel_app.config.internal import loadKeysFromFile
 
@@ -22,6 +22,7 @@ keyRing = None
 def reloadKeys():  
     log.info("reloading keys") 
     keyRing = loadKeysFromFile()
+    log.info("available keys: " + keyRing.keys())
     
 reloadKeys()
 
