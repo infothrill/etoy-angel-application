@@ -76,14 +76,15 @@ class ProppatchMixin:
             return __get(element).toxml()
         
         try: 
-            rid = self.resourceID()
+            lid = self.resourceID()
         except:
             # TODO: review -- this is a potential security hole if not handled right,
             # but we are going to be careful, aren't we?
             return True
-        goodID = (rid == __get(elements.ResourceID))
-        log.info("resource ID for PROPPATCH is valid: " + `goodID`)
-        if not goodID: return False
+        rid = __get(elements.ResourceID)
+        if not lid == rid:
+            log.info("resource ID's for PROPPATCH don't match. Local: %s, remote: " % (lid, rid))
+            return False
         
         sig = __both(elements.MetaDataSignature)
         keyString = __both(elements.PublicKeyString)
