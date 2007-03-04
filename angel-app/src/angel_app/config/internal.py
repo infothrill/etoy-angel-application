@@ -1,6 +1,3 @@
-port = 9998
-interface = "127.0.0.1"
-
 from angel_app.contrib.ezPyCrypto import key as ezKey
 from os import sep, listdir
 
