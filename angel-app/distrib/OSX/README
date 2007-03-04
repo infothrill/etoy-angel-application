@@ -18,3 +18,19 @@ $ export PYTHONPATH=$PWD/contrib/:$PWDsrc/angel_app/:$PYTHONPATH
 4. run py2app, giving it all the toplevel scripts as arguments
 $ py2applet ./src/bin/master.py ./src/bin/presenter.py ./src/bin/provider.py ./src/bin/maintainer.py
 
+5. the referencing of the icon file is broken, in the Contents/Info.plist file, you'll find an entry
+        <key>CFBundleIconFile</key>
+        <string>master</string>
+   while in fact there's only a PythonApplet.icns located in Contents/Resources. Specifying an icns on the
+   command line seems to be similarly broken for me. Here's what i've found to work.
+   -- Change the entry in the .plist file to:
+        <key>CFBundleIconFile</key>
+        <string>master.icns</string>
+   -- copy the icon file from distrib/OSX/icons/m221e.icns to Contents/Resources/master.icns
+   -- touch the app folder and fiddle around with the finder (moving something on the command line to the folder
+      where the app folder is located seems to work) until it decides it wants to refresh the
+      view of the app file.
+      
+DONE!
+        
+
