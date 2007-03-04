@@ -1,16 +1,19 @@
+log = getLogger("admin." + __name__)
+
 def initializeRepository():
-    # create the directory layout
+
     from angel_app.admin.directories import makeDirectories
+    log.info("initializing repository, if necessary.")
     makeDirectories()
     
-    # make a secret key, if necessary
     from angel_app.admin.secretKey import createAtLeastOneKey
+    log.info("making a secret key, if necessary.")
     createAtLeastOneKey()
     
-    # take ownership of repository root
     from angel_app.admin.resourceProperties import setKey
+    log.info("taking ownership of repository root.")
     setKey()
     
-    # mount the MISSION ETERNITY root resource
     from angel_app.admin.resourceProperties import setMountPoint
+    log.info("mounting MISSION ETERNITY")
     setMountPoint("MISSION ETERNITY", "http://missioneternity.org:9999")
