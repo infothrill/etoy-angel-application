@@ -51,6 +51,7 @@ def runServer():
     sleepTime = AngelConfig.getint("maintainer", "initialsleep")
     traversalTime = AngelConfig.getint("maintainer", "treetraversaltime")
     maxSleepTime = AngelConfig.getint("maintainer", "maxsleeptime")
+    import sys
     while 1:
         log.info("sleep timeout between resource inspections is: " + `sleepTime`)
         startTime = int(time.time())
@@ -60,10 +61,10 @@ def runServer():
                  time.sleep(sleepTime)
                  continue
                              
-
-                
         except:
-            log.warn("an error occured while traversing the tree -- restarting")
+            log.warn("an error occured while traversing the tree: type %s, value %s" % (`sys.exc_info()[0]`, `sys.exc_info()[1]`), exc_info = sys.exc_info())
+            log.warn("restarting in %s seconds" % `sleepTime`)
+            time.sleep(sleepTime)
         
         elapsedTime = int(time.time()) - startTime
         if elapsedTime > traversalTime:
