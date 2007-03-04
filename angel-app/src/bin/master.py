@@ -35,46 +35,29 @@ def startProcesses(binpath = os.getcwd()):
     procManager.registerProcessStarter(reactor.spawnProcess)
     procManager.registerDelayedStarter(reactor.callLater) 
     
-    # if binpath has a python interpreter, we use it:
-    if (os.path.exists(os.path.join(binpath, "python"))):
-        executable = os.path.join(binpath, "python")
-    else:
-        executable = "python" # system installation (must be in environ.PATH)
+    import sys
     
     if "PYTHONPATH" in os.environ.keys():
-        os.environ["PYTHONPATH"] += ":" + os.sep.join(os.sep.split(binpath)[:-1])
+        os.environ["PYTHONPATH"] += ":" + os.sep.join(binpath.split(os.sep)[:-1])
     else:
-        os.environ["PYTHONPATH"] = os.sep.join(os.sep.split(binpath)[:-1])
+        os.environ["PYTHONPATH"] = os.sep.join(binpath.split(os.sep)[:-1])
 
     from angel_app.config.config import getConfig
     angelConfig = getConfig()
     cfg = angelConfig.getConfigFilename()
 
-    presenterProcess = angel_app.procmanager.ExternalProcess()
-    presenterProcess.setProtocol(angel_app.procmanager.PresenterProtocol())
-    presenterProcess.setExecutable(executable)
-    presenterProcess.setArgs(args = [executable, os.path.join(binpath,"presenter.py"), '-l', '-c', cfg]) 
-    procManager.startServicing(presenterProcess)
-    
-    providerProcess = angel_app.procmanager.ExternalProcess()
-    providerProcess.setProtocol(angel_app.procmanager.ProviderProtocol())
-    providerProcess.setExecutable(executable)
-    providerProcess.setArgs(args = [executable, os.path.join(binpath,"provider.py"), '-l', '-c', cfg]) 
-    procManager.startServicing(providerProcess)
-    
-    maintainerProcess = angel_app.procmanager.ExternalProcess()
-    maintainerProcess.setProtocol(angel_app.procmanager.MaintainerProtocol())
-    maintainerProcess.setExecutable(executable)
-    maintainerProcess.setArgs(args = [executable, os.path.join(binpath,"maintainer.py"), '-l', '-c', cfg]) 
-    procManager.startServicing(maintainerProcess)
+    for protocol, scriptName in [
+                             (angel_app.procmanager.PresenterProtocol(), "presenter.py"),
+                             (angel_app.procmanager.ProviderProtocol(), "provider.py"),
+                             (angel_app.procmanager.MaintainerProtocol(), "maintainer.py")
+                             ]:
+        process = angel_app.procmanager.ExternalProcess()
+        process.setProtocol(protocol)
+        # always use the interpreter we were called with
+        process.setExecutable(sys.executable)
+        process.setArgs(args = [sys.executable, os.path.join(binpath, scriptName), '-l', '-c', cfg])
+        procManager.startServicing(process)
 
-    #test/debug code:
-#    testProcess = angel_app.procmanager.ExternalProcess()
-#    testProcess.setProtocol(angel_app.procmanager.TestProtocol())
-#    testProcess.setExecutable("/sw/bin/sleep")
-#    testProcess.setArgs(args = ["/sw/bin/sleep", '5']) 
-#    procManager.startServicing(testProcess)
-#    reactor.callLater(4, procManager.restartServicing, presenterProcess)
 
 def py2appletWorkaroundIgnoreMe():
     """
