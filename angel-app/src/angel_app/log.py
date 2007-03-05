@@ -52,11 +52,14 @@ from twisted.python import log as twistedlog
 from twisted.python.filepath import FilePath
 from os import environ, path, mkdir, linesep
 
+DEBUG = False # this will start printing to the console if set to True
 """
 Defaults for the logging backend (RotatingFileHandler)
 """
 log_maxbytes = 1024 * 1024 # each logfile has a max of 1 MB
 log_backupcount = 7        # max 7 "rotated" logfiles
+
+loggers = {}
 
 def getLogger(area = ""):
     """
@@ -72,9 +75,16 @@ def getLogger(area = ""):
     """
     from angel_app.config.globals import appname
     if len(area) > 0:
-        return logging.getLogger(appname+ '.' + area)
+        area = appname+ '.' + area
     else:
-        return logging.getLogger(appname)
+        area = appname
+    return _getLogger(area)
+
+
+def _getLogger(area = ''):
+    if not loggers.has_key(area):
+        loggers[area] = logging.getLogger(area)
+    return loggers[area]
 
 
 def getAngelLogPath():
@@ -93,16 +103,25 @@ def getAngelLogFilename():
 from logging import Filter
 import re
 class AngelLogFilter(Filter):
+    def __init__(self, f):
+        self.f = f
     def filter(self, record):
+        if DEBUG: print "HIT THE FILTER"
         stringobj = str(record.msg) # this enables us to log all sorts of types, by using their string representation
         record.msg = stringobj.replace("\n", "\\n") # TODO: this is not safe enough, there might be control chars, and record.args also can contain bad data
+        if record.levelno >= self.f[1]:
+            if DEBUG: record.msg = "PASS FILTER" + record.msg
+            return True
+        else:
+            if DEBUG: record.msg = "STOP FILTER" + record.msg
+            return False
         return True
 
 class AngelLogTwistedFilter(Filter):
     def __init__(self):
         self.re = re.compile("HTTPChannel,\d+,.*: (PROPFIND )|(HEAD )\/.* HTTP\/1\.1")
     def filter(self, record):
-        #DEBUG and getLogger().debug("TWISTED LOGFILTER")
+        if DEBUG: print "TWISTED LOGFILTER"
         if self.re.search(record.msg):
             return False
         else:
@@ -133,15 +152,20 @@ def enableHandler(handlername, handler = None):
         formatter = logging.Formatter('%(name)s %(levelname)-6s %(filename)s:%(lineno)d %(message)s')
         # tell the handler to use this format
         handler.setFormatter(formatter)
-        #console.addFilter(AngelLogFilter())
         logging.getLogger().addHandler(handler)
 
 def getReady():
     """
     must be called after setup() and after enabling handlers with enableHandler()
     """
+    
     ourTwistedLogger = getLogger("twisted")
     ourTwistedLogger.addFilter( AngelLogTwistedFilter() )
+    filters = getLoggingFilters()
+    for f in filters:
+        logger = _getLogger(f[0])
+        logger.addFilter( AngelLogFilter(f) )
+        
     twistedlog.startLoggingWithObserver(logTwisted, setStdout=0)
 
 
@@ -196,23 +220,30 @@ def __configLoggerBasic():
     else:
         logging.basicConfig()
 
+def loglevelToInt(loglevel = 'NOTSET'):
+    return logging._levelNames[loglevel]
+#    levels = { "NOTSET": 0, "DEBUG": 10, "INFO": 20, "WARNING": 30, "ERROR": 40, "CRITICAL": 50}
+#    if not levels.has_key(level):
+#        raise NameError, "The given loglevel %s is not defined" % level
+#    return levels[level]
+
 def __getConfiguredLogLevel():
     AngelConfig = angel_app.config.config.getConfig()
     loglevel = AngelConfig.get('common', 'loglevel')
-    return logging._levelNames[loglevel] # this is a bit ugly, we need to map a configured string to a loglevel int
+    return loglevelToInt(loglevel)
 
 
 def __addConsoleHandler():
     # define a console Handler:
     console = logging.StreamHandler()
-    console.setLevel(logging.DEBUG) # for the console logger, we always use DEBUG!
+    console.setLevel(__getConfiguredLogLevel())
+    #console.setLevel(logging.WARN) # for the console logger, we always use DEBUG!
     # set a format which is simpler for console use
     AngelConfig = angel_app.config.config.getConfig()
     formatstring = AngelConfig.get('common', 'consolelogformat', True)
     formatter = logging.Formatter(formatstring)
     # tell the handler to use this format
     console.setFormatter(formatter)
-    #console.addFilter(AngelLogFilter())
     # add the handler to the app's logger
     logging.getLogger().addHandler(console)
     #getLogger().addHandler(console)
@@ -229,7 +260,6 @@ def __addRotatingFileHandler():
     formatter = logging.Formatter(formatstring)
     # tell the handler to use this format
     fileHandler.setFormatter(formatter)    
-    fileHandler.addFilter(AngelLogFilter())
     # add the handler to the app's logger
     logging.getLogger().addHandler(fileHandler)
     #getLogger().addHandler(fileHandler)
@@ -245,3 +275,49 @@ def __addSocketHandler():
     # add the handler to the app's logger
     logging.getLogger().addHandler(socketHandler)
     #getLogger().addHandler(socketHandler)
+
+
+def getLoggingFilters():
+    """
+    Reads per module loglevels from the 'logfilters' section of the
+    config file.
+    Levels can be: NOTSET, DEBUG, INFO, WARN, ERROR, CRITICAL
+    The default loglevel applies, so even if the per module 
+    value is lower (==more verbosity), it won't get logged.
+    This method returns a list of tuples, each of which has
+    two values:
+        - module name (string)
+        - loglevel (int)
+
+    Example:
+    [logfilters]
+    master.angel_app.admin.initializeRepository = WARN
+    master.config = INFO
+    master.ExternalProcessManager = ERROR
+    presenter.delete = INFO
+    presenter = INFO
+    presenter.twisted = INFO
+    provider.angel_app.resource.local.external.methods.proppatch = INFO
+    """
+    import re
+    digits = re.compile("\d+")
+    sectionname = 'logfilters'
+    log = getLogger(__name__)
+    from angel_app.config.config import getConfig
+    angelConfig = getConfig()
+    try:
+        loglevel = angelConfig.config.has_section(sectionname)
+    except NameError:
+        log.warn("No section '%s' in config file, skipping" % sectionname)
+        return None
+    filters = []
+    #print "=======LOGGING CONFIG================"
+    #print "Default LOGLEVEL: " + str(__getConfiguredLogLevel())
+    for logfilter in angelConfig.config.options(sectionname):
+        level = angelConfig.config.get(sectionname, logfilter)
+        if not digits.match(level):
+            level = loglevelToInt(level)
+        #print "LOGLEVEL " + str(level) + " for " + logfilter
+        filters.append( [ logfilter, level] )
+    #print "=======END CONFIG================"
+    return filters
