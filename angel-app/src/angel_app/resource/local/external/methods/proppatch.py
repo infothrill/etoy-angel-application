@@ -150,7 +150,8 @@ class ProppatchMixin:
             address = str(request.remoteAddr.host)
             try:
                 newClone = clonesFromElement(property)[0]
-                newClone.host = address    
+                newClone.host = address
+                log.info("adding clone: " + `newClone` + " to resource " + self.fp.path)   
                 defaultHandler(clonesToElement(residentClones + [newClone]), store, responses)            
             except:
                 log.warn("received malformed clone:" + `property` + "from host:" + `address`)
