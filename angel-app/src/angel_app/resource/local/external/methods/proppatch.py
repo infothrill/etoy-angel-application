@@ -150,30 +150,17 @@ class ProppatchMixin:
             address = str(request.remoteAddr.host)
             try:
                 newClone = clonesFromElement(property)[0]
-                newClone.host = address                
+                newClone.host = address    
+                defaultHandler(clonesToElement(residentClones + [newClone]), store, responses)            
             except:
                 log.warn("received malformed clone:" + `property` + "from host:" + `address`)
                 return
-                
-            # verify that the clone is reachable ...
-            if not (newClone.ping() and newClone.exists()): 
-                log.info("not adding unreachable clone: " + `newClone`)
-                return
             
-            newClone.updateCache()
-            
-            # ... and good before adding it to the local store
-            # TODO: WARNING check: this may introduce a deadlock if a provider A tries to push a clone
-            # but the other provider B will not accept it until it verified the clone on A. do providers
-            # ever push resources? i think only presenters and maintainers do -- but verify!
-            if newClone.publicKeyString() == self.publicKeyString() and \
-                newClone.validate() and \
-                newClone.resourceID() == self.resourceID():
-                defaultHandler(clonesToElement(residentClones + [newClone]), store, responses)
-            else:
-                log.info("not adding invalid clone: " + `newClone`)
-            
-                    
+            # up until revision 572, there was some validation code in here, that would check
+            # back on the source clone to verify its existence and reachability. this leads
+            # to spurious hangs, since the source of the proppatch may (and will) be the provider
+            # process on the local host -- in which case we have reached a deadlock. the code
+            # has therefore been removed.
             
         
         for property in requestProperties:
