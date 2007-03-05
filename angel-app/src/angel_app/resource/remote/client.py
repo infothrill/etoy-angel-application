@@ -107,9 +107,7 @@ def _ensureLocalValidity(resource, referenceClone):
 
             # update the file contents, if necessary
             DEBUG and log.debug("_ensureLocalValidity: updating file contents for " + 
-                              resource.fp.path + " " + `resource.exists()`
-                              + " " + `referenceClone.revision()` + " " + `resource.revisionNumber()`
-                              + " " + `resource.verify()`)
+                              resource.fp.path)
 
             import angel_app.singlefiletransaction
             t = angel_app.singlefiletransaction.SingleFileTransaction()
