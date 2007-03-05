@@ -15,7 +15,7 @@ repository = Basic(AngelConfig.get("common","repository"))
 """
 The listen port that we expect from *other* peers. Don't mistake this for our own listen port!
 """
-publiclistenport = 9999
+providerPublicListenPort = 6221
 
 """
 the default clones of the local repository
@@ -24,7 +24,7 @@ tuples of (host names  IP addresses, port numbers) of the master (default) nodes
 the port numbers are optional and default publiclistenport
 """
 defaultpeers = [
-           ("localhost", publiclistenport)
+           ("localhost", providerPublicListenPort)
            ]
 
 # TODO: add defaultpeers defined by the user in the config file

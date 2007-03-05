@@ -138,9 +138,8 @@ class Config:
                                     "consolelogformat": '%(levelname)-6s %(name)-20s - %(filename)s:%(lineno)d - %(message)s',
 									}, 
                          "presenter": { "listenport": "9998", "listeninterface": "127.0.0.1" }, 
-						 "provider" : { "listenport": "9999" }, 
+						 "provider" : { "listenport": "6221" },
 						 "maintainer" : {
-                                         "peers": "localhost:9999" ,
                                          # it's nice to be fast on the first traversal
                                          "initialsleep": "1",
                                          # we want a tree traversal to take about one day after the initial synch

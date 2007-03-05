@@ -40,9 +40,7 @@ def setKey(path = "", key = secretKeys.values()[0]):
         # switch to crypto and sign
         reSign(path)
     
-def setMountPoint(
-                  mountPoint = "MISSION ETERNITY", 
-                  URLToMount = "http://missioneternity.org:9999"):
+def setMountPoint(mountPoint, URLToMount):
     """
     @param path is the resource that we want to use as a mount point
     @param pointsTo is the URL of the resource that we want to mount
@@ -69,9 +67,8 @@ def setMountPoint(
     
     host, port = host.split(":")
     if port == "": 
-        # TODO: check: does this give the default port (9999 <- we want this) 
-        # or the port used on this host?
-        port = providerport = AngelConfig.getint("provider","listenPort")
+        from angel_app.resource.remote.setup import providerPublicListenPort # default port of other peers
+        port = providerPublicListenPort
         
     cc = clone.Clone(host, int(port), path)
     

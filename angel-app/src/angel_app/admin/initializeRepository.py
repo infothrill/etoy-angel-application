@@ -1,6 +1,10 @@
 from angel_app.log import getLogger
 log = getLogger(__name__)
 
+fstab = [
+         ["http://missioneternity.org:6221", "MISSION ETERNITY"]
+         ]
+
 def initializeRepository():
 
     from angel_app.admin.directories import makeDirectories
@@ -16,8 +20,10 @@ def initializeRepository():
     setKey()
     
     from angel_app.admin.resourceProperties import setMountPoint
-    log.info("mounting MISSION ETERNITY")
     from twisted.python.filepath import FilePath
     from angel_app.admin.resourceProperties import absPath
-    if not FilePath(absPath("MISSION ETERNITY")).exists():
-        setMountPoint("MISSION ETERNITY", "http://missioneternity.org:9999")
+
+    for mount in fstab:
+        log.info("mounting '%s' to '%s'" % (mount[0], mount[1]))
+        if not FilePath(absPath(mount[1])).exists():
+            setMountPoint(mount[1], mount[0])
