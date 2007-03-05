@@ -48,21 +48,22 @@ def getConfig(configfile = None):
 
 class Config:
     """
-    This is a basic configuration engine that provides access to the configuration
-    file of angel-app. In case there is no config file, this class will create one
-    with default values on __del__. The path to the config file is currently
-    restricted to $HOME/.angelrc
-    Comment lines in the config file will get stripped off if it is rewritten.
-    The directory $HOME/.angel_app will automatically get created if needed.
+    This is a basic configuration engine that provides access to the 
+    configuration file of angel-app. In case there is no config file,
+    this class will create one with default values on __del__. The path
+    to the config file is currently restricted to $HOME/.angelrc.
+    Comment lines in the config file will get stripped off if it is
+    rewritten. The directory $HOME/.angel-app will automatically get
+    created if needed.
 
 	<p>
-	In angel-app, you will most probably not instantiate this class directly,
-	but use the routine "getConfig()" in this module.
+	In angel-app, you will most probably not instantiate this class
+    directly, but use the routine "getConfig()" in this module.
 	</p>
 
     <p>
-    See the documentation of the python SafeConfigParser module for information
-    on the configuration file syntax.
+    See the documentation of the python SafeConfigParser module for
+    information on the configuration file syntax.
     </p>
     """
 
@@ -74,6 +75,7 @@ class Config:
             self.cfgvars["mainconfigfile"] = configfilepath
 
         self.config = SafeConfigParser()
+        self.config.optionxform = str # overwrite method to remain case sensitive
         self.config.read(self.cfgvars["mainconfigfile"])
         self.bootstrapping = True
 		#dump entire config file (debug)
@@ -169,9 +171,12 @@ class Config:
 
     def commit(self):
         """
-        Commits the current values of the config object to the config file. This method is currently called automatically
-        whenever a configuration value is changed through set/get. We do not implement this in the destructor, because
-        in the destructor we cannot be sure about which stuff is already garbage collected during shutdown and so it might fail there.
+        Commits the current values of the config object to the config
+        file. This method is currently called automatically whenever a
+        configuration value is changed through set/get. We do not
+        implement this in the destructor, because in the destructor we
+        cannot be sure about which stuff is already garbage collected
+        during shutdown and so it might fail there.
         """
         if self.bootstrapping:
             return
