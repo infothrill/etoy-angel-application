@@ -59,22 +59,22 @@ log_maxbytes = 1024 * 1024 # each logfile has a max of 1 MB
 log_backupcount = 7        # max 7 "rotated" logfiles
 
 def getLogger(area = ""):
-	"""
-	the most important method in here. Call this to get a logger object, so
-	you can log a message using one of the methods 'error' 'info' 'critical' 'debug' ...
-	See the pyhton 'logging' module documentation for more information.
-	Additionally, this method can be called using an additionnal parameter called 'area'.
-	The area is used to tag the logged messages, so it is easier to read the log.
-	The value of area really can be anyt string you like, it might make sense to use
-	for example the class/module name you are in.
-	In logged messages, the area appears just behind the applicaton name, prepended with a dot:
-	"presenter.config" means the log message is from application presenter and area config.
-	"""
-	from angel_app.config.globals import appname
-	if len(area) > 0:
-		return logging.getLogger(appname+ '.' + area)
-	else:
-		return logging.getLogger(appname)
+    """
+    the most important method in here. Call this to get a logger object, so
+    you can log a message using one of the methods 'error' 'info' 'critical' 'debug' ...
+    See the pyhton 'logging' module documentation for more information.
+    Additionally, this method can be called using an additionnal parameter called 'area'.
+    The area is used to tag the logged messages, so it is easier to read the log.
+    The value of area really can be anyt string you like, it might make sense to use
+    for example the class/module name you are in.
+    In logged messages, the area appears just behind the applicaton name, prepended with a dot:
+    "presenter.config" means the log message is from application presenter and area config.
+    """
+    from angel_app.config.globals import appname
+    if len(area) > 0:
+        return logging.getLogger(appname+ '.' + area)
+    else:
+        return logging.getLogger(appname)
 
 
 def getAngelLogPath():
@@ -86,8 +86,8 @@ def getAngelLogPath():
 
 
 def getAngelLogFilename():
-	from angel_app.config.globals import appname
-	return path.join(getAngelLogPath(), appname + ".log")
+    from angel_app.config.globals import appname
+    return path.join(getAngelLogPath(), appname + ".log")
 
 
 from logging import Filter
@@ -155,7 +155,7 @@ def logTwisted(eventDict):
     isError = eventDict['isError']
     # buggy twisted: sometimes it also has the eventDict-key isErr:
     if eventDict.has_key('isErr'):
-    	isError = eventDict['isErr']
+        isError = eventDict['isErr']
 
     if eventDict.has_key('failure'):
         import string
@@ -171,19 +171,19 @@ def logTwisted(eventDict):
 
     text = ""
     if eventDict.has_key("system"):
-    	text = eventDict["system"] + ": "
+        text = eventDict["system"] + ": "
     if eventDict.has_key("message"):
-    	text += " ".join([str(m) for m in eventDict["message"]])
+        text += " ".join([str(m) for m in eventDict["message"]])
 
     if isError == 1:
-    	ourTwistedLogger.error(text)
+        ourTwistedLogger.error(text)
     else:
-    	ourTwistedLogger.info(text)
+        ourTwistedLogger.info(text)
         
 
 
 def __configLoggerBasic():
-	# leave this as is. It is the default root logger and goes to /dev/null
+    # leave this as is. It is the default root logger and goes to /dev/null
     # the way to call basicConfig() changed from version 2.3 to version 2.4
     # to be able to run in 2.3 (although with slightly messy logging), we detect this here:
     from platform import python_version_tuple
@@ -197,9 +197,9 @@ def __configLoggerBasic():
         logging.basicConfig()
 
 def __getConfiguredLogLevel():
-	AngelConfig = angel_app.config.config.getConfig()
-	loglevel = AngelConfig.get('common', 'loglevel')
-	return logging._levelNames[loglevel] # this is a bit ugly, we need to map a configured string to a loglevel int
+    AngelConfig = angel_app.config.config.getConfig()
+    loglevel = AngelConfig.get('common', 'loglevel')
+    return logging._levelNames[loglevel] # this is a bit ugly, we need to map a configured string to a loglevel int
 
 
 def __addConsoleHandler():
@@ -228,7 +228,7 @@ def __addRotatingFileHandler():
     formatstring = AngelConfig.get('common', 'logformat', True)
     formatter = logging.Formatter(formatstring)
     # tell the handler to use this format
-    fileHandler.setFormatter(formatter)	
+    fileHandler.setFormatter(formatter)    
     fileHandler.addFilter(AngelLogFilter())
     # add the handler to the app's logger
     logging.getLogger().addHandler(fileHandler)
@@ -245,4 +245,3 @@ def __addSocketHandler():
     # add the handler to the app's logger
     logging.getLogger().addHandler(socketHandler)
     #getLogger().addHandler(socketHandler)
-
