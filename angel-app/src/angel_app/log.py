@@ -305,11 +305,9 @@ def getLoggingFilters():
     log = getLogger(__name__)
     from angel_app.config.config import getConfig
     angelConfig = getConfig()
-    try:
-        loglevel = angelConfig.config.has_section(sectionname)
-    except NameError:
+    if not angelConfig.config.has_section(sectionname):
         log.warn("No section '%s' in config file, skipping" % sectionname)
-        return None
+        return []
     filters = []
     #print "=======LOGGING CONFIG================"
     #print "Default LOGLEVEL: " + str(__getConfiguredLogLevel())
