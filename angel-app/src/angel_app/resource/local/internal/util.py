@@ -31,7 +31,7 @@ from angel_app.resource.remote.client import inspectResource
 import time
 
 from twisted.internet import reactor
-log = getLogger()
+log = getLogger(__name__)
 
 def identity(something): return something
 

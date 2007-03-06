@@ -8,7 +8,7 @@ from angel_app.contrib.ezPyCrypto import key as ezKey
 
 AngelConfig = config.getConfig()
 from angel_app.log import getLogger
-log = getLogger("master")
+log = getLogger(__name__)
 
 def createKey(filePath = os.path.join(AngelConfig.get("common","keyring"), "default.key")):
     kk = ezKey()

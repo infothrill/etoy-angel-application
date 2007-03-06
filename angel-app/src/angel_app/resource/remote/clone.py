@@ -9,8 +9,7 @@ from angel_app.contrib.ezPyCrypto import key
 from angel_app.log import getLogger
 import urlparse
 
-log = getLogger("clone")
-DEBUG = False
+log = getLogger(__name__)
 
 from httplib import HTTPConnection
 
@@ -92,7 +91,7 @@ class Clone(object):
         # a default socket timeout leads to socket.error: (35, 'Resource temporarily unavailable'), so we disable it
         #import socket
         #socket.setdefaulttimeout(60)
-        DEBUG and log.debug("attempting " + method + " connection to: " + self.host + ":" + `self.port` + " " + self.path)   
+        log.debug("attempting " + method + " connection to: " + self.host + ":" + `self.port` + " " + self.path)   
         conn = HTTPConnection(self.host, self.port)
         conn.connect() 
         conn.sock.settimeout(10.0) # FIXME: implement a timeout on connect
@@ -118,7 +117,7 @@ class Clone(object):
         @rtype string
         @return the raw XML body of the multistatus response corresponding to the respective PROPFIND request.
         """  
-        #DEBUG and log.debug("running PROPFIND on clone " + `self` + " for properties " + `properties` + " with body " + self.__makePropfindRequestBody(properties))
+        #log.debug("running PROPFIND on clone " + `self` + " for properties " + `properties` + " with body " + self.__makePropfindRequestBody(properties))
         resp = self.__performRequest(
                               method = "PROPFIND", 
                               headers = {"Depth" : 0}, 
@@ -134,7 +133,7 @@ class Clone(object):
                 raise CloneError("must receive a MULTI_STATUS response for PROPFIND, otherwise something's wrong, got: " + `resp.status` +\
                     data)
 
-        #DEBUG and log.debug("PROPFIND body: " + data)
+        #log.debug("PROPFIND body: " + data)
         return data
     
     def propertiesDocument(self, properties):
@@ -163,7 +162,7 @@ class Clone(object):
         @return the body of a property consisting of just PCDATA.
         """
         
-        DEBUG and log.debug("returned for property "  + `property.qname()` + ": " + self.propertiesDocument([property]).toxml())
+        log.debug("returned for property "  + `property.qname()` + ": " + self.propertiesDocument([property]).toxml())
         # points to the first dav "prop"-element
         properties = self.propertiesDocument([property]
                                              ).root_element.children[0].children[1].children[0]
@@ -207,7 +206,7 @@ class Clone(object):
             return False  
 
     def isCollection(self):
-         DEBUG and log.debug("isCollection(): " + self.propertyFindBody(rfc2518.ResourceType) + " " + rfc2518.Collection.sname())
+         log.debug("isCollection(): " + self.propertyFindBody(rfc2518.ResourceType) + " " + rfc2518.Collection.sname())
          return self.propertyFindBody(rfc2518.ResourceType) == rfc2518.Collection.sname()
     
     
@@ -255,7 +254,7 @@ class Clone(object):
                                 for element in elements.signedKeys
                                 ])
         
-        #DEBUG and log.debug("Clone: " + toBeVerified)
+        #log.debug("Clone: " + toBeVerified)
         
         pubKey = key()
         try:
@@ -281,7 +280,7 @@ class Clone(object):
                                        [elements.Clones]
                                        ).root_element.children[0].children[1].children[0]
                                        
-            DEBUG and log.debug(`prop`)
+            log.debug(`prop`)
             return clonesFromElement(prop)
             #return [splitParse(
             #               str(clone.children[0].children[0].children[0]))
@@ -313,7 +312,7 @@ class Clone(object):
         @param elements is a list of property elements we want to push out to the remote clone
         """
         pb = makePushBody(localClone, elements)
-        DEBUG and log.debug("pushing metadata:" + pb)
+        log.debug("pushing metadata:" + pb)
         resp = self.__performRequest(
                                      method = "PROPPATCH", 
                                      body = pb
@@ -350,14 +349,14 @@ def makePushBody(localClone, elements = elements.requiredKeys):
     
     
     for el in elements:
-        DEBUG and log.debug("makePushBody: " + localClone.deadProperties().get(el.qname()).toxml())
+        log.debug("makePushBody: " + localClone.deadProperties().get(el.qname()).toxml())
         
     cc = Clone("localhost", providerport, "/" + localClone.relativePath())
     pList = [makeSetElement(element) for element in
              [localClone.deadProperties().get(el.qname()) for el in elements]
               + [clonesToElement([cc])]]
     
-    DEBUG and log.debug(`pList`)
+    log.debug(`pList`)
     
     pu = davxml.PropertyUpdate(*pList)
     return pu.toxml()

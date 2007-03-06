@@ -19,9 +19,7 @@ import os
 import urllib
 import angel_app.resource.local.util as util
 
-log = getLogger()
-
-DEBUG = False
+log = getLogger(__name__)
 
 # get config:
 from angel_app.config import config
@@ -68,7 +66,7 @@ class Basic(deleteable.Deletable, Safe):
         @return the metadata element corresponding to davXMLTextElement
         """
         if not self.fp.exists():
-            DEBUG and log.debug("Basic.get(): file not found for path: " + self.fp.path)
+            log.debug("Basic.get(): file not found for path: " + self.fp.path)
             raise HTTPError(responsecode.NOT_FOUND)
         
         # TODO: for some reason, the xml document parser wants to split
@@ -85,7 +83,7 @@ class Basic(deleteable.Deletable, Safe):
         @return the metadata element corresponding to davXMLTextElement
         """
         if not self.fp.exists():
-            DEBUG and log.debug("AngelFile.getOrSet: file not found for path: " + self.fp.path)
+            log.debug("AngelFile.getOrSet: file not found for path: " + self.fp.path)
             raise HTTPError(responsecode.NOT_FOUND)
         
         # TODO: for some reason, the xml document parser wants to split
@@ -102,7 +100,7 @@ class Basic(deleteable.Deletable, Safe):
             return self.get(davXmlTextElement)
         
         except HTTPError:
-            DEBUG and log.debug("angelFile.Basic.getOrSet: initializing element " + `davXmlTextElement.qname()` + " to " + defaultValueString)
+            log.debug("angelFile.Basic.getOrSet: initializing element " + `davXmlTextElement.qname()` + " to " + defaultValueString)
             self.deadProperties().set(davXmlTextElement.fromString(defaultValueString))
             self.fp.restat()
             return defaultValueString
@@ -131,20 +129,20 @@ class Basic(deleteable.Deletable, Safe):
         @return whether the basic AngelFile is writeable
         """
         if not self.verify():
-            DEBUG and log.debug(self.fp.path + " is writable")
+            log.debug(self.fp.path + " is writable")
             return True
         
         pp = self.parent()
         if not self.exists() and pp.verify() and [self in pp.metaDataChildren()]: 
-            DEBUG and log.debug(self.fp.path + " is writable")
+            log.debug(self.fp.path + " is writable")
             return True
         
-        DEBUG and log.debug(self.fp.path + " is not writable")
+        log.debug(self.fp.path + " is not writable")
         return False
     
     def verify(self):
         if not self.exists():
-            DEBUG and log.debug("Basic.verify(): False, file does not exist")
+            log.debug("Basic.verify(): False, file does not exist")
             return False
         
         try:
@@ -153,13 +151,13 @@ class Basic(deleteable.Deletable, Safe):
             sm = self.signableMetadata()
             ms = self.get(elements.MetaDataSignature)
         except:
-            DEBUG and log.debug("Basic.verify(): False, invalid metadata")
+            log.debug("Basic.verify(): False, invalid metadata")
             return False
         
         dataIsCorrect = False
         if cs == self._computeContentHexDigest():
             dataIsCorrect = True
-            DEBUG and log.debug("data signature for file '%s' is correct: %s" % (self.fp.path, cs) )
+            log.debug("data signature for file '%s' is correct: %s" % (self.fp.path, cs) )
         else:
             log.info("data signature for file '%s' is incorrect: %s" % (self.fp.path, cs) )
             return False
@@ -167,11 +165,11 @@ class Basic(deleteable.Deletable, Safe):
         publicKey = ezKey()
         publicKey.importKey(pk)
         
-        DEBUG and log.debug(ms)
-        DEBUG and log.debug(sm)
+        log.debug(ms)
+        log.debug(sm)
         metaDataIsCorrect = publicKey.verifyString(sm, ms)
         
-        DEBUG and log.debug("meta data signature for file " + self.fp.path + " is correct: " + `metaDataIsCorrect`)
+        log.debug("meta data signature for file " + self.fp.path + " is correct: " + `metaDataIsCorrect`)
             
         return dataIsCorrect and metaDataIsCorrect
     
@@ -320,7 +318,7 @@ class Basic(deleteable.Deletable, Safe):
         @rtype [Basic] 
         @return The children of this resource as specified in the resource metadata.
         """
-        DEBUG and log.debug("Basic.metaDataChildren")
+        log.debug("Basic.metaDataChildren")
         if not self.isCollection(): return []
         
         children = self.deadProperties().get(elements.Children.qname()).children
@@ -338,7 +336,7 @@ class Basic(deleteable.Deletable, Safe):
 
     def publicKeyString(self):
         
-        DEBUG and log.debug("retrieving public key string for: " + self.fp.path)
+        log.debug("retrieving public key string for: " + self.fp.path)
         
         return self.get(elements.PublicKeyString)
  
@@ -363,7 +361,7 @@ class Basic(deleteable.Deletable, Safe):
         """
         try:
             sm = "".join([self.getXml(key) for key in elements.signedKeys])
-            DEBUG and log.debug("signable meta data for " + self.fp.path + ":" + sm)
+            log.debug("signable meta data for " + self.fp.path + ":" + sm)
             return sm
         except Exception, e:
             log.error("Basic: invalid meta data: " + `e`)
@@ -382,7 +380,7 @@ class Basic(deleteable.Deletable, Safe):
     def renderDirectory(self, req):
         if req.uri[-1] != "/":
             # Redirect to include trailing '/' in URI
-            DEBUG and log.debug("redirecting")
+            log.debug("redirecting")
             return http.RedirectResponse(req.unparseURL(path=req.path+'/'))
         
         # is there an index file?
@@ -434,9 +432,9 @@ class Basic(deleteable.Deletable, Safe):
 
     def renderFile(self):
         
-        DEBUG and log.debug("running renderFile")
+        log.debug("running renderFile")
         
         response = self.getResponse()
         response.stream = self.getResponseStream()
-        DEBUG and log.debug("done running renderFile")
+        log.debug("done running renderFile")
         return response

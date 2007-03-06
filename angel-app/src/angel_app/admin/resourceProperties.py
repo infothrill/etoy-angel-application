@@ -57,8 +57,7 @@ def setMountPoint(mountPoint, URLToMount):
     from angel_app.resource.remote import clone
     
 
-    # TODO:
-    # urlparse is unfortunately still kind of broken in 2.4 (2.5 is fine),
+    # TODO:urlparse is unfortunately still kind of broken in 2.4 (2.5 is fine),
     # so we have to
     url = urlparse.urlparse(URLToMount)
     host, path = url[1], url[2]

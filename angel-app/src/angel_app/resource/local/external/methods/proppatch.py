@@ -40,8 +40,6 @@ import angel_app.contrib.ezPyCrypto
 from angel_app.log import getLogger
 
 log = getLogger(__name__)
-DEBUG = True
-
 
 class ProppatchMixin:
     
@@ -165,18 +163,18 @@ class ProppatchMixin:
             
         
         for property in requestProperties:
-            DEBUG and log.debug("proppatch applying: " + property.toxml())
-            DEBUG and log.debug("proppatch applying: " + `property.__class__`)
+            log.debug("proppatch applying: " + property.toxml())
+            log.debug("proppatch applying: " + `property.__class__`)
             try:
                 if property.__class__ == elements.Clones:
                     cloneHandler(property, dp, request, responses)
-                    DEBUG and log.debug("OK")
+                    log.debug("OK")
                 elif property.__class__ in elements.requiredKeys:
                     defaultHandler(property, dp, responses)
-                    DEBUG and log.debug("OK")
+                    log.debug("OK")
                 else: # we don't generally accept unsigned material
                     responses.add(responsecode.UNAUTHORIZED, property)
-                    DEBUG and log.debug("UNAUTHORIZED")
+                    log.debug("UNAUTHORIZED")
             except:
                 responses.add(Failure(), property)
             else:

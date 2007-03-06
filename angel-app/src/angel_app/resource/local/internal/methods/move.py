@@ -27,8 +27,6 @@
 WebDAV MOVE method. Very much incomplete.
 """
 
-DEBUG = True
-
 __all__ = ["http_MOVE"]
 
 from twisted.web2.dav.method.copymove import http_MOVE as hm

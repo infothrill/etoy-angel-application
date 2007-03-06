@@ -6,9 +6,7 @@ from angel_app import elements
 from angel_app.config import rootDefaults
 from angel_app.log import getLogger
 
-log = getLogger("setup")
-DEBUG = True
-DEBUG and log.debug("setup module loaded")
+log = getLogger(__name__)
 
 # get config:
 from angel_app.config import config
@@ -33,7 +31,7 @@ def setupRootMetaData():
     """
     
     angelRoot = Crypto(repository)
-    DEBUG and log.debug("public key: " + rootDefaults.publicKey)
+    log.debug("public key: " + rootDefaults.publicKey)
    
     # we want to make sure we take ownership of the root directory
     angelRoot.deadProperties().set(elements.PublicKeyString(rootDefaults.publicKey))

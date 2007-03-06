@@ -4,8 +4,7 @@ from twisted.web2.dav.element.rfc2518 import HRef
 from angel_app.resource.remote.util import syncClones
 from angel_app.log import getLogger
 
-log = getLogger("setup")
-DEBUG = True
+log = getLogger(__name__)
 
 # get config:
 from angel_app.config import config
@@ -61,5 +60,5 @@ def setupDefaultPeers():
     to one or more default peers. Once we have copied those over, the
     maintenance loop will do the rest.
     """
-    DEBUG and log.debug("running setupDefaultPeers")
+    log.debug("running setupDefaultPeers")
     syncClones(repository, defaultPeers())

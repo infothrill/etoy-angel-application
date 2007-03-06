@@ -4,8 +4,7 @@ from os import sep
 from angel_app import elements
 from angel_app.log import getLogger
 
-log = getLogger("util")
-DEBUG = True
+log = getLogger(__name__)
 
 def validateMulistatusResponseBody(rawData = ""):
     """

@@ -11,8 +11,6 @@ from angel_app.resource.remote.client import inspectResource
 
 import urllib
 
-DEBUG = False
-
 log = getLogger(__name__)
 # DO NOT EXPOSE THIS KEY!!!!
 from angel_app.config.internal import loadKeysFromFile
@@ -56,7 +54,7 @@ class Crypto(
                 else:  
                     ee = element()  
                 
-                DEBUG and log.debug("initializing " + element.sname() + " of " + self.fp.path + " to " + ee.toxml())
+                log.debug("initializing " + element.sname() + " of " + self.fp.path + " to " + ee.toxml())
                 dp.set(ee)
                     
     def secretKey(self):
@@ -70,7 +68,7 @@ class Crypto(
         if pks == None:
             raise "Unable to look up public key for resource: " + self.fp.path
         
-        DEBUG and log.debug("keys on key ring: " + " ".join[Crypto.keyRing])
+        log.debug("keys on key ring: " + " ".join(Crypto.keyRing.keys()))
         
         if pks not in Crypto.keyRing.keys():
             error = "Unable to look up secret key for public key %s on resource: %s. Found: " \
@@ -109,12 +107,12 @@ class Crypto(
         
         if self.fp.isdir() or self.secretKey() == None: return
 
-        DEBUG and log.debug("encrypting file: " + self.fp.path)
+        log.debug("encrypting file: " + self.fp.path)
         myFile = self.fp.open() 
         plainText = myFile.read()
         myFile.close()
         cypherText = self.secretKey().encString(plainText)
-        DEBUG and log.debug(cypherText)  
+        log.debug(cypherText)  
 
         import angel_app.singlefiletransaction
         t = angel_app.singlefiletransaction.SingleFileTransaction()
@@ -135,7 +133,7 @@ class Crypto(
         Therefore, it is not possible to use a directory's name as the 
         value to be signed.
         """
-        DEBUG and log.debug("signing file: " + self.fp.path)
+        log.debug("signing file: " + self.fp.path)
 
         signature = self._computeContentHexDigest()
         self.deadProperties().set(
@@ -151,7 +149,7 @@ class Crypto(
         Increase the revision number by one, if it not initialized, set it to 1.
         """
         nn = self.revisionNumber() + 1
-        DEBUG and log.debug("revision number for " + self.fp.path +" now at: " + `nn`)
+        log.debug("revision number for " + self.fp.path +" now at: " + `nn`)
         self.deadProperties().set(elements.Revision.fromString(`nn`))
         return int(nn)
 
@@ -166,11 +164,11 @@ class Crypto(
         @returns True if the location is writable, False otherwise
         """
         
-        DEBUG and log.debug("testing for writability of: " + self.fp.path)
+        log.debug("testing for writability of: " + self.fp.path)
         
         if not self.secretKey():
             # we don't even have a private key
-            DEBUG and log.debug("Crypto: no key available")
+            log.debug("Crypto: no key available")
             return False
 
         
@@ -182,7 +180,7 @@ class Crypto(
                 return False
             
             if not self.parent().exists():
-                DEBUG and log.debug("this is not the root, but the parent directory does not exist")
+                log.debug("this is not the root, but the parent directory does not exist")
                 return False
             else:
                 return self.parent().isWritableFile()
@@ -190,7 +188,7 @@ class Crypto(
                 
         myKeyString = self.secretKey().exportKey()    
         fileKeyString = self.getOrSet(elements.PublicKeyString, myKeyString)
-        DEBUG and log.debug("public key for " + self.fp.path + ": " + fileKeyString)
+        log.debug("public key for " + self.fp.path + ": " + fileKeyString)
         return fileKeyString == myKeyString
 
 
@@ -204,14 +202,14 @@ class Crypto(
         See also: L{ezPyCrypto.key}
         """
         
-        DEBUG and log.debug("Crypto: sealing " + self.fp.path)
-        DEBUG and log.debug("Crypto: signable data: " + self.signableMetadata())
+        log.debug("Crypto: sealing " + self.fp.path)
+        log.debug("Crypto: signable data: " + self.signableMetadata())
         signature = self.secretKey().signString(self.signableMetadata())
         self.deadProperties().set(elements.MetaDataSignature.fromString(signature))
         #storedsignature = self.getOrSet(elements.MetaDataSignature, "0")
         #log.error(signature)
         #log.error(storedsignature)
-        DEBUG and log.debug("Crypto: signature is " + signature)
+        log.debug("Crypto: signature is " + signature)
         return signature
     
     def updateParent(self, recursionLimit = 0):
@@ -223,30 +221,30 @@ class Crypto(
         """
         Remove this resource from its parent's child elements.
         """
-        DEBUG and log.debug("entering _deRegisterWithParent for: " + self.fp.path)
+        log.debug("entering _deRegisterWithParent for: " + self.fp.path)
 
         pp = self.parent()
         
         if None == pp:
             log.msg("Can not deregister root resource with parent.")
                
-        DEBUG and log.debug(`self.parent()`)
+        log.debug(`self.parent()`)
         pdp = pp.deadProperties()
         
         oc = pdp.get(elements.Children.qname()).children
         
-        DEBUG and log.debug("resourceName: " + self.resourceName())     
+        log.debug("resourceName: " + self.resourceName())     
         nc = [cc for cc in oc if not str(cc.childOfType(rfc2518.HRef)) == urllib.quote(self.resourceName())]
         
         pdp.set(elements.Children(*nc))
         pp.seal()
-        DEBUG and log.debug("exiting _deRegisterWithParent")
+        log.debug("exiting _deRegisterWithParent")
     
     def _registerWithParent(self):
         """
         Add this resource to its parent's child elements.
         """
-        DEBUG and log.debug("entering _registerWithParent for " + self.fp.path)
+        log.debug("entering _registerWithParent for " + self.fp.path)
 
         self._initProperties()
 
@@ -261,7 +259,7 @@ class Crypto(
            
         for cc in oc:
             if str(cc.childOfType(rfc2518.HRef)) == urllib.quote(self.resourceName()):
-                DEBUG and log.debug(self.fp.path + ": this resource is already registered with the parent")
+                log.debug(self.fp.path + ": this resource is already registered with the parent")
                 return
 
         ic = elements.Child(*[
@@ -274,7 +272,7 @@ class Crypto(
         ce = elements.Children(*nc)
         pdp.set(ce)  
         pp.seal()          
-        DEBUG and log.debug("exiting _registerWithParent")
+        log.debug("exiting _registerWithParent")
     
         
         
@@ -289,7 +287,7 @@ class Crypto(
             self._deRegisterWithParent()
             
             destination_uri = request.headers.getHeader("destination")
-            DEBUG and log.debug("changeRegister: " + `self.__class__`)
+            log.debug("changeRegister: " + `self.__class__`)
             destination = resourceFromURI(destination_uri, self.__class__)
             destination._registerWithParent()
         
@@ -300,26 +298,26 @@ class Crypto(
     
     def update(self, recursionLimit = 0):
         
-        DEBUG and log.debug("called update on: " + self.fp.path)
+        log.debug("called update on: " + self.fp.path)
         
         if not self.isWritableFile(): 
             raise "not authorized to perform update of signed meta data"
 
-        DEBUG and log.debug("encrypting " + self.fp.path + "?")
+        log.debug("encrypting " + self.fp.path + "?")
         if self.isEncrypted():
-            DEBUG and log.debug("encrypting " + self.fp.path)
+            log.debug("encrypting " + self.fp.path)
             self.encrypt()
-        DEBUG and log.debug("signing " + self.fp.path)
+        log.debug("signing " + self.fp.path)
         self.sign()
-        DEBUG and log.debug("bumping revision number for " + self.fp.path)
+        log.debug("bumping revision number for " + self.fp.path)
         self.bumpRevisionNumber()
 
         
-        DEBUG and log.debug("sealing " + self.fp.path)
+        log.debug("sealing " + self.fp.path)
         self.seal()
 
-        DEBUG and log.debug("Verifying " + self.fp.path)
-        DEBUG and self.verify()
+        log.debug("Verifying " + self.fp.path)
+        # DEBUG and self.verify() # TODO: this should go!
         
         # certainly not going to hurt if we do this:
         self.fp.restat()
@@ -333,7 +331,7 @@ class Crypto(
         """
         @see Basic.getResponseStream
         """
-        DEBUG and log.debug("rendering file in plaintext: " + self.fp.path)
+        log.debug("rendering file in plaintext: " + self.fp.path)
         if self.isEncrypted():
             
             fileContents = self.secretKey().decString(self.fp.open().read())

@@ -251,5 +251,13 @@ class MaintainerProtocol(ExternalProcessProtocol):
 class TestProtocol(ExternalProcessProtocol):
     pass
 
+# TODO: add test code to module
+#test/debug code:
+#    testProcess = angel_app.procmanager.ExternalProcess()
+#    testProcess.setProtocol(angel_app.procmanager.TestProtocol())
+#    testProcess.setExecutable("/sw/bin/sleep")
+#    testProcess.setArgs(args = ["/sw/bin/sleep", '5']) 
+#    procManager.startServicing(testProcess)
+#    reactor.callLater(4, procManager.restartServicing, presenterProcess)
 
 

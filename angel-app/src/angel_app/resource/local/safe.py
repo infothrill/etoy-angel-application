@@ -6,8 +6,7 @@ from twisted.web2.dav.xattrprops import xattrPropertyStore
 from angel_app import elements
 from angel_app.log import getLogger
 
-log = getLogger("safe")
-DEBUG = False
+log = getLogger(__name__)
 
 class Safe(DAVFile):
     """

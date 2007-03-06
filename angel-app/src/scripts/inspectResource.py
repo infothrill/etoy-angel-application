@@ -1,5 +1,5 @@
 """
-Utility script to force resigning the repository root
+Utility script to force inspect a local resource
 """
 
 import angel_app.resource.remote.client
@@ -14,4 +14,4 @@ AngelConfig = config.getConfig()
 repository = AngelConfig.get("common", "repository")
             
 if __name__ == "__main__":
-    angel_app.resource.remote.client.inspectResource("/home/pkremer/.angel-app/repository/MISSION ETERNITY")
+    angel_app.resource.remote.client.inspectResource(repository + "/MISSION ETERNITY")

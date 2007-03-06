@@ -1,5 +1,5 @@
 from angel_app.log import getLogger
-log = getLogger("maintainer")
+log = getLogger(__name__)
 
 def graphWalker(node, getChildren, toEvaluate, backPack = None):
     """

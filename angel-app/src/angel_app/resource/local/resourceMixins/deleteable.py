@@ -7,8 +7,7 @@ from twisted.web2.dav.http import ResponseQueue, statusForFailure
 from angel_app import elements
 from angel_app.log import getLogger
 
-log = getLogger("deleteable")
-DEBUG = True
+log = getLogger(__name__)
 
 # TODO -- this class requires extensive refactoring: 
 # it should be possible to delete a resource without having
@@ -21,27 +20,27 @@ class Deletable(object):
     def delete(self, uri = "", depth = "infinity"): 
     
         if not self.fp.exists():
-            DEBUG and log.debug("File not found: %s" % (self.fp.path,))
+            log.debug("File not found: %s" % (self.fp.path,))
             raise HTTPError(responsecode.NOT_FOUND)
 
         if not self.isWritableFile():
-            DEBUG and log.debug("Not authorized to delete file: %s" % (self.fp.path,))
+            log.debug("Not authorized to delete file: %s" % (self.fp.path,))
             raise HTTPError(responsecode.UNAUTHORIZED)
 
         succeededFileOperation =  self.__delete(uri, depth)
         
-        DEBUG and log.debug("delete on " + self.fp.path + ": done, with return code: " + `succeededFileOperation`)
+        log.debug("delete on " + self.fp.path + ": done, with return code: " + `succeededFileOperation`)
         return succeededFileOperation
         
     def __deleteFile(self):
         """
         Delete a file; much simpler, eh?
         """
-        DEBUG and log.debug("Deleting file %s" % (self.fp.path,))
+        log.debug("Deleting file %s" % (self.fp.path,))
         try:
             if self.fp.exists():
               #open(self.fp.path, "w").close()
-              DEBUG and log.debug("__deleteFile: " + self.fp.path)
+              log.debug("__deleteFile: " + self.fp.path)
               os.remove(self.fp.path)
         except:
             ff = Failure()
@@ -67,7 +66,7 @@ class Deletable(object):
         recursive filesystem deletes fail.
         """
 
-        DEBUG and log.debug("_recursiveDelete: entering")
+        log.debug("_recursiveDelete: entering")
 
         # TODO: this function sucks, review and fix it
         
@@ -75,7 +74,7 @@ class Deletable(object):
         if uri_path[-1] == "/":
             uri_path = uri_path[:-1]
 
-        DEBUG and log.debug("Deleting directory %s" % (self.fp.path,))
+        log.debug("Deleting directory %s" % (self.fp.path,))
 
         # NOTE: len(uri_path) is wrong if os.sep is not one byte long... meh.
         request_basename = self.fp.path[:-len(uri_path)]
@@ -85,10 +84,10 @@ class Deletable(object):
         # FIXME: defer this
         for dir, subdirs, files in os.walk(self.fp.path, topdown=False):
             
-            DEBUG and log.debug("_recursiveDelete: walking " + dir)
+            log.debug("_recursiveDelete: walking " + dir)
             
             for filename in files:
-                DEBUG and log.debug("_recursiveDelete: deleting: " + filename)
+                log.debug("_recursiveDelete: deleting: " + filename)
                 path = os.path.join(dir, filename)
                 try:
                     os.remove(path)
@@ -96,7 +95,7 @@ class Deletable(object):
                     errors.add(path, Failure())
 
             for subdir in subdirs:
-                DEBUG and log.debug("_recursiveDelete: deleting: " + subdir)
+                log.debug("_recursiveDelete: deleting: " + subdir)
                 path = os.path.join(dir, subdir)
                 if os.path.islink(path):
                     try:
@@ -126,7 +125,7 @@ class Deletable(object):
             except:
                 errors.add(path, Failure())
 
-        DEBUG and log.debug("_recursiveDelete: done")
+        log.debug("_recursiveDelete: done")
         return errors.response()
     
     def __deleteDirectory(self, uri, depth):
@@ -145,7 +144,7 @@ class Deletable(object):
         """
         if depth != "infinity":
             msg = ("Client sent illegal depth header value for DELETE: %s" % (depth,))
-            DEBUG and log.debug(msg)
+            log.debug(msg)
             raise HTTPError(StatusResponse(responsecode.BAD_REQUEST, msg))
         
         self._recursiveDelete(uri)
@@ -178,6 +177,6 @@ class Deletable(object):
         self._deRegisterWithParent()
         
         
-        DEBUG and log.debug("__delete: done")
+        log.debug("__delete: done")
         return response
 

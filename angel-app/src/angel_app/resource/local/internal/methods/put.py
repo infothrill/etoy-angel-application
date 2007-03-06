@@ -13,9 +13,7 @@ from angel_app.log import getLogger
 from angel_app.resource.local.internal.util import inspectWithResponse
 import angel_app.singlefiletransaction
 
-DEBUG = True
-
-log = getLogger()
+log = getLogger(__name__)
 
 class Putable(object):
     """
@@ -23,18 +21,18 @@ class Putable(object):
     """
     def _put(self, stream): 
        
-        not self.fp.exists() and DEBUG and log.debug("adding new file at: " + self.fp.path)
+        not self.fp.exists() and log.debug("adding new file at: " + self.fp.path)
 
         if not self.isWritableFile():
             message = "http_PUT: not authorized to put file: " + self.fp.path
             log.error(message)
             raise HTTPError(responsecode.UNAUTHORIZED, message)
         
-        DEBUG and log.debug("_put: deleting file at: " + self.fp.path)        
+        log.debug("_put: deleting file at: " + self.fp.path)        
         response = waitForDeferred(deferredGenerator(self.__putDelete)())
         yield response
         response = response.getResult()
-        DEBUG and log.debug("_put: return code for deleting file: " + `response`)
+        log.debug("_put: return code for deleting file: " + `response`)
         
         xx  = waitForDeferred(deferredGenerator(self.__putFile)(stream))
         yield xx
@@ -45,7 +43,7 @@ class Putable(object):
         xx = waitForDeferred(deferredGenerator(self._updateMetadata)())
         yield xx
         
-        DEBUG and log.debug("return code for updating meta data: " + `response`)
+        log.debug("return code for updating meta data: " + `response`)
         
         yield response
         
@@ -74,18 +72,18 @@ class Putable(object):
         if the destination already exists, or L{responsecode.NO_CONTENT} if the
         destination was created by the X{PUT} operation.
         """
-        DEBUG and log.debug("Deleting file %s" % (self.fp.path,))
+        log.debug("Deleting file %s" % (self.fp.path,))
         
         # TODO: actually do the above
         
         if self.fp.exists():
-            DEBUG and log.debug("deleting: " + self.fp.path)
+            log.debug("deleting: " + self.fp.path)
             response = self.delete()
-            DEBUG and log.debug("__putDelete: " + `response`)
+            log.debug("__putDelete: " + `response`)
             checkResponse(response, "delete", responsecode.NO_CONTENT)
             success_code = responsecode.NO_CONTENT
         else:
-            DEBUG and log.debug("__putDelete, file does not exist, not deleted.")
+            log.debug("__putDelete, file does not exist, not deleted.")
             success_code = responsecode.CREATED
         yield success_code
     
@@ -100,19 +98,19 @@ class Putable(object):
             x = waitForDeferred(readIntoFile(stream, safe))
             yield x
             x.getResult()
-            DEBUG and log.debug("__putFile: read stream into tmpfile: " + safe.name)
+            log.debug("__putFile: read stream into tmpfile: " + safe.name)
         except:
-            DEBUG and log.debug("failed to write to tmpfile: " + safe.name)
+            log.debug("failed to write to tmpfile: " + safe.name)
             raise HTTPError(statusForFailure(
                                              Failure(),
                 "writing to tmpfile: %s" % (safe.path,)
                 ))
 
         # it worked, commit the file:
-        DEBUG and log.debug("committing tmpfile %s to file %s" % (`safe.name`, `self.fp.path`))
+        log.debug("committing tmpfile %s to file %s" % (`safe.name`, `self.fp.path`))
         t.commit() # TODO: catch exception here!
         
-        DEBUG and log.debug("__putFile: done putting file stream: " + self.fp.path)
+        log.debug("__putFile: done putting file stream: " + self.fp.path)
         yield None
 
             

@@ -38,14 +38,13 @@ from angel_app import elements
 from angel_app.resource.local.internal.util import inspectWithResponse
 from angel_app.log import getLogger
 
-log = getLogger("mkcol")
-DEBUG = True
+log = getLogger(__name__)
 
 class mkcolMixin:
 
   def __checkSpot(self):
 
-      DEBUG and log.debug("calling __checkSpot")
+      log.debug("calling __checkSpot")
 
       if self.fp.exists():
           log.error("Attempt to create collection where file exists: %s"
@@ -68,7 +67,7 @@ class mkcolMixin:
             "The requested resource is not backed by a parent directory."
             ))
           
-      DEBUG and log.debug("done __checkSpot")
+      log.debug("done __checkSpot")
         
 
   def __mkcol(self, request):
@@ -90,13 +89,13 @@ class mkcolMixin:
     yield ignored
     ignored = ignored.getResult()
 
-    DEBUG and log.debug("__mkcol registering with parent")
+    log.debug("__mkcol registering with parent")
     self._registerWithParent()
     
-    DEBUG and log.debug("__mkcol updating metadata")
+    log.debug("__mkcol updating metadata")
     self._updateMetadata()
     
-    DEBUG and log.debug("done MKCOL request")   
+    log.debug("done MKCOL request")   
     yield responsecode.CREATED
 
   def http_MKCOL(self, request):

@@ -21,7 +21,7 @@ from twisted.web2.dav.element.rfc2518 import LockInfo
 
 from angel_app.contrib.uuid import uuid4
 
-log = getLogger("lock")
+log = getLogger(__name__)
 
 
 def parseLockRequest(stream):

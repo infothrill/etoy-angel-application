@@ -7,8 +7,7 @@ import urllib
 import os 
 from angel_app.log import getLogger
 
-log = getLogger("client")
-DEBUG = True
+log = getLogger(__name__)
 
 # get config:
 from angel_app.config import config
@@ -25,7 +24,7 @@ def getLocalCloneURLList(af):
     clones = []
     
     try:
-        DEBUG and log.debug("getting clones from resource: " + af.fp.path)
+        log.debug("getting clones from resource: " + af.fp.path)
         clones += [cloneFromElement(cc) for cc in af.clones().children]
         #clones += [cloneFromGunk(splitParse(str(cc.children[0].children[0]))) for cc in af.clones().children]
     except:
@@ -34,7 +33,7 @@ def getLocalCloneURLList(af):
 
     if af.parent():
         try:
-            DEBUG and log.debug("getting clones from parent resource " + af.parent().fp.path)
+            log.debug("getting clones from parent resource " + af.parent().fp.path)
             
             def assertTrailingSlash(path):
                 if len(path) == 0: path = '/' # catch the situation when looking for parent == repository dir
@@ -60,7 +59,7 @@ def getLocalCloneURLList(af):
                 return Clone(host, port, path)
             
             pclones = [cloneFromParentClone(cc) for cc in af.parent().clones().children]
-            DEBUG and log.debug("clones with parent resource: " + `pclones`)
+            log.debug("clones with parent resource: " + `pclones`)
             clones += pclones
         except:
             # we have no clones on this file
@@ -83,7 +82,7 @@ def getLocalCloneList(af):
     @return the local list of clones of the root directory.
     @rtype [Clone]
     """
-    #DEBUG and log.debug(getLocalCloneURLList(af))
+    #log.debug(getLocalCloneURLList(af))
     #return [cloneFromGunk(splitParse(url)) for url in getLocalCloneURLList(af)]
     return getLocalCloneURLList(af)
 
@@ -106,7 +105,7 @@ def _ensureLocalValidity(resource, referenceClone):
         if (not resource.exists()) or (referenceClone.revision() > resource.revisionNumber()):
 
             # update the file contents, if necessary
-            DEBUG and log.debug("_ensureLocalValidity: updating file contents for " + 
+            log.debug("_ensureLocalValidity: updating file contents for " + 
                               resource.fp.path)
 
             import angel_app.singlefiletransaction
@@ -121,7 +120,7 @@ def _ensureLocalValidity(resource, referenceClone):
         
         keysToBeUpdated = elements.signedKeys + [elements.MetaDataSignature]
         
-        DEBUG and log.debug("updating metadata for invalid local resource: " + resource.fp.path)
+        log.debug("updating metadata for invalid local resource: " + resource.fp.path)
         rp = referenceClone.propertiesDocument(keysToBeUpdated)
         re = rp.root_element.childOfType(rfc2518.Response
                      ).childOfType(rfc2518.PropertyStatus
@@ -131,11 +130,11 @@ def _ensureLocalValidity(resource, referenceClone):
             dd = re.childOfType(sk)
             resource.deadProperties().set(dd)
             
-        DEBUG and log.debug("_ensureLocalValidity, local clone's signed keys are now: " + resource.signableMetadata())   
+        log.debug("_ensureLocalValidity, local clone's signed keys are now: " + resource.signableMetadata())   
     
     # tell the referene clone we're now also hosting this resource
     referenceClone.performPushRequest(resource)
-    DEBUG and log.debug("resource is now valid: " + `resource.verify()`)
+    log.debug("resource is now valid: " + `resource.verify()`)
         
     resource.familyPlanning()
                 
@@ -156,7 +155,7 @@ def _updateBadClone(af, bc):
         # the remote clone is unreachable, ignore for now
         return
         
-    DEBUG and log.debug("updating invalid clone: " + `bc`)
+    log.debug("updating invalid clone: " + `bc`)
         
     # push the resource
     if not af.isCollection():
@@ -198,7 +197,7 @@ def getResourceID(resource):
                 resourceID = "".join(str(cc) for cc in child.childOfType(elements.ResourceID.qname()).children)
                 #log.err("ASDF" + resourceID)
         
-    DEBUG and log.debug("resourceID: " + `resourceID`)
+    log.debug("resourceID: " + `resourceID`)
     return resourceID
 
 def storeClones(af, goodClones, unreachableClones):
@@ -226,7 +225,7 @@ def storeClones(af, goodClones, unreachableClones):
 
 def inspectResource(path = repository):
 
-    DEBUG and log.debug("inspecting resource: " + path)
+    log.debug("inspecting resource: " + path)
     af = Basic(path)
     
     # at this point, we have no guarantee that a local clone actually
@@ -239,19 +238,19 @@ def inspectResource(path = repository):
     pubKey = standin.publicKeyString()
     startingClones = getLocalCloneList(af)
     resourceID = getResourceID(af)
-    DEBUG and log.debug("starting out iteration with: " + `startingClones`)
+    log.debug("starting out iteration with: " + `startingClones`)
     goodClones, badClones, unreachableClones = iterateClones(startingClones, pubKey, resourceID)
     
     if goodClones == []:
-        DEBUG and log.debug("no valid clones found for " + path)
+        log.debug("no valid clones found for " + path)
         raise StopIteration
     
-    DEBUG and log.debug("inspectResource: valid clones: " + `goodClones`)
+    log.debug("inspectResource: valid clones: " + `goodClones`)
     
     # the valid clones should all be identical, pick any one that exists for future reference
     rc = goodClones[0]
     
-    DEBUG and log.debug("reference clone: " + `rc` + " local path " + af.fp.path)
+    log.debug("reference clone: " + `rc` + " local path " + af.fp.path)
 
     _ensureLocalValidity(af, rc)
 
@@ -263,7 +262,7 @@ def inspectResource(path = repository):
 
     storeClones(af, goodClones, unreachableClones)
     
-    DEBUG and log.debug("DONE")
+    log.debug("DONE")
     
     
 
@@ -290,26 +289,26 @@ def iterateClones(cloneSeedList, publicKeyString, resourceID):
         
         # pop the next clone from the queue
         cc = toVisit[0]
-        DEBUG and log.debug("inspecting clone: " + `cc`)
+        log.debug("inspecting clone: " + `cc`)
         toVisit = toVisit[1:]
         
         if cc in visited:
             # we have already looked at this clone -- don't bother with it
-            DEBUG and log.debug("iterateClones: " + `cc` + " ignoring")
+            log.debug("iterateClones: " + `cc` + " ignoring")
             continue
                
         # otherwise, mark the clone as checked and proceed
         visited.append(cc)
         
         if not cc.ping():
-            DEBUG and log.debug("iterateClones: clone " + `cc` + " no reachable, ignoring")
+            log.debug("iterateClones: clone " + `cc` + " no reachable, ignoring")
             unreachable.append(cc)
             continue
         
         cc.checkForRedirect()
         
         if not cc.exists():
-            DEBUG and log.debug("iterateClones: resource " + `cc.path` + " not found on host " + `cc`)
+            log.debug("iterateClones: resource " + `cc.path` + " not found on host " + `cc`)
             bad.append(cc)
             continue
         
@@ -318,23 +317,23 @@ def iterateClones(cloneSeedList, publicKeyString, resourceID):
         
         if cc.resourceID() != resourceID:
             # an invalid clone
-            DEBUG and log.debug("iterateClones: " + `cc` + " wrong resource ID")
-            DEBUG and log.debug("expected: " + `resourceID`)
-            DEBUG and log.debug("found: " + `cc.resourceID()`)
+            log.debug("iterateClones: " + `cc` + " wrong resource ID")
+            log.debug("expected: " + `resourceID`)
+            log.debug("found: " + `cc.resourceID()`)
             bad.append(cc)
             continue
         
         if cc.publicKeyString() != publicKeyString:
             # an invalid clone
-            DEBUG and log.debug("iterateClones: " + `cc` + " wrong public key")
-            DEBUG and log.debug("expected: " + publicKeyString)
-            DEBUG and log.debug("found: " + cc.publicKeyString())
+            log.debug("iterateClones: " + `cc` + " wrong public key")
+            log.debug("expected: " + publicKeyString)
+            log.debug("found: " + cc.publicKeyString())
             bad.append(cc)
             continue
         
         if not cc.validate():
             # an invalid clone
-            DEBUG and log.debug("iterateClones: " + `cc` + " invalid signature")
+            log.debug("iterateClones: " + `cc` + " invalid signature")
             bad.append(cc)
             continue
         
@@ -342,7 +341,7 @@ def iterateClones(cloneSeedList, publicKeyString, resourceID):
         
         if rr < revision:
             # too old
-            DEBUG and log.debug("iterateClones: " + `cc` + " too old: " + `rr` + " < " + `revision`)
+            log.debug("iterateClones: " + `cc` + " too old: " + `rr` + " < " + `revision`)
             if cc not in bad:
                 bad.append(cc)
             continue
@@ -351,15 +350,15 @@ def iterateClones(cloneSeedList, publicKeyString, resourceID):
             # hah! the clone is newer than anything
             # we've seen so far. all the clones we thought
             # were good are in fact bad.
-            DEBUG and log.debug("iterateClones: " + `cc` + " very new: " + `rr` + " > " + `revision`)
+            log.debug("iterateClones: " + `cc` + " very new: " + `rr` + " > " + `revision`)
             bad.extend(good)
             good = []
             revision = rr
         
         # we only arrive here if the clone is valid and sufficiently new
         good.append(cc)
-        DEBUG and log.debug("iterateClones: adding good clone: " + `cc`)
-        DEBUG and log.debug(`cc.cloneList()`)
+        log.debug("iterateClones: adding good clone: " + `cc`)
+        log.debug(`cc.cloneList()`)
         toVisit += cc.cloneList()
         
         
