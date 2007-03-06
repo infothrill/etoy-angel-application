@@ -303,7 +303,7 @@ class Clone(object):
         remote parent clone via a PROPPATCH request.
         """
         resp = self.__performRequest(method = "MKCOL", body = "")
-        DEBUG and log.msg("response on MKCOL: " + `resp.status`)
+        log.debug("response on MKCOL: " + `resp.status`)
 
 
     def performPushRequest(self, localClone, elements = elements.requiredKeys):
