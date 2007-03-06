@@ -5,8 +5,6 @@ from twisted.web2 import http, stream
 from twisted.web2.dav.xattrprops import xattrPropertyStore
 from angel_app import elements
 
-DEBUG = False
-
 class TransactionalMixin:
     """
     Utilities for weak-ass transaction support. A transaction on all resources is guaranteed to proceed 

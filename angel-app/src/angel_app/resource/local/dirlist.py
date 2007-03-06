@@ -9,8 +9,6 @@ import urllib
 import stat
 import time
 
-DEBUG = True
-
 # twisted imports
 from twisted.web2 import iweb, resource, http, http_headers
 
