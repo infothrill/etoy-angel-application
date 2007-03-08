@@ -35,7 +35,7 @@ def cloneFromName(name = ("localhost", 90)):
     """
     hostname = name[0]
     if len(name) == 2: port = name[1]
-    else: port = publiclistenport
+    else: port = providerPublicListenPort
     
     return elements.Clone(
                           HRef.fromString(hostname + ":" + `port`))

@@ -33,9 +33,9 @@ from twisted.internet.defer import deferredGenerator, waitForDeferred
 from twisted.web2 import responsecode
 from twisted.web2.http import HTTPError, StatusResponse
 from twisted.web2.dav.fileop import mkcollection
-from twisted.web2.dav.util import noDataFromStream, parentForURL
-from angel_app import elements
-from angel_app.resource.local.internal.util import inspectWithResponse
+from twisted.web2.dav.util import noDataFromStream
+#from angel_app import elements
+#from angel_app.resource.local.internal.util import inspectWithResponse
 from angel_app.log import getLogger
 
 log = getLogger(__name__)
@@ -53,7 +53,7 @@ class mkcolMixin:
 
       if not self.parent().isCollection():
           log.error("Attempt to create collection with non-collection parent: %s"
-                % (parent.fp.path,))
+                % (self.parent().fp.path,))
           raise HTTPError(StatusResponse(
             responsecode.CONFLICT,
             "Parent resource is not a collection."

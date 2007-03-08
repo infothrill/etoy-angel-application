@@ -160,7 +160,6 @@ class SingleFileTransaction:
         The file is readable and writable only by the creating user, and
         executable by no one.
         """
-        import time
         fd, safename = tempfile.mkstemp(suffix='.tmp', prefix='safe', dir=self._basedir)
         safe = os.fdopen(fd, self.mode)
         return (safe, safename)

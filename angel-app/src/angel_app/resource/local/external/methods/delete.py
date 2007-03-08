@@ -29,6 +29,8 @@ WebDAV DELETE method.
 __all__ = ["precondition_DELETE"]
 
 from twisted.web2.http import HTTPError
+from twisted.web2.http import StatusResponse
+from twisted.web2 import responsecode
 
 class DeleteMixin:
     

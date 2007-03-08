@@ -30,9 +30,8 @@ legalMatters = """
 
 author = """Paul Kremer, 2006"""
 
-from os import environ, path, mkdir
+from os import environ, path
 from ConfigParser import SafeConfigParser
-from twisted.python.filepath import FilePath
 import angel_app.log
 
 configObject = None # holder for a Config object

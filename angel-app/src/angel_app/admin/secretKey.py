@@ -18,7 +18,6 @@ def createKey(filePath = os.path.join(AngelConfig.get("common","keyring"), "defa
     open(filePath, 'w').write(kk.exportKeyPrivate())
 
 def createAtLeastOneKey():
-    from angel_app.contrib.ezPyCrypto import key as ezKey
     
     # where the keys are located
     keyDirectory = AngelConfig.get("common", "keyring")

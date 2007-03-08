@@ -29,6 +29,8 @@ WebDAV MKCOL method.
 __all__ = ["precondition_MKCOL"]
 
 from twisted.web2.http import HTTPError
+from twisted.web2.http import StatusResponse
+from twisted.web2 import responsecode
 
 class MkcolMixin:
     def precondition_MKCOL(self, request):

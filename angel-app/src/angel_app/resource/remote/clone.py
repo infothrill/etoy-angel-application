@@ -2,7 +2,7 @@ from twisted.web2 import responsecode
 from twisted.web2.dav.element import rfc2518
 from twisted.web2.dav import davxml
 from angel_app import elements
-from angel_app.resource.remote import util
+#from angel_app.resource.remote import util
 from angel_app.resource import IResource
 from zope.interface import implements
 from angel_app.contrib.ezPyCrypto import key
@@ -69,7 +69,7 @@ class Clone(object):
                 self.path = path
                 log.info("redirecting to: " + `path`)
             except:
-                error = "redirection url invalid: " + `redirectUrl`
+                error = "redirection url invalid: " + `redirectURL`
                 log.warn(error)
                 raise CloneNotFoundError(error)
             
