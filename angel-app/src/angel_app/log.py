@@ -61,6 +61,8 @@ log_backupcount = 7        # max 7 "rotated" logfiles
 
 loggers = {}
 
+appname = "defaultAppname" # this string is prepended with a trailing dot to all log messages
+
 def getLogger(area = ""):
     """
     the most important method in here. Call this to get a logger object, so
@@ -73,7 +75,6 @@ def getLogger(area = ""):
     In logged messages, the area appears just behind the applicaton name, prepended with a dot:
     "presenter.config" means the log message is from application presenter and area config.
     """
-    from angel_app.config.globals import appname
     if len(area) > 0:
         area = appname+ '.' + area
     else:
@@ -96,7 +97,6 @@ def getAngelLogPath():
 
 
 def getAngelLogFilename():
-    from angel_app.config.globals import appname
     return path.join(getAngelLogPath(), appname + ".log")
 
 
@@ -126,6 +126,17 @@ class AngelLogTwistedFilter(Filter):
             return False
         else:
             return True
+
+
+def initializeLogging(appname = "defaultAppname", handlers = []):
+    """
+    This is the single-step routine to initialize the logging system.
+    """
+    angel_app.log.appname = appname
+    setup()
+    for handler in handlers:
+        enableHandler(handler)
+    getReady()
 
 def setup():
     """

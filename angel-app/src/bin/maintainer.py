@@ -1,15 +1,9 @@
-from optparse import OptionParser
-from angel_app.log import getLogger
-from angel_app.config import config
 
 def bootInit():
     """
     Method to be called in __main__ before anything else. This method cannot rely on any
     framework being initialised, e.g. no logging, no exception catching etc.
-    """
-    import angel_app.config.globals
-    angel_app.config.globals.appname = "maintainer"
-    
+    """    
     # TODO: ugly twisted workaround to provide angel_app xml elements
     from twisted.web2.dav.element import parser
     from angel_app import elements
@@ -27,9 +21,11 @@ def postConfigInit():
     singlefiletransaction.setup()
 
 def runServer():
+    from angel_app.log import getLogger
     from angel_app.resource.remote import client, setup
     from angel_app.graph import graphWalker
     from angel_app.resource.local.basic import Basic
+    from angel_app.config import config
 
     log = getLogger("maintainer")
     AngelConfig = config.getConfig()
@@ -39,7 +35,7 @@ def runServer():
 
     def getChildren(path):
         children = [cc.fp.path for cc in Basic(path).metaDataChildren()]
-        DEBUG and log.debug("children of " + path + " are " + `children`)
+        log.debug("children of " + path + " are " + `children`)
         return children
     
     def toEvaluate(foo, bar):
@@ -77,6 +73,7 @@ def runServer():
 
 def main():
     bootInit()
+    from optparse import OptionParser
     parser = OptionParser()
     parser.add_option("-d", "--daemon", dest="daemon", help="daemon mode?", default='')
     parser.add_option("-c", "--config", dest="config", help="alternative config file", default=None)
@@ -89,22 +86,23 @@ def main():
     postConfigInit()
     angelConfig.bootstrapping = False
 
+    appname = "maintainer"
     # setup/configure logging
-    import angel_app.log
-    angel_app.log.setup()
-    angel_app.log.enableHandler('file')
+    from angel_app.log import initializeLogging
+    loghandlers = ['file'] # always log to file
     if len(options.daemon) > 0:
-        angel_app.log.enableHandler('socket')
-        from angel_app import daemonizer
-        daemonizer.startstop(action=options.daemon, stdout='maintainer.stdout', stderr='maintainer.stderr', pidfile='maintainer.pid')
+        loghandlers.append('socket')
     else:
         if (options.networklogging):
-            angel_app.log.enableHandler('socket')
+            loghandlers.append('socket')
         else:
-            angel_app.log.enableHandler('console')
-    angel_app.log.getReady()
+            loghandlers.append('console')
+    initializeLogging(appname, loghandlers)
+
+    if len(options.daemon) > 0:
+        from angel_app import daemonizer
+        daemonizer.startstop(action=options.daemon, stdout=appname+'.stdout', stderr=appname+'.stderr', pidfile=appname+'.pid')
     runServer()
             
 if __name__ == "__main__":
-    DEBUG = True
     main()

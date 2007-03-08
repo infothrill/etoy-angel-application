@@ -6,17 +6,11 @@ I.e. it may NOT commit data to the angel-app (except e.g. new clone
 metadata).
 """
 
-from optparse import OptionParser
-from angel_app.log import getLogger
-
 def bootInit():
     """
     Method to be called in __main__ before anything else. This method cannot rely on any
     framework being initialised, e.g. no logging, no exception catching etc.
-    """
-    import angel_app.config.globals
-    angel_app.config.globals.appname = "provider"
-    
+    """    
     # TODO: ugly twisted workaround to provide angel_app xml elements
     from twisted.web2.dav.element import parser
     from angel_app import elements
@@ -34,10 +28,11 @@ def postConfigInit():
     singlefiletransaction.setup()
 
 def runServer():
+    from angel_app.log import getLogger
     from angel_app.config import config
     AngelConfig = config.getConfig()
-    providerport = AngelConfig.getint("provider","listenPort")
-    repository = AngelConfig.get("common","repository")
+    providerport = AngelConfig.getint("provider", "listenPort")
+    repository = AngelConfig.get("common", "repository")
 
     from angel_app.resource.local.external.resource import External
     root = External(repository)
@@ -51,11 +46,12 @@ def runServer():
     reactor.run()
 
 def main():
+    from optparse import OptionParser
     bootInit()
     parser = OptionParser()
     parser.add_option("-d", "--daemon", dest="daemon", help="daemon mode?", default='')
     parser.add_option("-c", "--config", dest="config", help="alternative config file", default=None)
-    parser.add_option("-l", "--log", dest="networklogging", help="use network logging?",action="store_true" ,default=False)
+    parser.add_option("-l", "--log", dest="networklogging", help="use network logging?", action="store_true" , default=False)
     (options, args) = parser.parse_args()
 
     # setup/configure config system
@@ -64,20 +60,23 @@ def main():
     postConfigInit()
     angelConfig.bootstrapping = False
 
+    appname = "provider"
     # setup/configure logging
-    import angel_app.log
-    angel_app.log.setup()
-    angel_app.log.enableHandler('file')
+    from angel_app.log import initializeLogging
+    loghandlers = ['file'] # always log to file
     if len(options.daemon) > 0:
-        angel_app.log.enableHandler('socket')
-        from angel_app import daemonizer
-        daemonizer.startstop(action=options.daemon, stdout='provider.stdout', stderr='provider.stderr', pidfile='provider.pid')
+        loghandlers.append('socket')
     else:
         if (options.networklogging):
-            angel_app.log.enableHandler('socket')
+            loghandlers.append('socket')
         else:
-            angel_app.log.enableHandler('console')
-    angel_app.log.getReady()
+            loghandlers.append('console')
+    initializeLogging(appname, loghandlers)
+
+    if len(options.daemon) > 0:
+        from angel_app import daemonizer
+        daemonizer.startstop(action=options.daemon, stdout=appname+'.stdout', stderr=appname+'.stderr', pidfile=appname+'.pid')
+
     runServer()
 
 if __name__ == "__main__":

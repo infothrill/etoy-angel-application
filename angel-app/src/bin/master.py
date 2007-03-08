@@ -3,21 +3,14 @@ Master process. Responsible for starting all relevant angel-app components
 (presenter, provider, maintainer), does the logging as well.
 """
 
-from optparse import OptionParser
-from twisted.internet.protocol import Protocol, Factory, ProcessProtocol
 from twisted.internet import reactor
-import os
-import angel_app.logserver
-import angel_app.procmanager
-from angel_app.log import getLogger
 
 def bootInit():
     """
     Method to be called in __main__ before anything else. This method cannot rely on any
     framework being initialised, e.g. no logging, no exception catching etc.
     """
-    import angel_app.config.globals
-    angel_app.config.globals.appname = "master"
+    pass
 
 def postConfigInit():
     """
@@ -30,12 +23,15 @@ def postConfigInit():
     from angel_app import singlefiletransaction
     singlefiletransaction.purgeTmpPathAndSetup()
 
-def startProcesses(binpath = os.getcwd(), privateMode = False):
+def startProcesses(binpath = None, privateMode = False):
+    import os
+    import sys
+    import angel_app.procmanager
     procManager = angel_app.procmanager.ExternalProcessManager()
     procManager.registerProcessStarter(reactor.spawnProcess)
     procManager.registerDelayedStarter(reactor.callLater) 
 
-    import sys
+    if binpath == None: binpath = os.getcwd()
     
     if "PYTHONPATH" in os.environ.keys():
         os.environ["PYTHONPATH"] += ":" + os.sep.join(binpath.split(os.sep)[:-1])
@@ -47,11 +43,11 @@ def startProcesses(binpath = os.getcwd(), privateMode = False):
     cfg = angelConfig.getConfigFilename()
 
     apps = [
-         (angel_app.procmanager.ProviderProtocol(), "provider.py"),
+         (angel_app.procmanager.ProviderProtocol(), "provider.py"), 
          (angel_app.procmanager.MaintainerProtocol(), "maintainer.py")
          ]
     if privateMode == False:
-         apps.append( (angel_app.procmanager.PresenterProtocol(), "presenter.py") )
+         apps.append((angel_app.procmanager.PresenterProtocol(), "presenter.py"))
 
     for protocol, scriptName in apps:
         process = angel_app.procmanager.ExternalProcess()
@@ -67,10 +63,13 @@ def py2appletWorkaroundIgnoreMe():
     Import the other binaries, so py2applet takes them along in the packaging process.
     """
     import maintainer, presenter, provider
-        
+
+
 
 def main():
+    import os
     bootInit()
+    from optparse import OptionParser
     parser = OptionParser()
     parser.add_option("-d", "--daemon", dest="daemon", help="daemon mode?", default='')
     parser.add_option("-c", "--config", dest="config", help="alternative config file", default=None)
@@ -83,29 +82,33 @@ def main():
     postConfigInit()
     angelConfig.bootstrapping = False
 
+    appname = "master"
+
     # setup/configure logging
-    import angel_app.log
-    angel_app.log.setup()
-
-    binpath = os.getcwd() # get the binpath before daemonizing (which switches to root directory of filessystem)
-    angel_app.log.enableHandler('file')
-    if len(options.daemon) > 0:
-        from angel_app import daemonizer
-        daemonizer.startstop(action=options.daemon, stdout='master.stdout', stderr='master.stderr', pidfile='master.pid')
-    else:
-        angel_app.log.enableHandler('console')
-    angel_app.log.getReady()
-
-    angel_app.logserver.startLoggingServer()
+    from angel_app.log import initializeLogging
+    loghandlers = ['file']
+    if len(options.daemon) == 0: # not in daemon mode, so we log to console!
+        loghandlers.append('console')
+    initializeLogging(appname, loghandlers)
 
     from angel_app.admin import initializeRepository
     initializeRepository.initializeRepository()
 
-    # end bootsprapping, bring on the dancing girls!
+    binpath = os.getcwd() # get the binpath before daemonizing (which switches to root directory of the filessystem)
+    if len(options.daemon) > 0:
+        from angel_app import daemonizer
+        daemonizer.startstop(action=options.daemon, stdout=appname+'.stdout', stderr=appname+'.stderr', pidfile=appname+'.pid')
 
+    # we must start the logging server after daemonizing, because we might get a port already in use otherwise (stop/restart)
+    import angel_app.logserver
+    angel_app.logserver.startLoggingServer()
+    
+    # start processes _after_ starting the logging server!
     startProcesses(binpath, options.private)
 
-    reactor.run()    
+def twistedLoop():
+    reactor.run()
 
 if __name__ == "__main__":
     main()
+    twistedLoop()
