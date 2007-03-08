@@ -31,7 +31,7 @@ legalMatters = """
 author = """Paul Kremer, 2007"""
 
 from twisted.internet.protocol import ProcessProtocol
-from angel_app.log import getLogger
+#from angel_app.log import getLogger
 import os
     
 class ExternalProcess:
@@ -60,12 +60,12 @@ class ExternalProcessManager:
     work. Also, a single external process is described by an object of class
     "externalProcess".
     """
-    from angel_app.log import getLogger
     def __init__(self):
         """
         Initialize internal process dictionary, set some defaults and
         get a logger object.
         """
+        from angel_app.log import getLogger
         self.procDict = {}
         self.startendedprocessdelay = 5 # number of seconds to delay the restarting of an ended process
         self.log = getLogger("ExternalProcessManager")
@@ -153,7 +153,7 @@ class ExternalProcessManager:
         if not processObj.transport == None:
             self.log.debug("trying to kill process")
             try:
-                res = processObj.transport.signalProcess("KILL")
+                processObj.transport.signalProcess("KILL")
             except twisted.internet.error.ProcessExitedAlready:
                 self.log.debug("Could not kill, process is down already")
                 return True
@@ -206,7 +206,6 @@ class ExternalProcessManager:
 
 
 class ExternalProcessProtocol(ProcessProtocol):
-    from angel_app.log import getLogger
     """
     Protocol for an external process.
     This is the base class for each external process we are going to start.
@@ -215,6 +214,7 @@ class ExternalProcessProtocol(ProcessProtocol):
     This class shall not be used directly. It must be used as a base class!
     """
     def __init__(self):
+        from angel_app.log import getLogger
         self.log = getLogger(self.__class__.__name__)
 
     def setProcManager(self, procManager):
