@@ -38,49 +38,49 @@ class IAngelResource(zope.interface.Interface):
     Angel-app resource interface specification.
     """
     
-    def exists():
+    def exists(self):
         """
         @return: a C{True} if this resource is accessible, C{False} otherwise.
         """
     
-    def location():
+    def location(self):
         """
         @return the resource's path relative to the site root.
         """
     
-    def isCollection():
+    def isCollection(self):
         """
         Checks whether this resource is a collection resource / directory.
         @return: a C{True} if this resource is a collection resource, C{False}
             otherwise.
         """
 
-    def resourceID():
+    def resourceID(self):
         """
         @return: the id of the resource as C{String}.
         """
 
-    def relativePath():
+    def relativePath(self):
         """
         @return the path of the resource with respect to the site root
         """
         
-    def revision():
+    def revision(self):
         """
         @return: a C{int} corresponding to the revision number of this resource
         """
 
-    def findChildren():
+    def findChildren(self):
         """
         @return: an iterable over C{uri}.
         """
     
-    def stream():
+    def stream(self):
         """
         @return: an object that minimally supports the read() method, which in turn returns the stream contents as a string.
         """
 
-    def getProperty(property):
+    def getProperty(self, property):
         """
         Reads the given property on this resource.
         @param property: an empty L{davxml.WebDAVElement} class or instance, or
@@ -89,13 +89,13 @@ class IAngelResource(zope.interface.Interface):
             containing the value of the given property.
         """
 
-    def writeProperties(properties):
+    def writeProperties(self, properties):
         """
         Writes the given property on this resource.
         @param properties a the list of elements.requiredKeys
         """
 
-    def listProperties():
+    def listProperties(self):
         """
         @param request: the request being processed.
         @return: a deferred iterable of qnames for all properties defined for
