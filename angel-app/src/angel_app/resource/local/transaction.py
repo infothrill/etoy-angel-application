@@ -4,6 +4,7 @@ from twisted.web2.http import HTTPError
 from twisted.web2 import http, stream
 from twisted.web2.dav.xattrprops import xattrPropertyStore
 from angel_app import elements
+from twisted.internet import reactor
 
 class TransactionalMixin:
     """
@@ -12,6 +13,7 @@ class TransactionalMixin:
     """
     
     def acquireLock(self, numAttempts = 0, timeOut = 1):
+        maxAttempts = 5
         if self.locked():
             if numAttempts >= maxAttempts:
                 raise "failed to acuire lock after many many attempts"
