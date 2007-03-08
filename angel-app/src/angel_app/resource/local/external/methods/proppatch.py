@@ -128,7 +128,7 @@ class ProppatchMixin:
                         Failure(
                             exc_value=HTTPError(
                                 StatusResponse(
-                                   responsecode.FORBIDDEN, str(e)))),
+                                   responsecode.FORBIDDEN, str(err)))),
                         property
                     )
                 
