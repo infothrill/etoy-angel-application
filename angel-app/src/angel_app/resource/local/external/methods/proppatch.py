@@ -154,7 +154,7 @@ class ProppatchMixin:
                 log.warn("received malformed clone:" + `property` + "from host:" + `address`)
                 return
             
-            log.info("adding clone: " + `newClone.toxml()` + " to resource " + self.fp.path)   
+            log.info("adding clone: " + `newClone` + " to resource " + self.fp.path)   
             defaultHandler(clonesToElement(residentClones + [newClone]), store, responses)     
 
             
