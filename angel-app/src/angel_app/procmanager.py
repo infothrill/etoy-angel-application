@@ -31,9 +31,48 @@ legalMatters = """
 author = """Paul Kremer, 2007"""
 
 from twisted.internet.protocol import ProcessProtocol
-#from angel_app.log import getLogger
+from twisted.internet import reactor
 import os
+
+binpath = os.getcwd() # this is used to find the scripts, so be sure to import this module before changing the working directory
+
+def startProcesses(privateMode = False):
+    """
+    This method ties together the classes in this module and
+    instantiates/initializes and starts external processes.
+    """
+    import sys
+    procManager = ExternalProcessManager()
+    procManager.registerProcessStarter(reactor.spawnProcess)
+    procManager.registerDelayedStarter(reactor.callLater) 
+
+    #if binpath == None: binpath = os.getcwd()
     
+    if "PYTHONPATH" in os.environ.keys():
+        os.environ["PYTHONPATH"] += ":" + os.sep.join(binpath.split(os.sep)[:-1])
+    else:
+        os.environ["PYTHONPATH"] = os.sep.join(binpath.split(os.sep)[:-1])
+
+    from angel_app.config.config import getConfig
+    angelConfig = getConfig()
+    cfg = angelConfig.getConfigFilename()
+
+    apps = [
+         (ProviderProtocol(), "provider.py"), 
+         (MaintainerProtocol(), "maintainer.py")
+         ]
+    if privateMode == False:
+         apps.append((PresenterProtocol(), "presenter.py"))
+
+    for protocol, scriptName in apps:
+        process = ExternalProcess()
+        process.setProtocol(protocol)
+        # always use the interpreter we were called with
+        process.setExecutable(sys.executable)
+        process.setArgs(args = [sys.executable, os.path.join(binpath, scriptName), '-l', '-c', cfg])
+        procManager.startServicing(process)
+
+
 class ExternalProcess:
     """
     Class to represent an external process. It really is just a container for

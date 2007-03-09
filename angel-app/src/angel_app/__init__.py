@@ -18,6 +18,7 @@ all = [
        "graph", 
        "log",  
        "logserver", 
+       "proc", 
        "procmanger", 
        "resource", 
        "server", 
