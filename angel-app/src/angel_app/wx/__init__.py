@@ -1,0 +1,1 @@
+all = ["main", "splash", "masterthread"]
