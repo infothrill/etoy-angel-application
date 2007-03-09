@@ -149,11 +149,14 @@ class ProppatchMixin:
             try:
                 newClone = clonesFromElement(property)[0]
                 newClone.host = address
-                log.info("adding clone: " + `newClone.toxml()` + " to resource " + self.fp.path)   
-                defaultHandler(clonesToElement(residentClones + [newClone]), store, responses)            
+       
             except:
                 log.warn("received malformed clone:" + `property` + "from host:" + `address`)
                 return
+            
+            log.info("adding clone: " + `newClone.toxml()` + " to resource " + self.fp.path)   
+            defaultHandler(clonesToElement(residentClones + [newClone]), store, responses)     
+
             
             # up until revision 572, there was some validation code in here, that would check
             # back on the source clone to verify its existence and reachability. this leads
