@@ -20,7 +20,7 @@ class MasterThread(threading.Thread):
         import sys
         import subprocess
         self.showOutput = True
-        m = ['python', 'master.py']
+        m = [sys.executable, 'master.py']
         self.proc = subprocess.Popen(m, stdin=subprocess.PIPE, 
                                      stdout=subprocess.PIPE, 
                                      stderr=subprocess.STDOUT)
