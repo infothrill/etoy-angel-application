@@ -86,8 +86,10 @@ class Crypto(
           
     def _updateMetadata(self): 
 
+        log.debug("entering _updateMetadata for resource " + self.fp.path)
         self._initProperties()
         self.update(1)
+        log.debug("exiting _updateMetadata for resource " + self.fp.path)
 
     
     
@@ -316,9 +318,11 @@ class Crypto(
         # certainly not going to hurt if we do this:
         self.fp.restat()
         
-        log.error(self.fp.path + " now at revision: " + self.getOrSet(elements.Revision)) 
+        log.debug(self.fp.path + " now at revision: " + self.getOrSet(elements.Revision)) 
         if recursionLimit > 0:
             self.updateParent(recursionLimit - 1)
+            
+        log.debug("done update for resource " + self.fp.path)
     
         
     def getResponseStream(self):
