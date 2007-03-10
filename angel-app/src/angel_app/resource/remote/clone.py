@@ -161,11 +161,10 @@ class Clone(object):
         @rtype string
         @return the body of a property consisting of just PCDATA.
         """
-        
-        log.debug("returned for property "  + `property.qname()` + ": " + self.propertiesDocument([property]).toxml())
+        propertyDocument = self.propertiesDocument([property])
+        log.debug("returned for property "  + `property.qname()` + ": " + propertyDocument.toxml())
         # points to the first dav "prop"-element
-        properties = self.propertiesDocument([property]
-                                             ).root_element.children[0].children[1].children[0]
+        properties = propertyDocument.root_element.children[0].children[1].children[0]
         
         return "".join([str(ee) for ee in properties.children[0].children])
     
