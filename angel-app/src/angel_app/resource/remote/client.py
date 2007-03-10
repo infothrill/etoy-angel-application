@@ -13,7 +13,7 @@ log = getLogger(__name__)
 from angel_app.config import config
 AngelConfig = config.getConfig()
 repository = AngelConfig.get("common","repository")
-maxclones = int(AngelConfig.get("common","maxclones"))
+maxclones = AngelConfig.getint("common","maxclones")
 
 
 
