@@ -3,10 +3,14 @@ import wx
 import angel_app.wx.masterthread
 from angel_app.wx.splash import AngelSplashScreen
 
+IMAGE_PATH="../../distrib/images/" # FIXME: this shall not be hardcoded (and have no os specific stuff)!
+M221E_LOGO_SMALL = IMAGE_PATH+"m221elogosmall.jpg"
+
 class AngelMainFrame(wx.Frame):
     def __init__(self, parent, ID, title):
         wx.Frame.__init__(self, parent, ID, title, wx.DefaultPosition, wx.Size(450, 200))
         
+        # define the menus
         self.menu_bar  = wx.MenuBar()
   
         self.file_menu = wx.Menu()
@@ -21,28 +25,34 @@ class AngelMainFrame(wx.Frame):
         self.Bind(wx.EVT_MENU, self.on_about_request, id=wx.ID_ABOUT)
         self.Bind(wx.EVT_MENU, self.on_about_request, id=wx.ID_ABOUT)
         ID_HELP_WIKI = wx.NewId()
-        self.help_menu.Append(ID_HELP_WIKI, "&Angel-App Wiki")
+        self.help_menu.Append(ID_HELP_WIKI, "&Angel-App Wiki (Website)")
         self.Bind(wx.EVT_MENU, self.on_help_wiki, id=ID_HELP_WIKI)
 
         ID_HELP_M221E = wx.NewId()
-        self.help_menu.Append(ID_HELP_M221E, "&MISSION ETERNITY Website")
+        self.help_menu.Append(ID_HELP_M221E, "&MISSION ETERNITY (Website)")
         self.Bind(wx.EVT_MENU, self.on_help_m221e, id=ID_HELP_M221E)
 
-        
         self.menu_bar.Append(self.help_menu, "&Help")
         self.SetMenuBar(self.menu_bar)
+        # end define the menus
 
-        self.static_text = wx.StaticText(self, -1, 'Welcome to the Angel-App from MISSION ETERNITY')
+        self.SetBackgroundColour(wx.WHITE)
+        self.bitmap = wx.Bitmap(M221E_LOGO_SMALL)
+        wx.EVT_PAINT(self, self.OnPaint)
+        self.Centre()
+        self.static_text = wx.StaticText(self, -1, "MISSION ETERNITY's Angel-App",style=wx.ALIGN_CENTRE)
 
         _daemon = angel_app.wx.masterthread.MasterThread()
         _daemon.setDaemon(True)
         _daemon.start() # TODO: shall we always start master on init??
         self.daemon = _daemon
-        #btn = wx.Button(self, label = "Quit")
-        #btn.Bind(wx.EVT_BUTTON, self.OnQuit )
+
         self.Bind(wx.EVT_CLOSE, self.OnQuit)
 
-
+    def OnPaint(self, event):
+        dc = wx.PaintDC(self)
+        dc.DrawBitmap(self.bitmap, 60, 20)
+    
     def OnQuit(self, event):
         self.daemon.stop()
         self.Destroy()
@@ -62,7 +72,7 @@ Redistribution and use in source and binary forms, with or without modification,
          
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
 """ 
-        from wxPython.lib.dialogs import wxScrolledMessageDialog
+        from wxPython.lib.dialogs import wxScrolledMessageDialog # TODO:  DeprecationWarning: The wxPython compatibility package is no longer automatically generated or activly maintained.  Please switch to the wx package as soon as possible. from wxPython.lib.dialogs import wxScrolledMessageDialog
         dlg = wxScrolledMessageDialog(self, text, 'About Angel-App')
         dlg.ShowModal()
 
@@ -77,13 +87,6 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 class AngelApp(wx.App):
     def OnInit(self):
-        showSplash = False # TODO: make this a configurable option
-        if showSplash:
-            angelSplash = AngelSplashScreen()
-            angelSplash.app = self # hmm, this is strange design
-            angelSplash.Show(True)
-            #angelSplash.SetTopWindow(angelSplash)
-        #else:
         mainframe = AngelMainFrame(None, -1, "Angel-App: CROSSING THE DEAD-LINE")
         mainframe.Show(True)
         self.SetTopWindow(mainframe)
