@@ -32,7 +32,6 @@ class Crypto(
     </p>
     """
     
-#    secretKey = loadKeysFromFile().items()[0][1]
     keyRing = loadKeysFromFile()
 
     
@@ -88,8 +87,6 @@ class Crypto(
     def _updateMetadata(self): 
 
         self._initProperties()
-        #self._inheritClones()        
-        # now encrypt and sign, update the containing collection
         self.update(1)
 
     
@@ -206,15 +203,12 @@ class Crypto(
         log.debug("Crypto: signable data: " + self.signableMetadata())
         signature = self.secretKey().signString(self.signableMetadata())
         self.deadProperties().set(elements.MetaDataSignature.fromString(signature))
-        #storedsignature = self.getOrSet(elements.MetaDataSignature, "0")
-        #log.error(signature)
-        #log.error(storedsignature)
         log.debug("Crypto: signature is " + signature)
         return signature
     
     def updateParent(self, recursionLimit = 0):
         pp = self.parent()
-        log.error(pp.fp.path)
+        log.debug("updating parent of " + self.fp.path)
         pp and pp.update()
 
     def _deRegisterWithParent(self):
@@ -226,7 +220,7 @@ class Crypto(
         pp = self.parent()
         
         if None == pp:
-            log.msg("Can not deregister root resource with parent.")
+            log.warn("Can not deregister root resource with parent.")
                
         log.debug(`self.parent()`)
         pdp = pp.deadProperties()
