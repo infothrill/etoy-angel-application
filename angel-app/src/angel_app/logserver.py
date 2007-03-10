@@ -40,6 +40,8 @@ from angel_app.log import getLogger
 import struct
 import cPickle
 
+log = getLogger(__name__)
+
 class LoggingProtocol(Protocol):
     """
     Logging protocol as given by the "standard" python logging module and
@@ -48,14 +50,14 @@ class LoggingProtocol(Protocol):
     def connectionMade(self):
         self.buf = ''
         self.slen = 0
-        getLogger().debug("Incoming logging connection from %s", self.transport.getPeer())
+        log.debug("Incoming logging connection from %s", self.transport.getPeer())
         if (not hasattr(self.factory, "numProtocols")):
             self.factory.numProtocols = 0
         self.factory.numProtocols = self.factory.numProtocols+1 
-        #getLogger().debug("numConnections %d" , self.factory.numProtocols)
+        #log.debug("numConnections %d" , self.factory.numProtocols)
         if self.factory.numProtocols > 20:
             self.transport.write("Too many connections, try later") 
-            getLogger().warn("Too many incoming logging connections. Dropping connection from '%s'.", self.transport.getPeer())
+            log.warn("Too many incoming logging connections. Dropping connection from '%s'.", self.transport.getPeer())
             self.transport.loseConnection()
 
     def connectionLost(self, reason):
@@ -66,20 +68,23 @@ class LoggingProtocol(Protocol):
         # first 4 bytes specify the length of the pickle
         while len(self.buf) >= 4:
             if self.slen == 0:
-                #print "buf longer than 4, finding slen"
+                log.debug("buf longer than 4, finding length of pickle")
                 self.slen = struct.unpack(">L", self.buf[0:4])[0]
-            #print "slen ", self.slen
-            #print "buf length: ", len(self.buf)-4
+            log.debug("length of pickle: %s" % str(self.slen))
+            log.debug("buffer length: %s" % str( len(self.buf)-4))
             if (len(self.buf)-4 >= self.slen):
                 try:
                     obj = cPickle.loads(self.buf[4:self.slen+4])
                 except:
-                    getLogger().error("Problem unpickling")
+                    log.error("Problem unpickling")
                 else:
                     record = logging.makeLogRecord(obj)
                     self.handleLogRecord(record)
                 self.buf = self.buf[self.slen+4:]
                 self.slen = 0
+            else:
+                log.debug("not enough in the buffer to unpickle")
+                break
 
     def handleLogRecord(self, record):
         logger = logging.getLogger(record.name)
