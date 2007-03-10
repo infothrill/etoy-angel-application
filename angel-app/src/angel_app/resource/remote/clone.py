@@ -39,8 +39,14 @@ class Clone(object):
         @rtype Clone
         @return a new clone
         """
+        
+        # the host name or ip
         self.host = host
+        
+        # a port number
         self.port = port
+        
+        # a path string. must be valid as part of a URL (i.e. quoted, using "/")
         self.path = path
         
         self.propertyCache = {}
@@ -315,7 +321,7 @@ class Clone(object):
         @param elements is a list of property elements we want to push out to the remote clone
         """
         pb = makePushBody(localClone, elements)
-        log.debug("pushing metadata:" + pb)
+        log.debug("pushing metadata:" + pb + " for clone " + `self`)
         resp = self.__performRequest(
                                      method = "PROPPATCH", 
                                      body = pb
@@ -325,7 +331,7 @@ class Clone(object):
         data = resp.read()
         if resp.status != responsecode.MULTI_STATUS:
             if resp.status == responsecode.NOT_FOUND:
-                raise CloneNotFoundError("Clone %s not found, response code is: %s, data is %s" % (self, `resp.status`, data) )
+                raise CloneNotFoundError("Clone %s not found, response code is: %s, data is %s" % (`self`, `resp.status`, data) )
             else:
                 raise CloneError("must receive a MULTI_STATUS response for PROPPATCH, otherwise something's wrong, got: " + `resp.status` +\
                     data)
