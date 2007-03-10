@@ -10,6 +10,8 @@ class TransactionalMixin:
     """
     Utilities for weak-ass transaction support. A transaction on all resources is guaranteed to proceed 
     atomically, exactly if all other destructive updates to the resource are also transactions. 
+    
+    UNUSED AT THE MOMENT. feel free to hack.
     """
     
     def acquireLock(self, numAttempts = 0, timeOut = 1):
