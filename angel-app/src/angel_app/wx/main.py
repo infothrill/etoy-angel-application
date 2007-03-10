@@ -1,7 +1,6 @@
 import wx
 
 import angel_app.wx.masterthread
-from angel_app.wx.splash import AngelSplashScreen
 
 IMAGE_PATH="../../distrib/images/" # FIXME: this shall not be hardcoded (and have no os specific stuff)!
 M221E_LOGO_SMALL = IMAGE_PATH+"m221elogosmall.jpg"
