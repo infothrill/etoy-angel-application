@@ -29,8 +29,6 @@ class CloneNotFoundError(CloneError):
 class Clone(object):
     """
     Provides methods for transparent access to frequently used clone meta data.
-    
-    TODO: might want to implement property caching
     """
     implements(IResource.IAngelResource)
     
@@ -46,7 +44,7 @@ class Clone(object):
         # a port number
         self.port = port
         
-        # a path string. must be valid as part of a URL (i.e. quoted, using "/")
+        # a path string. must be valid as part of an absolute URL (i.e. quoted, using "/")
         self.path = path
         
         self.propertyCache = {}
