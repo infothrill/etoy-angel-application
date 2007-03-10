@@ -183,7 +183,7 @@ class Clone(object):
             properties = self.propertyCache[property.qname()]   
             return "".join([str(ee) for ee in properties.children])
         else:
-            log.info("property " + `property` + " not cached.")
+            log.debug("property " + `property` + " not cached.")
             return self.uncachedPropertyFindBody(property)
     
 
