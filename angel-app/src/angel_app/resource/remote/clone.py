@@ -46,7 +46,7 @@ class Clone(object):
         self.propertyCache = {}
         
     def updateCache(self):
-        response = self.propertiesDocument(elements.signedKeys)
+        response = self.propertiesDocument(elements.signedKeys + [elements.MetaDataSignature, rfc2518.ResourceType])
         properties = response.root_element.childOfType(
                                        rfc2518.Response
                                        ).childOfType(
@@ -91,7 +91,8 @@ class Clone(object):
         # a default socket timeout leads to socket.error: (35, 'Resource temporarily unavailable'), so we disable it
         #import socket
         #socket.setdefaulttimeout(60)
-        log.debug("attempting " + method + " connection to: " + self.host + ":" + `self.port` + " " + self.path)   
+        log.debug("attempting " + method + " connection to: " + self.host + ":" + `self.port` + " " + self.path) 
+        log.debug("with body " + body)   
         conn = HTTPConnection(self.host, self.port)
         conn.connect() 
         conn.sock.settimeout(10.0) # FIXME: implement a timeout on connect
@@ -161,6 +162,7 @@ class Clone(object):
         @rtype string
         @return the body of a property consisting of just PCDATA.
         """
+        log.info("Performing lookup for property " + `property.qname()` +" on remote host.")
         propertyDocument = self.propertiesDocument([property])
         log.debug("returned for property "  + `property.qname()` + ": " + propertyDocument.toxml())
         # points to the first dav "prop"-element
@@ -177,9 +179,11 @@ class Clone(object):
         """
         
         if property.qname() in self.propertyCache.keys():
+            log.info("property " + `property` + " returned from local cache.")
             properties = self.propertyCache[property.qname()]   
             return "".join([str(ee) for ee in properties.children])
         else:
+            log.info("property " + `property` + " not cached.")
             return self.uncachedPropertyFindBody(property)
     
 
