@@ -45,7 +45,7 @@ log = getLogger(__name__)
 # get config:
 from angel_app.config import config
 AngelConfig = config.getConfig()
-maxclones = int(AngelConfig.get("common","maxclones"))
+maxclones = AngelConfig.getint("common","maxclones")
 
 
 class ProppatchMixin:
