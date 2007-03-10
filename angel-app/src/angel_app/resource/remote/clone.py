@@ -47,7 +47,25 @@ class Clone(object):
         # a path string. must be valid as part of an absolute URL (i.e. quoted, using "/")
         self.path = path
         
+        self.validatePath()
+        self.validateHostPort()
+        
         self.propertyCache = {}
+        
+    def validatePath(self):
+        from urllib import url2pathname, pathname2url
+        # if the path is valid, then the composition of url2pathname and pathname2url is the identity function
+        if not url2pathname(pathname2url(self.path)) == self.path:
+            raise CloneError("Invalid path for clone: " + `self`)
+        
+    def validateHostPort(self):
+        import urlparse
+        # if the clone is valid, we must be able to reconstruct the host, port, path from the string representation
+        url = urlparse.urlsplit("http://" + `self`)
+        if not url[1] == self.host + ":" + `self.port`:
+            raise CloneError("Invalid host for clone: " + `self`)
+        # as of python 2.5, we will also be able to do this:
+        # assert url.port == self.port
         
     def updateCache(self):
         response = self.propertiesDocument(elements.signedKeys + [elements.MetaDataSignature, rfc2518.ResourceType])
