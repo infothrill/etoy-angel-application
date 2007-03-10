@@ -105,15 +105,12 @@ class ProppatchMixin:
                      __xml(element)
                     for element in elements.signedKeys
                     ])
-        #sm = "".join([requestProperties.childOfType(key) for key in elements.requiredKeys])
-        #sm = "".join(requestProperties[1])
-        log.info(`signable`)
-        #sig = requestProperties.childOfType(elements.MetaDataSignature)
-        log.info(`sig`)
+
+        log.debug("PROPPATCH: signable:" + `signable`)
         pubKey = angel_app.contrib.ezPyCrypto.key()
         pubKey.importKey(keyString)
         isValid = pubKey.verifyString(signable, sig)
-        log.info("PROPPATCH request signature is valid: " + `isValid`)
+        log.debug("PROPPATCH request signature is valid: " + `isValid`)
         return isValid
         
             
@@ -129,8 +126,15 @@ class ProppatchMixin:
         
         def defaultHandler(property, store, responses):
             try:
-                store.set(property)
+                if store.contains(property.qname()) and (store.get(property.qname()) == property):
+                    log.debug("Supplied property: %s identical to available property: %s. Not updating resource."
+                              % (property.toxml(), store.get(property.qname()))
+                              )
+                else:
+                    store.set(property)
+
             except ValueError, err:
+                log.error("Failed to add property " + `property` + ". Failed with error :" + err)
                 responses.add(
                         Failure(
                             exc_value=HTTPError(
@@ -149,7 +153,7 @@ class ProppatchMixin:
                 residentClones = clonesFromElement(dp.get(elements.Clones))
             except:
                 residentClones = []
-            if len(residentClones) > maxclones: return
+            if len(residentClones) >= maxclones: return
             
             address = str(request.remoteAddr.host)
             try:
