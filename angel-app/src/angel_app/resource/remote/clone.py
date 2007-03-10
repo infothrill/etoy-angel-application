@@ -55,8 +55,11 @@ class Clone(object):
     def validatePath(self):
         from urllib import url2pathname, pathname2url
         # if the path is valid, then the composition of url2pathname and pathname2url is the identity function
-        if not url2pathname(pathname2url(self.path)) == self.path:
+        if not pathname2url(url2pathname(self.path)) == self.path:
             raise CloneError("Invalid path for clone: " + `self`)
+        
+        if not self.path[0] == "/":
+            raise CloneError("Need absolute path for clone. Got: " + self.path)
         
     def validateHostPort(self):
         import urlparse
