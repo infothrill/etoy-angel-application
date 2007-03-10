@@ -15,7 +15,7 @@ then
 	exit -1
 fi
 
-for f in master presenter provider maintainer
+for f in master presenter provider maintainer wxmaster
 do
 	`PYTHONPATH=src/:$PYTHONPATH python src/scripts/py2depgraph.py src/bin/$f.py | python src/scripts/depgraph2dot.py | dot -T $format -o $outdir/$f.$format`
 done
