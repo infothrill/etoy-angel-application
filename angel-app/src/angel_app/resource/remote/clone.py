@@ -57,6 +57,9 @@ class Clone(object):
         # if the path is valid, then the composition of url2pathname and pathname2url is the identity function
         if not pathname2url(url2pathname(self.path)) == self.path:
             raise CloneError("Invalid path for clone: " + `self`)
+
+        if not len(self.path) > 0:
+            raise CloneError("Need non-empty path for clone. Got: " + self.path)
         
         if not self.path[0] == "/":
             raise CloneError("Need absolute path for clone. Got: " + self.path)
