@@ -97,8 +97,10 @@ def getAngelLogPath():
 
 
 def getAngelLogFilename():
-    return path.join(getAngelLogPath(), appname + ".log")
+    return getAngelLogFilenameForApp(appname)
 
+def getAngelLogFilenameForApp(app):
+    return path.join(getAngelLogPath(), app + ".log")
 
 from logging import Filter
 import re
