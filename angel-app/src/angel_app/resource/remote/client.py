@@ -13,6 +13,7 @@ log = getLogger(__name__)
 from angel_app.config import config
 AngelConfig = config.getConfig()
 repository = AngelConfig.get("common","repository")
+maxclones = int(AngelConfig.get("common","maxclones"))
 
 
 
@@ -215,8 +216,7 @@ def storeClones(af, goodClones, unreachableClones):
             clonesToBeStored.append(clone)
             
         # guard against DOS and xattr overflow
-        # TODO: eliminate this magic number at some point
-        if len(clonesToBeStored) > 5: break
+        if len(clonesToBeStored) > maxclones: break
     
     newClones = elements.Clones(*[
                     elements.Clone(rfc2518.HRef(`cc`)) for cc in clonesToBeStored

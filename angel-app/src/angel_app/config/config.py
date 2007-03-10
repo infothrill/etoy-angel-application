@@ -133,6 +133,7 @@ class Config:
                                     "repository": path.join(environ["HOME"], ".angel-app", "repository"),
                                     "keyring": path.join(environ["HOME"], ".angel-app", "keyring"),
                                     "logdir": path.join(environ["HOME"], ".angel-app", "log"),
+                                    "maxclones": str(5),
 									"loglevel": "DEBUG",
                                     # FIXME: %(funcName)s is only available in Python 2.5 ;-(
                                     "logformat": '%(asctime)s %(levelname)-6s %(name)-20s - %(filename)s:%(lineno)d - %(message)s',

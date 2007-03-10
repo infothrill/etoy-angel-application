@@ -41,6 +41,13 @@ from angel_app.log import getLogger
 
 log = getLogger(__name__)
 
+
+# get config:
+from angel_app.config import config
+AngelConfig = config.getConfig()
+maxclones = int(AngelConfig.get("common","maxclones"))
+
+
 class ProppatchMixin:
     
     def __proppatchPreconditions(self, request):
@@ -142,8 +149,7 @@ class ProppatchMixin:
                 residentClones = clonesFromElement(dp.get(elements.Clones))
             except:
                 residentClones = []
-            # TODO -- eliminate this magic number
-            if len(residentClones) > 5: return
+            if len(residentClones) > maxclones: return
             
             address = str(request.remoteAddr.host)
             try:
