@@ -113,7 +113,7 @@ class ProppatchMixin:
         pubKey = angel_app.contrib.ezPyCrypto.key()
         pubKey.importKey(keyString)
         isValid = pubKey.verifyString(signable, sig)
-        log.info("PROPPATCH request is signature is valid: " + `isValid`)
+        log.info("PROPPATCH request signature is valid: " + `isValid`)
         return isValid
         
             
