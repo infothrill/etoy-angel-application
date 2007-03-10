@@ -179,7 +179,7 @@ class Clone(object):
         """
         
         if property.qname() in self.propertyCache.keys():
-            log.info("property " + `property` + " returned from local cache.")
+            log.debug("property " + `property` + " returned from local cache.")
             properties = self.propertyCache[property.qname()]   
             return "".join([str(ee) for ee in properties.children])
         else:
