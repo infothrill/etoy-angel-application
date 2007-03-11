@@ -289,7 +289,7 @@ class Basic(deleteable.Deletable, Safe):
         i.e. ${repository}/foo becomes "/foo", for the repository itself, "/" is returned.
         """
         if self.isRepositoryRoot(): return os.sep
-        else: return  os.sep.join(self.segmentsFrom(repository))
+        else: return  os.sep.join(self.fp.segmentsFrom(repository))
     
     def relativeURL(self):
         """
