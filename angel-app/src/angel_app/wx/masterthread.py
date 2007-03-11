@@ -17,23 +17,28 @@ Responsible for starting all relevant angel-app components
 (presenter, provider, maintainer), does the logging as well.
 """
 
-EXTERNAL_SCRIPT_NAME = "master.py"
+EXTERNAL_SCRIPT_NAME = "master.py" # name of the script to be executed
 
 class MasterThread(threading.Thread):
     def __init__(self):
         super(MasterThread, self).__init__()
         self.proc = None
-        self.pid = None
 
     def run(self):
+        """
+        Start the subprocess
+        """
         self.showOutput = True
         # TODO: is PYTHONPATH ok here?
         m = [sys.executable, EXTERNAL_SCRIPT_NAME]
+        #self.proc = subprocess.Popen(m, stdout=open(os.devnull, "w"), stderr=subprocess.STDOUT)
         self.proc = subprocess.Popen(m)
-        self.pid = self.proc.pid
-        self.taillog()
+        #self.taillog()
         
     def isAlive(self):
+        """
+        Returns True if the subprocess has not exited yet and false otherwise
+        """
         if self.proc == None:
             return False
         result = self.proc.poll()
@@ -43,15 +48,22 @@ class MasterThread(threading.Thread):
             return False
 
     def stop(self):
-        # FIXME: for some reason, it seems impossible to make the subprocess go away,
-        # it hangs around in zombie state until the GUI quits as well !??!?
+        """
+        This method will stop the subprocess started with run()
+        """
+        maxWait = 2 # number of seconds the subprocess is allowed to take when shutting down
         if self.isAlive():
-            pid = self.pid
+            pid = self.proc.pid
             print "================SIGNALLING SUBPROCESS %s ========================" % `pid`
             os.kill(pid, signal.SIGTERM) # FIXME: not cross-platform
             # give it a moment to digest the signal:
-            time.sleep(0.001)
-            # check if it's gone:
+            tStart = time.time()
+            tElapsed = time.time() - tStart
+            while tElapsed < maxWait and self.isAlive():
+                time.sleep(0.0001)
+                #print "WAITING"
+                tElapsed = time.time() - tStart
+            # check if it's really gone:
             if self.isAlive():
                 print "================SIGNALLING SUBPROCESS HARD %s ========================" % `pid`
                 os.kill(pid, signal.SIGKILL) # FIXME: not cross-platform
