@@ -131,6 +131,7 @@ class ProppatchMixin:
                               % (property.toxml(), store.get(property.qname()))
                               )
                 else:
+                    log.debug("storing property: " + `property`)
                     store.set(property)
 
             except ValueError, err:
