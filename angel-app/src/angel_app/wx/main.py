@@ -1,24 +1,31 @@
 import wx
 
 import angel_app.wx.masterthread
+from angel_app.config import config
+AngelConfig = config.getConfig()
 
 IMAGE_PATH="../../distrib/images/" # FIXME: this shall not be hardcoded (and have no os specific stuff)!
 M221E_LOGO_SMALL = IMAGE_PATH+"m221elogosmall.jpg"
 
 class AngelMainFrame(wx.Frame):
     def __init__(self, parent, ID, title):
-        wx.Frame.__init__(self, parent, ID, title, wx.DefaultPosition, wx.Size(450, 200))
+        wx.Frame.__init__(self, parent, ID, title, wx.DefaultPosition, wx.Size(400, 200))
         
         # define the menus
         self.menu_bar  = wx.MenuBar()
   
+        # File menu
         self.file_menu = wx.Menu()
+        ID_FILE_SHOW_REPO_BROWSER = wx.NewId()
+        self.file_menu.Append(ID_FILE_SHOW_REPO_BROWSER, "O&pen repository in web-browser", "Open repository in web-browser")
+        self.Bind(wx.EVT_MENU, self.on_help_presenter, id=ID_FILE_SHOW_REPO_BROWSER)
         self.file_menu.Append(wx.ID_EXIT, "E&xit", "Terminate the program")
         self.Bind(wx.EVT_MENU, self.doExit, id=wx.ID_EXIT)
         self.file_menu.Append(wx.ID_CLOSE, "Q&uit", "Quit")
         self.Bind(wx.EVT_MENU, self.doExit, id=wx.ID_CLOSE)
         self.menu_bar.Append(self.file_menu, "&File")
 
+        # Help menu
         self.help_menu = wx.Menu()
         self.help_menu.Append(wx.ID_ABOUT, "&About")
         self.Bind(wx.EVT_MENU, self.on_about_request, id=wx.ID_ABOUT)
@@ -26,7 +33,6 @@ class AngelMainFrame(wx.Frame):
         ID_HELP_WIKI = wx.NewId()
         self.help_menu.Append(ID_HELP_WIKI, "&Angel-App Wiki (Website)")
         self.Bind(wx.EVT_MENU, self.on_help_wiki, id=ID_HELP_WIKI)
-
         ID_HELP_M221E = wx.NewId()
         self.help_menu.Append(ID_HELP_M221E, "&MISSION ETERNITY (Website)")
         self.Bind(wx.EVT_MENU, self.on_help_m221e, id=ID_HELP_M221E)
@@ -50,7 +56,7 @@ class AngelMainFrame(wx.Frame):
 
     def OnPaint(self, event):
         dc = wx.PaintDC(self)
-        dc.DrawBitmap(self.bitmap, 60, 20)
+        dc.DrawBitmap(self.bitmap, 110, 20)
     
     def OnQuit(self, event):
         self.daemon.stop()
@@ -74,6 +80,11 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
         from wxPython.lib.dialogs import wxScrolledMessageDialog # TODO:  DeprecationWarning: The wxPython compatibility package is no longer automatically generated or activly maintained.  Please switch to the wx package as soon as possible. from wxPython.lib.dialogs import wxScrolledMessageDialog
         dlg = wxScrolledMessageDialog(self, text, 'About Angel-App')
         dlg.ShowModal()
+
+    def on_help_presenter(self, event):
+        interface = AngelConfig.get("presenter", "listenInterface")
+        port = AngelConfig.get("presenter", "listenPort")
+        wx.Execute("open http://%s:%s" %( interface, port)) # FIXME: only works on OS X
 
     def on_help_wiki(self, event):
         wx.Execute("open http://angelapp.missioneternity.org") # FIXME: only works on OS X
