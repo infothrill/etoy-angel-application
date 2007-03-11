@@ -139,7 +139,7 @@ class Config:
                                     "logformat": '%(asctime)s %(levelname)-6s %(name)-20s - %(filename)s:%(lineno)d - %(message)s',
                                     "consolelogformat": '%(levelname)-6s %(name)-20s - %(filename)s:%(lineno)d - %(message)s',
 									}, 
-                         "presenter": { "listenport": "9998", "listeninterface": "127.0.0.1" }, 
+                         "presenter": { "listenport": "6222", "listeninterface": "127.0.0.1" }, 
 						 "provider" : { "listenport": "6221" },
 						 "maintainer" : {
                                          # it's nice to be fast on the first traversal
