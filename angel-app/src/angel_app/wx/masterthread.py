@@ -3,42 +3,44 @@ This module contains code for running master and wx in the same
 process, using two threads.
 """
 
-import wx
 import threading
 import os
 import sys
-from signal import SIGTERM, SIGKILL
 import signal
 import time
+import angel_app.log
+import subprocess
      
 """
 Class for the thread running our external process in its own thread.
 Responsible for starting all relevant angel-app components
 (presenter, provider, maintainer), does the logging as well.
 """
+
+EXTERNAL_SCRIPT_NAME = "master.py"
+
 class MasterThread(threading.Thread):
     def __init__(self):
         super(MasterThread, self).__init__()
+        self.proc = None
         self.pid = None
 
     def run(self):
-        import sys
-        import subprocess
         self.showOutput = True
         # TODO: is PYTHONPATH ok here?
-        m = [sys.executable, 'master.py']
-        self.pid = subprocess.Popen(m).pid
+        m = [sys.executable, EXTERNAL_SCRIPT_NAME]
+        self.proc = subprocess.Popen(m)
+        self.pid = self.proc.pid
         self.taillog()
         
     def isAlive(self):
-        if self.pid == None:
+        if self.proc == None:
             return False
-        pid = self.pid
-        try:
-            os.kill(pid, 0)
-        except OSError, err:
+        result = self.proc.poll()
+        if result == None:
+            return True
+        else:
             return False
-        return True
 
     def stop(self):
         # FIXME: for some reason, it seems impossible to make the subprocess go away,
@@ -46,12 +48,13 @@ class MasterThread(threading.Thread):
         if self.isAlive():
             pid = self.pid
             print "================SIGNALLING SUBPROCESS %s ========================" % `pid`
-            os.kill(pid, SIGTERM)
-            time.sleep(1.5)
+            os.kill(pid, signal.SIGTERM) # FIXME: not cross-platform
+            # give it a moment to digest the signal:
+            time.sleep(0.001)
+            # check if it's gone:
             if self.isAlive():
                 print "================SIGNALLING SUBPROCESS HARD %s ========================" % `pid`
-                time.sleep(2.5)
-                os.kill(pid, SIGKILL)
+                os.kill(pid, signal.SIGKILL) # FIXME: not cross-platform
         else:
             print "=========== not alive, not signalling ==============="
 
@@ -78,8 +81,10 @@ class MasterThread(threading.Thread):
             else:
                 print line, # already has newline
                 
-    def win32kill(pid): # TODO: use this! (also in daemonizer.py)
-        """kill function for Win32"""
+    def win32kill(self, pid): # TODO: use this! (also in daemonizer.py), currently unused
+        """
+        kill function for Win32
+        """
         import win32api
         handle = win32api.OpenProcess(1, 0, pid)
         return (0 != win32api.TerminateProcess(handle, 0))
