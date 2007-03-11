@@ -32,13 +32,17 @@ def setKey(path = "", key = secretKeys.values()[0]):
     # first set the key -- this won't work with Crypto
     rr = Basic(absPath(path))
     try:
-        rr.publicKeyString()
-        return
+        presentKey = rr.publicKeyString()
     except:
-        log.info("setting key for " + path + " to " + key.exportKey())
+        log.info("no key set for " + path)
+        presentKey = ""
+
+    if presentKey != PublicKeyString(key.exportKey()):        
         rr.deadProperties().set(PublicKeyString(key.exportKey()))
         # switch to crypto and sign
         reSign(path)
+    else:
+        log.info("key already set to %s for resource: %s"  % (presentKey, rr.fp.path))
     
 def setMountPoint(mountPoint, URLToMount):
     """

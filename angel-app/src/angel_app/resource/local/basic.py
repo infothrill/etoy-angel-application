@@ -19,6 +19,7 @@ from angel_app.contrib.ezPyCrypto import key as ezKey
 import os
 import urllib
 import angel_app.resource.local.util as util
+from angel_app.config.defaultMetadata import defaultMetaData
 
 log = getLogger(__name__)
 
@@ -44,6 +45,7 @@ class Basic(deleteable.Deletable, Safe):
         self.assertInRepository()
         
         self._dead_properties = xattrPropertyStore(self)
+        self.fp.exists() and self._initProperties()
 
     def contentAsString(self):
         return self.open().read()
@@ -65,6 +67,21 @@ class Basic(deleteable.Deletable, Safe):
             # file requires decryption of the file.
             # let's just pretend we don't know
             return None
+
+    def _initProperties(self):
+        """
+        Set all required properties to a syntactically meaningful default value, if not already set.
+        """
+        dp = self.deadProperties()
+        for element in elements.requiredKeys:
+            if not dp.contains(element.qname()):
+                if element in defaultMetaData.keys():
+                    ee = element(defaultMetaData[element](self))
+                else:  
+                    ee = element()  
+                
+                log.debug("initializing " + element.sname() + " of " + self.fp.path + " to " + ee.toxml())
+                dp.set(ee)
  
     def get(self, davXMLTextElement):
         """

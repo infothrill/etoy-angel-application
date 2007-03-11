@@ -17,6 +17,7 @@ def initializeRepository():
     
     from angel_app.admin.resourceProperties import setKey
     log.info("taking ownership of repository root.")
+    # TODO -- we need to be more specific about which key we use for owning the root
     setKey()
     
     from angel_app.admin.resourceProperties import setMountPoint

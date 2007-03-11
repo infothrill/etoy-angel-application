@@ -6,7 +6,6 @@ from angel_app import elements
 from angel_app.resource.local.internal.methods import copy, delete, lock, mkcol, move, put
 from angel_app.resource.local.basic import Basic
 from angel_app.contrib.ezPyCrypto import key as ezKey
-from angel_app.config import internal as config
 from angel_app.resource.remote.client import inspectResource
 
 import urllib
@@ -24,12 +23,7 @@ class Crypto(
              put.Putable, 
              Basic):
     """
-    <p>
-    </p>
-    <p>
-    See subclasses and angel_app.angelMixins for the implementation of
-    specific WebDAV methods.
-    </p>
+    WebDAV resource interface for presenter.
     """
     
     keyRing = loadKeysFromFile()
@@ -39,22 +33,6 @@ class Crypto(
                  defaultType="text/plain",
                  indexNames=None):
         Basic.__init__(self, path, defaultType, indexNames)
-        self.fp.exists() and self._initProperties()
-
-    def _initProperties(self):
-        """
-        Set all required properties to a syntactically meaningful default value, if not already set.
-        """
-        dp = self.deadProperties()
-        for element in elements.requiredKeys:
-            if not dp.contains(element.qname()):
-                if element in config.defaultMetaData.keys():
-                    ee = element(config.defaultMetaData[element](self))
-                else:  
-                    ee = element()  
-                
-                log.debug("initializing " + element.sname() + " of " + self.fp.path + " to " + ee.toxml())
-                dp.set(ee)
                     
     def secretKey(self):
         

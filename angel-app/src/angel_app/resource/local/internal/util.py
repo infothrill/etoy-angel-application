@@ -27,7 +27,6 @@ legalMatters = """
 author = """Vincent Kraeutler, 2006"""
 
 from angel_app.log import getLogger
-from angel_app.resource.remote.client import inspectResource
 import time
 
 from twisted.internet import reactor
@@ -43,6 +42,7 @@ def orderedInspection(resource):
     Returns a generator that first triggers an inspection of the resource's parent, followed
     by an inspection of the resource proper.
     """
+    from angel_app.resource.remote.client import inspectResource
     def inspector():
         log.error("inspecting foo: " + resource.fp.path)
         try:
@@ -70,7 +70,7 @@ def inspectWithResponse(resource):
     network first. This is conveniently done by a call to inspectResource, after which we can safely
     return the response.
     """
-
+    from angel_app.resource.remote.client import inspectResource
     # higher-order foo-nctions
     def foo(response):
         log.info("inspecting: " + resource.fp.path)
