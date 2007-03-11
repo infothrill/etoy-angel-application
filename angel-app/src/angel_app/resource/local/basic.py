@@ -308,7 +308,7 @@ class Basic(deleteable.Deletable, Safe):
         """
         assert self.insideRepository(), "Path (%s) lies outside of repository." % self.fp.path
         
-        if isRepositoryRoot():
+        if self.isRepositoryRoot():
             # this is the root directory, don't return a parent
             return None
         
