@@ -248,7 +248,7 @@ class Basic(deleteable.Deletable, Safe):
         @rtype boolean
         @return true if the resource was deleted, false otherwise
         """
-        if self.parent() == None:
+        if self.isRepositoryRoot():
             # the root is never referenced
             return False
         
