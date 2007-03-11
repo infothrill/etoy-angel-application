@@ -182,24 +182,29 @@ def getResourceID(resource):
     because it has just been updated, however, the root directory has no parent....
     TODO: review
     """
-    resourceID = ""
-    if not resource.parent():
+    if resource.isRepositoryRoot():
         # root directory
-        resourceID = resource.resourceID()
+        return resource.resourceID()
     else:
         # otherwise, take the resourceID delivered from the parent
-        # yumyum. python prose. enjoy.
-        # TODO: our current xml metdatata model sucks rocks. possibly elementTree to the rescue?
         children = resource.parent().deadProperties().get(elements.Children.qname()).children
-        for child in children:
-            if str(child.childOfType(rfc2518.HRef.qname())) == urllib.quote(resource.resourceName()):
-                xx = child.childOfType(elements.ResourceID.qname())
-                #log.err("ASDF" + `xx` + xx.toxml())
-                resourceID = "".join(str(cc) for cc in child.childOfType(elements.ResourceID.qname()).children)
-                #log.err("ASDF" + resourceID)
         
-    log.debug("resourceID: " + `resourceID`)
-    return resourceID
+        # make a list of all linked resource names
+        linkedResourceNames = [str(child.childOfType(rfc2518.HRef.qname())) for child in children]
+        
+        # get the index of the child we're actually interested in
+        try:
+            linkIndex = linkedResourceNames.index(urllib.pathname2url(resource.resourceName()))
+        except ValueError:
+            log.error("Could not find resource %s in parent's links." % resource.relativePath())
+            # re-raise the exception
+            raise
+        
+        # this is the child we actually want
+        child = children[linkIndex]
+        log.debug("child for resourceID: " + `child`)
+        
+        return str(child.childOfType(elements.ResourceID.qname()).children[0])
 
 def storeClones(af, goodClones, unreachableClones):
 
@@ -237,8 +242,10 @@ def inspectResource(path = repository):
     if standin == None: raise StopIteration
     pubKey = standin.publicKeyString()
     startingClones = getLocalCloneList(af)
-    resourceID = getResourceID(af)
     log.debug("starting out iteration with: " + `startingClones`)
+    resourceID = getResourceID(af)
+    log.debug("starting out iteration with resourceID: " + `resourceID`)
+
     goodClones, badClones, unreachableClones = iterateClones(startingClones, pubKey, resourceID)
     
     if goodClones == []:
