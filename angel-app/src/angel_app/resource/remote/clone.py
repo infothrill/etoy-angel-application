@@ -120,7 +120,6 @@ class Clone(object):
         #import socket
         #socket.setdefaulttimeout(60)
         log.debug("attempting " + method + " connection to: " + self.host + ":" + `self.port` + " " + self.path) 
-        log.debug("with body " + body)   
         conn = HTTPConnection(self.host, self.port)
         conn.connect() 
         conn.sock.settimeout(10.0) # FIXME: implement a timeout on connect
