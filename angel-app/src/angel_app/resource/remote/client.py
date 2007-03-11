@@ -186,25 +186,8 @@ def getResourceID(resource):
         # root directory
         return resource.resourceID()
     else:
-        # otherwise, take the resourceID delivered from the parent
-        children = resource.parent().deadProperties().get(elements.Children.qname()).children
-        
-        # make a list of all linked resource names
-        linkedResourceNames = [str(child.childOfType(rfc2518.HRef.qname())) for child in children]
-        
-        # get the index of the child we're actually interested in
-        try:
-            linkIndex = linkedResourceNames.index(urllib.pathname2url(resource.resourceName()))
-        except ValueError:
-            log.error("Could not find resource %s in parent's links." % resource.relativePath())
-            # re-raise the exception
-            raise
-        
-        # this is the child we actually want
-        child = children[linkIndex]
-        log.debug("child for resourceID: " + `child`)
-        
-        return str(child.childOfType(elements.ResourceID.qname()).children[0])
+        from angel_app.resource.local.util import getResourceIDFromParentLinks
+        return getResourceIDFromParentLinks(resource)
 
 def storeClones(af, goodClones, unreachableClones):
 
