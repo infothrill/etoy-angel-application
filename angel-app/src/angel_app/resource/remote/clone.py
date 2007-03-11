@@ -310,11 +310,7 @@ class Clone(object):
                                        [elements.Clones]
                                        ).root_element.children[0].children[1].children[0]
                                        
-            log.debug(`prop`)
             return clonesFromElement(prop)
-            #return [splitParse(
-            #               str(clone.children[0].children[0].children[0]))
-            #    for clone in prop.children if len(prop.children[0].children) > 0]
         except:
             return []
 
