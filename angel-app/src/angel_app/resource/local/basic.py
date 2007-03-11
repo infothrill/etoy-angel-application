@@ -39,6 +39,10 @@ class Basic(deleteable.Deletable, Safe):
                  defaultType="text/plain",
                  indexNames=None):
         Safe.__init__(self, path, defaultType, indexNames)
+        
+        # disallow the creation of resources outside of the repository
+        self.assertInRepository()
+        
         self._dead_properties = xattrPropertyStore(self)
 
     def contentAsString(self):
@@ -295,6 +299,9 @@ class Basic(deleteable.Deletable, Safe):
         """
         return self.fp.path.find(repository.path) == 0
     
+    def assertInRepository(self):
+        assert self.insideRepository(), "Path (%s) lies outside of repository." % self.fp.path
+    
     def isRepositoryRoot(self):
         """
         Returns true, if the resource is the repository's root resource, false otherwise.
@@ -306,7 +313,7 @@ class Basic(deleteable.Deletable, Safe):
         @return this resource's parent. if this resource is the repository root, return None.
         Fail, if the resource is not located inside the repository.
         """
-        assert self.insideRepository(), "Path (%s) lies outside of repository." % self.fp.path
+        self.assertInRepository()
         
         if self.isRepositoryRoot():
             # this is the root directory, don't return a parent
