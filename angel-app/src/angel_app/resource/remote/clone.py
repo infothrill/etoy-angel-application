@@ -324,6 +324,8 @@ class Clone(object):
         remote parent clone via a PROPPATCH request.
         
         @see performPushRequest
+        
+        TODO: read the file lazily
         """
         resp = self.__performRequest(method = "PUT", body = stream.read())
 
