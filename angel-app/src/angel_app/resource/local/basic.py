@@ -197,9 +197,13 @@ class Basic(deleteable.Deletable, Safe):
     
     def resourceName(self):
         """
-        @return the "file name" of the resource
+        
+        @return the "file name" of the resource, return "/" for the repository root
         """
-        return self.relativePath().split(os.sep)[-1]
+        if self.isRepositoryRoot(): 
+            return os.sep
+        else: 
+            return self.relativePath().split(os.sep)[-1]
     
     def referenced(self):
         # the root is always referenced
@@ -272,18 +276,39 @@ class Basic(deleteable.Deletable, Safe):
                 ]
 
     def relativePath(self):
-        return os.sep.join(self.segmentsFrom(repository))
+        """
+        Returns the relative path with respect to the repository root as an absolute path,
+        i.e. ${repository}/foo becomes "/foo", for the repository itself, "/" is returned.
+        """
+        if self.isRepositoryRoot(): return os.sep
+        else: return  os.sep.join(self.segmentsFrom(repository))
     
     def relativeURL(self):
+        """
+        @return: a URL-quoted representation of self.relativePath()
+        """
         return urllib.pathname2url(self.relativePath())
+    
+    def insideRepository(self):
+        """
+        Returns true if the resource is located beneath the repository root. False otherwise.
+        """
+        return self.fp.path.find(repository.path) == 0
+    
+    def isRepositoryRoot(self):
+        """
+        Returns true, if the resource is the repository's root resource, false otherwise.
+        """
+        return self.fp.path == repository
 
     def parent(self):
         """
-        @return this resource's parent
+        @return this resource's parent. if this resource is the repository root, return None.
+        Fail, if the resource is not located inside the repository.
         """
-        assert(self.fp.path.find(repository)) == 0, "Path (%s) lies outside of repository." % self.fp.path
+        assert self.insideRepository(), "Path (%s) lies outside of repository." % self.fp.path
         
-        if self.fp.path == repository:
+        if isRepositoryRoot():
             # this is the root directory, don't return a parent
             return None
         
