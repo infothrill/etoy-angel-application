@@ -18,7 +18,7 @@ from angel_app.contrib import uuid
 from angel_app.contrib.ezPyCrypto import key as ezKey
 import os
 import urllib
-import angel_app.resource.local.util as util
+from angel_app.resource.local import util
 from angel_app.config.defaultMetadata import defaultMetaData
 
 log = getLogger(__name__)
@@ -35,6 +35,18 @@ class Basic(deleteable.Deletable, Safe):
     An extension to Safe, that implements common metadata operations.
     """
     implements(IResource.IAngelResource)
+    
+    # a map from xml-elements corresponding to metadata fields to functions taking a resource 
+    # and returning appropriate values for those metadata fields
+    defaultMetaData = {
+                   elements.Revision           : lambda x: "0",
+                   elements.Encrypted          : lambda x: "0",
+                   elements.PublicKeyString    : lambda x: x.parent() and x.parent().publicKeyString() or "",
+                   elements.ContentSignature   : lambda x: "",
+                   elements.ResourceID         : lambda x: util.getResourceIDFromParentLinks(x),
+                   elements.Clones             : lambda x: []
+                   }
+
     
     def __init__(self, path,
                  defaultType="text/plain",
@@ -75,8 +87,9 @@ class Basic(deleteable.Deletable, Safe):
         dp = self.deadProperties()
         for element in elements.requiredKeys:
             if not dp.contains(element.qname()):
-                if element in defaultMetaData.keys():
-                    ee = element(defaultMetaData[element](self))
+                dm = self.__class__.defaultMetaData
+                if element in dm.keys():
+                    ee = element(dm[element](self))
                 else:  
                     ee = element()  
                 
