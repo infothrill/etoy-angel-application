@@ -155,5 +155,12 @@ def getResourceIDFromParentLinks(resource):
         
     return str(child.childOfType(elements.ResourceID.qname()).children[0])
 
+
+def makeResourceID(relativePath = ""):
+    """
+    Generate a new resourceID for a (new) resource.
+    """
+    return relativePath + `time.gmtime()`
+
 if __name__ == "__main__":
     testStringReader()

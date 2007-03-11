@@ -34,9 +34,6 @@ log = getLogger(__name__)
 
 def identity(something): return something
 
-def makeResourceID(relativePath = ""):
-    return relativePath + `time.gmtime()`
-
 def orderedInspection(resource):
     """
     Returns a generator that first triggers an inspection of the resource's parent, followed
