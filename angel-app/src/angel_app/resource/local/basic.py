@@ -341,7 +341,7 @@ class Basic(deleteable.Deletable, Safe):
         @rtype [Basic] 
         @return The children of this resource as specified in the resource metadata.
         """
-        log.debug("Basic.metaDataChildren")
+        log.debug("Basic.metaDataChildren for resource: " + self.fp.path)
         if not self.isCollection(): return []
         
         children = self.deadProperties().get(elements.Children.qname()).children
