@@ -37,7 +37,7 @@ def setKey(path = "", key = secretKeys.values()[0]):
         log.info("no key set for " + path)
         presentKey = ""
 
-    if presentKey != PublicKeyString(key.exportKey()):        
+    if presentKey == "":        
         rr.deadProperties().set(PublicKeyString(key.exportKey()))
         # switch to crypto and sign
         reSign(path)
