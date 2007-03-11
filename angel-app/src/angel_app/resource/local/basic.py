@@ -210,17 +210,21 @@ class Basic(deleteable.Deletable, Safe):
             return self.relativePath().split(os.sep)[-1]
     
     def referenced(self):
-        # the root is always referenced
-        if self.parent() is None: return True
-        
+        """
+        Returns true if the resource is referenced by the parent resource.
+        """
         return self in self.parent().metaDataChildren()
     
     def exists(self):
         """
         @rtype boolean
-        @return true, if the corresponding file exists and is referenced by the parent collection.
-        """       
-        return self.referenced() and self.fp.exists()
+        @return true, if the corresponding file exists. If the resource is not the root resource, it must additionally be
+            referenced by the parent collection.
+        """    
+        if self.isRepositoryRoot(): 
+            return self.fp.exists()  
+        else: 
+            return self.referenced() and self.fp.exists()
 
     def removeIfUnreferenced(self):
         """
