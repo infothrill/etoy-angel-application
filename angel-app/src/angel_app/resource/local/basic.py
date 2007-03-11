@@ -310,7 +310,7 @@ class Basic(deleteable.Deletable, Safe):
         """
         Returns true, if the resource is the repository's root resource, false otherwise.
         """
-        return self.fp.path == repository
+        return self.fp.path == repository.path
 
     def parent(self):
         """
