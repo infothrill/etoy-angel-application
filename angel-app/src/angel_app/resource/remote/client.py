@@ -301,7 +301,7 @@ def iterateClones(cloneSeedList, publicKeyString, resourceID):
         visited.append(cc)
         
         if not cc.ping():
-            log.debug("iterateClones: clone " + `cc` + " no reachable, ignoring")
+            log.debug("iterateClones: clone " + `cc` + " not reachable, ignoring")
             unreachable.append(cc)
             continue
         
