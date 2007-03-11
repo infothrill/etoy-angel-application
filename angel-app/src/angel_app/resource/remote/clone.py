@@ -56,7 +56,7 @@ class Clone(object):
         from urllib import url2pathname, pathname2url
         # if the path is valid, then the composition of url2pathname and pathname2url is the identity function
         if not pathname2url(url2pathname(self.path)) == self.path:
-            raise CloneError("Invalid path for clone: " + `self`)
+            raise CloneError("Invalid path for clone: " + `self.path`)
 
         if not len(self.path) > 0:
             raise CloneError("Need non-empty path for clone. Got: " + self.path)
@@ -382,7 +382,7 @@ def makePushBody(localClone, elements = elements.requiredKeys):
     for el in elements:
         log.debug("makePushBody: " + localClone.deadProperties().get(el.qname()).toxml())
         
-    cc = Clone("localhost", providerport, "/" + localClone.relativePath())
+    cc = Clone("localhost", providerport, localClone.relativeURL())
     pList = [makeSetElement(element) for element in
              [localClone.deadProperties().get(el.qname()) for el in elements]
               + [clonesToElement([cc])]]
