@@ -19,7 +19,6 @@ from angel_app.contrib.ezPyCrypto import key as ezKey
 import os
 import urllib
 from angel_app.resource.local import util
-from angel_app.config.defaultMetadata import defaultMetaData
 
 log = getLogger(__name__)
 
