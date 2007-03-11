@@ -4,6 +4,7 @@ from twisted.web2 import http, stream
 from twisted.web2.dav.xattrprops import xattrPropertyStore
 from twisted.web2.dav.element import rfc2518
 from twisted.web2.dav import davxml
+from twisted.python.filepath import FilePath
 from angel_app import elements
 from angel_app.resource.local.dirlist import DirectoryLister
 
@@ -24,7 +25,7 @@ log = getLogger(__name__)
 # get config:
 from angel_app.config import config
 AngelConfig = config.getConfig()
-repository = AngelConfig.get("common","repository")
+repository = FilePath(AngelConfig.get("common","repository"))
 
 REPR_DIRECTORY = "directory" #This is the string content representation of a directory
 
@@ -271,13 +272,10 @@ class Basic(deleteable.Deletable, Safe):
                 ]
 
     def relativePath(self):
-        return self.fp.path.split(repository)[1]
+        return os.sep.join(self.segmentsFrom(repository))
     
     def relativeURL(self):
-        return os.sep.join(
-                           map(
-                               urllib.quote, 
-                               self.relativePath().split(os.sep)))
+        return urllib.pathname2url(self.relativePath())
 
     def parent(self):
         """
