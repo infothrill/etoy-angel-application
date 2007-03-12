@@ -184,7 +184,6 @@ class Crypto(
         """
         
         log.debug("Crypto: sealing " + self.fp.path)
-        log.debug("Crypto: signable data: " + self.signableMetadata())
         signature = self.secretKey().signString(self.signableMetadata())
         self.deadProperties().set(elements.MetaDataSignature.fromString(signature))
         log.debug("Crypto: signature is " + signature)
@@ -245,7 +244,7 @@ class Crypto(
         nc = [cc for cc in oc] + [ic]
         ce = elements.Children(*nc)
         pdp.set(ce)  
-        pp.seal()          
+        self.parent().seal()          
         log.debug("exiting _registerWithParent")
     
         
