@@ -169,7 +169,7 @@ class Crypto(
                 
                 
         myKeyString = self.secretKey().exportKey()    
-        fileKeyString = self.get(elements.PublicKeyString)
+        fileKeyString = self.publicKeyString()
         log.debug("public key for " + self.fp.path + ": " + fileKeyString)
         return fileKeyString == myKeyString
 
