@@ -56,7 +56,7 @@ Let us start this discussion with some numbers meant to illustrate how surprisin
 \begin{equation}
 N(t) = N(t_0) \mathrm e^{-t / \tau}
 \end{equation}
-are still working. This is based on the assumption of spontaneous (uncorrelated), irreversible failure, similar to \emph{e.g.} radioactive decay. In corresponding differential form illustrates that the rate of decay is assumed to be proportional to the (time-dependent) existing population
+are still working. This is based on the assumption of spontaneous (uncorrelated), irreversible failure, similar to \emph{e.g.} radioactive decay. The corresponding differential form illustrates that the rate of decay is assumed to be proportional to the (time-dependent) existing population
 \begin{equation}
 \frac{\mathrm d N}{\mathrm d t} = -\frac{N}{\tau}
 \end{equation}
@@ -98,7 +98,7 @@ We introduce the term ``resource'' to be a specific case of a node of a weakly c
 \item Last but not least, tree-like file systems are so extremely wide-spread that every computer user may be assumed to be familiar with their semantics.
 \end{itemize}
 
-Furthermore, it can be used as the starting point of a (rigorously, if necessary) byzantine fail-safe distributed storage system\footnote{Byzantine failure, named after a historical anecdote, is the failure in the face of conspiracy or misinformation.}: Consider the case of a non-distributed, locally stored file system. All data is available, no data is shared, no information exchanged. Clearly, such a system is byzantine fail-safe, since the behavior of the system is entirely determined by local information. Next, consider a generalization of such a system, in which all data is made available publicly (but, \emph{e.g.} in encrypted form). Such a system is still byzantine fail-safe, and could in principle, allow for the (unstructured) replication of data. Finally, let us allow for a small set of verifiable messages that nodes can send to each other. Misinformation is impossible in such a system, because we have defined the messages to be verifiable. Conspiracy will, in the worst case, lead to the absence of meaningful replication, since we require (at least the possibility of) the local storage of all relevant data.
+Furthermore, it can be used as the starting point of a (rigorously, if necessary) byzantine fail-safe distributed storage system\footnote{Byzantine failure, named after a historical anecdote, is the failure in the face of conspiracy or misinformation.}: Consider the case of a non-distributed, locally stored file system on a single-user node. All data is available, no data is shared, no information exchanged. Clearly, such a system is byzantine fail-safe, since the behavior of the system is entirely determined by local information and the user herself. Next, consider a generalization of such a system, in which all data is made publicly  available (but, \emph{e.g.} in encrypted form). Such a system is still byzantine fail-safe, and could, in principle, allow for the (unstructured) replication of data. Finally, let us allow for a small set of verifiable messages that nodes can send to each other. Misinformation is impossible in such a system, because we have defined the messages to be verifiable. Conspiracy will, in the worst case, lead to the absence of meaningful replication, since we require (at least the possibility of) the local storage of all relevant data.
 
 The following sections describe a system that takes these standard file system semantics as a starting point (and limiting case, when no network of benevolent peers is available), enhanced with the possibility of structured data replication (based on verifiable messages and contracts), suitable for use in a hostile network.
 
@@ -171,7 +171,7 @@ Another way to address this, is to note that the links used here are defined ent
 
 A second particular property of the link structure is that there exist no \emph{a priori} constraints on the location and ownership of the parent and child resources. \emph{I. e.} a resource may link to any other resource \emph{independent of where it is physically located, or who it belongs to}. In other words, the system is \emph{composable} in the sense that individual resource networks can be combined to form larger networks. This is strictly analogous to the semantics of the Unix \texttt{mount} command. 
 
-The above suggests a straightforward implementation of the central registry of root resources mentioned in this section -- the root resources are ``mounted'' on a reasonably persistent resource graph such as the one maintained by MISSION ETERNITY. Since cyclic mounts are in principle possible (though care must be taken in the replication process), the act of publishing root resources can therefore also be expressed as a recursive, cyclic mechanism, which will only fail if many components fail at the same time.
+The above suggests a straightforward implementation of the central registry of root resources mentioned in this section -- the root resources are ``mounted'' on a reasonably persistent resource graph such as the one maintained by MISSION ETERNITY. Again, cyclic mounts are in principle possible (though care must be taken in the replication process). The act of publishing root resources can therefore also be expressed as a cyclic mechanism. For example, one could set up two networks $A$ and $B$, where network $A$ mounts the root resource of network $B$ and $B$ mounts the root resource of network $A$. This is analogous to the way cycle closures are obtained in Type II systems, which will only fail if many components fail at the same time.
 
 
 \begin{figure}[ht!]
@@ -181,9 +181,7 @@ A a resource in network \textbf{A} references the root resource of another netwo
 }
 \end{figure}
 
-\subsection{Summary}
-
-\subsubsection{Structure of a Resource}
+\subsection{Structure of a Resource}
 \label{resource-structure}
 We can now proceed to define the resource data structure as used in the angel-application. A resource consists of content and ``metadata''. If the resource is a ``file-type'' resource, the content is the file content as known from conventional filesystems. If the resource is a ``directory-type'' resource, the content is a piece of data identifying the resource as a directory (\emph{e.g.} the string ``directory''). Using an \emph{ad hoc} specification language, we write this as
 \begin{verbatim}
@@ -225,9 +223,9 @@ clone := URL
 \end{verbatim}
 For simplicity reasons, the current prototype of the angel-application assumes that the \texttt{child-clones} may be inferred from the \texttt{resource-clones}, \emph{i.e.} assumes that if a remote clone exists for a local clone, then for a local child clone of the resource a remote child clone may be found for the remote clone.
 
-\subsubsection{Traversing and Inspecting the Resource Graph}
+\subsection{Traversing and Inspecting the Resource Graph}
 \label{traverse}
-We will first consider a \textbf{Type I} recoverable system (see section \ref{typeOne}), where we additionally impose that every resource has exactly one parent resource, or none, if it is the root resource, \emph{i.e.} the resource graph is a tree. This somewhat limits the kinds of available network topologies that the system supports, but it becomes easy to write an exhaustive graph-traversal algorithm, \emph{i.e.} an algorithm that visits every node exactly once. The current prototype of the angel-application requires this graph structure, and employs a depth-first tree traversal algorithm:
+We will first consider a \textbf{Type I} recoverable system (see section \ref{typeOne}), where we additionally impose that every resource has exactly one parent resource, or none, if it is the root resource, \emph{i.e.} the resource graph is a tree. This somewhat limits the kinds of available network topologies that the system supports, but it becomes easy to write an efficient, exhaustive graph-traversal algorithm, \emph{i.e.} an algorithm that visits every node exactly once. The current prototype of the angel-application requires this graph structure, and employs a depth-first tree traversal algorithm:
 \begin{verbatim}
 def graphWalker(node, getChildren, toEvaluate, backPack = None):
     """
@@ -293,9 +291,9 @@ The overall approach is then the following: \emph{a user must be able (though no
 
 The fulfillment of the above requirement is verified from the contents of Section \ref{backup}:
 \begin{enumerate} 
-\item In the absence of remote clones, and assuming that for each resource there exists a local clone, the angel-app directly models a local file system. Such a system is clearly byzantine fault tolerant.
+\item In the absence of remote clones, and assuming that for each resource there exists a local clone, the angel-app directly models a local file system. Such a system is clearly byzantine fault tolerant (at least in a single-user environment).
 \item Clone replication is entirely based on \emph{verifyable} claims made by the peer node. A system such as the above extended with a replication mechanism is therefore also byzantine fault tolerant.
-\item We will describe a byzantine fault tolerant approach to propagating resource modifications and updates in the following section and therefore conclude that the overall system is also byzantine fault tolerant. 
+\item We believe that the following section describes a byzantine fault tolerant approach to propagating resource modifications and updates and we therefore claim that the overall system is also byzantine fault tolerant. 
 \end{enumerate}
 
 \subsection{Adding, Modifying and Removing Resources}
@@ -312,7 +310,7 @@ We have briefly introduced the notion of a revision number (a signed metadata fi
 
 To add a resource, we 
 \begin{enumerate}
-\item add a  \texttt{resource-child} reference (see Section \ref{resource-structure}), implying that a user can only add resources in directories she has the secret key of, and 
+\item add a  \texttt{resource-child} reference (see Section \ref{resource-structure}) to the resource's parent, implying that a user can only add resources in directories she has the secret key of, and 
 \item increase the parent's revision number.
 \end{enumerate}
 The modified parent and the resource itself will then automatically be replicated to suitable clones (Section \ref{traverse}). Similarly, deletion operations may be implemented by removing the \texttt{resource-child}  reference to the resource from the resource's parent, and requiring that upon update of the parent all local child resources are removed that are not referenced by the parent.
