@@ -1,8 +1,12 @@
+import twisted.web2.responsecode
+from twisted.web2.http import HTTPError
+
 """
 Provide a Mapping from XML-elements to xattr keys.
 Hanlde initialization of attributes with default values.
 """
 
+from angel_app import elements
 from angel_app.resource.local import util
 
 
@@ -35,9 +39,11 @@ class PropertyManagerMixin:
 
     def get(self, element):
         
+        self.assertExistence()
+        
         # the property is available in the property store
         if self.deadProperties().contains(element.qname()):
-            return self.getAsString(element.qname())
+            return self.deadProperties().get(element.qname())
         
         # the property is not available in the property store,
         # but we have an initializer   
@@ -46,18 +52,34 @@ class PropertyManagerMixin:
                               self.defaultValues(element)(self)
                               ))
             
-            return self.getAsString(element.qname())
+            return self.deadProperties().get(element.qname())
         
         else:
             raise KeyError("Attribute for element %s not found on resource %s." % (`element`, self.fp.path))
     
+    def assertExistence(self):
+        if not self.fp.exits():
+            error = "Resource %s not found in xattr lookup." % self.fp.path
+            log.warn(error)
+            raise HTTPError(responsecode.NOT_FOUND, error)
+    
     def getAsString(self, element):
         return "".join([
                         str(child) for child in 
-                       self.deadProperties().get(element.qname()).children
+                       self.get(element).children
                                                  ])
         
+            
+    def getXml(self, element):
+        """
+        @return the metadata element corresponding to davXMLTextElement
+        """
+        return  self.get(element).toxml()
+        
     def set(self, element, value):
+        
+        self.assertExistence()
+        
         self.deadProperties().set(element)
             
             
