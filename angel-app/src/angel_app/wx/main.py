@@ -34,6 +34,17 @@ class AngelMainFrame(wx.Frame):
         self.Bind(wx.EVT_MENU, self.doExit, id=wx.ID_CLOSE)
         self.menu_bar.Append(self.file_menu, "&File")
 
+        # network menu
+        self.net_menu = wx.Menu()
+        ID_NET_START = wx.NewId()
+        self.net_menu.Append(ID_NET_START, "S&tart p2p service", "Start p2p service")
+        self.Bind(wx.EVT_MENU, self.on_net_start, id=ID_NET_START)
+
+        ID_NET_STOP = wx.NewId()
+        self.net_menu.Append(ID_NET_STOP, "S&top p2p service", "Stop p2p service")
+        self.Bind(wx.EVT_MENU, self.on_net_stop, id=ID_NET_STOP)
+        self.menu_bar.Append(self.net_menu, "&Network")
+
         # Help menu
         self.help_menu = wx.Menu()
         self.help_menu.Append(wx.ID_ABOUT, "&About")
@@ -54,9 +65,6 @@ class AngelMainFrame(wx.Frame):
         self.SetMenuBar(self.menu_bar)
         # end define the menus
 
-        self.sb = AngelStatusBar(self)
-        self.SetStatusBar(self.sb)
-        
         self.SetBackgroundColour(wx.WHITE)
         self.bitmap = wx.Bitmap(M221E_LOGO_SMALL)
         wx.EVT_PAINT(self, self.OnPaint)
@@ -64,11 +72,14 @@ class AngelMainFrame(wx.Frame):
 
         self.Centre()
 
-
         _daemon = angel_app.wx.masterthread.MasterThread()
         _daemon.setDaemon(True)
         _daemon.start() # TODO: shall we always start master on init??
         self.daemon = _daemon
+
+        self.sb = AngelStatusBar(self, self.daemon)
+        self.SetStatusBar(self.sb)
+        
 
         self.Bind(wx.EVT_CLOSE, self.OnQuit)
 
@@ -85,6 +96,14 @@ class AngelMainFrame(wx.Frame):
         print "Exiting on user request"
         self.Close(True)
 
+    def on_net_start(self, event):
+        if not self.daemon.isAlive():
+            self.daemon.run()
+
+    def on_net_stop(self, event):
+        if self.daemon.isAlive():
+            self.daemon.stop()
+    
     def on_repo_in_filemanager(self, event):
         interface = AngelConfig.get("presenter", "listenInterface")
         port = AngelConfig.get("presenter", "listenPort")
@@ -130,13 +149,14 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
     
 
 class AngelStatusBar(wx.StatusBar):
-    def __init__(self, parent):
+    def __init__(self, parent, masterproc):
+        self.masterproc = masterproc
         wx.StatusBar.__init__(self, parent, -1)
 
         # This status bar has one field
-        self.SetFieldsCount(1)
+        self.SetFieldsCount(2)
         # Sets the three fields to be relative widths to each other.
-        self.SetStatusWidths([-2])
+        self.SetStatusWidths([-2,-1])
 
         # We're going to use a timer to drive a 'clock' in the last
         # field.
@@ -147,9 +167,11 @@ class AngelStatusBar(wx.StatusBar):
     # Handles events from the timer we started in __init__().
     # We're using it to drive a 'clock' in field 0
     def Notify(self):
-        t = time.localtime(time.time())
-        st = time.strftime("%d-%b-%Y   %H:%M:%S", t)
-        self.SetStatusText(st, 0)
+        if self.masterproc.isAlive():
+            status = "p2p running"
+        else:
+            status = "p2p stopped"
+        self.SetStatusText(status, 1)
 
 
 class AngelApp(wx.App):
