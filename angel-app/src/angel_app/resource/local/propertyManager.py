@@ -19,17 +19,20 @@ def resourceID(resource):
         else:
             return util.getResourceIDFromParentLinks(resource)
 
-def getOnePublicKey():
-    from angel_app.config.internal import loadKeysFromFile
+def getOnePublicKey(resource):
     
-    return loadKeysFromFile().keys()[0]
+    if resource.isRepositoryRoot():
+        from angel_app.config.internal import loadKeysFromFile    
+        return loadKeysFromFile().keys()[0]
+    else:
+        return resource.parent().publicKeyString()
 
 # a map from xml-elements corresponding to metadata fields to functions taking a resource 
 # and returning appropriate values for those metadata fields
 defaultMetaData = {
                    elements.Revision           : lambda x: "0",
                    elements.Encrypted          : lambda x: "0",
-                   elements.PublicKeyString    : lambda x: x.parent() and x.parent().publicKeyString() or getOnePublicKey(),
+                   elements.PublicKeyString    : lambda x: getOnePublicKey(x),
                    elements.ContentSignature   : lambda x: "",
                    elements.MetaDataSignature  : lambda x: "",
                    elements.ResourceID         : lambda x: resourceID(x),
