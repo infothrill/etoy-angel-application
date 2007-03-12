@@ -6,7 +6,7 @@ def py2appletWorkaroundIgnoreMe():
     """
     Import the other binaries, so py2applet takes them along in the packaging process.
     """
-    import maintainer, presenter, provider
+    import master
 
 
 def main():
