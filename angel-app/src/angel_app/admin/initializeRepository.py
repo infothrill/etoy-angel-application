@@ -20,6 +20,11 @@ def initializeRepository():
     # TODO -- we need to be more specific about which key we use for owning the root
     setKey()
     
+    from angel_app.admin.resourceProperties import reSign
+    log.info("sealing repository root if necessary.")
+    # switch to crypto and sign
+    reSign(path)
+    
     from angel_app.admin.resourceProperties import setMountPoint
     from twisted.python.filepath import FilePath
     from angel_app.admin.resourceProperties import absPath

@@ -20,12 +20,13 @@ def absPath(relativePathInRepository):
             
 def reSign(path = ""):
     """
-    Force new signing of resource.
+    Request new signing of resource.
     Path is a relative path with respect to repository root.
     """
-    r = Crypto(absPath(path))
-    r.sign()
-    r.seal()
+    rr = Crypto(absPath(path))
+    if not rr.verify():
+        rr.sign()
+        rr.seal()
 
 def setKey(path = "", key = secretKeys.values()[0]):
     from angel_app.elements import PublicKeyString
@@ -39,8 +40,6 @@ def setKey(path = "", key = secretKeys.values()[0]):
 
     if presentKey == "":        
         rr.deadProperties().set(PublicKeyString(key.exportKey()))
-        # switch to crypto and sign
-        reSign(path)
     else:
         log.info("key already set to %s for resource: %s"  % (presentKey, rr.fp.path))
     
