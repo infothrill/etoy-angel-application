@@ -69,7 +69,6 @@ class Crypto(
     def _updateMetadata(self): 
 
         log.debug("entering _updateMetadata for resource " + self.fp.path)
-        self._initProperties()
         self.update(1)
         log.debug("exiting _updateMetadata for resource " + self.fp.path)
 
@@ -222,8 +221,6 @@ class Crypto(
         Add this resource to its parent's child elements.
         """
         log.debug("entering _registerWithParent for " + self.fp.path)
-
-        self._initProperties()
 
         pp = self.parent()
         
