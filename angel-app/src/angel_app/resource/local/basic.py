@@ -19,6 +19,7 @@ from angel_app.contrib.ezPyCrypto import key as ezKey
 import os
 import urllib
 from angel_app.resource.local import util
+from angel_app.resource.local.propertyManager import PropertyManagerMixin
 
 log = getLogger(__name__)
 
@@ -29,34 +30,22 @@ repository = FilePath(AngelConfig.get("common","repository"))
 
 REPR_DIRECTORY = "directory" #This is the string content representation of a directory
 
-class Basic(deleteable.Deletable, Safe):
+class Basic(PropertyManagerMixin, deleteable.Deletable, Safe):
     """
     An extension to Safe, that implements common metadata operations.
     """
     implements(IResource.IAngelResource)
     
-    # a map from xml-elements corresponding to metadata fields to functions taking a resource 
-    # and returning appropriate values for those metadata fields
-    defaultMetaData = {
-                   elements.Revision           : lambda x: "0",
-                   elements.Encrypted          : lambda x: "0",
-                   elements.PublicKeyString    : lambda x: x.parent() and x.parent().publicKeyString() or "",
-                   elements.ContentSignature   : lambda x: "",
-                   elements.ResourceID         : lambda x: util.getResourceIDFromParentLinks(x),
-                   elements.Clones             : lambda x: []
-                   }
-
-    
     def __init__(self, path,
                  defaultType="text/plain",
                  indexNames=None):
+        PropertyManagerMixin.__init__(self)
         Safe.__init__(self, path, defaultType, indexNames)
         
         # disallow the creation of resources outside of the repository
         self.assertInRepository()
         
         self._dead_properties = xattrPropertyStore(self)
-        self.fp.exists() and self._initProperties()
 
     def contentAsString(self):
         return self.open().read()
@@ -78,80 +67,20 @@ class Basic(deleteable.Deletable, Safe):
             # file requires decryption of the file.
             # let's just pretend we don't know
             return None
-
-    def _initProperties(self):
-        """
-        Set all required properties to a syntactically meaningful default value, if not already set.
-        """
-        dp = self.deadProperties()
-        for element in elements.requiredKeys:
-            if not dp.contains(element.qname()):
-                dm = self.__class__.defaultMetaData
-                if element in dm.keys():
-                    ee = element(dm[element](self))
-                else:  
-                    ee = element()  
-                
-                log.debug("initializing " + element.sname() + " of " + self.fp.path + " to " + ee.toxml())
-                dp.set(ee)
- 
-    def get(self, davXMLTextElement):
-        """
-        @return the metadata element corresponding to davXMLTextElement
-        """
-        if not self.fp.exists():
-            log.debug("Basic.get(): file not found for path: " + self.fp.path)
-            raise HTTPError(responsecode.NOT_FOUND)
-        
-        # TODO: for some reason, the xml document parser wants to split
-        # PCDATA strings at newlines etc., returning a list of PCDATA elements
-        # rather than just one. We only have tags of depth one anyway, so we
-        # might as well work around this thing right here:
-        return "".join([
-                        str(child) for child in 
-                       self.deadProperties().get(davXMLTextElement.qname()).children
-                                                 ])
-        
-    def getXml(self, davXMLTextElement):
-        """
-        @return the metadata element corresponding to davXMLTextElement
-        """
-        if not self.fp.exists():
-            log.debug("AngelFile.getOrSet: file not found for path: " + self.fp.path)
-            raise HTTPError(responsecode.NOT_FOUND)
-        
-        # TODO: for some reason, the xml document parser wants to split
-        # PCDATA strings at newlines etc., returning a list of PCDATA elements
-        # rather than just one. We only have tags of depth one anyway, so we
-        # might as well work around this thing right here:
-        return  self.deadProperties().get(davXMLTextElement.qname()).toxml()
-        
-    def getOrSet(self, davXmlTextElement, defaultValueString = ""):
-        """
-        the metadata element corresponding to davXMLTextElement, setting it to defaultValueString if not already present
-        """
-        try:
-            return self.get(davXmlTextElement)
-        
-        except HTTPError:
-            log.debug("angelFile.Basic.getOrSet: initializing element " + `davXmlTextElement.qname()` + " to " + defaultValueString)
-            self.deadProperties().set(davXmlTextElement.fromString(defaultValueString))
-            self.fp.restat()
-            return defaultValueString
        
     def revisionNumber(self):
         """
         @rtype int
         @return the revision number. if not already set, it is initialized to 1.
         """
-        return int(self.getOrSet(elements.Revision, "1"))
+        return int(self.getAsString(elements.Revision))
 
     def isEncrypted(self):
         """
         @rtype boolean
         @return whether the file is encrypted. 
         """
-        return int(self.get(elements.Encrypted)) == 1
+        return int(self.getAsString(elements.Encrypted)) == 1
     
     def isWriteable(self):
         """
@@ -226,7 +155,7 @@ class Basic(deleteable.Deletable, Safe):
         """
         @see IResource
         """ 
-        return self.deadProperties().get(elements.ResourceID.qname())
+        return self.get(elements.ResourceID)
     
     def resourceName(self):
         """
@@ -360,10 +289,10 @@ class Basic(deleteable.Deletable, Safe):
         """
         Return the list of clones stored with this resource.
         """
-        if self.deadProperties().contains(elements.Clones.qname()):
-            return self.deadProperties().get(elements.Clones.qname())
-        else:
-            return elements.Clones()
+        return self.get(elements.Clones)
+
+    def childLinks(self):
+        return self.get(elements.Children)
 
     def metaDataChildren(self):
         """
@@ -384,7 +313,7 @@ class Basic(deleteable.Deletable, Safe):
         log.debug("Basic.metaDataChildren for resource: " + self.fp.path)
         if not self.isCollection(): return []
         
-        children = self.deadProperties().get(elements.Children.qname()).children
+        children = self.childLinks().children
 
         #validatedChildren = []
         #for child in children:

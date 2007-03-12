@@ -29,20 +29,14 @@ class Crypto(
     """
     
     keyRing = loadKeysFromFile()
-
-    # a map from xml-elements corresponding to metadata fields to functions taking a resource 
-    # and returning appropriate values for those metadata fields. See Basic._initProperties()
-    # 1. copy the entries from Basic
-
-    defaultMetaData = dict(Basic.defaultMetaData.items())
-    # 2. add / modify
-    defaultMetaData[elements.ResourceID] = lambda x: util.makeResourceID(x.relativePath())
-    
     
     def __init__(self, path,
                  defaultType="text/plain",
                  indexNames=None):
+        
         Basic.__init__(self, path, defaultType, indexNames)
+         
+        self.defaultValues[elements.ResourceID] = lambda x : util.makeResourceID(x.relativePath())
                     
     def secretKey(self):
         
@@ -177,7 +171,6 @@ class Crypto(
         fileKeyString = self.getOrSet(elements.PublicKeyString, myKeyString)
         log.debug("public key for " + self.fp.path + ": " + fileKeyString)
         return fileKeyString == myKeyString
-
 
     def seal(self):
         """

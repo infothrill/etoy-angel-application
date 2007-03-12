@@ -1,10 +1,10 @@
-import twisted.web2.responsecode
-from twisted.web2.http import HTTPError
-
 """
 Provide a Mapping from XML-elements to xattr keys.
 Hanlde initialization of attributes with default values.
 """
+
+import twisted.web2.responsecode
+from twisted.web2.http import HTTPError
 
 from angel_app import elements
 from angel_app.resource.local import util
@@ -27,8 +27,9 @@ defaultMetaData = {
                    elements.Encrypted          : lambda x: "0",
                    elements.PublicKeyString    : lambda x: x.parent() and x.parent().publicKeyString() or "",
                    elements.ContentSignature   : lambda x: "",
-                   elements.ResourceID         : lambda x: resourceID,
-                   elements.Clones             : lambda x: []
+                   elements.ResourceID         : lambda x: resourceID(x),
+                   elements.Clones             : lambda x: [],
+                   elements.Children           : lambda x: []
                    }
 
 class PropertyManagerMixin:
@@ -36,7 +37,7 @@ class PropertyManagerMixin:
     def __init__(self):
 
         # create a per-instance copy of the default generators
-        self.defaultValues = dict(defaultMetaData.values())
+        self.defaultValues = dict(defaultMetaData.items())
 
     def get(self, element):
         
@@ -49,8 +50,10 @@ class PropertyManagerMixin:
         # the property is not available in the property store,
         # but we have an initializer   
         if element in self.defaultValues.keys():
+            df = self.defaultValues[element](self)
+            log.debug("Setting property %s from default value." % `df`)
             self.set(element(
-                              self.defaultValues(element)(self)
+                              self.defaultValues[element](self)
                               ))
             
             return self.deadProperties().get(element.qname())
@@ -62,7 +65,7 @@ class PropertyManagerMixin:
         """
         Raise and log an appropriate error if the resource does not exist on the file system.
         """
-        if not self.fp.exits():
+        if not self.fp.exists():
             error = "Resource %s not found in xattr lookup." % self.fp.path
             log.warn(error)
             raise HTTPError(responsecode.NOT_FOUND, error)
@@ -80,7 +83,7 @@ class PropertyManagerMixin:
         """
         return  self.get(element).toxml()
         
-    def set(self, element, value):
+    def set(self, element):
         
         self.assertExistence()
         
