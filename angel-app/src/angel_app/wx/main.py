@@ -1,3 +1,7 @@
+"""
+The main GUI module.
+"""
+
 import wx
 
 import time
@@ -5,12 +9,17 @@ import angel_app.wx.platform.wrap as platformwrap
 import angel_app.wx.masterthread
 from angel_app.config import config
 AngelConfig = config.getConfig()
+import os.path as path
 
-IMAGE_PATH="../../distrib/images/" # FIXME: this shall not be hardcoded (and have no os specific stuff)!
-M221E_LOGO_SMALL = IMAGE_PATH+"m221elogosmall.jpg"
+IMAGE_PATH="../../distrib/images/" # TODO: path shall not be hardcoded (relevant for packaging)
+M221E_LOGO_SMALL = path.join(IMAGE_PATH, "m221elogosmall.jpg")
 
 class AngelMainFrame(wx.Frame):
     def __init__(self, parent, ID, title):
+        """
+        The constructor, initializes the menus, the mainframe with the logo and the statusbar.
+        By default, also starts the p2p process automatically on start-up
+        """
         wx.Frame.__init__(self, parent, ID, title, wx.DefaultPosition, wx.Size(340, 150))
         
         # define the menus
@@ -79,37 +88,59 @@ class AngelMainFrame(wx.Frame):
 
         self.sb = AngelStatusBar(self, self.daemon)
         self.SetStatusBar(self.sb)
-        
 
         self.Bind(wx.EVT_CLOSE, self.OnQuit)
 
 
     def OnPaint(self, event):
+        """
+        Handler for wx.EVT_PAINT event.
+        Also draws the m221e logo.
+        """
         dc = wx.PaintDC(self)
         dc.DrawBitmap(self.bitmap, 90, 20)
     
     def OnQuit(self, event):
+        """
+        Handler for wx.EVT_CLOSE event
+        """
         self.daemon.stop()
         self.Destroy()
 
     def doExit(self, event):
+        """
+        Exits the application explicitly
+        """
         print "Exiting on user request"
         self.Close(True)
 
     def on_net_start(self, event):
+        """
+        Starts the p2p process if not running
+        """
         if not self.daemon.isAlive():
             self.daemon.run()
 
     def on_net_stop(self, event):
+        """
+        Stops the p2p process if running
+        """
         if self.daemon.isAlive():
             self.daemon.stop()
     
     def on_repo_in_filemanager(self, event):
+        """
+        Opens the local private repository from presenter in the
+        file manager
+        """
         interface = AngelConfig.get("presenter", "listenInterface")
         port = AngelConfig.get("presenter", "listenPort")
         platformwrap.showRepositoryInFilemanager(interface, port)
 
     def on_about_request(self, event):
+        """
+        Shows a dialogue with an icon, version and copyright
+        """
         # copyright symbol: \u00A9
         dlg = wx.MessageDialog(self, u'Version pre-alpha0.1\n\u00A9 Copyright 2006-2007 etoy.VENTURE ASSOCIATION,\nall rights reserved', # TODO embed version string
                                'Angel-App',
@@ -120,6 +151,9 @@ class AngelMainFrame(wx.Frame):
         dlg.Destroy()
         
     def on_help_license(self, event):
+        """
+        Shows the license in a scroll box
+        """
         text = """Copyright (c) 2006-2007, etoy.VENTURE ASSOCIATION
 All rights reserved.
          
@@ -137,19 +171,38 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
         dlg.Destroy()
 
     def on_help_presenter(self, event):
+        """
+        Opens the local presenter website in a web browser
+        """
         interface = AngelConfig.get("presenter", "listenInterface")
         port = AngelConfig.get("presenter", "listenPort")
         platformwrap.showURLInBrowser("http://%s:%s"% (interface, port))
 
     def on_help_wiki(self, event):
+        """
+        Opens http://angel-app.missioneternity.org in a web browser
+        """
         platformwrap.showURLInBrowser("http://angelapp.missioneternity.org")
     
     def on_help_m221e(self, event):
+        """
+        Opens http://www.missioneternity.org in a web browser
+        """
         platformwrap.showURLInBrowser("http://www.missioneternity.org")
     
 
 class AngelStatusBar(wx.StatusBar):
+    """
+    Status bar for the main frame. Shows 2 things:
+    - currently selected menu
+    - p2p status (running/stopped)
+    """
     def __init__(self, parent, masterproc):
+        """
+        Constructor, takes an additional parameter pointing to the
+        thread object runing the p2p process. Initializes a timer to
+        see if the p2p process is running.
+        """
         self.masterproc = masterproc
         wx.StatusBar.__init__(self, parent, -1)
 
@@ -164,9 +217,11 @@ class AngelStatusBar(wx.StatusBar):
         self.timer.Start(1000)
         self.Notify()
 
-    # Handles events from the timer we started in __init__().
-    # We're using it to drive a 'clock' in field 0
     def Notify(self):
+        """
+        Timer callback to check if the p2p process is running and
+        set the status bar text accordingly.
+        """
         if self.masterproc.isAlive():
             status = "p2p running"
         else:
@@ -175,14 +230,17 @@ class AngelStatusBar(wx.StatusBar):
 
 
 class AngelApp(wx.App):
+    """
+    The main wx.App
+    """
     def OnInit(self):
+        """
+        Instantiates the main frame and shows it
+        """
         mainframe = AngelMainFrame(None, -1, "Angel-App: CROSSING THE DEAD-LINE")
         mainframe.Show(True)
         self.SetTopWindow(mainframe)
         return True
-
-    #def onExit(self, event):
-    #    self.mainframe.daemon.stop()
 
 if __name__ == '__main__':
     pass
