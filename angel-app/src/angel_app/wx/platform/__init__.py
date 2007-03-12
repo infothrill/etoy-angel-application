@@ -1,1 +1,1 @@
-all = ['macosx', 'wrap']
+all = ['macosx', 'unix', 'win32', 'wrap']
