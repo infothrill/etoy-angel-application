@@ -298,7 +298,7 @@ class Crypto(
         # certainly not going to hurt if we do this:
         self.fp.restat()
         
-        log.debug(self.fp.path + " now at revision: " + self.revisionNumber()) 
+        log.debug(self.fp.path + " now at revision: " + `self.revisionNumber()`) 
         if recursionLimit > 0:
             self.updateParent(recursionLimit - 1)
             
