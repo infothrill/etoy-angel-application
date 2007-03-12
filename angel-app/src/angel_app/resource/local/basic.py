@@ -329,7 +329,7 @@ class Basic(PropertyManagerMixin, deleteable.Deletable, Safe):
         #        validatedChildren.append(sf)
         links = [str(child.childOfType(davxml.HRef)) for child in children]
         #return validatedChildren
-        return [self.createSimilarFile(self.fp.path + urllib.url2pathname(link))
+        return [self.createSimilarFile(self.fp.path + os.sep + urllib.url2pathname(link))
                 for link in links]
 
 
