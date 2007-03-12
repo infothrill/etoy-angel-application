@@ -11,7 +11,7 @@ M221E_LOGO_SMALL = IMAGE_PATH+"m221elogosmall.jpg"
 
 class AngelMainFrame(wx.Frame):
     def __init__(self, parent, ID, title):
-        wx.Frame.__init__(self, parent, ID, title, wx.DefaultPosition, wx.Size(400, 200))
+        wx.Frame.__init__(self, parent, ID, title, wx.DefaultPosition, wx.Size(340, 150))
         
         # define the menus
         self.menu_bar  = wx.MenuBar()
@@ -47,17 +47,17 @@ class AngelMainFrame(wx.Frame):
 
         # Help menu
         self.help_menu = wx.Menu()
-        self.help_menu.Append(wx.ID_ABOUT, "&About")
+        self.help_menu.Append(wx.ID_ABOUT, "A&bout", "About Angel-App")
         self.Bind(wx.EVT_MENU, self.on_about_request, id=wx.ID_ABOUT)
         ID_HELP_WIKI = wx.NewId()
-        self.help_menu.Append(ID_HELP_WIKI, "&Angel-App Wiki (Website)")
+        self.help_menu.Append(ID_HELP_WIKI, "Angel-App W&iki (Website)", "http://angelapp.missioneternity.org")
         self.Bind(wx.EVT_MENU, self.on_help_wiki, id=ID_HELP_WIKI)
         ID_HELP_M221E = wx.NewId()
-        self.help_menu.Append(ID_HELP_M221E, "&MISSION ETERNITY (Website)")
+        self.help_menu.Append(ID_HELP_M221E, "M&ISSION ETERNITY (Website)", "http://www.missioneternity.org")
         self.Bind(wx.EVT_MENU, self.on_help_m221e, id=ID_HELP_M221E)
 
         ID_HELP_LICENSE = wx.NewId()
-        self.help_menu.Append(ID_HELP_LICENSE, "&License")
+        self.help_menu.Append(ID_HELP_LICENSE, "S&oftware License", "Software License")
         self.Bind(wx.EVT_MENU, self.on_help_license, id=ID_HELP_LICENSE)
 
         self.menu_bar.Append(self.help_menu, "&Help")
@@ -86,7 +86,7 @@ class AngelMainFrame(wx.Frame):
 
     def OnPaint(self, event):
         dc = wx.PaintDC(self)
-        dc.DrawBitmap(self.bitmap, 110, 20)
+        dc.DrawBitmap(self.bitmap, 90, 20)
     
     def OnQuit(self, event):
         self.daemon.stop()
