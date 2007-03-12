@@ -52,6 +52,7 @@ def dance(options):
         startTime = int(time.time())
         try:
 
+            time.sleep(sleepTime)
             for ii in graphWalker(repository, getChildren, toEvaluate):
                  time.sleep(sleepTime)
                  continue
