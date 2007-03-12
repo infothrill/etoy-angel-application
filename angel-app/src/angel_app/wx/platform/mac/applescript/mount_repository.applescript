@@ -12,11 +12,11 @@ end volumeExists
 -- showVolume opens a Finder window with the given volume
 on showVolume(diskname)
 	tell application "Finder"
+		activate
 		if exists disk diskname then
-			reveal disk diskname
-			select disk diskname
-			activate
-			--make new Finder window to disk diskname
+			--reveal disk diskname
+			--select disk diskname
+			make new Finder window to disk diskname
 		else
 			display dialog "Could not open disk '" & diskname & "' in a Finder window, disk does not exist"
 		end if
@@ -43,6 +43,8 @@ on run argv
 	--set portnumber to "6222"
 	if not volumeExists(hostname) then
 		mountVolume("http://" & hostname & ":" & portnumber)
+		-- give it a chance to mount
+		do shell script "sleep 3"
 	end if
 	if volumeExists(hostname) then
 		showVolume(hostname)
