@@ -167,7 +167,7 @@ class Crypto(
                 
                 
         myKeyString = self.secretKey().exportKey()    
-        fileKeyString = self.getOrSet(elements.PublicKeyString, myKeyString)
+        fileKeyString = self.get(elements.PublicKeyString)
         log.debug("public key for " + self.fp.path + ": " + fileKeyString)
         return fileKeyString == myKeyString
 
@@ -296,7 +296,7 @@ class Crypto(
         # certainly not going to hurt if we do this:
         self.fp.restat()
         
-        log.debug(self.fp.path + " now at revision: " + self.getOrSet(elements.Revision)) 
+        log.debug(self.fp.path + " now at revision: " + self.revisionNumber()) 
         if recursionLimit > 0:
             self.updateParent(recursionLimit - 1)
             
