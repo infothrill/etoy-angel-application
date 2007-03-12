@@ -61,7 +61,7 @@ log_backupcount = 7        # max 7 "rotated" logfiles
 
 loggers = {}
 
-appname = "defaultAppname" # this string is prepended with a trailing dot to all log messages
+appname = "default" # this string is prepended with a trailing dot to all log messages
 
 def getLogger(area = ""):
     """
@@ -130,7 +130,7 @@ class AngelLogTwistedFilter(Filter):
             return True
 
 
-def initializeLogging(appname = "defaultAppname", handlers = []):
+def initializeLogging(appname = "default", handlers = []):
     """
     This is the single-step routine to initialize the logging system.
     """
