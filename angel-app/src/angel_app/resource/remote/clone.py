@@ -75,12 +75,11 @@ class Clone(object):
         
     def updateCache(self):
         response = self.propertiesDocument(elements.signedKeys + [elements.MetaDataSignature, rfc2518.ResourceType])
-        properties = response.root_element.childOfType(
-                                       rfc2518.Response
-                                       ).childOfType(
-                                         rfc2518.PropertyStatus
-                                         ).childOfType(
-                                           rfc2518.PropertyContainer).children
+        responseElement = response.root_element.childOfType(rfc2518.Response)
+        availableProperties = responseElement.childrenOfType(rfc2518.PropertyStatus)[0]
+        # the second entry will contain the properties for which the request failed.
+        
+        properties = availableProperties.childOfType(rfc2518.PropertyContainer).children
         for property in properties:
             self.propertyCache[property.qname()] = property                            
         
