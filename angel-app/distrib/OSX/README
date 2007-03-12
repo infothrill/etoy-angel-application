@@ -16,9 +16,11 @@ your current py2app version (py2app-0.3.5 at the time of writing).
 $ export PYTHONPATH=$PWD/contrib/:$PWD/src/:$PYTHONPATH
 
 4. run py2app, giving it all the toplevel scripts as arguments
-$ py2applet ./src/bin/wxmaster.py ./src/bin/master.py ./src/bin/presenter.py ./src/bin/provider.py ./src/bin/maintainer.py
+$ py2applet --iconfile=./distrib/OSX/icons/m221e.icns ./src/bin/wxmaster.py ./src/bin/master.py ./src/bin/presenter.py ./src/bin/provider.py ./src/bin/maintainer.py
 
-5. the referencing of the icon file is broken, in the Contents/Info.plist file, you'll find an entry
+5. with py2app 0.3.6 (developer version), the icon referencing works!
+  If using an old version:
+  the referencing of the icon file is broken, in the Contents/Info.plist file, you'll find an entry
         <key>CFBundleIconFile</key>
         <string>master</string>
    while in fact there's only a PythonApplet.icns located in Contents/Resources. Specifying an icns on the
