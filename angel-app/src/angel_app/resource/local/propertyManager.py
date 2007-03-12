@@ -19,10 +19,9 @@ def resourceID(resource):
         else:
             return util.getResourceIDFromParentLinks(resource)
 
+
 # a map from xml-elements corresponding to metadata fields to functions taking a resource 
 # and returning appropriate values for those metadata fields
-
-
 defaultMetaData = {
                    elements.Revision           : lambda x: "0",
                    elements.Encrypted          : lambda x: "0",
@@ -60,6 +59,9 @@ class PropertyManagerMixin:
             raise KeyError("Attribute for element %s not found on resource %s." % (`element`, self.fp.path))
     
     def assertExistence(self):
+        """
+        Raise and log an appropriate error if the resource does not exist on the file system.
+        """
         if not self.fp.exits():
             error = "Resource %s not found in xattr lookup." % self.fp.path
             log.warn(error)
