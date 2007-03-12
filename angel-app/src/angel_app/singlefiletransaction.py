@@ -194,6 +194,7 @@ def runtests():
     safe = t.open(testfname, 'ab')
     appendcontent = "appended stuff\n"
     safe.write(appendcontent)
+    print "the temp filename before commiting is: " + t.safename
     t.commit()
 
     print ">read test"
