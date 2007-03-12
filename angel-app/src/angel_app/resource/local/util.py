@@ -32,6 +32,7 @@ from os import sep
 from angel_app.contrib import uuid
 import time
 from twisted.web2.dav.element import rfc2518
+import urllib
 
 from angel_app import elements
 
@@ -41,7 +42,7 @@ AngelConfig = config.getConfig()
 repository = AngelConfig.get("common","repository")
 
 def resourceFromURI(uri, resourceClass):
-    
+    # TODO clean up
     (scheme, host, path, query, fragment) = urlsplit(uri)
     segments = path.split("/")
     assert segments[0] == "", "URL path didn't begin with '/': %s" % (path,)
