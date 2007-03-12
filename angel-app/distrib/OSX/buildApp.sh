@@ -22,8 +22,7 @@ BASENAME=`basename $RENAMETO .py`
 export PYTHONPATH=$PWD/contrib/:$PWD/src/:$PYTHONPATH
 cp ./src/bin/wxmaster.py ./src/bin/$RENAMETO
 
-py2applet --iconfile=${repo}/distrib/OSX/icons/m221e.icns ./src/bin/$RENAMETO
-#py2applet --iconfile=${repo}/distrib/OSX/icons/m221e.icns ./src/bin/wxmaster.py ./src/bin/master.py ./src/bin/presenter.py ./src/bin/provider.py ./src/bin/maintainer.py
+py2applet --iconfile=${repo}/distrib/OSX/icons/m221e.icns ./src/bin/$RENAMETO ./src/bin/master.py ./src/bin/presenter.py ./src/bin/provider.py ./src/bin/maintainer.py
 
 mkdir -p ${repo}/src/bin/$BASENAME.app/distrib/images/ || error "could not mkdir"
 cp ${repo}/distrib/images/* ${repo}/src/bin/$BASENAME.app/distrib/images/ || error "could not cp"
