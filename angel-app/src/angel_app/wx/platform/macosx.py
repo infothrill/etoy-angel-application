@@ -4,7 +4,7 @@ Module for Mac OS X specific methods
 
 import wx
 
-APPLESCRIPT_PATH="../angel_app/wx/platform/mac/applescript/" # TODO: path (relevant for packaging)
+APPLESCRIPT_PATH="../../distrib/applescript/" # TODO: path (relevant for packaging)
 
 # TODO: review command line args (whitespaces ,special chars)
 
