@@ -93,7 +93,7 @@ class SingleFileTransaction:
         """
         self._needcopyregex = re.compile(".*[a|\+].*")
         self._needemptyregex = re.compile(".*[w].*")
-        self._safe = None
+        self.safe = None
         self._basedir = getTmpPath()
     
     def open(self, name, mode = 'r', buffering = 0):
@@ -109,23 +109,23 @@ class SingleFileTransaction:
         self.buffering = buffering
         if not self._needcopyregex.match(self.mode) == None:
             if DEBUG: print "we are in needcopy mode for file '%s'" % self.name
-            (self._safe, self._safename) = self.__createTmpCopy()
+            (self.safe, self.safename) = self.__createTmpCopy()
         elif not self._needemptyregex.match(self.mode) == None:
             if DEBUG: print "we are in needempty mode for file '%s'" % self.name
-            (self._safe, self._safename) = self.__createTmpEmpty()
+            (self.safe, self.safename) = self.__createTmpEmpty()
         else:
             if DEBUG: print "we are in readonly mode for file '%s'" % self.name
             return open(self.name, self.mode, self.buffering)
-        return self._safe
+        return self.safe
 
     def commit(self):
         """
         Commits the changes made to the file atomically
         """
-        if not None == self._safe:
+        if not None == self.safe:
             if DEBUG: "we have a safe, so we need to commit!"
-            self._safe.close()
-            return os.rename(self._safename, self.name)
+            self.safe.close()
+            return os.rename(self.safename, self.name)
 
     def __createTmpEmpty(self):
         """
@@ -165,11 +165,7 @@ class SingleFileTransaction:
         return (safe, safename)
 
 
-if __name__ == "__main__":
-    """
-    test code
-    """
-    DEBUG = True
+def runtests():
     import os.path
 
     import sys
@@ -213,5 +209,10 @@ if __name__ == "__main__":
     safe.seek(len(content))
     assert(safe.read(1) == 'x'), "ERROR: content does not match what we expected!"
     t.commit()
-    
-    
+
+if __name__ == "__main__":
+    """
+    test code
+    """
+    DEBUG = True
+    runtests()
