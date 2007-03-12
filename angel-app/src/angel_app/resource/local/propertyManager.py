@@ -9,6 +9,8 @@ Hanlde initialization of attributes with default values.
 from angel_app import elements
 from angel_app.resource.local import util
 
+from angel_app.log import getLogger
+log = getLogger(__name__)
 
 def resourceID(resource):
         if resource.isRepositoryRoot():
