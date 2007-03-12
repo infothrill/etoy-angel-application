@@ -159,7 +159,7 @@ def getResourceIDFromParentLinks(resource):
         
         # get the index of the child we're actually interested in
         try:
-            linkIndex = linkedResourceNames.index(urllib.pathname2url(resource.resourceName()))
+            linkIndex = linkedResourceNames.index(resource.relativeURL())
         except ValueError:
             log.error("Could not find resource %s in parent's links." % resource.relativePath())
             # re-raise the exception
