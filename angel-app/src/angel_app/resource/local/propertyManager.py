@@ -80,7 +80,8 @@ class PropertyManagerMixin:
         """
         Raise and log an appropriate error if the resource does not exist on the file system.
         """
-        if not self.fp.exists():
+        import os.path
+        if not os.path.exists(self.fp.path):
             error = "Resource %s not found in xattr lookup." % self.fp.path
             log.warn(error)
             raise HTTPError(StatusResponse(responsecode.NOT_FOUND, error))
