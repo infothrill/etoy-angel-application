@@ -5,14 +5,24 @@ Hanlde initialization of attributes with default values.
 
 from angel_app.resource.local import util
 
+
+def resourceID(resource):
+        if resource.isRepositoryRoot():
+            return util.makeResourceID(resource.relativePath())
+            
+        else:
+            return util.getResourceIDFromParentLinks(resource)
+
 # a map from xml-elements corresponding to metadata fields to functions taking a resource 
 # and returning appropriate values for those metadata fields
+
+
 defaultMetaData = {
                    elements.Revision           : lambda x: "0",
                    elements.Encrypted          : lambda x: "0",
                    elements.PublicKeyString    : lambda x: x.parent() and x.parent().publicKeyString() or "",
                    elements.ContentSignature   : lambda x: "",
-                   elements.ResourceID         : lambda x: util.getResourceIDFromParentLinks(x),
+                   elements.ResourceID         : lambda x: resourceID,
                    elements.Clones             : lambda x: []
                    }
 
