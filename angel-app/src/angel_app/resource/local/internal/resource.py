@@ -211,7 +211,7 @@ class Crypto(
         oc = pdp.get(elements.Children.qname()).children
         
         log.debug("resourceName: " + self.resourceName())     
-        nc = [cc for cc in oc if not str(cc.childOfType(rfc2518.HRef)) == self.relativeURL()]
+        nc = [cc for cc in oc if not str(cc.childOfType(rfc2518.HRef)) == self.quotedResourceName()]
         
         pdp.set(elements.Children(*nc))
         pp.seal()
@@ -229,19 +229,24 @@ class Crypto(
         pdp = self.parent().deadProperties()
         
         oc = pdp.get(elements.Children.qname()).children
-           
+        
         for cc in oc:
-            if str(cc.childOfType(rfc2518.HRef)) == urllib.quote(self.resourceName()):
+            if str(cc.childOfType(rfc2518.HRef)) == self.quotedResourceName():
                 log.debug(self.fp.path + ": this resource is already registered with the parent")
                 return
 
         ic = elements.Child(*[
-                         rfc2518.HRef(self.relativeURL()),
+                         rfc2518.HRef(self.quotedResourceName()),
                          elements.UUID(str(self.keyUUID())),
                          self.resourceID()
                          ])
         
-        nc = [cc for cc in oc] + [ic]
+        # create the list of new children
+        if ic not in oc:
+            nc = [cc for cc in oc] + [ic]
+        else:
+            nc = oc
+            
         ce = elements.Children(*nc)
         pdp.set(ce)  
         self.parent().seal()          
