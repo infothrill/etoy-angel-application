@@ -31,6 +31,7 @@ from urlparse import urlsplit
 from os import sep
 from angel_app.contrib import uuid
 import time
+from twisted.web2.dav.element import rfc2518
 
 from angel_app import elements
 
