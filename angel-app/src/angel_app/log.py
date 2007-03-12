@@ -279,9 +279,11 @@ def __addRotatingFileHandler():
 
 
 def __addSocketHandler():
+    from angel_app.config.config import getConfig
+    angelConfig = getConfig()
     import logging.handlers # needed to instiate the SocketHandler
     # define a socket Handler:
-    socketHandler = logging.handlers.SocketHandler('localhost', logging.handlers.DEFAULT_TCP_LOGGING_PORT)
+    socketHandler = logging.handlers.SocketHandler('localhost', angelConfig.getint("common", "loglistenport"))
     socketHandler.setLevel(__getConfiguredLogLevel())
     # don't bother with a formatter, since a socket handler sends the event as
     # an unformatted pickle
