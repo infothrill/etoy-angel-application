@@ -172,7 +172,7 @@ class Basic(PropertyManagerMixin, deleteable.Deletable, Safe):
             return self.relativePath().split(os.sep)[-1]
         
     def quotedResourceName(self):
-        urllib.quote(self.resourceName())
+        return urllib.quote(self.resourceName())
     
     def referenced(self):
         """
