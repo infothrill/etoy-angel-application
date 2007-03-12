@@ -46,7 +46,11 @@ class PropertyManagerMixin:
 
     def get(self, element):
         
-        self.assertExistence()
+        try:
+            self.assertExistence()
+        except:
+            log.info("failed to look up element %s for resource %s" % (`element`, self.fp.path))
+            raise
         
         # the property is available in the property store
         if self.deadProperties().contains(element.qname()):
