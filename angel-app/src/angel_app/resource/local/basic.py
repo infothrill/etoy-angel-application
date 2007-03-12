@@ -170,6 +170,9 @@ class Basic(PropertyManagerMixin, deleteable.Deletable, Safe):
             return os.sep
         else: 
             return self.relativePath().split(os.sep)[-1]
+        
+    def quotedResourceName(self):
+        urllib.quote(self.resourceName())
     
     def referenced(self):
         """
@@ -324,10 +327,10 @@ class Basic(PropertyManagerMixin, deleteable.Deletable, Safe):
         #    sf = self.createSimilarFile(self.fp.path + os.sep + urllib.unquote(str(child.childOfType(davxml.HRef))))
         #    if sf.fp.exists(): # and str(sf.keyUUID()) == str(child.childOfType(elements.UUID).children[0]):
         #        validatedChildren.append(sf)
-            
+        links = [str(child.childOfType(davxml.HRef)) for child in children]
         #return validatedChildren
-        return [self.createSimilarFile(self.fp.path + os.sep + urllib.unquote(str(child.childOfType(davxml.HRef))))
-                for child in children]
+        return [self.createSimilarFile(self.fp.path + urllib.url2pathname(link))
+                for link in links]
 
 
     def publicKeyString(self):
