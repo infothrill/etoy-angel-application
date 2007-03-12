@@ -3,7 +3,7 @@ Provide a Mapping from XML-elements to xattr keys.
 Hanlde initialization of attributes with default values.
 """
 
-import twisted.web2.responsecode
+from twisted.web2 import responsecode
 from twisted.web2.http import HTTPError
 
 from angel_app import elements
