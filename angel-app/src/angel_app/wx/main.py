@@ -2,6 +2,7 @@ import wx
 import  wx.gizmos   as  gizmos
 
 import time
+import angel_app.wx.platform.wrap as platformwrap
 import angel_app.wx.masterthread
 from angel_app.config import config
 AngelConfig = config.getConfig()
@@ -21,6 +22,13 @@ class AngelMainFrame(wx.Frame):
         ID_FILE_SHOW_REPO_BROWSER = wx.NewId()
         self.file_menu.Append(ID_FILE_SHOW_REPO_BROWSER, "O&pen repository in web-browser", "Open repository in web-browser")
         self.Bind(wx.EVT_MENU, self.on_help_presenter, id=ID_FILE_SHOW_REPO_BROWSER)
+        ID_FILE_SHOW_REPO_FILEMANAGER = wx.NewId()
+        if platformwrap.isMacOSX():
+            filemanager = "Finder"
+        else:
+            filemanager = "file manager"
+        self.file_menu.Append(ID_FILE_SHOW_REPO_FILEMANAGER, "O&pen repository in %s" % filemanager, "Open repository in %s" % filemanager)
+        self.Bind(wx.EVT_MENU, self.on_repo_in_filemanager, id=ID_FILE_SHOW_REPO_FILEMANAGER)
         self.file_menu.Append(wx.ID_EXIT, "E&xit", "Terminate the program")
         self.Bind(wx.EVT_MENU, self.doExit, id=wx.ID_EXIT)
         self.file_menu.Append(wx.ID_CLOSE, "Q&uit", "Quit")
@@ -43,7 +51,7 @@ class AngelMainFrame(wx.Frame):
         self.Bind(wx.EVT_MENU, self.on_help_license, id=ID_HELP_LICENSE)
 
         self.menu_bar.Append(self.help_menu, "&Help")
-
+# osascript -e "try" -e "mount volume \"http://localhost:6222/\"" -e "end try"
         self.SetMenuBar(self.menu_bar)
         # end define the menus
 
@@ -78,6 +86,11 @@ class AngelMainFrame(wx.Frame):
         print "Exiting on user request"
         self.Close(True)
 
+    def on_repo_in_filemanager(self, event):
+        interface = AngelConfig.get("presenter", "listenInterface")
+        port = AngelConfig.get("presenter", "listenPort")
+        platformwrap.showRepositoryInFilemanager(interface, port)
+
     def on_about_request(self, event):
         # copyright symbol: \u00A9
         dlg = wx.MessageDialog(self, u'Version pre-alpha0.1\n\u00A9 Copyright 2006-2007 etoy.VENTURE ASSOCIATION,\nall rights reserved', # TODO embed version string
@@ -108,13 +121,13 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
     def on_help_presenter(self, event):
         interface = AngelConfig.get("presenter", "listenInterface")
         port = AngelConfig.get("presenter", "listenPort")
-        wx.Execute("open http://%s:%s" %( interface, port)) # FIXME: only works on OS X
+        platformwrap.showURLInBrowser("http://%s:%s"% (interface, port))
 
     def on_help_wiki(self, event):
-        wx.Execute("open http://angelapp.missioneternity.org") # FIXME: only works on OS X
+        platformwrap.showURLInBrowser("http://angelapp.missioneternity.org")
     
     def on_help_m221e(self, event):
-        wx.Execute("open http://www.missioneternity.org") # FIXME: only works on OS X
+        platformwrap.showURLInBrowser("http://www.missioneternity.org")
     
 
 class AngelStatusBar(wx.StatusBar):
