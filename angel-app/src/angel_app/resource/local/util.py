@@ -121,17 +121,30 @@ class StringReader:
     def close(self):
         self._offset = 0
 
-def testStringReader():
-        import sys
-        string = "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.\nThis is on a new line.\n"
-        str = StringReader(string)
+import unittest
+
+class StringReaderTest(unittest.TestCase):
+
+    def setUp(self):
+        self.teststring = "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.\nThis is on a new line.\n"
+
+    def testReadClose(self):
+        reader = StringReader(self.teststring)
+        self.assertEqual(self.teststring, reader.read())
+        reader.close()
+        self.assertEqual(self.teststring, reader.read())
+        
+    def testBufferedRead(self):
+        reader = StringReader(self.teststring)
+        data = ''
         bufsize = 5
         while True:
-            buf = str.read(bufsize)
+            buf = reader.read(bufsize)
             if len(buf) == 0:
                 break
             else:
-                sys.stdout.write(buf)
+                data += buf
+        self.assertEqual(self.teststring, data)
 
 def uuidFromPublicKeyString(publicKey):    
     return uuid.UUID( getHashObject(publicKey).hexdigest()[:32] )
@@ -172,4 +185,4 @@ def getResourceIDFromParentLinks(resource):
     return str(child.childOfType(elements.ResourceID.qname()).children[0])
 
 if __name__ == "__main__":
-    testStringReader()
+    unittest.main()
