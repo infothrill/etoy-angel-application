@@ -35,7 +35,8 @@ from twisted.web2.dav.element import rfc2518
 import urllib
 
 from angel_app import elements
-
+from angel_app.log import getLogger
+log = getLogger(__name__)
 # get config:
 from angel_app.config import config
 AngelConfig = config.getConfig()
