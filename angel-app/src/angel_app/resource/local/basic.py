@@ -109,10 +109,10 @@ class Basic(PropertyManagerMixin, deleteable.Deletable, Safe):
             return False
         
         try:
-            pk = self.get(elements.PublicKeyString)
-            cs = self.get(elements.ContentSignature)
+            pk = self.getAsString(elements.PublicKeyString)
+            cs = self.getAsString(elements.ContentSignature)
             sm = self.signableMetadata()
-            ms = self.get(elements.MetaDataSignature)
+            ms = self.getAsString(elements.MetaDataSignature)
         except:
             log.debug("Basic.verify(): False, invalid metadata")
             return False
@@ -130,7 +130,11 @@ class Basic(PropertyManagerMixin, deleteable.Deletable, Safe):
         
         log.debug(ms)
         log.debug(sm)
-        metaDataIsCorrect = publicKey.verifyString(sm, ms)
+        try:
+            metaDataIsCorrect = publicKey.verifyString(sm, ms)
+        except:
+            log.info("Can not verify metadata %s against signature %s" % (sm, ms))
+            return False
         
         log.debug("meta data signature for file " + self.fp.path + " is correct: " + `metaDataIsCorrect`)
             
@@ -330,7 +334,7 @@ class Basic(PropertyManagerMixin, deleteable.Deletable, Safe):
         
         log.debug("retrieving public key string for: " + self.fp.path)
         
-        return self.get(elements.PublicKeyString)
+        return self.getAsString(elements.PublicKeyString)
  
     def keyUUID(self):
         """
@@ -357,7 +361,7 @@ class Basic(PropertyManagerMixin, deleteable.Deletable, Safe):
             return sm
         except Exception, e:
             log.error("Basic: invalid meta data: " + `e`)
-            raise ValueError
+            raise
 
     def render(self, req):
         """You know what you doing. override render method (for GET) in twisted.web2.static.py"""

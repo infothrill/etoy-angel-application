@@ -38,10 +38,12 @@ def setKey(path = "", key = secretKeys.values()[0]):
         log.info("no key set for " + path)
         presentKey = ""
 
-    if presentKey == "":        
-        rr.deadProperties().set(PublicKeyString(key.exportKey()))
-    else:
+    try: 
+        key.importKey(presentKey)
         log.info("key already set to %s for resource: %s"  % (presentKey, rr.fp.path))
+    except:       
+        rr.deadProperties().set(PublicKeyString(key.exportKey()))
+        
     
 def setMountPoint(mountPoint, URLToMount):
     """

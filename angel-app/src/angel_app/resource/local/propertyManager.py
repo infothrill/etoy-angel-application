@@ -19,18 +19,22 @@ def resourceID(resource):
         else:
             return util.getResourceIDFromParentLinks(resource)
 
+def getOnePublicKey():
+    from angel_app.config.internal import loadKeysFromFile
+    
+    return loadKeysFromFile().keys()[0]
 
 # a map from xml-elements corresponding to metadata fields to functions taking a resource 
 # and returning appropriate values for those metadata fields
 defaultMetaData = {
                    elements.Revision           : lambda x: "0",
                    elements.Encrypted          : lambda x: "0",
-                   elements.PublicKeyString    : lambda x: x.parent() and x.parent().publicKeyString() or "",
+                   elements.PublicKeyString    : lambda x: x.parent() and x.parent().publicKeyString() or getOnePublicKey(),
                    elements.ContentSignature   : lambda x: "",
                    elements.MetaDataSignature  : lambda x: "",
                    elements.ResourceID         : lambda x: resourceID(x),
-                   elements.Clones             : lambda x: [],
-                   elements.Children           : lambda x: []
+                   elements.Clones             : lambda x: None,
+                   elements.Children           : lambda x: None
                    }
 
 class PropertyManagerMixin:
@@ -52,10 +56,13 @@ class PropertyManagerMixin:
         # but we have an initializer   
         if element in self.defaultValues.keys():
             df = self.defaultValues[element](self)
-            log.debug("Setting property %s from default value." % `df`)
-            self.set(element(
-                              self.defaultValues[element](self)
-                              ))
+            log.debug("Setting property %s to default value %s." % (`element`, `df`))
+            if None == df:
+                me = element()
+            else:
+                me = element(df)
+                
+            self.set(me)
             
             return self.deadProperties().get(element.qname())
         
