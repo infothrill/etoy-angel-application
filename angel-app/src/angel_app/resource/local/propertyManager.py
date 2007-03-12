@@ -27,6 +27,7 @@ defaultMetaData = {
                    elements.Encrypted          : lambda x: "0",
                    elements.PublicKeyString    : lambda x: x.parent() and x.parent().publicKeyString() or "",
                    elements.ContentSignature   : lambda x: "",
+                   elements.MetaDataSignature  : lambda x: "",
                    elements.ResourceID         : lambda x: resourceID(x),
                    elements.Clones             : lambda x: [],
                    elements.Children           : lambda x: []
