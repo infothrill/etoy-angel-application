@@ -100,6 +100,7 @@ class LoggingProtocol(Protocol):
 def startLoggingServer():
     factory = Factory()
     factory.protocol = LoggingProtocol
-    from logging.handlers import DEFAULT_TCP_LOGGING_PORT
-    reactor.listenTCP(DEFAULT_TCP_LOGGING_PORT, factory)
+    from angel_app.config.config import getConfig
+    angelConfig = getConfig()
+    reactor.listenTCP(angelConfig.getint("common", "loglistenport"), factory)
     #print "LOGGING STARTED"
