@@ -146,9 +146,11 @@ class Crypto(
         
         log.debug("testing for writability of: " + self.fp.path)
         
-        if not self.secretKey():
+        try: 
+            self.secretKey()
+        except:
             # we don't even have a private key
-            log.debug("Crypto: no key available")
+            log.debug("Crypto: no key available for resource: " + self.fp.path)
             return False
 
         
