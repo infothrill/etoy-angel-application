@@ -1,1 +1,1 @@
-all = ["common", "master", "presenter", "provider", "maintainer"]
+all = ["common", "master", "presenter", "provider", "maintainer", "wxmaster"]
