@@ -134,10 +134,11 @@ class Config:
                                     "keyring": path.join(environ["HOME"], ".angel-app", "keyring"),
                                     "logdir": path.join(environ["HOME"], ".angel-app", "log"),
                                     "maxclones": str(5),
-									"loglevel": "DEBUG",
+									"loglevel": "INFO",
                                     # FIXME: %(funcName)s is only available in Python 2.5 ;-(
-                                    "logformat": '%(asctime)s %(levelname)-6s %(name)-20s - %(filename)s:%(lineno)d - %(message)s',
-                                    "consolelogformat": '%(levelname)-6s %(name)-20s - %(filename)s:%(lineno)d - %(message)s',
+                                    # also, for some reason, macpython always shows __init__.py as filename, so we leave it off ( %(filename)s:%(lineno)d )
+                                    "logformat": '%(asctime)s %(levelname)-6s %(name)-20s - %(message)s',
+                                    "consolelogformat": '%(levelname)-6s %(name)-20s - %(message)s',
 									}, 
                          "presenter": { "listenport": "6222", "listeninterface": "127.0.0.1" }, 
 						 "provider" : { "listenport": "6221" },
