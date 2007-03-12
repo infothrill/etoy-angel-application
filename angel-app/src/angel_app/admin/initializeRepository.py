@@ -23,7 +23,7 @@ def initializeRepository():
     from angel_app.admin.resourceProperties import reSign
     log.info("sealing repository root if necessary.")
     # switch to crypto and sign
-    reSign(path)
+    reSign()
     
     from angel_app.admin.resourceProperties import setMountPoint
     from twisted.python.filepath import FilePath
