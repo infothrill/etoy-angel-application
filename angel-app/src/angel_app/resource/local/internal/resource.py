@@ -212,7 +212,7 @@ class Crypto(
         oc = pdp.get(elements.Children.qname()).children
         
         log.debug("resourceName: " + self.resourceName())     
-        nc = [cc for cc in oc if not str(cc.childOfType(rfc2518.HRef)) == urllib.quote(self.resourceName())]
+        nc = [cc for cc in oc if not str(cc.childOfType(rfc2518.HRef)) == self.relativeURL()]
         
         pdp.set(elements.Children(*nc))
         pp.seal()
@@ -224,12 +224,10 @@ class Crypto(
         """
         log.debug("entering _registerWithParent for " + self.fp.path)
 
-        pp = self.parent()
-        
-        if None == pp:
+        if self.isRepositoryRoot():
             log.msg("Can not register root resource with parent.")
         
-        pdp = pp.deadProperties()
+        pdp = self.parent().deadProperties()
         
         oc = pdp.get(elements.Children.qname()).children
            
@@ -239,7 +237,7 @@ class Crypto(
                 return
 
         ic = elements.Child(*[
-                         rfc2518.HRef(urllib.quote(self.resourceName())),
+                         rfc2518.HRef(self.relativeURL()),
                          elements.UUID(str(self.keyUUID())),
                          self.resourceID()
                          ])
