@@ -196,7 +196,10 @@ def storeClones(af, goodClones, unreachableClones):
     
     # in decreasing order of how much we like them:
     ourProviderListenPort = AngelConfig.getint("provider","listenPort")
-    clonesWeMightStore = goodClones +  [Clone("localhost", ourProviderListenPort, af.relativeURL())]  + unreachableClones
+    
+    # gradually filter out the unreachable clones
+    someUnreachableOnes = unreachableClones[:len(unreachableClones)]
+    clonesWeMightStore = goodClones +  [Clone("localhost", ourProviderListenPort, af.relativeURL())]  + someUnreachableOnes
     
     for clone in clonesWeMightStore:
         # take only non-duplicates
