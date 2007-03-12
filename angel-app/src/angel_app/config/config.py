@@ -127,19 +127,20 @@ class Config:
         """
         s = section.lower()
         k = key.lower()
+        from logging.handlers import DEFAULT_TCP_LOGGING_PORT
         defaultValues = {
                          "common" : {
                                     "angelhome": path.join(environ["HOME"], ".angel-app"),
-                                    "repository": path.join(environ["HOME"], ".angel-app", "repository"),
-                                    "keyring": path.join(environ["HOME"], ".angel-app", "keyring"),
-                                    "logdir": path.join(environ["HOME"], ".angel-app", "log"),
+                                    "repository": path.join(self.get("common", "angelhome"), "repository"),
+                                    "keyring": path.join(self.get("common", "angelhome"), "keyring"),
+                                    "logdir": path.join(self.get("common", "angelhome"), "log"),
                                     "maxclones": str(5),
-									"loglevel": "INFO",
+                                    "loglevel": "DEBUG",
                                     # FIXME: %(funcName)s is only available in Python 2.5 ;-(
-                                    # also, for some reason, macpython always shows __init__.py as filename, so we leave it off ( %(filename)s:%(lineno)d )
-                                    "logformat": '%(asctime)s %(levelname)-6s %(name)-20s - %(message)s',
-                                    "consolelogformat": '%(levelname)-6s %(name)-20s - %(message)s',
-									}, 
+                                    "logformat": '%(asctime)s %(levelname)-6s %(name)-20s - %(filename)s:%(lineno)d - %(message)s',
+                                    "consolelogformat": '%(levelname)-6s %(name)-20s - %(filename)s:%(lineno)d - %(message)s',
+                                    "loglistenport" : str(DEFAULT_TCP_LOGGING_PORT)
+                                    }, 
                          "presenter": { "listenport": "6222", "listeninterface": "127.0.0.1" }, 
 						 "provider" : { "listenport": "6221" },
 						 "maintainer" : {
