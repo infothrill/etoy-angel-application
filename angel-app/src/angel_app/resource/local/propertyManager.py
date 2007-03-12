@@ -4,7 +4,7 @@ Hanlde initialization of attributes with default values.
 """
 
 from twisted.web2 import responsecode
-from twisted.web2.http import HTTPError
+from twisted.web2.http import HTTPError, StatusResponse
 
 from angel_app import elements
 from angel_app.resource.local import util
@@ -76,7 +76,7 @@ class PropertyManagerMixin:
         if not self.fp.exists():
             error = "Resource %s not found in xattr lookup." % self.fp.path
             log.warn(error)
-            raise HTTPError(responsecode.NOT_FOUND, error)
+            raise HTTPError(StatusResponse(responsecode.NOT_FOUND, error))
     
     def getAsString(self, element):
         return "".join([

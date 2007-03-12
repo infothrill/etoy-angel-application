@@ -1,5 +1,5 @@
 from twisted.web2 import responsecode
-from twisted.web2.http import HTTPError
+from twisted.web2.http import HTTPError, StatusResponse
 from angel_app import elements
 
 
@@ -26,7 +26,7 @@ class Putable(object):
         if not self.isWritableFile():
             message = "http_PUT: not authorized to put file: " + self.fp.path
             log.error(message)
-            raise HTTPError(responsecode.UNAUTHORIZED, message)
+            raise HTTPError(StatusResponse(responsecode.UNAUTHORIZED, message))
         
         log.debug("_put: deleting file at: " + self.fp.path)        
         response = waitForDeferred(deferredGenerator(self.__putDelete)())
