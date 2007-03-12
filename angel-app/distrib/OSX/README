@@ -27,11 +27,10 @@ $ py2applet ./src/bin/wxmaster.py ./src/bin/master.py ./src/bin/presenter.py ./s
         <key>CFBundleIconFile</key>
         <string>master.icns</string>
    -- copy the icon file from distrib/OSX/icons/m221e.icns to Contents/Resources/master.icns
-   -- touch the app folder and fiddle around with the finder (moving something on the command line to the folder
-      where the app folder is located seems to work) until it decides it wants to refresh the
-      view of the app file.
       
-5. rename the app bundle from wxmaster.app to angel.app.
+5. rename the app bundle from wxmaster.app to angel.app. If you do this on the command line
+$ mv master.app angel.app
+the icon will also refresh.
       
 DONE!
         
