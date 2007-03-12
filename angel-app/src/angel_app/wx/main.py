@@ -1,5 +1,4 @@
 import wx
-import  wx.gizmos   as  gizmos
 
 import time
 import angel_app.wx.platform.wrap as platformwrap
@@ -51,7 +50,7 @@ class AngelMainFrame(wx.Frame):
         self.Bind(wx.EVT_MENU, self.on_help_license, id=ID_HELP_LICENSE)
 
         self.menu_bar.Append(self.help_menu, "&Help")
-# osascript -e "try" -e "mount volume \"http://localhost:6222/\"" -e "end try"
+
         self.SetMenuBar(self.menu_bar)
         # end define the menus
 
