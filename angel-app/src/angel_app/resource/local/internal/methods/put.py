@@ -21,7 +21,8 @@ class Putable(object):
     """
     def _put(self, stream): 
        
-        not self.fp.exists() and log.debug("adding new file at: " + self.fp.path)
+        if not self.fp.exists():
+            log.debug("adding new file at: " + self.fp.path)
 
         if not self.isWritableFile():
             message = "http_PUT: not authorized to put file: " + self.fp.path
