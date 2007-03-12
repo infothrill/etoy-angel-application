@@ -131,11 +131,11 @@ class Config:
         defaultValues = {
                          "common" : {
                                     "angelhome": path.join(environ["HOME"], ".angel-app"),
-                                    "repository": path.join(self.get("common", "angelhome"), "repository"),
-                                    "keyring": path.join(self.get("common", "angelhome"), "keyring"),
-                                    "logdir": path.join(self.get("common", "angelhome"), "log"),
+                                    "repository": path.join(environ["HOME"], ".angel-app", "repository"),
+                                    "keyring": path.join(environ["HOME"], ".angel-app", "keyring"),
+                                    "logdir": path.join(environ["HOME"], ".angel-app", "log"),
                                     "maxclones": str(5),
-                                    "loglevel": "DEBUG",
+                                    "loglevel": "INFO",
                                     # FIXME: %(funcName)s is only available in Python 2.5 ;-(
                                     "logformat": '%(asctime)s %(levelname)-6s %(name)-20s - %(filename)s:%(lineno)d - %(message)s',
                                     "consolelogformat": '%(levelname)-6s %(name)-20s - %(filename)s:%(lineno)d - %(message)s',
