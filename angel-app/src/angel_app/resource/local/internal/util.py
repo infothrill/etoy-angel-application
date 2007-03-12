@@ -27,7 +27,6 @@ legalMatters = """
 author = """Vincent Kraeutler, 2006"""
 
 from angel_app.log import getLogger
-import time
 
 from twisted.internet import reactor
 log = getLogger(__name__)
