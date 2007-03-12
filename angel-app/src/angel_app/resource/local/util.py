@@ -137,36 +137,39 @@ def uuidFromPublicKeyString(publicKey):
     return uuid.UUID( getHashObject(publicKey).hexdigest()[:32] )
 
 
+def makeResourceID(relativePath = ""):
+    """
+    Generate a new resourceID for a (new) resource.
+    """
+    return relativePath + `time.gmtime()`
+
 def getResourceIDFromParentLinks(resource):
     """
     Extracts the resource's ID from the Child links of the parent.
     """
-    # otherwise, take the resourceID delivered from the parent
-    children = resource.parent().deadProperties().get(elements.Children.qname()).children
+    if resource.isRepositoryRoot():
+        # root directory
+        return makeResourceID(resource.relativePath())
+    else:
+        # otherwise, take the resourceID delivered from the parent
+        children = resource.parent().deadProperties().get(elements.Children.qname()).children
         
-    # make a list of all linked resource names
-    linkedResourceNames = [str(child.childOfType(rfc2518.HRef.qname())) for child in children]
+        # make a list of all linked resource names
+        linkedResourceNames = [str(child.childOfType(rfc2518.HRef.qname())) for child in children]
         
-    # get the index of the child we're actually interested in
-    try:
-        linkIndex = linkedResourceNames.index(urllib.pathname2url(resource.resourceName()))
-    except ValueError:
-        log.error("Could not find resource %s in parent's links." % resource.relativePath())
-        # re-raise the exception
-        raise
+        # get the index of the child we're actually interested in
+        try:
+            linkIndex = linkedResourceNames.index(urllib.pathname2url(resource.resourceName()))
+        except ValueError:
+            log.error("Could not find resource %s in parent's links." % resource.relativePath())
+            # re-raise the exception
+            raise
         
     # this is the child we actually want
     child = children[linkIndex]
     log.debug("child for resourceID: " + `child`)
         
     return str(child.childOfType(elements.ResourceID.qname()).children[0])
-
-
-def makeResourceID(relativePath = ""):
-    """
-    Generate a new resourceID for a (new) resource.
-    """
-    return relativePath + `time.gmtime()`
 
 if __name__ == "__main__":
     testStringReader()
