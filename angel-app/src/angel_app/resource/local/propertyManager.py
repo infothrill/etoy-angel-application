@@ -3,6 +3,8 @@ Provide a Mapping from XML-elements to xattr keys.
 Hanlde initialization of attributes with default values.
 """
 
+from angel_app.resource.local import util
+
 # a map from xml-elements corresponding to metadata fields to functions taking a resource 
 # and returning appropriate values for those metadata fields
 defaultMetaData = {
@@ -18,6 +20,7 @@ class PropertyManagerMixin:
     
     def __init__(self):
 
+        # create a per-instance copy of the default generators
         self.defaultValues = dict(defaultMetaData.values())
 
     def get(self, element):
