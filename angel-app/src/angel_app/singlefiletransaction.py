@@ -55,6 +55,8 @@ def setup():
     setup() creates the needed internal directory structure for safe
     file  transactions (.angel_app/tmp/). It must be called once
     during bootstrap.
+    Executing is not strictly necessary when using the SingleFileTransaction
+    class directly (it can have a temp dir as parameter in th constructor)
     """
     path = getTmpPath()
     if not os.path.exists(path):
@@ -65,7 +67,8 @@ def setup():
 def getTmpPath():
     """
     Returns the full path of the tmp directory to be used for safe
-    file operations. This method does not ensure the path is valid!
+    file operations (from the angelConfig).
+    This method does not ensure the path is valid!
     """
     tmpPath = os.path.join(angelConfig.get("common","angelhome"), "tmp")
     return tmpPath
@@ -73,7 +76,7 @@ def getTmpPath():
 
 def purgeTmpPathAndSetup():
     """
-    This function will empty the tmp path. It must only be called
+    This function will empty the configured tmp path. It must only be called
     during bootstrap and while no other process is using the tmp path!
     """
     shutil.rmtree(getTmpPath(), ignore_errors = True) # FIXME: do we want to catch errors here?
@@ -85,16 +88,22 @@ class SingleFileTransaction:
     The idea is to use a standard python file object for doing
     regular file operations and hide away safety operations like
     creation of temporary files.
+    Parameters:
+    tmpPath - full pathname to the temp directory to operate in (optional)
     """
 
-    def __init__(self):
+    def __init__(self, tmpPath = None):
         """
         Just set some attributes
         """
         self._needcopyregex = re.compile(".*[a|\+].*")
         self._needemptyregex = re.compile(".*[w].*")
-        self.safe = None
-        self._basedir = getTmpPath()
+        self.safe = None # placeholder for the python file object that points to the temp file
+        if tmpPath == None:
+            self._basedir = getTmpPath()
+        else:
+            self._basedir = tmpPath
+        # TODO: make sure self._basedir exists!
     
     def open(self, name, mode = 'r', buffering = 0):
         """
@@ -120,12 +129,14 @@ class SingleFileTransaction:
 
     def commit(self):
         """
-        Commits the changes made to the file atomically
+        Commits the changes made to the file atomically and return
+        the filename of the commit
         """
         if not None == self.safe:
             if DEBUG: "we have a safe, so we need to commit!"
             self.safe.close()
-            return os.rename(self.safename, self.name)
+            os.rename(self.safename, self.name)
+            return self.name
 
     def __createTmpEmpty(self):
         """
@@ -165,55 +176,83 @@ class SingleFileTransaction:
         return (safe, safename)
 
 
-def runtests():
-    import os.path
+import unittest
 
-    import sys
-    testfname = "test.data"
-    print ">starting test..."
-    if os.path.exists(testfname):
-        print "Please remove file %s first" % testfname
-        sys.exit()
+class SingleFileTransactionTest(unittest.TestCase):
 
-    setup()
-    purgeTmpPathAndSetup()
-    t = SingleFileTransaction()
+    def setUp(self):
+        import tempfile
+        import os
+        self.testdir = tempfile.mkdtemp('tmp', 'unittest', os.getcwd())
+        self.teststring = "Lorem Ipsum is simply dummy text of the printing and typesetting industry.\n"
+        self.teststring2 = "This is on a new line.\n"
+        self.testfilename = os.path.join(self.testdir, 'test.dat')
+        self.t = SingleFileTransaction(self.testdir)
 
-    print ">write test"
-    safe = t.open(testfname, 'wb')
-    testcontent = "Some randomly chosen text to be put into the new file\n"
-    safe.write(testcontent)
-    t.commit()
-    
-    print ">read test"
-    safe = t.open(testfname, 'rb')
-    content = safe.read()
-    assert(content == testcontent), "ERROR: content does not match what we expected!"
+    def testWriteNewFile(self):
+        import os
+        #t = SingleFileTransaction(self.testdir)
+        safe = self.t.open(self.testfilename, 'wb')
+        safe.write(self.teststring)
+        fname = self.t.commit()
+        # now, self.testfilename should exist:
+        self.assertEqual(self.testfilename, fname)
+        self.assertEqual(True, os.path.exists(self.testfilename))
+        # also, it should have the content:
+        self.assertEqual(self.teststring, open(self.testfilename).read())
         
-    print ">append test"
-    safe = t.open(testfname, 'ab')
-    appendcontent = "appended stuff\n"
-    safe.write(appendcontent)
-    print "the temp filename before commiting is: " + t.safename
-    t.commit()
+    def testAppendToFile(self):
+        # first, create a new file with content:
+        safe = self.t.open(self.testfilename, 'wb')
+        safe.write(self.teststring)
+        self.t.commit()
+        # now open ind append mode and append:
+        safe = self.t.open(self.testfilename, 'ab')
+        safe.write(self.teststring2)
+        self.t.commit()
+        content = open(self.testfilename).read()
+        self.assertEqual(self.teststring + self.teststring2, content)
 
-    print ">read test"
-    safe = t.open(testfname, 'rb')
-    content = safe.read()
-    assert(content == testcontent + appendcontent), "ERROR: content does not match what we expected!"
+    def testOverwriteFile(self):
+        # first create, an initial file to be overwritten:
+        safe = self.t.open(self.testfilename, 'wb')
+        safe.write(self.teststring)
+        self.t.commit()
+        # now, overwrite it, with new content:
+        safe = self.t.open(self.testfilename, 'wb')
+        safe.write(self.teststring2)
+        self.t.commit()
+        self.assertEqual(self.teststring2, open(self.testfilename).read())
 
-    print ">read+write test"
-    safe = t.open(testfname, 'w+b')
-    content = safe.read()
-    assert(content == testcontent + appendcontent), "ERROR: content does not match what we expected!"
-    safe.write("x")
-    safe.seek(len(content))
-    assert(safe.read(1) == 'x'), "ERROR: content does not match what we expected!"
-    t.commit()
+    def testReadWriteFile(self):
+        # first create, an initial file to work on:
+        safe = self.t.open(self.testfilename, 'wb')
+        safe.write(self.teststring)
+        self.t.commit()
+        # open it in read+write mode:
+        safe = self.t.open(self.testfilename, 'w+b')
+        self.assertEqual(self.teststring, safe.read())
+        # append, file pointer is now at end of file:
+        safe.write(self.teststring2)
+        safe.seek(len(self.teststring))
+        self.assertEqual(safe.read(len(self.teststring2)), self.teststring2)
+#        self.assertEqual(self.teststring + self.teststring2, open(self.testfilename).read())
+        # rewind file pointer and overwrite beginning of file:
+        safe.seek(0)
+        safe.write(self.teststring2)
+        safe.seek(0)
+        self.assertEqual(safe.read(len(self.teststring2)), self.teststring2)
+        self.t.commit()
+        # result must now match 
+        expectedcontent = self.teststring2 + self.teststring[len(self.teststring2):] + self.teststring2
+        self.assertEqual(expectedcontent, open(self.testfilename).read())
+
+    def tearDown(self):
+        import shutil
+        shutil.rmtree(self.testdir)
 
 if __name__ == "__main__":
     """
     test code
     """
-    DEBUG = True
-    runtests()
+    unittest.main()
