@@ -276,8 +276,6 @@ class Clone(object):
         """
         
         
-        # TODO: this probably sucks rocks performance-wise, since for each
-        # element, we generate a HTTP request...
         toBeVerified = "".join([
                                 self.propertyFindBodyXml(element)
                                 for element in elements.signedKeys
