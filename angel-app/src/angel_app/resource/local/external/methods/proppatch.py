@@ -38,6 +38,7 @@ from twisted.internet.defer import deferredGenerator, waitForDeferred
 from angel_app import elements
 import angel_app.contrib.ezPyCrypto
 from angel_app.log import getLogger
+import os
 
 log = getLogger(__name__)
 
@@ -52,7 +53,7 @@ class ProppatchMixin:
     
     def __proppatchPreconditions(self, request):
         
-        if not self.fp.exists():
+        if not os.path.exists(self.fp.path):
             log.error("File not found: %s" % (self.fp.path,))
             raise HTTPError(responsecode.NOT_FOUND)
         

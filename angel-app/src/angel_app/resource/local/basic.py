@@ -187,9 +187,9 @@ class Basic(PropertyManagerMixin, deleteable.Deletable, Safe):
             referenced by the parent collection.
         """    
         if self.isRepositoryRoot(): 
-            return self.fp.exists()  
+            return os.path.exists(self.fp.path)
         else: 
-            return self.referenced() and self.fp.exists()
+            return self.referenced() and os.path.exists(self.fp.path)
 
     def removeIfUnreferenced(self):
         """
@@ -200,7 +200,7 @@ class Basic(PropertyManagerMixin, deleteable.Deletable, Safe):
             # the root is never referenced
             return False
         
-        if self.fp.exists() and not self.exists():
+        if os.path.exists(self.fp.path) and not self.exists():
             log.info(self.fp.path + " not referenced by parent, deleting")
             self._recursiveDelete(self.fp.path)
             return True
@@ -325,7 +325,7 @@ class Basic(PropertyManagerMixin, deleteable.Deletable, Safe):
         #validatedChildren = []
         #for child in children:
         #    sf = self.createSimilarFile(self.fp.path + os.sep + urllib.unquote(str(child.childOfType(davxml.HRef))))
-        #    if sf.fp.exists(): # and str(sf.keyUUID()) == str(child.childOfType(elements.UUID).children[0]):
+        #    if os.path.exists(sf.fp.path): # and str(sf.keyUUID()) == str(child.childOfType(elements.UUID).children[0]):
         #        validatedChildren.append(sf)
         links = [str(child.childOfType(davxml.HRef)) for child in children]
         #return validatedChildren

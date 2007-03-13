@@ -19,7 +19,7 @@ class Deletable(object):
     """
     def delete(self, uri = "", depth = "infinity"): 
     
-        if not self.fp.exists():
+        if not os.path.exists(self.fp.path):
             log.debug("File not found: %s" % (self.fp.path,))
             raise HTTPError(responsecode.NOT_FOUND)
 
@@ -38,7 +38,7 @@ class Deletable(object):
         """
         log.debug("Deleting file %s" % (self.fp.path,))
         try:
-            if self.fp.exists():
+            if os.path.exists(self.fp.path):
               #open(self.fp.path, "w").close()
               log.debug("__deleteFile: " + self.fp.path)
               os.remove(self.fp.path)

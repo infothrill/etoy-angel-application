@@ -37,6 +37,7 @@ from twisted.web2.dav.util import noDataFromStream
 #from angel_app import elements
 #from angel_app.resource.local.internal.util import inspectWithResponse
 from angel_app.log import getLogger
+import os
 
 log = getLogger(__name__)
 
@@ -46,7 +47,7 @@ class mkcolMixin:
 
       log.debug("calling __checkSpot")
 
-      if self.fp.exists():
+      if os.path.exists(self.fp.path):
           log.error("Attempt to create collection where file exists: %s"
                 % (self.fp.path,))
           raise HTTPError(responsecode.NOT_ALLOWED)

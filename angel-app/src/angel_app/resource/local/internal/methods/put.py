@@ -12,6 +12,7 @@ from twisted.web2.dav.fileop import checkResponse
 from angel_app.log import getLogger
 from angel_app.resource.local.internal.util import inspectWithResponse
 import angel_app.singlefiletransaction
+import os
 
 log = getLogger(__name__)
 
@@ -21,7 +22,7 @@ class Putable(object):
     """
     def _put(self, stream): 
        
-        if not self.fp.exists():
+        if not os.path.exists(self.fp.path):
             log.debug("adding new file at: " + self.fp.path)
 
         if not self.isWritableFile():
@@ -77,7 +78,7 @@ class Putable(object):
         
         # TODO: actually do the above
         
-        if self.fp.exists():
+        if os.path.exists(self.fp.path):
             log.debug("deleting: " + self.fp.path)
             response = self.delete()
             log.debug("__putDelete: " + `response`)

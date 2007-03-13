@@ -1,5 +1,6 @@
 #from angel_app.static import AngelFile
 
+import os
 from os import mkdir
 from angel_app.resource.local.internal.resource import Crypto
 from angel_app import elements
@@ -15,7 +16,7 @@ repository = AngelConfig.get("common","repository")
 
 def setupRoot():
     angelRoot = Crypto(repository)
-    if not angelRoot.fp.exists(): mkdir(repository)
+    if not os.path.exists(angelRoot.fp.path): mkdir(repository)
     setupRootMetaData()
     
 def setupRootMetaData():

@@ -154,7 +154,7 @@ class Crypto(
             return False
 
         
-        if not self.fp.exists():
+        if not os.path.exists(self.fp.path):
             # the corresponding file does not exist
             
             if not self.parent():
