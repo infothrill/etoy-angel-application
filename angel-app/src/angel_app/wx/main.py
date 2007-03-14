@@ -88,7 +88,7 @@ class AngelMainFrame(wx.Frame):
 
         _daemon = angel_app.wx.masterthread.MasterThread()
         _daemon.setDaemon(True)
-        #_daemon.start() # TODO: shall we always start master on init??
+        _daemon.start() # TODO: shall we always start master on init??
         self.daemon = _daemon
 
         self.sb = AngelStatusBar(self, self.daemon)
@@ -181,6 +181,9 @@ class AngelMainFrame(wx.Frame):
         # BAD things can happen otherwise!
         elif keyselectionresult == wx.ID_CANCEL:
                 self.sb.SetStatusText("Crypto key import canceled", 0)
+        # restart the p2p process (makes sure the key is now known)
+        self.on_net_stop("dummyevent")
+        self.on_net_start("dummyevent")
         dlg.Destroy()
 
 
