@@ -39,7 +39,7 @@ class AngelMainFrame(wx.Frame):
         self.Bind(wx.EVT_MENU, self.on_repo_in_filemanager, id=ID_FILE_SHOW_REPO_FILEMANAGER)
 
         ID_FILE_IMPORT_KEY = wx.NewId()
-        self.file_menu.Append(ID_FILE_IMPORT_KEY, "I&mport crypto key...")
+        self.file_menu.Append(ID_FILE_IMPORT_KEY, "I&mport crypto key...", "Import crypto key...")
         self.Bind(wx.EVT_MENU, self.on_file_import_key, id=ID_FILE_IMPORT_KEY)
 
         self.file_menu.Append(wx.ID_EXIT, "E&xit", "Terminate the program")
