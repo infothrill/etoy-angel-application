@@ -207,7 +207,7 @@ def storeClones(af, goodClones, unreachableClones):
             clonesToBeStored.append(clone)
             
         # guard against DOS and xattr overflow
-        if len(clonesToBeStored) > maxclones: break
+        if len(clonesToBeStored) >= maxclones: break
     
     newClones = elements.Clones(*[
                     elements.Clone(rfc2518.HRef(`cc`)) for cc in clonesToBeStored
