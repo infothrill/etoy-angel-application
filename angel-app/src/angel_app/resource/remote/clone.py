@@ -115,6 +115,19 @@ class Clone(object):
         return `self`.__hash__()
 
     def __performRequest(self, method = "GET", headers = {}, body = ""):
+        """
+        Perform an http request on the clone's host.
+        
+        TODO: add content-length headers
+        
+        TODO: add support for stream bodies.
+        
+        I'm not sure the urllib client supports stream arguments for the body. In either case, __performRequest
+        is not only called for file pushing, but is a generic abstraction for any http request to the given host
+        (HEAD, PROPFIND, GET, MKCOL, PROPPATCH). One might have to distinguish between string-type bodies such as used
+        for the PROPFIND and PROPPATCH requests and stream type bodies. In either case, it seems possible and
+        desirable to supply a "content-length" header.
+        """
         # a default socket timeout leads to socket.error: (35, 'Resource temporarily unavailable'), so we disable it
         #import socket
         #socket.setdefaulttimeout(60)
@@ -319,6 +332,12 @@ class Clone(object):
         @see performPushRequest
         
         TODO: read the file lazily (hint: maybe just pass the stream object as body instead of it contents?)
+        
+        I'm not sure the urllib client supports stream arguments for the body. In either case, __performRequest
+        is not only called for file pushing, but is a generic abstraction for any http request to the given host
+        (HEAD, PROPFIND, GET, MKCOL, PROPPATCH). One might have to distinguish between string-type bodies such as used
+        for the PROPFIND and PROPPATCH requests and stream type bodies. In either case, it seems possible and
+        desirable to supply a "content-length" header.
         """
         resp = self.__performRequest(method = "PUT", body = stream.read())
 
