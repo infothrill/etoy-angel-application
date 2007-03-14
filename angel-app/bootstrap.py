@@ -3,6 +3,7 @@
 INSTALL_LOCATION = "angel-app"
 
 import os
+import sys
 
 os.mkdir(INSTALL_LOCATION)
 
@@ -12,7 +13,7 @@ def run(command, description):
   print command + ":" + commands.getstatusoutput(command)[1]
 
 run(
-  "python ./virtual-python.py --prefix=" + INSTALL_LOCATION,
+  sys.executable + " ./virtual-python.py --prefix=" + INSTALL_LOCATION,
   "create virtual python installation")
 
 print "use virtual python installation from now on"
