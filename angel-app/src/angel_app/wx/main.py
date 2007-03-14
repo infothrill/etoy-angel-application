@@ -25,6 +25,7 @@ class AngelMainFrame(wx.Frame):
         # define the menus
         self.menu_bar  = wx.MenuBar()
   
+        # TODO: add File->Import secret key...
         # File menu
         self.file_menu = wx.Menu()
         ID_FILE_SHOW_REPO_BROWSER = wx.NewId()

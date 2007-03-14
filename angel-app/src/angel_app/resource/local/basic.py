@@ -225,7 +225,7 @@ class Basic(PropertyManagerMixin, deleteable.Deletable, Safe):
         
         if not self.verify():
             # empty the contents of the file, but retain the file itself for the metadata
-            open(self.fp.path, "w").close()
+            open(self.fp.path, "w").close() # TODO: non-atomic
     
     def familyPlanning(self):
         """

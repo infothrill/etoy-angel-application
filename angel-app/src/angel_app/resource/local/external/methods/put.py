@@ -68,4 +68,4 @@ class PutMixin:
             self.garbageCollect()
             yield response
         
-        return put(request.stream, self.fp).addCallback(gc)
+        return put(request.stream, self.fp).addCallback(gc) # TODO: twisted.web2.dav.fileop.put is not atomic!

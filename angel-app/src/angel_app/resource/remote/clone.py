@@ -318,7 +318,7 @@ class Clone(object):
         
         @see performPushRequest
         
-        TODO: read the file lazily
+        TODO: read the file lazily (hint: maybe just pass the stream object as body instead of it contents?)
         """
         resp = self.__performRequest(method = "PUT", body = stream.read())
 
