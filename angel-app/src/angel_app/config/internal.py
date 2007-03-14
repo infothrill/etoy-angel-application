@@ -2,7 +2,9 @@ from angel_app.contrib.ezPyCrypto import key as ezKey
 from os import sep, listdir
 
 from angel_app.config.config import getConfig
+from angel_app.log import getLogger
 
+log = getLogger(__name__)
 angelConfig = getConfig()
 
 keyBase = angelConfig.get("common", "keyring")
@@ -11,10 +13,6 @@ def loadKeysFromFile(keyDir = keyBase):
     """
     Load the ***SECRET*** keys from the appropriate location in the angel-app directory.
     """
-    
-    from angel_app.log import getLogger
-    # TODO: which argument to give to getLogger, if we don't know which process we're getting called from?
-    log = getLogger()
     
     keyFiles = listdir(keyDir)
     keyRing = {}
