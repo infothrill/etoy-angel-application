@@ -68,4 +68,10 @@ class PutMixin:
             self.garbageCollect()
             return response
         
-        return put(request.stream, self.fp).addCallback(gc) # TODO: twisted.web2.dav.fileop.put is not atomic!
+        # garbage-collection is currently broken. here's why:
+        # if we garbage-collect right after a PUT, the resource metadata has not yet
+        # been properly initialized. (the PROPPATCH follows later)
+        # in later runs, this clone will then be seen as valid by its peers, 
+        # because the peer validation code only checks for correct metadata (clearly a bug).
+        # therefore, a second PUT never follows -- and the resource stays at 0 bytes...
+        return put(request.stream, self.fp)#.addCallback(gc) # TODO: twisted.web2.dav.fileop.put is not atomic!
