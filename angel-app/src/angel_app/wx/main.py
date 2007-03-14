@@ -25,7 +25,6 @@ class AngelMainFrame(wx.Frame):
         # define the menus
         self.menu_bar  = wx.MenuBar()
   
-        # TODO: add File->Import secret key...
         # File menu
         self.file_menu = wx.Menu()
         ID_FILE_SHOW_REPO_BROWSER = wx.NewId()
@@ -38,6 +37,11 @@ class AngelMainFrame(wx.Frame):
             filemanager = "file manager"
         self.file_menu.Append(ID_FILE_SHOW_REPO_FILEMANAGER, "O&pen repository in %s" % filemanager, "Open repository in %s" % filemanager)
         self.Bind(wx.EVT_MENU, self.on_repo_in_filemanager, id=ID_FILE_SHOW_REPO_FILEMANAGER)
+
+        ID_FILE_IMPORT_KEY = wx.NewId()
+        self.file_menu.Append(ID_FILE_IMPORT_KEY, "I&mport crypto key...")
+        self.Bind(wx.EVT_MENU, self.on_file_import_key, id=ID_FILE_IMPORT_KEY)
+
         self.file_menu.Append(wx.ID_EXIT, "E&xit", "Terminate the program")
         self.Bind(wx.EVT_MENU, self.doExit, id=wx.ID_EXIT)
         self.file_menu.Append(wx.ID_CLOSE, "Q&uit", "Quit")
@@ -84,7 +88,7 @@ class AngelMainFrame(wx.Frame):
 
         _daemon = angel_app.wx.masterthread.MasterThread()
         _daemon.setDaemon(True)
-        _daemon.start() # TODO: shall we always start master on init??
+        #_daemon.start() # TODO: shall we always start master on init??
         self.daemon = _daemon
 
         self.sb = AngelStatusBar(self, self.daemon)
@@ -114,6 +118,85 @@ class AngelMainFrame(wx.Frame):
         """
         print "Exiting on user request"
         self.Close(True)
+
+    def on_file_import_key(self, evt):
+        import os
+        # This is how you pre-establish a file filter so that the dialog
+        # only shows the extension(s) you want it to.
+        wildcard = "Key files (*.key)|*.key|"     \
+                   "All files (*.*)|*.*"
+        #self.log.WriteText("CWD: %s\n" % os.getcwd())
+
+        # Create the dialog. In this case the current directory is forced as the starting
+        # directory for the dialog, and no default file name is forced.
+        dlg = wx.FileDialog(
+            self, message="Import crypto key ...", defaultDir=os.getcwd(), 
+            defaultFile="", wildcard=wildcard, style=wx.OPEN
+            )
+
+        # This sets the default filter that the user will initially see. Otherwise,
+        # the first filter in the list will be used by default.
+        #dlg.SetFilterIndex(0)
+
+        # Show the dialog and retrieve the user response. If it is the OK response, 
+        # process the data.
+        keyselectionresult = dlg.ShowModal()
+        if keyselectionresult == wx.ID_OK:
+            path = dlg.GetPath()
+            #self.log.WriteText('You selected "%s"' % path)
+            print 'You selected "%s"' % path
+            keynamedlg = wx.TextEntryDialog(
+                    self, 'Please enter a name for the key (preferably something that associates the key with its usage):',
+                    'Enter key name', '')
+            keynamedlg.CenterOnParent()
+            #default keyname:
+            keyname = os.path.basename(path)
+            keynamedlg.SetValue(keyname)
+    
+            res = keynamedlg.ShowModal()
+            if  res == wx.ID_OK:
+                keyname = keynamedlg.GetValue()
+                keynamedlg.Destroy()
+            elif res == wx.ID_CANCEL:
+                #print "HIT CANCEL"
+                keynamedlg.Destroy()
+                dlg.Destroy()
+                self.sb.SetStatusText("Crypto key import canceled", 0)
+                return False
+               #self.log.WriteText('You entered: %s\n' % keynamedlg.GetValue())    
+
+            f = open(path, 'rb')
+            from angel_app.admin.secretKey import importKey
+            result = False
+            try:
+                result = importKey(f, keyname)
+                f.close()
+            except NameError, err:
+                self.showErrorDialog(self, str(err))
+                self.sb.SetStatusText("Crypto key import failed", 0)
+            if result == True:
+                self.sb.SetStatusText("Crypto key successfully imported", 0)
+
+        # Destroy the dialog. Don't do this until you are done with it!
+        # BAD things can happen otherwise!
+        elif keyselectionresult == wx.ID_CANCEL:
+                self.sb.SetStatusText("Crypto key import canceled", 0)
+        dlg.Destroy()
+
+
+    def showErrorDialog(self, parent, message):
+        dlg = wx.MessageDialog(parent, message,
+                               'Error:',
+                               wx.OK | wx.ICON_INFORMATION
+                               #wx.YES_NO | wx.NO_DEFAULT | wx.CANCEL | wx.ICON_INFORMATION
+                               )
+        dlg.CenterOnParent()
+        dlg.ShowModal()
+        dlg.Destroy()
+
+    def _import_new_key(self, filename):
+        print "Trying to import new key: %s" % filename
+        # TODO: implement
 
     def on_net_start(self, event):
         """
