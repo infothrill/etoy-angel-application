@@ -1,8 +1,41 @@
+def bootInit():
+    """
+    Method to be called in __main__ before anything else. This method cannot rely on any
+    framework being initialised, e.g. no logging, no exception catching etc.
+    """    
+    # TODO: ugly twisted workaround to provide angel_app xml elements
+    from twisted.web2.dav.element import parser
+    from angel_app import elements
+    parser.registerElements(elements)
+    
+    
+def postConfigInit():
+    """
+    Run this method after the config system is initialized.
+    """
+    from angel_app.admin.directories import makeDirectories
+    makeDirectories()
+
+    # setup our internal temporary path for files:
+    from angel_app import singlefiletransaction
+    singlefiletransaction.setup()
 
 
 def boot():
-    # here we don't do anything (yet)
-    pass
+    bootInit()
+    # setup/configure config system
+    from angel_app.config.config import getConfig
+    angelConfig = getConfig()
+    postConfigInit()
+    angelConfig.bootstrapping = False
+
+    appname = "wxmaster"
+    # setup/configure logging
+    from angel_app.log import initializeLogging
+    loghandlers = ['file', 'console'] # always log to file
+    initializeLogging(appname, loghandlers)
+
+    return True
 
 def dance(options):
     import angel_app.wx.main
