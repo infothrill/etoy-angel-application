@@ -176,14 +176,15 @@ class AngelMainFrame(wx.Frame):
                 self.sb.SetStatusText("Crypto key import failed", 0)
             if result == True:
                 self.sb.SetStatusText("Crypto key successfully imported", 0)
+                # restart the p2p process (makes sure the key is now known)
+                if self.daemon.isAlive():
+                    self.daemon.stop()
+                    self.daemon.run()
 
         # Destroy the dialog. Don't do this until you are done with it!
         # BAD things can happen otherwise!
         elif keyselectionresult == wx.ID_CANCEL:
                 self.sb.SetStatusText("Crypto key import canceled", 0)
-        # restart the p2p process (makes sure the key is now known)
-        self.on_net_stop("dummyevent")
-        self.on_net_start("dummyevent")
         dlg.Destroy()
 
 
@@ -196,10 +197,6 @@ class AngelMainFrame(wx.Frame):
         dlg.CenterOnParent()
         dlg.ShowModal()
         dlg.Destroy()
-
-    def _import_new_key(self, filename):
-        print "Trying to import new key: %s" % filename
-        # TODO: implement
 
     def on_net_start(self, event):
         """
