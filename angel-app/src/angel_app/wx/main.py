@@ -225,8 +225,9 @@ class AngelMainFrame(wx.Frame):
         """
         Shows a dialogue with an icon, version and copyright
         """
-        # copyright symbol: \u00A9
-        dlg = wx.MessageDialog(self, u'Version pre-alpha0.1\n\u00A9 Copyright 2006-2007 etoy.VENTURE ASSOCIATION,\nall rights reserved', # TODO embed version string
+        # NOTE: VERSION and BUILD_ID number MUST be set during packaging! (most simply through sed/search+replace)
+        # unicode copyright symbol: \u00A9
+        dlg = wx.MessageDialog(self, u'Version #!#VERSION#!# Build (#!#BUILD_ID#!#)\n\u00A9 Copyright 2006-2007 etoy.VENTURE ASSOCIATION,\nall rights reserved', # TODO embed version string
                                'Angel-App',
                                wx.OK | wx.ICON_INFORMATION
                                )
