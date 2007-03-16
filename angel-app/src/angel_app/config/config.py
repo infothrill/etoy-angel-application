@@ -109,10 +109,18 @@ class Config:
         return val
 
     def __checkGetter(self, section, option):
+        """
+        Convenience method to make sure the section and option are
+        allowed and valid.
+        """
         self.__checkSection(section)
         self.__checkOption(section, option)
 
     def __isAllowedSection(self, section):
+        """
+        This checks the given sectionname against the hard-coded list
+        of allowed section names.
+        """
         allowedSections = ["presenter", "common", "maintainer", "provider"]
         if not section in allowedSections:
             return False
@@ -121,6 +129,11 @@ class Config:
 
     def __getDefaultValue(self, section, key):
         """
+        Return the default option value for the given section and key.
+
+        This is usually only called during the first run of the
+        application.
+
         Attention:
           - all keys must be lower case!
           - all values in the dictionary defaultValues must be of type string
@@ -137,11 +150,12 @@ class Config:
                                     "maxclones": str(5),
                                     "loglevel": "INFO",
                                     # FIXME: %(funcName)s is only available in Python 2.5 ;-(
-                                    "logformat": '%(asctime)s %(levelname)-6s %(name)-20s - %(filename)s:%(lineno)d - %(message)s',
-                                    "consolelogformat": '%(levelname)-6s %(name)-20s - %(filename)s:%(lineno)d - %(message)s',
+                                    # %(filename)s:%(lineno)d is not used, because we get useless __init__.py after packaging
+                                    "logformat": '%(asctime)s %(levelname)-6s %(name)-20s - %(message)s',
+                                    "consolelogformat": '%(levelname)-6s %(name)-20s - %(message)s',
                                     "loglistenport" : str(DEFAULT_TCP_LOGGING_PORT)
                                     }, 
-                         "presenter": { "listenport": "6222", "listeninterface": "127.0.0.1" }, 
+                         "presenter": { "listenport": "6222", "listeninterface": "localhost" }, 
 						 "provider" : { "listenport": "6221" },
 						 "maintainer" : {
                                          # it's nice to be fast on the first traversal
@@ -157,6 +171,10 @@ class Config:
             return defaultValues[s][k]
 
     def __checkSection(self, section):
+        """
+        Makes sure the given section is allowed and eventually adds it
+        to the config file (if not present yet).
+        """
         if not self.__isAllowedSection(section):
             raise NameError, "ConfigError: Section name '"+section+"' is not allowed"
         if not self.config.has_section(section):
@@ -164,6 +182,10 @@ class Config:
             self.commit()
 
     def __checkOption(self, section, key):
+        """
+        Makes sure the given option is allowed and eventually adds it
+        to the config file (if not present yet).
+        """
         if not self.config.has_option(section, key):
             if not self.__getDefaultValue(section, key):
                 raise NameError, "ConfigError: Section '"+section+"' has no option '"+key+"' and there is no default value available"
