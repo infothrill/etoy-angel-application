@@ -313,13 +313,13 @@ To add a resource, we
 \item add a  \texttt{resource-child} reference (see Section \ref{resource-structure}) to the resource's parent, implying that a user can only add resources in directories she has the secret key of, and 
 \item increase the parent's revision number.
 \end{enumerate}
-The modified parent and the resource itself will then automatically be replicated to suitable clones (Section \ref{traverse}). Similarly, deletion operations may be implemented by removing the \texttt{resource-child}  reference to the resource from the resource's parent, and requiring that upon update of the parent all local child resources are removed that are not referenced by the parent.
+The modified parent and the resource itself will then automatically be replicated to suitable clones (Section \ref{traverse}). Similarly, deletion operations may be implemented by removing the \texttt{resource-child}  reference to the resource from the resource's parent, and requiring that upon update of the parent all local child resources are removed that are not referenced by the parent. Note that while a user may only add resources in directories she has the secret key of, the resource to be added may belong to another user. This is how the \texttt{mount} operation is implemented. 
 
 \subsection{Multiple Nodes and Multiple Users}
 \label{multiple}
 Let us first consider what happens when a node of the angel-app network comes online, either after it has been newly initialized, or after it has been intermittently offline for some time for another reason. In both cases, it will start by obtaining a root resource of some sort, and then proceed to replicate the rest of the resource graph starting from this root resource. Due to the transactional nature of clone replication (see Section \ref{transaction}), and the robustness properties of the graph replication process (see Section \ref{typeOne}) this will eventually succeed \emph{exactly if there exists no unreachable, modified clone  with a revision number smaller or equal to the current revision number of the resource}.
 
-To illustrate the above, consider the following scenario: let Alice and Bob be users running different nodes, but with access to the same secret key. Let there be no communication channel between them (\emph{i.e.} at least one of them is ``offline''). Let both of them perform modifications of the same resource. When Alice and Bob re-establish their communication channel, the modifications of (at least) Alice or of Bob will get lost if the corresponding revision numbers are not the same. If the corresponding revision numbers are the same, the behavior of the graph inspection will be undefined. 
+To illustrate a failure of the above condition, consider the following scenario: let Alice and Bob be users running different nodes, but with access to the same secret key. Let there be no communication channel between them (\emph{i.e.} at least one of them is ``offline''). Let both of them perform modifications of the same resource. When Alice and Bob re-establish their communication channel, the modifications of (at least) Alice or of Bob will get lost if the corresponding revision numbers are not the same. If the corresponding revision numbers are the same, the behavior of the graph inspection will be undefined. 
 
 We therefore require that additionally at least one of the following constraints holds:
 \begin{itemize}
@@ -365,6 +365,14 @@ The wide-spread use of network-address-translation (NAT) and firewalling techniq
 \end{itemize}
 The current (temporary) solution to this problem can be interpreted as an \emph{ad hoc} implementation of the latter approach. It makes use of the fact that (in the absence of a mechanism to enforce distributed resource locks) no hard limits exist on the time that message-passing may take. Namely in contrast to \emph{e.g.} instant-messaging systems, messages in the context of the angel-app consist entirely of replication requests, which may take an essentially arbitrary amount of time (days or more). For the replication of a clone from a node $A$ to a node $B$, with nodes $A$ and $B$ being unable to communicate directly, it is therefore (more than) sufficient to require that a node $C$ exists, such that the clone can be replicated to $C$ and that $C$ is visible by both $A$ and $B$. This in turn is requires that a ``push'' mechanism exists, by which $A$ can initiate the replication of the resource to $C$. Once the this replication step is completed, the clone is visible from $B$.
 
+The above \emph{push} mechanism can be safely implemented as follows. We allow for the ability to send the signed metadata of a resource to a given node (implemented as a WebDAV \texttt{PROPPATCH} method). Being signed, this metadata message is verifiable. Furthermore, we require that a resource may be created on a remote node, if the parent resource contains a (signed) \texttt{resource-child} link to a resource that does not exist, or whose contents do not match its \texttt{content-signature}. The push mechanism then consists of the following steps:
+\begin{enumerate}
+\item push the parent metadata,
+\item push a zero-sized standin resource for the child (in the case of a directory-type resource, this will correspond to a WebDAV \texttt{MKCOL} request, in the case of a file-type resource, this will correspond to a \texttt{PUT} request with an empty file),
+\item push the resource metadata.
+\item in the case of a file-type resource, push the file contents (these can now be verified on the host node, and discarded if inappropriate). 
+\end{enumerate}
+For security reasons, the last step implies that a maximum file size is enforced, or that files are distributed as signed ``chunks'' of a given maximum size.
 
 \section{Possible Future Developments}
 
