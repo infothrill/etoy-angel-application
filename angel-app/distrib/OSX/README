@@ -12,6 +12,20 @@ your current py2app version (py2app-0.3.5 at the time of writing).
 
 2. go to the root directory of your angel-app checkout
 
+3. run the distrib/preprelease.sh script, specifying your options on versions.
+   Example:
+   $ ./distrib/preprelease.sh release 0.1.2 0.1.2
+
+4. run the distrib/OSX/buildApp.sh script on the tree prepared in step 3.
+   Example:
+   $ ./distrib/OSX/buildApp.sh ~/tmp/angel_app-0.1.2  0.1.2  756
+
+DONE!
+
+
+
+OLD DOCUMENTATION FOR REFERENCE ONLY:
+
 3. include the contrib and src directories in the python module search path
 $ export PYTHONPATH=$PWD/contrib/:$PWD/src/:$PYTHONPATH
 
