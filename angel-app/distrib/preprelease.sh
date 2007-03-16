@@ -17,6 +17,7 @@
 function error()
 {
 	echo "$0: $1" 1>&2
+	rm -rf $THISTMPDIR > /dev/null 2>&1 # cleanup temp junk
 	exit -1
 }
 
@@ -31,6 +32,11 @@ function usage()
 	echo ""
 	exit
 }
+
+# setup a temp dir for temp junk:
+THISTMPDIR=${TMPDIR:?env variable TMPDIR must be set}/`basename $0`_$$
+mkdir $THISTMPDIR
+chmod 700 $THISTMPDIR # just be sure it's only readable by the current user!
 
 #clean env:
 env -i
@@ -81,10 +87,7 @@ then
 	fi
 fi
 
-#echo "Cleaning local temp disc space..."
-tmp="/tmp/"
-
-cd ${tmp} || error "Could not switch to directory $tmp"
+cd ${THISTMPDIR} || error "Could not switch to directory $THISTMPDIR"
 # rm -rf ${MODULE} # TODO: remove eventual previous checkout
 
 if [ "${MODE}" = "release" ]
@@ -114,7 +117,7 @@ if [ "${MODE}" = "local" ]
 then
 	RELEASE="LOCALDEV"
 	echo "Local copy..."
-	rm -rf ${tmp}/${SHORTNAME}
+	rm -rf ${THISTMPDIR}/${SHORTNAME}
 	cp -ax $LOCALDIR ${SHORTNAME}  > /dev/null
 fi
 
@@ -128,7 +131,7 @@ echo "BUILD_ID is: ${BUILD_ID}"
 
 # remove spurious development files/repository files
 echo "Removing files not used for production/release..."
-cd ${tmp}
+cd ${THISTMPDIR}
 echo -n " SVN directories"
 find ${SHORTNAME}/ -type d -name '.svn' -print0 | xargs -0 rm -rf
 echo ""
@@ -154,5 +157,8 @@ rm -rf "${SHORTNAME}-${RELEASE}"
 #rm -rf "${SHORTNAME}-${RELEASE}.tgz"
 
 mv ${SHORTNAME} "${SHORTNAME}-${RELEASE}"
-echo "You can now create a platform build from the directory:"
-echo "${tmp}${SHORTNAME}-${RELEASE}"
+rm -rf "$TMPDIR/${SHORTNAME}-${RELEASE}" > /dev/null 2>&1
+mv "${SHORTNAME}-${RELEASE}" $TMPDIR
+# clean temp junk:
+rm -rf $THISTMPDIR > /dev/null 2>&1 # cleanup temp junk
+echo "You can now create a platform build from the directory: ${TMPDIR}${SHORTNAME}-${RELEASE}"
