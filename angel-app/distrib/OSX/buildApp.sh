@@ -46,7 +46,7 @@ else
 fi
 
 
-RENAMETO="Angel-App.py" # is not allowed to contain empty spaces for now. This will set the application name that appears in the dock and other places
+RENAMETO="angel.py" # is not allowed to contain empty spaces for now. This will set the application name that appears in the dock and other places
 BASENAME=`basename $RENAMETO .py`
 
 export PYTHONPATH=$PWD/contrib/:$PWD/src/:$PYTHONPATH
