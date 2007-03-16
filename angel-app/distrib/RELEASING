@@ -1,0 +1,31 @@
+Versioning
+==========
+Sample: 0.2.346
+
+The release version number is a string comprised of three
+period-separated integers. The first integer represents major
+revisions to the application, such as revisions that implement
+new features or major changes. The second integer denotes revisions
+that implement less prominent features. The third integer represents
+maintenance releases.
+
+Build numbers
+=============
+Each released version of the application must correspond to a specific
+revision of the source code from the repository. It is not allowed
+to publish/distribute bundles that are created from local source trees.
+Each published bundled has an additional BUILD ID associated to it,
+which corresponds with the subversion revision it was create from.
+
+Tags and branches
+=================
+For each public release, it is preferable to create a tag in the
+subversion repository first. The tag should match the 3 digit
+version string given to the application while bundling.
+
+Branches
+========
+Branches are used for development purposes only. No releases will be
+created from branches. (in subversion, branches and tags are
+technically equivalent anyway)
+
