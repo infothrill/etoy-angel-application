@@ -81,25 +81,33 @@ class Crypto(
         return right away if the resource is a directory or self.secretKey
         is None.
         </p>
-
-        TODO: this uses in-memory encryption, revamp to streams
         """
         
         if self.fp.isdir() or self.secretKey() == None: return
 
-        log.debug("encrypting file: " + self.fp.path)
-        myFile = self.fp.open() 
-        plainText = myFile.read()
-        myFile.close()
-        cypherText = self.secretKey().encString(plainText)
-        log.debug(cypherText)  
-
         import angel_app.singlefiletransaction
+
+        log.debug("encrypting file: " + self.fp.path)
+
+        encrypter = self.secretKey()
+        myFile = self.fp.open()
         t = angel_app.singlefiletransaction.SingleFileTransaction()
         safe = t.open(self.fp, 'wb')
-        safe.write(cypherText)
+
+        EOF = False
+        bufsize = 1024 # 1 kB
+        encrypter.encStart()
+        while not EOF:
+            data = myFile.read(bufsize)
+            if len(data) > 0:
+                encdata = encrypter.encNext(data)
+            else:
+                encdata = encrypter.encEnd()
+                EOF = True
+            safe.write(encdata)
+        myFile.close()
         safe.close()
-        t.commit()
+        t.commit() # TODO: only commit if encryption worked!
 
 
     def sign(self):
