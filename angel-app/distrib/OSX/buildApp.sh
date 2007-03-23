@@ -89,4 +89,8 @@ ${repo}/distrib/OSX/patchPlist.py --version "$VERSION" --buildnumber "$BUILD_ID"
 # cleanup temp junk
 rm -rf $THISTMPDIR > /dev/null 2>&1 # cleanup temp junk
 
-echo "You app should now be in ${repo}/src/bin/$BASENAME.app"
+echo "app-bundle created in ${repo}/src/bin/$BASENAME.app"
+cd ${repo}/src/bin/
+tar cjf ${repo}/angel_app_macosx-$VERSION.tar.bz2 $BASENAME.app
+echo "tar bzip2 created in ${repo}/angel_app_macosx-$VERSION.tar.bz2"
+
