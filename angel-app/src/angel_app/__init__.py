@@ -8,6 +8,7 @@ log: loggin facilities
 logserver: handle logs of multiple processes
 procmanager: utilities for spawning and managing processes
 resource: implementation of the various resources
+version: version information
 wx: GUI related
 """
 
@@ -24,5 +25,6 @@ all = [
        "resource", 
        "server", 
        "singlefiletransaction",
+       "version",
        "wx"
        ]

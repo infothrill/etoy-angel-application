@@ -8,6 +8,16 @@
 #
 #
 
+function usage()
+{
+	echo "Usage: `basename $0` PATHTOSOURCE [version] [buildnumber]"
+	echo ""
+	echo "  Example usage:"
+	echo "     `basename $0` ~/src/angel-app/ 1.0.2  34536"
+	echo ""
+	exit
+}
+
 function error()
 {
 	echo "$0: $1" 1>&2
@@ -20,8 +30,12 @@ THISTMPDIR=${TMPDIR:?env variable TMPDIR must be set}/`basename $0`_$$
 mkdir $THISTMPDIR
 chmod 700 $THISTMPDIR # just be sure it's only readable by the current user!
 
+if [ -z $1 ]
+then
+	usage
+fi
 
-repo=${1:?Please specify the full path to the base directory of the source tree}
+repo=${1}
 shift
 cd $repo || error "Specified dir '$repo' does no exist"
 
@@ -62,12 +76,12 @@ then
 fi
 rm ./src/bin/$RENAMETO
 
-echo "Adding stuff to application Bundle..."
-mkdir -p ${repo}/src/bin/$BASENAME.app/distrib/images/ || error "could not mkdir"
-cp ${repo}/distrib/images/* ${repo}/src/bin/$BASENAME.app/distrib/images/ || error "could not cp"
+echo "Adding resources to application Bundle..."
+mkdir -p ${repo}/src/bin/$BASENAME.app/Resources/images/ || error "could not mkdir"
+cp ${repo}/distrib/images/* ${repo}/src/bin/$BASENAME.app/Resources/images/ || error "could not cp"
 
-mkdir -p ${repo}/src/bin/$BASENAME.app/distrib/applescript/ || error "could not mkdir"
-cp ${repo}/src/angel_app/wx/platform/mac/applescript/* ${repo}/src/bin/$BASENAME.app/distrib/applescript/ || error "could not cp"
+mkdir -p ${repo}/src/bin/$BASENAME.app/Resources/applescript/ || error "could not mkdir"
+cp ${repo}/distrib/applescript/* ${repo}/src/bin/$BASENAME.app/Resources/applescript/ || error "could not cp"
 
 echo "Patching Info.plist to match our info..."
 ${repo}/distrib/OSX/patchPlist.py --version "$VERSION" --buildnumber "$BUILD_ID" ${repo}/src/bin/$BASENAME.app

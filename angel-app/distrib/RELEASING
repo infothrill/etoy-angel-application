@@ -1,3 +1,9 @@
+Example for building a OS X release:
+
+  # bash ./distrib/preprelease.sh release $tag $version
+  (this will show the buildnumber, so you can set it)
+  # bash ./distrib/OSX/buildApp.sh $version $buildnumber
+
 Versioning
 ==========
 Sample: 0.2.346

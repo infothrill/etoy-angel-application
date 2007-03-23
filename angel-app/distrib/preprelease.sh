@@ -144,13 +144,13 @@ if [ "x${RELEASE}" == "xSVN" ]
 then
 	STRING="SVN_"`date +"%m%d_%H:%M:%S"`
 	#echo $STRING
-	sed -i.bak s/#\!#VERSION#\!#/$STRING/ ${SHORTNAME}/src/angel_app/wx/main.py
-	sed -i.bak s/#\!#BUILD_ID#\!#/$BUILD_ID/ ${SHORTNAME}/src/angel_app/wx/main.py
-	rm -f ${SHORTNAME}/src/angel_app/wx/main.py.bak 
+	sed -i.bak s/#\!#VERSION#\!#/$STRING/ ${SHORTNAME}/src/angel_app/version.py
+	sed -i.bak s/#\!#BUILD_ID#\!#/$BUILD_ID/ ${SHORTNAME}/src/angel_app/version.py
+	rm -f ${SHORTNAME}/src/angel_app/version.py.bak 
 else
-	sed -i.bak s/#\!#VERSION#\!#/$RELEASE/ ${SHORTNAME}/src/angel_app/wx/main.py
-	sed -i.bak s/#\!#BUILD_ID#\!#/$BUILD_ID/ ${SHORTNAME}/src/angel_app/wx/main.py
-	rm -f ${SHORTNAME}/src/angel_app/wx/main.py.bak
+	sed -i.bak s/#\!#VERSION#\!#/$RELEASE/ ${SHORTNAME}/src/angel_app/version.py
+	sed -i.bak s/#\!#BUILD_ID#\!#/$BUILD_ID/ ${SHORTNAME}/src/angel_app/version.py
+	rm -f ${SHORTNAME}/src/angel_app/version.py.bak
 fi
 
 rm -rf "${SHORTNAME}-${RELEASE}"

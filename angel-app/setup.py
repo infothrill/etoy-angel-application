@@ -5,7 +5,7 @@ ez_setup.use_setuptools()
 
 from setuptools import setup, find_packages
 
-VERSION = '0.1'
+VERSION = '0.1' # TODO: use version from angel_app.version.getVersionString()
 DESCRIPTION = "The angel-app distributed file system."
 LONG_DESCRIPTION = """
 See http://angelapp.missioneternity.org/

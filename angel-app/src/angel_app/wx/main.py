@@ -3,16 +3,13 @@ The main GUI module.
 """
 
 import wx
-
-import time
+import os
 import angel_app.wx.platform.wrap as platformwrap
 import angel_app.wx.masterthread
 from angel_app.config import config
 AngelConfig = config.getConfig()
-import os.path as path
 
-IMAGE_PATH="../../distrib/images/" # TODO: path shall not be hardcoded (relevant for packaging)
-M221E_LOGO_SMALL = path.join(IMAGE_PATH, "m221elogosmall.jpg")
+M221E_LOGO_SMALL = os.path.join(platformwrap.getResourcePath(), "images", "m221elogosmall.jpg")
 
 class AngelMainFrame(wx.Frame):
     def __init__(self, parent, ID, title):
@@ -220,14 +217,15 @@ class AngelMainFrame(wx.Frame):
         interface = AngelConfig.get("presenter", "listenInterface")
         port = AngelConfig.get("presenter", "listenPort")
         platformwrap.showRepositoryInFilemanager(interface, port)
-
+        
     def on_about_request(self, event):
         """
-        Shows a dialogue with an icon, version and copyright
+        Shows a dialogue with an icon, version, build number and copyright
         """
-        # NOTE: VERSION and BUILD_ID number MUST be set during packaging! (most simply through sed/search+replace)
+        from angel_app.version import getVersionString
+        from angel_app.version import getBuildString
         # unicode copyright symbol: \u00A9
-        dlg = wx.MessageDialog(self, u'Version #!#VERSION#!# Build (#!#BUILD_ID#!#)\n\u00A9 Copyright 2006-2007 etoy.VENTURE ASSOCIATION,\nall rights reserved', # TODO embed version string
+        dlg = wx.MessageDialog(self, u'Version %s Build (%s)\n\u00A9 Copyright 2006-2007 etoy.VENTURE ASSOCIATION,\nall rights reserved' % (getVersionString() , getBuildString()),
                                'Angel-App',
                                wx.OK | wx.ICON_INFORMATION
                                )

@@ -3,15 +3,15 @@ Module for Mac OS X specific methods
 """
 
 import wx
+import os
+import common
 
-APPLESCRIPT_PATH="../../distrib/applescript/" # TODO: path (relevant for packaging)
+APPLESCRIPT_PATH=os.path.join(common.getResourcePath(), "applescript")
 
 # TODO: review command line args (whitespaces ,special chars)
 
-import os.path as path
-
 def showRepositoryInFilemanager(interface, port):
-    script = path.join(APPLESCRIPT_PATH, "mount_repository.applescript")
+    script = os.path.join(APPLESCRIPT_PATH, "mount_repository.applescript")
     wx.Execute("/usr/bin/osascript %s '%s' '%s'" %( script, interface, str(port)), wx.EXEC_ASYNC)
 
 def showURLInBrowser(url):
