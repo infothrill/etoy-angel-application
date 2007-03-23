@@ -6,7 +6,7 @@ def getResourcePath():
     """
     based = os.path.split(os.path.dirname(os.getcwd()))[0]
     for subdir in ["distrib", "Resources"]: # hm, this is sort of hacky
-        p = os.path.join(based, "distrib")
+        p = os.path.join(based, subdir)
         if os.path.exists(p):
             return p
-    raise NameError, "Could not find the path to the resources!"
+    raise NameError, "Could not find the path to the resources! (using basedir %s)" % based
