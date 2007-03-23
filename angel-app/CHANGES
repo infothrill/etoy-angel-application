@@ -1,0 +1,11 @@
+
+0.1.2 March 23 2007
+ * added "Import Crypto Key" functionality
+ * minimal GUI polish
+ * correctly create OS X application bundle
+ * initial release for Linux/BSD as source tarball
+
+
+0.1.1 March 13 2007
+ * initial developer preview release for OS X. All releases starting
+   with 0.1 are developer previews and considered alpha quality.
