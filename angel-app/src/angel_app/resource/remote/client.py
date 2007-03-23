@@ -111,9 +111,18 @@ def _ensureLocalValidity(resource, referenceClone):
 
             import angel_app.singlefiletransaction
             t = angel_app.singlefiletransaction.SingleFileTransaction()
-            t.open(resource.fp.path, 'wb').write(referenceClone.stream().read())
-            t.commit()
-            #open(resource.fp.path, "w").write(referenceClone.stream().read()) #old
+            bufsize = 8192 # 8 kB
+            safe = t.open(resource.fp.path, 'wb')
+            readstream = referenceClone.stream()
+            EOF = False
+            while not EOF:
+                #log.debug("====DOWNLOADING====")
+                data = readstream.read(bufsize)
+                if len(data) == 0:
+                    EOF = True
+                else:
+                    safe.write(data)
+            t.commit() # TODO: only commit if the download worked!
             
            
     if not resource.verify() or (referenceClone.revision() > resource.revisionNumber()):
