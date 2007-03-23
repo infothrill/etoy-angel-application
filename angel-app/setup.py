@@ -1,5 +1,14 @@
 #!/usr/bin/env python
 
+import sys
+
+def check_python():
+    if sys.version_info < (2,4):
+        print "Python 2.4 or higher is required to run Angel-App."
+        sys.exit(256)
+
+check_python()
+
 import ez_setup
 ez_setup.use_setuptools()
 
