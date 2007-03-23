@@ -17,7 +17,12 @@ os.mkdir(INSTALL_LOCATION)
 import commands
 def run(command, description):  
   print description
-  print command + ":" + commands.getstatusoutput(command)[1]
+  restuple = commands.getstatusoutput(command)
+  if restuple[0] != 0:
+      print "Command %s returned non-zero exit code '%s' and output '%s'" % (command, restuple[0], restuple[1])
+      sys.exit(256)
+  else:
+      print command + ":" + restuple[1]
 
 run(
   sys.executable + " ./virtual-python.py --prefix=" + INSTALL_LOCATION,
