@@ -95,6 +95,9 @@ def main():
 
     mkdir(inc_dir)
     stdinc_dir = join(prefix, 'include', py_version)
+    if not os.path.exists(stdinc_dir):
+        print "Cannot find python include files. Do you have the python development files installed? Aborting."
+        sys.exit(256)
     for fn in os.listdir(stdinc_dir):
         symlink(join(stdinc_dir, fn), join(inc_dir, fn))
 
