@@ -122,11 +122,19 @@ class Clone(object):
         
         TODO: add support for stream bodies.
         
-        I'm not sure the urllib client supports stream arguments for the body. In either case, __performRequest
+        vinc: I'm not sure the urllib client supports stream arguments for the body. In either case, __performRequest
         is not only called for file pushing, but is a generic abstraction for any http request to the given host
         (HEAD, PROPFIND, GET, MKCOL, PROPPATCH). One might have to distinguish between string-type bodies such as used
         for the PROPFIND and PROPPATCH requests and stream type bodies. In either case, it seems possible and
         desirable to supply a "content-length" header.
+
+        pol: - httplib does NOT support stream bodies (as in python <=2.5)
+             - httplib does add the content-length header automatically (as of python >=2.4)
+             - urllib/urllib2 have similar problems (they rely on httlib), although
+               urllib2's design allows for extensions, so it could be
+               hooked in, but this would essentially mean writing our
+               own request() method (not relying on httplib) and going
+               down the rabbit hole on urlencoding/multipart mime content encoding etc.
         """
         # a default socket timeout leads to socket.error: (35, 'Resource temporarily unavailable'), so we disable it
         #import socket
@@ -332,13 +340,7 @@ class Clone(object):
         
         @see performPushRequest
         
-        TODO: read the file lazily (hint: maybe just pass the stream object as body instead of it contents?)
-        
-        I'm not sure the urllib client supports stream arguments for the body. In either case, __performRequest
-        is not only called for file pushing, but is a generic abstraction for any http request to the given host
-        (HEAD, PROPFIND, GET, MKCOL, PROPPATCH). One might have to distinguish between string-type bodies such as used
-        for the PROPFIND and PROPPATCH requests and stream type bodies. In either case, it seems possible and
-        desirable to supply a "content-length" header.
+        TODO: read the file lazily (needs re-work of __performRequest!)
         """
         resp = self.__performRequest(method = "PUT", body = stream.read())
 
