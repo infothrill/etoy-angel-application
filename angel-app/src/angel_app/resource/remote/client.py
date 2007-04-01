@@ -296,7 +296,7 @@ def iterateClones(cloneSeedList, publicKeyString, resourceID):
         
         if cc in visited:
             # we have already looked at this clone -- don't bother with it
-            log.debug("iterateClones: " + `cc` + " ignoring")
+            log.debug("iterateClones: " + `cc` + " already visited, ignoring")
             continue
                
         # otherwise, mark the clone as checked and proceed
