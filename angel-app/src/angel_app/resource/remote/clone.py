@@ -115,23 +115,43 @@ class Clone(object):
         return `self`.__hash__()
     
     def _performRequestWithTimeOut(self, method = "CONNECT", headers = {}, body = "", timeout = 3.0):
+        """
+        Perform a request with a timeout. 
+        
+        TODO: It would be nice if we could set timeouts on a per-socket basis. For the time being, it
+        seems we have to operate with socket.setdefaulttimeout(), which is obviously a dangerous and
+        annoying hack (since it applies to all future sockets). We need to make sure that in the end, 
+        the default time out is set back to the original value (typpically None). Since python2.4 does
+        not yet support the finally clause, we have to do that in two places (i.e. in the try statement,
+        if the request succeeds, in the catch statement otherwise).
+        
+        @see Clone.ping
+        """
         log.debug("attempting " + method + " connection with timeout of " + `timeout `+ " second to: " + \
                   self.host + ":" + `self.port` + " " + self.path) 
+        
+        log.debug("socket default time out is now: " + `socket.getdefaulttimeout()`)
         conn = HTTPConnection(self.host, self.port)
         import socket
         oldTimeOut = socket.getdefaulttimeout()
         socket.setdefaulttimeout(timeout)
-        conn.connect()
-        #conn.sock.settimeout(timeout) # FIXME: implement a timeout on connect
-        conn.request(
+        try:
+            conn.connect()
+            conn.request(
                  method, 
                  self.path,
                  headers = headers,
                  body = body
                  )
-        # revert back to blocking sockets
-        socket.setdefaulttimeout(oldTimeOut)
-        return conn.getresponse()
+            # revert back to blocking sockets -- 
+            socket.setdefaulttimeout(oldTimeOut)
+            return conn.getresponse()
+        except:
+            # revert back to blocking sockets
+            socket.setdefaulttimeout(oldTimeOut)
+            # then re-raise the exception
+            raise
+
 
     def __performRequest(self, method = "GET", headers = {}, body = ""):
         """
