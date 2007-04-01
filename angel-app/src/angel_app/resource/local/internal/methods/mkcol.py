@@ -67,6 +67,11 @@ class mkcolMixin:
             responsecode.INTERNAL_SERVER_ERROR,
             "The requested resource is not backed by a parent directory."
             ))
+      
+      if not self.parent().isWritableFile():
+          errorMessage = "You don't have sufficient privileges to create a collection in this location."
+          log.error(errorMessage)
+          raise HTTPError(StatusResponse(responsecode.UNAUTHORIZED, errorMessage))
           
       log.debug("done __checkSpot")
         
