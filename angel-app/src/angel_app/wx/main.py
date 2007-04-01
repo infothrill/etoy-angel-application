@@ -220,12 +220,13 @@ class AngelMainFrame(wx.Frame):
         
     def on_about_request(self, event):
         """
-        Shows a dialogue with an icon, version, build number and copyright
+        Shows a dialogue with an icon, version, build number and copyright and authors
         """
         from angel_app.version import getVersionString
         from angel_app.version import getBuildString
         # unicode copyright symbol: \u00A9
-        dlg = wx.MessageDialog(self, u'Version %s Build (%s)\n\u00A9 Copyright 2006-2007 etoy.VENTURE ASSOCIATION,\nall rights reserved' % (getVersionString() , getBuildString()),
+        authors = ("Vincent Kraeutler", "Paul Kremer")
+        dlg = wx.MessageDialog(self, u'Version %s Build (%s)\n\n\u00A9 Copyright 2006-2007 etoy.VENTURE ASSOCIATION, all rights reserved.\n\nAuthors: %s\n' % (getVersionString() , getBuildString(), ", ".join(authors)),
                                'Angel-App',
                                wx.OK | wx.ICON_INFORMATION
                                )
