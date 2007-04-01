@@ -113,6 +113,24 @@ class Clone(object):
     
     def __hash__(self):
         return `self`.__hash__()
+    
+    def _performRequestWithTimeOut(self, method = "CONNECT", headers = {}, body = "", timeout = 3.0):
+        log.debug("attempting " + method + " connection with timeout of " + `timeout `+ " second to: " + \
+                  self.host + ":" + `self.port` + " " + self.path) 
+        conn = HTTPConnection(self.host, self.port)
+        import socket
+        socket.setdefaulttimeout(timeout)
+        conn.connect()
+        #conn.sock.settimeout(timeout) # FIXME: implement a timeout on connect
+        conn.request(
+                 method, 
+                 self.path,
+                 headers = headers,
+                 body = body
+                 )
+        # revert back to blocking sockets
+        socket.setdefaulttimeout(0.0)
+        return conn.getresponse()
 
     def __performRequest(self, method = "GET", headers = {}, body = ""):
         """
@@ -251,7 +269,7 @@ class Clone(object):
         If an HTTP request can be performed, the remote host is up.
         """
         try:
-            response = self.__performRequest(method = "HEAD", body = "")
+            response = self._performRequestWithTimeOut()
             return True
         except:
             return False  
