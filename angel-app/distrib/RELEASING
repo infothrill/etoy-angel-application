@@ -1,8 +1,25 @@
-Example for building a OS X release:
+Overview
+=========
+When creating a public release, there are several steps that _must_
+be respected:
 
-  # bash ./distrib/preprelease.sh release $tag $version
-  (this will show the buildnumber, so you can set it)
-  # bash ./distrib/OSX/buildApp.sh $version $buildnumber
+1. preliminary things
+   1.1 update the CHANGES file
+   1.2 test the code
+   1.3 make sure all code is "signed-off", e.g. not in a broken state and all
+       developers are OK with a release
+2. create a subversion tag for the release in angel_app/tags/ (see versioning below)
+3. the actual building:
+   3.1 Prepare the release using the preprelease.sh script
+   3.2 Build a release from the output of the preprelease.sh script using the
+       buildApp.sh script of your liking from the angel_app/distrib/ dir
+   3.3 if you create several builds, repeat steps 3.1 and 3.2
+4. Run a minimal test of the build
+5. Release to the public
+   5.1 Update http://angelapp.missioneternity.org/
+   5.2 Create a blog entry at http://www.etoy.com/blog/
+   5.3 Ping etoy.AGENTS
+6. Get drunk
 
 Versioning
 ==========

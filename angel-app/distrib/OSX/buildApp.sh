@@ -46,6 +46,8 @@ BUILD_ID="NO_BUILD"
 if [ -z "$1" ]
 then
 	echo "WARNING: no version supplied, using $VERSION"
+	echo "Press [RETURN] to continue... (interrupt with Ctrl-C)"
+	read
 else
 	VERSION=$1
 	shift
@@ -54,6 +56,8 @@ fi
 if [ -z "$1" ]
 then
 	echo "WARNING: no build number supplied, using $BUILD_ID"
+	echo "Press [RETURN] to continue... (interrupt with Ctrl-C)"
+	read
 else
 	BUILD_ID=$1
 	shift

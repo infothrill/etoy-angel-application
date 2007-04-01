@@ -1,53 +1,25 @@
 README file for deployment of a Mac OS X app bundle
 
-this file is based on the creation of such a bundle on OS X 10.4 with a 
-python2.4 framework package obtained from http://www.pythonmac.org/ and
-an svn checkout of the current source code (Revision 474, Sat Mar  3 16:39:49 2007) 
-of the angel-app.
+Requirements:
+=============
+- Mac OS X 10.4
+- pythonmac 2.4 from http://www.pythonmac.org/
+- py2app >=0.3.6 from http://undefined.org/python/ or http://cheeseshop.python.org/pypi/py2app/
+- wxpython from http://www.wxpython.org/download.php#binaries
+- pycrypto from http://www.amk.ca/python/code/crypto
+- source code of angel-app from http://svn.gna.org/svn/angel-app/
 
-1. make sure you have a current version of py2app as described in 
-http://svn.pythonmac.org/py2app/py2app/trunk/doc/index.html#installation
-if you're using an older macpython framework install, you might have to uninstall
-your current py2app version (py2app-0.3.5 at the time of writing).
+
+1. check out a copy of the angel-app
 
 2. go to the root directory of your angel-app checkout
 
-3. run the distrib/preprelease.sh script, specifying your options on versions.
-   Example:
-   $ ./distrib/preprelease.sh release 0.1.2 0.1.2
+3. run the distrib/preprelease.sh script, specifying the tag and the version:
+   $ ./distrib/preprelease.sh release $TAG $VERSION
+   
+   See distrib/RELEASING for more information on the "preprelease" step
 
-4. run the distrib/OSX/buildApp.sh script on the tree prepared in step 3.
-   Example:
+4. now run the distrib/OSX/buildApp.sh script on the tree prepared in step 3:
    $ ./distrib/OSX/buildApp.sh ~/tmp/angel_app-0.1.2  0.1.2  756
 
 DONE!
-
-
-
-OLD DOCUMENTATION FOR REFERENCE ONLY:
-
-3. include the contrib and src directories in the python module search path
-$ export PYTHONPATH=$PWD/contrib/:$PWD/src/:$PYTHONPATH
-
-4. run py2app, giving it all the toplevel scripts as arguments
-$ py2applet --iconfile=./distrib/OSX/icons/m221e.icns ./src/bin/wxmaster.py ./src/bin/master.py ./src/bin/presenter.py ./src/bin/provider.py ./src/bin/maintainer.py
-
-5. with py2app 0.3.6 (developer version), the icon referencing works!
-  If using an old version:
-  the referencing of the icon file is broken, in the Contents/Info.plist file, you'll find an entry
-        <key>CFBundleIconFile</key>
-        <string>master</string>
-   while in fact there's only a PythonApplet.icns located in Contents/Resources. Specifying an icns on the
-   command line seems to be similarly broken for me. Here's what i've found to work.
-   -- Change the entry in the .plist file to:
-        <key>CFBundleIconFile</key>
-        <string>master.icns</string>
-   -- copy the icon file from distrib/OSX/icons/m221e.icns to Contents/Resources/master.icns
-      
-5. rename the app bundle from wxmaster.app to angel.app. If you do this on the command line
-$ mv master.app angel.app
-the icon will also refresh.
-      
-DONE!
-        
-
