@@ -119,6 +119,7 @@ class Clone(object):
                   self.host + ":" + `self.port` + " " + self.path) 
         conn = HTTPConnection(self.host, self.port)
         import socket
+        oldTimeOut = socket.getdefaulttimeout()
         socket.setdefaulttimeout(timeout)
         conn.connect()
         #conn.sock.settimeout(timeout) # FIXME: implement a timeout on connect
@@ -129,7 +130,7 @@ class Clone(object):
                  body = body
                  )
         # revert back to blocking sockets
-        socket.setdefaulttimeout(0.0)
+        socket.setdefaulttimeout(oldTimeOut)
         return conn.getresponse()
 
     def __performRequest(self, method = "GET", headers = {}, body = ""):
