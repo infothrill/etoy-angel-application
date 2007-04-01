@@ -130,9 +130,9 @@ class Clone(object):
         log.debug("attempting " + method + " connection with timeout of " + `timeout `+ " second to: " + \
                   self.host + ":" + `self.port` + " " + self.path) 
         
+        import socket
         log.debug("socket default time out is now: " + `socket.getdefaulttimeout()`)
         conn = HTTPConnection(self.host, self.port)
-        import socket
         oldTimeOut = socket.getdefaulttimeout()
         socket.setdefaulttimeout(timeout)
         try:
