@@ -1,6 +1,7 @@
-0.1.3 XXXXXXXXXX
+0.1.3 April 1 2007
  * reduced memory usage in encryption routines
  * reduced memory usage when fetching remote files
+ * clone ping is performed with (reduced) default timeout of 3 s
 
 0.1.2 March 23 2007
  * added "Import Crypto Key" functionality
