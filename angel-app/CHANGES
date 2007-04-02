@@ -1,5 +1,7 @@
 0.1.4 ***
  * improved HTTP error reporting
+ * new welcome screen
+ * added "Send a bug report" to the help menu
 
 0.1.3 April 1 2007
  * reduced memory usage in encryption routines

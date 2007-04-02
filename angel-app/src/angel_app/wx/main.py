@@ -67,7 +67,9 @@ class AngelMainFrame(wx.Frame):
         ID_HELP_M221E = wx.NewId()
         self.help_menu.Append(ID_HELP_M221E, "M&ISSION ETERNITY (Website)", "http://www.missioneternity.org")
         self.Bind(wx.EVT_MENU, self.on_help_m221e, id=ID_HELP_M221E)
-
+        ID_HELP_BUGREPORT = wx.NewId()
+        self.help_menu.Append(ID_HELP_BUGREPORT, "Send a b&ug report (Website)", "https://gna.org/bugs/?func=additem&group=angel-app")
+        self.Bind(wx.EVT_MENU, self.on_help_bugreport, id=ID_HELP_BUGREPORT)
         ID_HELP_LICENSE = wx.NewId()
         self.help_menu.Append(ID_HELP_LICENSE, "S&oftware License", "Software License")
         self.Bind(wx.EVT_MENU, self.on_help_license, id=ID_HELP_LICENSE)
@@ -274,7 +276,12 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
         Opens http://www.missioneternity.org in a web browser
         """
         platformwrap.showURLInBrowser("http://www.missioneternity.org")
-    
+
+    def on_help_bugreport(self, event):
+        """
+        Opens https://gna.org/bugs/?func=additem&group=angel-app in a web browser
+        """
+        platformwrap.showURLInBrowser("https://gna.org/bugs/?func=additem&group=angel-app")
 
 class AngelStatusBar(wx.StatusBar):
     """
