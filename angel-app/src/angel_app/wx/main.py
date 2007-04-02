@@ -10,6 +10,7 @@ from angel_app.config import config
 AngelConfig = config.getConfig()
 
 M221E_LOGO_SMALL = os.path.join(platformwrap.getResourcePath(), "images", "m221elogosmall.jpg")
+M221E_WELCOME_SCREEN = os.path.join(platformwrap.getResourcePath(), "images", "angel_app_welcomescreen.jpg")
 
 class AngelMainFrame(wx.Frame):
     def __init__(self, parent, ID, title):
@@ -17,7 +18,7 @@ class AngelMainFrame(wx.Frame):
         The constructor, initializes the menus, the mainframe with the logo and the statusbar.
         By default, also starts the p2p process automatically on start-up
         """
-        wx.Frame.__init__(self, parent, ID, title, wx.DefaultPosition, wx.Size(340, 150))
+        wx.Frame.__init__(self, parent, ID, title, wx.DefaultPosition, wx.Size(810, 380))
         
         # define the menus
         self.menu_bar  = wx.MenuBar()
@@ -77,9 +78,9 @@ class AngelMainFrame(wx.Frame):
         # end define the menus
 
         self.SetBackgroundColour(wx.WHITE)
-        self.bitmap = wx.Bitmap(M221E_LOGO_SMALL)
+        self.bitmap = wx.Bitmap(M221E_WELCOME_SCREEN)
         wx.EVT_PAINT(self, self.OnPaint)
-        self.static_text = wx.StaticText(self, -1, "MISSION ETERNITY's Angel-App",style=wx.ALIGN_CENTRE)
+        #self.static_text = wx.StaticText(self, -1, "MISSION ETERNITY's Angel-App",style=wx.ALIGN_CENTRE)
 
         self.Centre()
 
@@ -100,7 +101,7 @@ class AngelMainFrame(wx.Frame):
         Also draws the m221e logo.
         """
         dc = wx.PaintDC(self)
-        dc.DrawBitmap(self.bitmap, 90, 20)
+        dc.DrawBitmap(self.bitmap, 0, 0)
     
     def OnQuit(self, event):
         """
@@ -321,7 +322,7 @@ class AngelApp(wx.App):
         """
         Instantiates the main frame and shows it
         """
-        mainframe = AngelMainFrame(None, -1, "Angel-App: CROSSING THE DEAD-LINE")
+        mainframe = AngelMainFrame(None, -1, "Angel-App: THE CODE THAT CROSSES THE DEAD-LINE")
         mainframe.Show(True)
         self.SetTopWindow(mainframe)
         return True
