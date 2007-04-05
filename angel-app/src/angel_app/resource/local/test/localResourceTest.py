@@ -33,7 +33,7 @@ author = """Vincent Kraeutler 2007"""
 
 import unittest
 
-class LocalResourceTest(unittest.TestCase):
+class BasicResourceTest(unittest.TestCase):
     
 
     def setUp(self):

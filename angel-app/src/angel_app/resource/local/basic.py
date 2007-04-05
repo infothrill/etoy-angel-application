@@ -81,27 +81,12 @@ class Basic(PropertyManagerMixin, deleteable.Deletable, Safe):
         @return whether the file is encrypted. 
         """
         return int(self.getAsString(elements.Encrypted)) == 1
-    
-    def isWriteable(self):
+
+    def contentSignature(self):
         """
-        A basic AngelFile is writeable (by a non-local host) exactly if:
-          -- the resource is corrupted, i.e. it does not verify()
-          -- the resource does not exist but is referenced by its parent()
-          
-        @rtype boolean
-        @return whether the basic AngelFile is writeable
+        @return: the checksum of the resource content
         """
-        if not self.verify():
-            log.debug(self.fp.path + " is writable")
-            return True
-        
-        pp = self.parent()
-        if not self.exists() and pp.verify() and [self in pp.metaDataChildren()]: 
-            log.debug(self.fp.path + " is writable")
-            return True
-        
-        log.debug(self.fp.path + " is not writable")
-        return False
+        return self.getAsString(elements.ContentSignature)
     
     def verify(self):
         if not self.exists():
@@ -110,7 +95,7 @@ class Basic(PropertyManagerMixin, deleteable.Deletable, Safe):
         
         try:
             pk = self.getAsString(elements.PublicKeyString)
-            cs = self.getAsString(elements.ContentSignature)
+            cs = self.contentSignature()
             sm = self.signableMetadata()
             ms = self.getAsString(elements.MetaDataSignature)
         except:
