@@ -11,6 +11,7 @@ AngelConfig = config.getConfig()
 
 M221E_LOGO_SMALL = os.path.join(platformwrap.getResourcePath(), "images", "m221elogosmall.jpg")
 M221E_WELCOME_SCREEN = os.path.join(platformwrap.getResourcePath(), "images", "angel_app_welcomescreen.jpg")
+BUGREPORT_URL = "https://gna.org/support/?func=additem&group=angel-app" # use "support", because "bugs" requires a gna account
 
 class AngelMainFrame(wx.Frame):
     def __init__(self, parent, ID, title):
@@ -68,7 +69,7 @@ class AngelMainFrame(wx.Frame):
         self.help_menu.Append(ID_HELP_M221E, "M&ISSION ETERNITY (Website)", "http://www.missioneternity.org")
         self.Bind(wx.EVT_MENU, self.on_help_m221e, id=ID_HELP_M221E)
         ID_HELP_BUGREPORT = wx.NewId()
-        self.help_menu.Append(ID_HELP_BUGREPORT, "Send a b&ug report (Website)", "https://gna.org/bugs/?func=additem&group=angel-app")
+        self.help_menu.Append(ID_HELP_BUGREPORT, "Send a b&ug report (Website)", BUGREPORT_URL)
         self.Bind(wx.EVT_MENU, self.on_help_bugreport, id=ID_HELP_BUGREPORT)
         ID_HELP_LICENSE = wx.NewId()
         self.help_menu.Append(ID_HELP_LICENSE, "S&oftware License", "Software License")
@@ -279,9 +280,9 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
     def on_help_bugreport(self, event):
         """
-        Opens https://gna.org/bugs/?func=additem&group=angel-app in a web browser
+        Opens BUGREPORT_URL in web-browser
         """
-        platformwrap.showURLInBrowser("https://gna.org/bugs/?func=additem&group=angel-app")
+        platformwrap.showURLInBrowser(BUGREPORT_URL)
 
 class AngelStatusBar(wx.StatusBar):
     """
