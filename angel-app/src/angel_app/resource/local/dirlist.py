@@ -36,7 +36,7 @@ def formatClones(path):
 
 
 def getStatistics():  
-    from tracker.connectToTracker import connectToTracker
+    from angel_app.tracker.connectToTracker import connectToTracker
     stats = connectToTracker()
     return "<br/>".join(stats.split("\n"))
 

@@ -53,7 +53,7 @@ def dance(options):
         try:
 
             # register with the tracker
-            from tracker.connectToTracker import connectToTracker
+            from angel_app.tracker.connectToTracker import connectToTracker
             stats = connectToTracker()
 
             time.sleep(sleepTime)
