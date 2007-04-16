@@ -52,6 +52,10 @@ def dance(options):
         startTime = int(time.time())
         try:
 
+            # register with the tracker
+            from tracker.connectToTracker import connectToTracker
+            stats = connectToTracker()
+
             time.sleep(sleepTime)
             for ii in graphWalker(repository, getChildren, toEvaluate):
                  time.sleep(sleepTime)

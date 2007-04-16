@@ -36,8 +36,8 @@ def formatClones(path):
 
 
 def getStatistics():  
-    import connectToTracker
-    stats = connectToTracker.connectToTracker()
+    from tracker.connectToTracker import connectToTracker
+    stats = connectToTracker()
     return "<br/>".join(stats.split("\n"))
 
 class DirectoryLister(resource.Resource):
@@ -132,9 +132,9 @@ class DirectoryLister(resource.Resource):
         </head><body style="margin-bottom: 50px;">
         <div id="container"  style="width:650px; padding:30px 0px 0px 0px;">
         <div style="text-align:right"><a href="http://www.missioneternity.org/"><img style="border:0;" src="http://angelapp.missioneternity.org/moin/share/moin/htdocs/rightsidebar/img/m221e-batch-logo.jpg" alt="MISSION ETERNITY"></a></div>
-        <div>%s</div>
+        
         <div class="directory-listing">       
-        <h1><a href="http://angelapp.missioneternity.org/">angel-app</a>: %s</h1>""" % (title, getStatistics(), linkList)
+        <h1><a href="http://angelapp.missioneternity.org/">angel-app</a>: %s</h1>""" % (title, linkList)
         s += "<div> Clones: " + formatClones(self.path) + "</div>"
         s+='<div><table width="100%">'
         s+="<tr><th>Filename</th><th>Size</th><th>Last Modified</th><th>File Type</th><th>Clones</th></tr>"
@@ -144,8 +144,8 @@ class DirectoryLister(resource.Resource):
             s+='\n<td><a href="%(link)s">%(linktext)s</a></td><td align="right">%(size)s</td><td>%(lastmod)s</td><td>%(type)s</td><td>%(clones)s</td></tr>' % row
             even = not even
                 
-        s+="""</table></div>
-        </div></div></body></html>"""
+        s+="""</table></div><div>%s</div>
+        </div></div></body></html>""" % (getStatistics())
         response = http.Response(200, {}, s)
         response.headers.setHeader("content-type", http_headers.MimeType('text', 'html'))
         return response
