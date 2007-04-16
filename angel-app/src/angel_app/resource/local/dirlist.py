@@ -144,7 +144,7 @@ class DirectoryLister(resource.Resource):
             s+='\n<td><a href="%(link)s">%(linktext)s</a></td><td align="right">%(size)s</td><td>%(lastmod)s</td><td>%(type)s</td><td>%(clones)s</td></tr>' % row
             even = not even
                 
-        s+="""</table></div><div>%s</div>
+        s+="""</table></div><hr/><div>%s</div>
         </div></div></body></html>""" % (getStatistics())
         response = http.Response(200, {}, s)
         response.headers.setHeader("content-type", http_headers.MimeType('text', 'html'))
