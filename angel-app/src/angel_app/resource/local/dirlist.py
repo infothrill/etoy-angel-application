@@ -33,7 +33,12 @@ def formatClones(path):
                                  cloneFromElement(cc) for cc in basic.Basic(path).clones().children]])
     except:
         return ""
-    
+
+
+def getStatistics():  
+    import connectToTracker
+    stats = connectToTracker.connectToTracker()
+    return "<br/>".join(stats.split("\n"))
 
 class DirectoryLister(resource.Resource):
     def __init__(self, pathname, dirs=None,
@@ -127,8 +132,9 @@ class DirectoryLister(resource.Resource):
         </head><body style="margin-bottom: 50px;">
         <div id="container"  style="width:650px; padding:30px 0px 0px 0px;">
         <div style="text-align:right"><a href="http://www.missioneternity.org/"><img style="border:0;" src="http://angelapp.missioneternity.org/moin/share/moin/htdocs/rightsidebar/img/m221e-batch-logo.jpg" alt="MISSION ETERNITY"></a></div>
+        <div>%s</div>
         <div class="directory-listing">       
-        <h1><a href="http://angelapp.missioneternity.org/">angel-app</a>: %s</h1>""" % (title, linkList)
+        <h1><a href="http://angelapp.missioneternity.org/">angel-app</a>: %s</h1>""" % (title, getStatistics(), linkList)
         s += "<div> Clones: " + formatClones(self.path) + "</div>"
         s+='<div><table width="100%">'
         s+="<tr><th>Filename</th><th>Size</th><th>Last Modified</th><th>File Type</th><th>Clones</th></tr>"
