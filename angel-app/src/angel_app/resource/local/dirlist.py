@@ -148,8 +148,10 @@ class DirectoryLister(resource.Resource):
             s+='\n<td><a href="%(link)s">%(linktext)s</a></td><td align="right">%(size)s</td><td>%(lastmod)s</td><td>%(type)s</td><td>%(clones)s</td></tr>' % row
             even = not even
                 
-        s+="""</table></div><br/><hr/><div>%s</div>
+        s+="""</table></div>
+        <div style="margin-top:20px;">%s</div>
         </div></div></body></html>""" % (getStatistics())
+        s += """<a rel="license" href="http://creativecommons.org/licenses/by-nc-nd/3.0/"><img alt="Copyright etoy.VENTURE association -- Creative Commons License" style="border-width:0" src="http://i.creativecommons.org/l/by-nc-nd/3.0/80x15.png" />"""
         response = http.Response(200, {}, s)
         response.headers.setHeader("content-type", http_headers.MimeType('text', 'html'))
         return response

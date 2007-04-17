@@ -75,10 +75,10 @@ def makeStatistics(numberOfHosts = 0, amountOfData = 0):
     tau = (1 / tau_1) / oneYear
     
     return """
-estimated number of nodes online: %i
-repository size: %i %s
-total rate of data validation: %i %s / h
-estimated data lifetime: %15.1e years
+Estimated number of nodes online: %i
+Total repository size: %i %s
+Total rate of data validation: %i %s / h
+Estimated data lifetime: %15.1e years
 """ % (numberOfHosts, normalizedData, unit, normalizedTransferred, transferUnit, tau)
 
     
