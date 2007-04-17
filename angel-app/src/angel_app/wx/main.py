@@ -12,6 +12,7 @@ AngelConfig = config.getConfig()
 M221E_LOGO_SMALL = os.path.join(platformwrap.getResourcePath(), "images", "m221elogosmall.jpg")
 M221E_WELCOME_SCREEN = os.path.join(platformwrap.getResourcePath(), "images", "angel_app_welcomescreen.jpg")
 BUGREPORT_URL = "https://gna.org/support/?func=additem&group=angel-app" # use "support", because "bugs" requires a gna account
+TECHNICALREPORT_URL = "http://svn.gna.org/viewcvs/*checkout*/angel-app/trunk/angel-app/doc/report/m221e-angel-app-0.2.pdf" # TODO: this URL needs to have NO version in it!!!
 
 class AngelMainFrame(wx.Frame):
     def __init__(self, parent, ID, title):
@@ -68,9 +69,13 @@ class AngelMainFrame(wx.Frame):
         ID_HELP_M221E = wx.NewId()
         self.help_menu.Append(ID_HELP_M221E, "M&ISSION ETERNITY (Website)", "http://www.missioneternity.org")
         self.Bind(wx.EVT_MENU, self.on_help_m221e, id=ID_HELP_M221E)
+        ID_HELP_TECHNICALREPORT = wx.NewId()
+        self.help_menu.Append(ID_HELP_TECHNICALREPORT, "Technical Report on Angel-App (Online PDF)", TECHNICALREPORT_URL)
+        self.Bind(wx.EVT_MENU, self.on_help_technicalreport, id=ID_HELP_TECHNICALREPORT)
         ID_HELP_BUGREPORT = wx.NewId()
         self.help_menu.Append(ID_HELP_BUGREPORT, "Send a b&ug report (Website)", BUGREPORT_URL)
         self.Bind(wx.EVT_MENU, self.on_help_bugreport, id=ID_HELP_BUGREPORT)
+        
         ID_HELP_LICENSE = wx.NewId()
         self.help_menu.Append(ID_HELP_LICENSE, "S&oftware License", "Software License")
         self.Bind(wx.EVT_MENU, self.on_help_license, id=ID_HELP_LICENSE)
@@ -283,6 +288,13 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
         Opens BUGREPORT_URL in web-browser
         """
         platformwrap.showURLInBrowser(BUGREPORT_URL)
+
+    def on_help_technicalreport(self, event):
+        """
+        Opens TECHINCALREPORT_URL in a web browser
+        """
+        platformwrap.showURLInBrowser(TECHNICALREPORT_URL)
+    
 
 class AngelStatusBar(wx.StatusBar):
     """
