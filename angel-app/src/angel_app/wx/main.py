@@ -42,6 +42,10 @@ class AngelMainFrame(wx.Frame):
         self.file_menu.Append(ID_FILE_IMPORT_KEY, "I&mport crypto key...", "Import crypto key...")
         self.Bind(wx.EVT_MENU, self.on_file_import_key, id=ID_FILE_IMPORT_KEY)
 
+        ID_FILE_EXPORT_KEY = wx.NewId()
+        self.file_menu.Append(ID_FILE_EXPORT_KEY, "E&xport public crypto key...", "Export public crypto key...")
+        self.Bind(wx.EVT_MENU, self.on_file_export_key, id=ID_FILE_EXPORT_KEY)
+
         self.file_menu.Append(wx.ID_EXIT, "E&xit", "Terminate the program")
         self.Bind(wx.EVT_MENU, self.doExit, id=wx.ID_EXIT)
         self.file_menu.Append(wx.ID_CLOSE, "Q&uit", "Quit")
@@ -125,6 +129,43 @@ class AngelMainFrame(wx.Frame):
         print "Exiting on user request"
         self.Close(True)
 
+    def on_file_export_key(self, evt):
+        keyfiletoexport = "default.key"
+        wildcard = "Key files (*.key)|*.key|"     \
+                   "All files (*.*)|*.*"
+        # Create the dialog. In this case the current directory is forced as the starting
+        # directory for the dialog, and a default file name is forced.
+        dlg = wx.FileDialog(
+            self, message="Save key as ...", defaultDir=os.getcwd(), 
+            defaultFile=keyfiletoexport, wildcard=wildcard, style=wx.SAVE
+            )
+        
+        # This sets the default filter that the user will initially see. Otherwise,
+        # the first filter in the list will be used by default.
+        dlg.SetFilterIndex(0)
+        
+        # Show the dialog and retrieve the user response. If it is the OK response, 
+        # process the data.
+        keyselectionresult = dlg.ShowModal()
+        if keyselectionresult == wx.ID_OK:
+            exportfilename = dlg.GetPath()
+            #print "You selected filename %s\n" % exportfilename
+        
+            from angel_app.contrib.ezPyCrypto import key as ezKey
+            key = ezKey()
+            exportfile = open(exportfilename, 'wb')
+            exportfile.write( key.exportKey() )
+            exportfile.close()
+            #
+            # TODO: error checking on export!
+            #
+        elif keyselectionresult == wx.ID_CANCEL:
+            self.sb.SetStatusText("Crypto key export canceled", 0)
+   
+        # Destroy the dialog. Don't do this until you are done with it!
+        # BAD things can happen otherwise!
+        dlg.Destroy()
+
     def on_file_import_key(self, evt):
         import os
         # This is how you pre-establish a file filter so that the dialog
@@ -186,11 +227,11 @@ class AngelMainFrame(wx.Frame):
                 if self.daemon.isAlive():
                     self.daemon.stop()
                     self.daemon.run()
+        elif keyselectionresult == wx.ID_CANCEL:
+                self.sb.SetStatusText("Crypto key import canceled", 0)
 
         # Destroy the dialog. Don't do this until you are done with it!
         # BAD things can happen otherwise!
-        elif keyselectionresult == wx.ID_CANCEL:
-                self.sb.SetStatusText("Crypto key import canceled", 0)
         dlg.Destroy()
 
 

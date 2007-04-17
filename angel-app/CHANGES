@@ -1,4 +1,6 @@
-0.1.6 April ????????????????? 2007
+0.1.6 April 17 2007
+ * added "Export public crypto key..." entry in "File" menu
+ * last minute layout fixes in web-view of provider
  * added Help Menu entry for Technical Report PDF (online link)
 
 0.1.5 April 16 2007
