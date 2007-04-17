@@ -77,8 +77,8 @@ def makeStatistics(numberOfHosts = 0, amountOfData = 0):
     return """
 estimated number of nodes online: %i
 repository size: %i %s
-overall rate of data validation: %i %s / h
-estimated data lifetime: %15.1f years
+total rate of data validation: %i %s / h
+estimated data lifetime: %15.1e years
 """ % (numberOfHosts, normalizedData, unit, normalizedTransferred, transferUnit, tau)
 
     
