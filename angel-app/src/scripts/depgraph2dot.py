@@ -165,7 +165,8 @@ class pydepgraphdot:
         # Calculate a color systematically based on the hash of the module name. Modules in the
         # same package have the same color. Unpackaged modules are grey
         t = self.normalise_module_name_for_hash_coloring(s,type)
-        return self.color_from_name(t)
+        # return self.color_from_name(t) # automatic coloring, not for etoy.CI !
+        return "#ff6600"
         
     def normalise_module_name_for_hash_coloring(self,s,type):
         if type==imp.PKG_DIRECTORY:
