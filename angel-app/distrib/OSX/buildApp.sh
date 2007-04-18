@@ -83,6 +83,8 @@ rm ./src/bin/$RENAMETO
 echo "Adding resources to application Bundle..."
 mkdir -p ${repo}/src/bin/$BASENAME.app/Resources/images/ || error "could not mkdir"
 cp ${repo}/distrib/images/* ${repo}/src/bin/$BASENAME.app/Resources/images/ || error "could not cp"
+mkdir -p ${repo}/src/bin/$BASENAME.app/Resources/files/ || error "could not mkdir"
+cp ${repo}/distrib/files/* ${repo}/src/bin/$BASENAME.app/Resources/files/ || error "could not cp"
 
 mkdir -p ${repo}/src/bin/$BASENAME.app/Resources/applescript/ || error "could not mkdir"
 cp ${repo}/distrib/applescript/* ${repo}/src/bin/$BASENAME.app/Resources/applescript/ || error "could not cp"
