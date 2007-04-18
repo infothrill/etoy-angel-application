@@ -21,7 +21,7 @@ class AngelMainFrame(wx.Frame):
         The constructor, initializes the menus, the mainframe with the logo and the statusbar.
         By default, also starts the p2p process automatically on start-up
         """
-        wx.Frame.__init__(self, parent, ID, title, wx.DefaultPosition, wx.Size(810, 380))
+        wx.Frame.__init__(self, parent, ID, title, wx.DefaultPosition, wx.Size(823, 548))
         
         # define the menus
         self.menu_bar  = wx.MenuBar()
