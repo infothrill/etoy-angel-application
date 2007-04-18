@@ -10,6 +10,7 @@ from angel_app.config import config
 AngelConfig = config.getConfig()
 
 M221E_LOGO_SMALL = os.path.join(platformwrap.getResourcePath(), "images", "m221elogosmall.jpg")
+LICENSE_TEXTFILE = os.path.join(platformwrap.getResourcePath(), "files", "GPL.txt")
 M221E_WELCOME_SCREEN = os.path.join(platformwrap.getResourcePath(), "images", "angel_app_welcomescreen.jpg")
 BUGREPORT_URL = "https://gna.org/support/?func=additem&group=angel-app" # use "support", because "bugs" requires a gna account
 TECHNICALREPORT_URL = "http://svn.gna.org/viewcvs/*checkout*/angel-app/trunk/angel-app/doc/report/m221e-angel-app-0.2.pdf" # TODO: this URL needs to have NO version in it!!!
@@ -43,7 +44,7 @@ class AngelMainFrame(wx.Frame):
         self.Bind(wx.EVT_MENU, self.on_file_import_key, id=ID_FILE_IMPORT_KEY)
 
         ID_FILE_EXPORT_KEY = wx.NewId()
-        self.file_menu.Append(ID_FILE_EXPORT_KEY, "E&xport public crypto key...", "Export public crypto key...")
+        self.file_menu.Append(ID_FILE_EXPORT_KEY, "E&xport personal ANGEL KEY...", "Export personal ANGEL KEY...")
         self.Bind(wx.EVT_MENU, self.on_file_export_key, id=ID_FILE_EXPORT_KEY)
 
         self.file_menu.Append(wx.ID_EXIT, "E&xit", "Terminate the program")
@@ -65,16 +66,16 @@ class AngelMainFrame(wx.Frame):
 
         # Help menu
         self.help_menu = wx.Menu()
-        self.help_menu.Append(wx.ID_ABOUT, "A&bout", "About Angel-App")
+        self.help_menu.Append(wx.ID_ABOUT, "A&bout", "About ANGEL APPLICATION")
         self.Bind(wx.EVT_MENU, self.on_about_request, id=wx.ID_ABOUT)
         ID_HELP_WIKI = wx.NewId()
-        self.help_menu.Append(ID_HELP_WIKI, "Angel-App W&iki (Website)", "http://angelapp.missioneternity.org")
+        self.help_menu.Append(ID_HELP_WIKI, "ANGEL APPLICATION W&iki (Website)", "http://angelapp.missioneternity.org")
         self.Bind(wx.EVT_MENU, self.on_help_wiki, id=ID_HELP_WIKI)
         ID_HELP_M221E = wx.NewId()
         self.help_menu.Append(ID_HELP_M221E, "M&ISSION ETERNITY (Website)", "http://www.missioneternity.org")
         self.Bind(wx.EVT_MENU, self.on_help_m221e, id=ID_HELP_M221E)
         ID_HELP_TECHNICALREPORT = wx.NewId()
-        self.help_menu.Append(ID_HELP_TECHNICALREPORT, "Technical Report on Angel-App (Online PDF)", TECHNICALREPORT_URL)
+        self.help_menu.Append(ID_HELP_TECHNICALREPORT, "Technical Report on ANGEL APPLICATION (Online PDF)", TECHNICALREPORT_URL)
         self.Bind(wx.EVT_MENU, self.on_help_technicalreport, id=ID_HELP_TECHNICALREPORT)
         ID_HELP_BUGREPORT = wx.NewId()
         self.help_menu.Append(ID_HELP_BUGREPORT, "Send a b&ug report (Website)", BUGREPORT_URL)
@@ -131,13 +132,14 @@ class AngelMainFrame(wx.Frame):
 
     def on_file_export_key(self, evt):
         keyfiletoexport = "default.key"
+        saveasfilename = "ANGEL.key"
         wildcard = "Key files (*.key)|*.key|"     \
                    "All files (*.*)|*.*"
         # Create the dialog. In this case the current directory is forced as the starting
         # directory for the dialog, and a default file name is forced.
         dlg = wx.FileDialog(
-            self, message="Save key as ...", defaultDir=os.getcwd(), 
-            defaultFile=keyfiletoexport, wildcard=wildcard, style=wx.SAVE
+            self, message="Save ANGEL KEY as ...", defaultDir=os.getcwd(), 
+            defaultFile=saveasfilename, wildcard=wildcard, style=wx.SAVE
             )
         
         # This sets the default filter that the user will initially see. Otherwise,
@@ -160,7 +162,7 @@ class AngelMainFrame(wx.Frame):
             # TODO: error checking on export!
             #
         elif keyselectionresult == wx.ID_CANCEL:
-            self.sb.SetStatusText("Crypto key export canceled", 0)
+            self.sb.SetStatusText("personal ANGEL KEY export canceled", 0)
    
         # Destroy the dialog. Don't do this until you are done with it!
         # BAD things can happen otherwise!
@@ -276,8 +278,8 @@ class AngelMainFrame(wx.Frame):
         from angel_app.version import getBuildString
         # unicode copyright symbol: \u00A9
         authors = ("Vincent Kraeutler", "Paul Kremer")
-        dlg = wx.MessageDialog(self, u'Version %s Build (%s)\n\n\u00A9 Copyright 2006-2007 etoy.VENTURE ASSOCIATION, all rights reserved.\n\nAuthors: %s\n' % (getVersionString() , getBuildString(), ", ".join(authors)),
-                               'Angel-App',
+        dlg = wx.MessageDialog(self, u'Version %s Build (%s)\n\n\u00A9 Copyright 2006-2007 etoy.VENTURE ASSOCIATION, all rights reserved.\n\nProgrammers: %s\n' % (getVersionString() , getBuildString(), ", ".join(authors)),
+                               'ANGEL APPLICATION',
                                wx.OK | wx.ICON_INFORMATION
                                )
         dlg.CenterOnParent()
@@ -288,18 +290,12 @@ class AngelMainFrame(wx.Frame):
         """
         Shows the license in a scroll box
         """
-        text = """Copyright (c) 2006-2007, etoy.VENTURE ASSOCIATION
-All rights reserved.
-         
-Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
-*  Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
-*  Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
-*  Neither the name of etoy.CORPORATION nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
-         
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
-""" 
+        licensefile = open(LICENSE_TEXTFILE)
+        text = licensefile.read()
+        licensefile.close()
+
         from wx.lib.dialogs import ScrolledMessageDialog
-        dlg = ScrolledMessageDialog(self, text, 'Angel-App License Information')
+        dlg = ScrolledMessageDialog(self, text, 'ANGEL APPLICATION License Information')
         dlg.CenterOnParent()
         dlg.ShowModal()
         dlg.Destroy()
@@ -383,7 +379,7 @@ class AngelApp(wx.App):
         """
         Instantiates the main frame and shows it
         """
-        mainframe = AngelMainFrame(None, -1, "Angel-App: THE CODE THAT CROSSES THE DEAD-LINE")
+        mainframe = AngelMainFrame(None, -1, "ANGEL APPLICATION: THE CODE THAT CROSSES THE DEAD-LINE")
         mainframe.Show(True)
         self.SetTopWindow(mainframe)
         return True
