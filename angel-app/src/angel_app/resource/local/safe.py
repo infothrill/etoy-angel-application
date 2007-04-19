@@ -30,7 +30,7 @@ class Safe(DAVFile):
         """
         return ("1", "2")
 
-    def precondition_MKCOL(self, request):
+    def preconditions_MKCOL(self, request):
         """
         Disallowed.
         """

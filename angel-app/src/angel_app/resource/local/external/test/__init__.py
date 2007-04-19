@@ -1,0 +1,2 @@
+all = ["methodTest",
+       "resourceTest"]

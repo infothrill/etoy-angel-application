@@ -44,40 +44,37 @@ from twisted.web2 import responsecode
 
 import os 
 
-class ResourceTest(unittest.TestCase):
-    
-    def testIsWritable(self):
-        """
-        this test assumes that the following resources that i set up by hand still exist in the
-        local repository.
+class MethodTest(unittest.TestCase):
         
-        @see: isWritableFile
+    def testDenyRemoteResourceModification(self):
+        """
+        Assert that all modification requests for the root resource are denied.
         """
         
-        testDirPath = os.path.sep.join([repositoryPath, "MISSION ETERNITY", "TEST", "vincent", "test"])       
+        from angel_app.resource.remote.clone import Clone
         
-        dirResource = EResource(testDirPath)        
-        assert dirResource.exists(), "Test directory does not exist." 
-        assert dirResource.verify(), "Test directory is not valid."
+        cc = Clone()
         
-        goodTestResourcePath = os.path.sep.join([testDirPath, "foo.txt"])
-        fileResource = EResource(goodTestResourcePath)        
-        assert fileResource.exists(), "Test file does not exist." 
-        assert fileResource.verify(), "Test file resource is not valid."
+        assert cc.ping(), "Test resource root unreachable."
         
-        cfileResource = IResource(goodTestResourcePath)
-        assert cfileResource.isWritableFile() == True, "Internal resource representation must be writable."        
-        assert fileResource.isWriteable() == False, "External resource representation must not be writable."
-        contents = fileResource.contentAsString()
-        fileResource.fp.open("w").write("broken content")
-        assert fileResource.isWriteable() == True, "Broken resources are writable."
-        fileResource.fp.open("w").write(contents)
-        assert fileResource.verify(), "uh-oh, test broke the test resource."
+        # fake resource, modification of which should be disallowed 
+        dd = Clone("localhost", providerport, "/NOT_ALLOWED")
         
+        methodsAndExpectedResponseCodes = [
+                                           ("MKCOL", responsecode.FORBIDDEN),
+                                           ("DELETE", responsecode.FORBIDDEN),
+                                           ("PUT", responsecode.FORBIDDEN),
+                                           ("PROPPATCH", responsecode.BAD_REQUEST),
+                                           ("MOVE", responsecode.FORBIDDEN),
+                                           ("COPY", responsecode.FORBIDDEN)
+                                           ]
         
-        badTestResourcePath = os.path.sep.join([testDirPath, "bar.txt"])
-        badFileResource = EResource(badTestResourcePath)
-        assert badFileResource.exists() == False, "This resource must not exist for this test to proceed."
-        assert badFileResource.referenced() == False, "Resource must be unreferenced."
-        assert badFileResource.isWriteable() == False, "Unreferenced resource must not be writable."
+        for method, expect in methodsAndExpectedResponseCodes:
+            response = dd._performRequest(method)
+            assert response.status == expect, \
+                method + " must not be allowed, received: " + `response.status` + " " + response.read()
+        
+        #response = dd.mkCol()
+        
+        #assert response.status == responsecode.FORBIDDEN, "MKCOL must not be allowed."
 

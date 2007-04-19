@@ -50,7 +50,10 @@ class Deletable(object):
                 "deleting file: %s" % (self.fp.path,)
             ))
 
-        return responsecode.NO_CONTENT
+        #return responsecode.NO_CONTENT
+        return StatusResponse(responsecode.NO_CONTENT, 
+                       "DELETED."
+                       )
     
     def _recursiveDelete(self, uri):
         """

@@ -51,16 +51,11 @@ maxclones = AngelConfig.getint("common","maxclones")
 
 class ProppatchMixin:
     
-    def __proppatchPreconditions(self, request):
+    def preconditions_PROPPATCH(self, request):
         
         if not os.path.exists(self.fp.path):
             log.error("File not found: %s" % (self.fp.path,))
             raise HTTPError(responsecode.NOT_FOUND)
-        
-        yield request
-    
-    def preconditions_PROPPATCH(self, request):
-        return deferredGenerator(self.__proppatchPreconditions)(request)
 
     def authenticate(self, request, requestProperties):
         """

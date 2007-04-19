@@ -86,7 +86,7 @@ class Clone(object):
     
     def checkForRedirect(self):
 
-        response = self.__performRequest(method = "HEAD", body = "")
+        response = self._performRequest(method = "HEAD", body = "")
         if response.status == responsecode.MOVED_PERMANENTLY:
             log.info("clone received redirect: " + `self`)
             try:
@@ -153,7 +153,7 @@ class Clone(object):
             raise
 
 
-    def __performRequest(self, method = "GET", headers = {}, body = ""):
+    def _performRequest(self, method = "GET", headers = {}, body = ""):
         """
         Perform an http request on the clone's host.
         
@@ -161,7 +161,7 @@ class Clone(object):
         
         TODO: add support for stream bodies.
         
-        vinc: I'm not sure the urllib client supports stream arguments for the body. In either case, __performRequest
+        vinc: I'm not sure the urllib client supports stream arguments for the body. In either case, _performRequest
         is not only called for file pushing, but is a generic abstraction for any http request to the given host
         (HEAD, PROPFIND, GET, MKCOL, PROPPATCH). One might have to distinguish between string-type bodies such as used
         for the PROPFIND and PROPPATCH requests and stream type bodies. In either case, it seems possible and
@@ -194,7 +194,7 @@ class Clone(object):
 
   
     def stream(self):
-        response = self.__performRequest()
+        response = self._performRequest()
         if response.status != responsecode.OK:
             raise "must receive an OK response for GET, otherwise something's wrong"
         return response
@@ -206,7 +206,7 @@ class Clone(object):
         @return the raw XML body of the multistatus response corresponding to the respective PROPFIND request.
         """  
         #log.debug("running PROPFIND on clone " + `self` + " for properties " + `properties` + " with body " + self.__makePropfindRequestBody(properties))
-        resp = self.__performRequest(
+        resp = self._performRequest(
                               method = "PROPFIND", 
                               headers = {"Depth" : 0}, 
                               body = makePropfindRequestBody(properties)
@@ -279,7 +279,7 @@ class Clone(object):
         Existence does not imply validity.
         """
         try:
-            response = self.__performRequest(method = "HEAD", body = "")
+            response = self._performRequest(method = "HEAD", body = "")
             return response.status == responsecode.OK
         except:
             return False       
@@ -379,17 +379,18 @@ class Clone(object):
         
         @see performPushRequest
         
-        TODO: read the file lazily (needs re-work of __performRequest!)
+        TODO: read the file lazily (needs re-work of _performRequest!)
         """
-        resp = self.__performRequest(method = "PUT", body = stream.read())
+        resp = self._performRequest(method = "PUT", body = stream.read())
 
     def mkCol(self):
         """
         Make a remote collection, after pushing the relevant properties of a local parent clone to the 
         remote parent clone via a PROPPATCH request.
         """
-        resp = self.__performRequest(method = "MKCOL", body = "")
+        resp = self._performRequest(method = "MKCOL", body = "")
         log.debug("response on MKCOL: " + `resp.status`)
+        return resp
 
 
     def performPushRequest(self, localClone, elements = elements.requiredKeys):
@@ -399,7 +400,7 @@ class Clone(object):
         """
         pb = makePushBody(localClone, elements)
         log.debug("pushing metadata:" + pb + " for clone " + `self`)
-        resp = self.__performRequest(
+        resp = self._performRequest(
                                      method = "PROPPATCH", 
                                      body = pb
                                      )

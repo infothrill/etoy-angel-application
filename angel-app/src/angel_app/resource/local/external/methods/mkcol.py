@@ -26,14 +26,17 @@
 WebDAV MKCOL method.
 """
 
-__all__ = ["precondition_MKCOL"]
+__all__ = ["preconditions_MKCOL"]
 
 from twisted.web2.http import HTTPError
 from twisted.web2.http import StatusResponse
 from twisted.web2 import responsecode
 
+from angel_app.log import getLogger
+log = getLogger(__name__)
+
 class MkcolMixin:
-    def precondition_MKCOL(self, request):
+    def preconditions_MKCOL(self, request):
         """
         A MKCOL operation from a non-authenticated source is allowed
         exactly if the file does not exist, but is referenced in the parent resource,
@@ -46,6 +49,3 @@ class MkcolMixin:
                        responsecode.FORBIDDEN, 
                        "MKCOL is forbidden on unreferenced resources. Try a PROPPATCH of the parent first."
                        ))
-        
-        # permission granted
-        return request

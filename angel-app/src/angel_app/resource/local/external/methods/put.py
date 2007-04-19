@@ -26,14 +26,14 @@
 WebDAV PUT method.
 """
 
-__all__ = ["precondition_PUT"]
+__all__ = ["preconditions_PUT"]
 
 from twisted.web2.http import HTTPError
 from twisted.web2.http import StatusResponse
 from twisted.web2 import responsecode
 
 class PutMixin:
-    def precondition_PUT(self, request):
+    def preconditions_PUT(self, request):
         """
         A put operation from a non-authenticated source is allowed
         exactly if 
@@ -55,9 +55,6 @@ class PutMixin:
                            responsecode.FORBIDDEN, 
                            "PUT is forbidden on valid resources. Try a PROPPATCH first."
                            ))
-        
-        # permission granted
-        return request
     
     def http_PUT(self, request):
         

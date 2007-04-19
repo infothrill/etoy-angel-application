@@ -26,20 +26,25 @@
 WebDAV DELETE method.
 """
 
-__all__ = ["precondition_DELETE"]
+__all__ = ["preconditions_DELETE"]
 
 from twisted.web2.http import HTTPError
 from twisted.web2.http import StatusResponse
 from twisted.web2 import responsecode
 
+from angel_app.log import getLogger
+log = getLogger(__name__)
+
 class DeleteMixin:
     
-    def precondition_DELETE(self, request):
+    def preconditions_DELETE(self, request):
         """
         A DELETE operation from a non-authenticated source is allowed
         exactly if the file is not referenced in the parent resource,
         See also proppatch.
         """ 
+        
+        log.debug("foo")
         
         if self in self.parent().metaDataChildren():
             raise HTTPError(
@@ -47,6 +52,3 @@ class DeleteMixin:
                        responsecode.FORBIDDEN, 
                        "DELETE is forbidden on referenced resources. Try a PROPPATCH on the parent first."
                        ))
-        
-        # permission to proceed granted
-        return request
