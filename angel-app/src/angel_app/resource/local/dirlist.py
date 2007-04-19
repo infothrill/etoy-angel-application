@@ -122,9 +122,14 @@ class DirectoryLister(resource.Resource):
                     zip(linkTargets[1:], pathSegments[1:])
                     ])
     
-        s= """<html><head><title>ANGEL APPLICATION: %s</title>
-        <link href="http://missioneternity.org/files/m221e.css" rel="stylesheet" type="text/css" media="all" />
-        <style>
+        s= """<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+        <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+        <head>
+            <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+            <title>ANGEL APPLICATION: %s</title>
+            <link href="http://missioneternity.org/files/m221e.css" rel="stylesheet" type="text/css" media="all" />
+        <style type="text/css">
           .even-dir { background-color: #eeeeee }
           .even { background-color: #eeeeee }
           .odd-dir {background-color: #ffffff }
@@ -135,7 +140,9 @@ class DirectoryLister(resource.Resource):
         </style>
         </head><body style="margin-bottom: 50px;">
         <div id="container"  style="width:650px; padding:30px 0px 0px 0px;">
-        <div style="text-align:right"><a href="http://www.missioneternity.org/"><img style="border:0;" src="http://angelapp.missioneternity.org/moin/share/moin/htdocs/rightsidebar/img/m221e-batch-logo.jpg" alt="MISSION ETERNITY"></a></div>
+        <div style="text-align:right">
+            <a href="http://www.missioneternity.org/"><img style="border:0;" src="http://angelapp.missioneternity.org/moin/share/moin/htdocs/rightsidebar/img/m221e-batch-logo.jpg" alt="MISSION ETERNITY"></a>
+        </div>
         
         <div class="directory-listing">       
         <h1><a href="http://angelapp.missioneternity.org/">ANGEL APPLICATION</a>: %s</h1>""" % (title, linkList)
@@ -148,7 +155,11 @@ class DirectoryLister(resource.Resource):
             s+='\n<td><a href="%(link)s">%(linktext)s</a></td><td align="right">%(size)s</td><td>%(lastmod)s</td><td>%(type)s</td><td>%(clones)s</td></tr>' % row
             even = not even
                 
-        CC_LICENSE = """<a rel="license" href="http://creativecommons.org/licenses/by-nc-nd/3.0/"><img alt="Copyright etoy.VENTURE association -- Creative Commons License" style="border-width:0" src="http://i.creativecommons.org/l/by-nc-nd/3.0/80x15.png" />"""
+        CC_LICENSE = """
+        <div style="margin-top:20px">
+            <a rel="license" href="http://creativecommons.org/licenses/by-nc-nd/3.0/"><img alt="Copyright etoy.VENTURE association -- Creative Commons License" style="border-width:0" src="http://i.creativecommons.org/l/by-nc-nd/3.0/80x15.png" /></a>
+        </div>
+            """
         s+="""</table></div>
         <div style="margin-top:20px;">%s</div>
         </div>%s</div></body></html>""" % (getStatistics(), CC_LICENSE)
