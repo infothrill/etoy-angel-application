@@ -1,3 +1,6 @@
+0.1.8 
+ * security fixes (for http-preconditions)
+
 0.1.7 April 18 2007
  * updated welcome screen
  * slightly fixed html layout of provider
