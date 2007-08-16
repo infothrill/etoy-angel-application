@@ -243,19 +243,23 @@ class Crypto(
                 log.debug(self.fp.path + ": this resource is already registered with the parent")
                 return
 
+        # build the child element
         ic = elements.Child(*[
                          rfc2518.HRef(self.quotedResourceName()),
                          elements.UUID(str(self.keyUUID())),
                          self.resourceID()
                          ])
         
-        # create the list of new children
+        # create the updated list of new children
         if ic not in oc:
             nc = [cc for cc in oc] + [ic]
         else:
             nc = oc
-            
+
+        # build the children element
         ce = elements.Children(*nc)
+        
+        # add to parent and seal parent
         pdp.set(ce)  
         self.parent().seal()          
         log.debug("exiting _registerWithParent")
