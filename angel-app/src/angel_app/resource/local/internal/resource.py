@@ -39,7 +39,10 @@ class Crypto(
         self.defaultValues[elements.ResourceID] = lambda x : util.makeResourceID(x.relativePath())
                     
     def secretKey(self):
-        
+        """
+        Return the secret key corresponding to the public key of this resource (or the parent resource,
+        if this resource does not actually exist on the file system).
+        """
         pks = None
         if self.exists():                
             pks = self.publicKeyString()
@@ -62,12 +65,22 @@ class Crypto(
         return Crypto.keyRing[pks]
   
     def _inheritClones(self):
+        """
+        Inherit the clones list from the parent resource -- useful for initialization.
+        """
         self.deadProperties().set(
                                   self.parent().deadProperties().get(
                                                                      elements.Clones.qname()))
           
     def _updateMetadata(self): 
-
+        """
+        Update the metadata for this resource and its parent.
+        
+        TODO: One wonders why this is a separate method. It's confusing this way.
+        On the other hand, just writing self.update(1) would be even more confusing.
+        On a similar note: why is this method "protected", when the (only) method it
+        calls is public?
+        """
         log.debug("entering _updateMetadata for resource " + self.fp.path)
         self.update(1)
         log.debug("exiting _updateMetadata for resource " + self.fp.path)
@@ -198,6 +211,9 @@ class Crypto(
         return signature
     
     def updateParent(self, recursionLimit = 0):
+        """
+        TODO: This is a one-liner and should go into self.update()
+        """
         pp = self.parent()
         log.debug("updating parent of " + self.fp.path)
         pp and pp.update()
