@@ -264,6 +264,8 @@ class Crypto(
         
     def _changeRegister(self, request):
         """
+        Needed for copy and move operations.
+        
         @return a callback that deregisters the current resource and registers the request destination resource.
         """       
         
