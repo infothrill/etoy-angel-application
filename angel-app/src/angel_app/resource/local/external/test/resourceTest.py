@@ -45,8 +45,59 @@ from twisted.web2 import responsecode
 import os 
 
 class ResourceTest(unittest.TestCase):
+
+    testDirPath = os.path.sep.join([repositoryPath, "TEST"])
+    testResourcePath = os.path.sep.join([testDirPath, "foo.txt"])
+
+    def setUp(self):
+        """
+        Create the test directory and resource, if necessary.
+        """
+        try:
+            os.mkdir(self.testDirPath)
+        except:
+            print "test directory already exists"
+            pass
+        self.dirResource = IResource(self.testDirPath) 
+        self.dirResource._registerWithParent()  
+        self.dirResource._updateMetadata()
+        
+        open(self.testResourcePath, "w").write("lorem ipsum")
+        self.tResource = IResource(self.testResourcePath) 
+        self.tResource._registerWithParent()  
+        self.tResource._updateMetadata()
+        
+        
+        
+        
+    def tearDown(self):
+        """
+        Delete the test directory, if necessary.
+        """
+        
+        try:
+            self.tResource._deRegisterWithParent() 
+            os.remove(self.testResourcePath)
+        except:
+            print "problem removing test resource."
+            pass
+        
+        
+        self.dirResource._deRegisterWithParent()  
+        try:
+            os.rmdir(self.testDirPath)
+        except:
+            print "test directory already removed."
+
+    def testValidation(self):
+        """
+        After setUp(), the test directory should exist and be valid.
+        """
+        dirResource = EResource(self.testDirPath)        
+        assert dirResource.exists(), "Test directory does not exist." 
+        assert dirResource.verify(), "Test directory is not valid."
     
-    def testIsWritable(self):
+    def testIsWritableExisting(self):
         """
         this test assumes that the following resources that i set up by hand still exist in the
         local repository.
@@ -54,18 +105,8 @@ class ResourceTest(unittest.TestCase):
         @see: isWritableFile
         """
         
-        testDirPath = os.path.sep.join([repositoryPath, "MISSION ETERNITY", "TEST", "vincent", "test"])       
-        
-        dirResource = EResource(testDirPath)        
-        assert dirResource.exists(), "Test directory does not exist." 
-        assert dirResource.verify(), "Test directory is not valid."
-        
-        goodTestResourcePath = os.path.sep.join([testDirPath, "foo.txt"])
-        fileResource = EResource(goodTestResourcePath)        
-        assert fileResource.exists(), "Test file does not exist." 
-        assert fileResource.verify(), "Test file resource is not valid."
-        
-        cfileResource = IResource(goodTestResourcePath)
+        fileResource = EResource(self.testResourcePath)
+        cfileResource = IResource(self.testResourcePath)
         assert cfileResource.isWritableFile() == True, "Internal resource representation must be writable."        
         assert fileResource.isWriteable() == False, "External resource representation must not be writable."
         contents = fileResource.contentAsString()
@@ -74,8 +115,8 @@ class ResourceTest(unittest.TestCase):
         fileResource.fp.open("w").write(contents)
         assert fileResource.verify(), "uh-oh, test broke the test resource."
         
-        
-        badTestResourcePath = os.path.sep.join([testDirPath, "bar.txt"])
+    def testIsWritableInexistent(self):        
+        badTestResourcePath = os.path.sep.join([self.testDirPath, "bar.txt"])
         badFileResource = EResource(badTestResourcePath)
         assert badFileResource.exists() == False, "This resource must not exist for this test to proceed."
         assert badFileResource.referenced() == False, "Resource must be unreferenced."
