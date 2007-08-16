@@ -43,23 +43,25 @@ import os
 
 class ResourceTest(unittest.TestCase):
     
+    testDirPath = os.path.sep.join([repositoryPath, "TEST"])
+
+    def setUp(self):
+        os.mkdir(self.testDirPath)
+        self.dirResource = Crypto(self.testDirPath) 
+        self.dirResource._registerWithParent()  
+        self.dirResource._updateMetadata()
+        
+    def tearDown(self):
+        self.dirResource._deRegisterWithParent()  
+        os.rmdir(self.testDirPath)
+    
     def testSigning(self):
         """
         this test assumes that the following resources that i set up by hand still exist in the
         local repository.
-        """
+        """    
         
-        testDirPath = os.path.sep.join([repositoryPath, "MISSION ETERNITY", "TEST", "vincent", "test"])       
-        
-        dirResource = Crypto(testDirPath)        
+        dirResource = Crypto(self.testDirPath)        
         assert dirResource.exists(), "Test directory does not exist." 
-        
-        goodTestResourcePath = os.path.sep.join([testDirPath, "foo.txt"])
-        fileResource = Crypto(goodTestResourcePath)
-        
-
-        assert fileResource.exists(), "Test file does not exist." 
-
-        assert fileResource.verify(), "Test file is not valid."
-
-        assert fileResource.contentSignature() == fileResource.sign()
+        assert dirResource.verify(), "Test directory is not valid."
+        assert dirResource.contentSignature() == dirResource.sign()
