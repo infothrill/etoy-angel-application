@@ -1,6 +1,6 @@
 """
 Provide a Mapping from XML-elements to xattr keys.
-Hanlde initialization of attributes with default values.
+Handle initialization of attributes with default values.
 """
 
 from twisted.web2 import responsecode
