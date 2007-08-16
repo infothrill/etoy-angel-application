@@ -13,14 +13,20 @@ from angel_app.log import getLogger
 log = getLogger(__name__)
 
 def resourceID(resource):
-        if resource.isRepositoryRoot():
-            return util.makeResourceID(resource.relativePath())
+    """
+    Provide a default resource ID for the metadata initialization.
+    """
+    if resource.isRepositoryRoot():
+        return util.makeResourceID(resource.relativePath())
             
-        else:
-            return util.getResourceIDFromParentLinks(resource)
+    else:
+        return util.getResourceIDFromParentLinks(resource)
 
 def getOnePublicKey(resource):
-    
+    """
+    This is used in the initialization phase of a resource's meta-data:
+    get hold of a meaningful public key.
+    """
     if resource.isRepositoryRoot():
         from angel_app.config.internal import loadKeysFromFile    
         return loadKeysFromFile().keys()[0]
