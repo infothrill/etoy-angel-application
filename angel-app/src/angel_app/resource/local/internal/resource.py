@@ -295,21 +295,14 @@ class Crypto(
         if not self.isWritableFile(): 
             raise "not authorized to perform update of signed meta data"
 
-        log.debug("encrypting " + self.fp.path + "?")
         if self.isEncrypted():
-            log.debug("encrypting " + self.fp.path)
             self.encrypt()
-        log.debug("signing " + self.fp.path)
+
         self.sign()
-        log.debug("bumping revision number for " + self.fp.path)
+
         self.bumpRevisionNumber()
 
-        
-        log.debug("sealing " + self.fp.path)
         self.seal()
-
-        log.debug("Verifying " + self.fp.path)
-        # DEBUG and self.verify() # TODO: this should go!
         
         # certainly not going to hurt if we do this:
         self.fp.restat()
@@ -323,6 +316,8 @@ class Crypto(
         
     def getResponseStream(self):
         """
+        Stream the file contents (after decryption, if necessary).
+        
         @see Basic.getResponseStream
         """
         log.debug("rendering file in plaintext: " + self.fp.path)
