@@ -343,6 +343,12 @@ class FileDescriptor(log.Logger, styles.Ephemeral, object):
 
 
 def isIPAddress(addr):
+    return (isIPv4Address(addr) or isIPv6Address(addr))
+
+def isIPv6Address(addr):
+    return True
+    
+def isIPv4Address(addr):
     parts = string.split(addr, '.')
     if len(parts) == 4:
         try:

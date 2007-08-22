@@ -34,7 +34,7 @@ def dance(options):
     from twisted.web2 import channel
     from twisted.internet import reactor
     site = server.Site(root)
-    reactor.listenTCP(providerport, channel.HTTPFactory(site), 50)
+    reactor.listenTCP(providerport, channel.HTTPFactory(site), 50, "2001::53aa:64c:0:af95:c1f3:6f11") #"127.0.0.1")#
     getLogger().info("Listening on port %d and serving content from %s", providerport, repository)
     reactor.run()
 

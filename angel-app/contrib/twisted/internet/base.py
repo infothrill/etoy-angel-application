@@ -326,7 +326,9 @@ class ReactorBase(object):
         """
         if not name:
             # XXX - This is *less than* '::', and will screw up IPv6 servers
-            return defer.succeed('0.0.0.0')
+            #return defer.succeed('0.0.0.0')
+            # workaround for IPv6
+            return defer.succeed('::')
         if abstract.isIPAddress(name):
             return defer.succeed(name)
         return self.resolver.getHostByName(name, timeout)
