@@ -43,68 +43,68 @@ log = getLogger(__name__)
 
 class mkcolMixin:
 
-  def __checkSpot(self):
+    def __checkSpot(self):
 
-      log.debug("calling __checkSpot")
+        log.debug("calling __checkSpot")
 
-      if os.path.exists(self.fp.path):
-          log.error("Attempt to create collection where file exists: %s"
+        if os.path.exists(self.fp.path):
+            log.error("Attempt to create collection where file exists: %s"
                 % (self.fp.path,))
-          raise HTTPError(responsecode.NOT_ALLOWED)
+            raise HTTPError(responsecode.NOT_ALLOWED)
 
-      if not self.parent().isCollection():
-          log.error("Attempt to create collection with non-collection parent: %s"
+        if not self.parent().isCollection():
+            log.error("Attempt to create collection with non-collection parent: %s"
                 % (self.parent().fp.path,))
-          raise HTTPError(StatusResponse(
-            responsecode.CONFLICT,
-            "Parent resource is not a collection."
-            ))
+            raise HTTPError(StatusResponse(
+                                           responsecode.CONFLICT,
+                "Parent resource is not a collection."
+                ))
 
-      if not self.parent() or not self.parent().isCollection():
-          log.error("Attempt to create collection with no parent directory: %s"
+        if not self.parent() or not self.parent().isCollection():
+            log.error("Attempt to create collection with no parent directory: %s"
                 % (self.fp.path,))
-          raise HTTPError(StatusResponse(
-            responsecode.INTERNAL_SERVER_ERROR,
+            raise HTTPError(StatusResponse(
+                                           responsecode.INTERNAL_SERVER_ERROR,
             "The requested resource is not backed by a parent directory."
             ))
       
-      if not self.parent().isWritableFile():
-          errorMessage = "You don't have sufficient privileges to create a collection in this location."
-          log.error(errorMessage)
-          raise HTTPError(StatusResponse(responsecode.UNAUTHORIZED, errorMessage))
+        if not self.parent().isWritableFile():
+            errorMessage = "You don't have sufficient privileges to create a collection in this location."
+            log.error(errorMessage)
+            raise HTTPError(StatusResponse(responsecode.UNAUTHORIZED, errorMessage))
           
-      log.debug("done __checkSpot")
+        log.debug("done __checkSpot")
         
 
-  def __mkcol(self, request):
+    def __mkcol(self, request):
     
-    self.__checkSpot()
+        self.__checkSpot()
 
-    #
-    # Read request body
-    #
-    x = waitForDeferred(noDataFromStream(request.stream))
-    yield x
-    try:
-        x.getResult()
-    except ValueError, e:
-        log.error("Error while handling MKCOL body: %s" % (e,))
-        raise HTTPError(responsecode.UNSUPPORTED_MEDIA_TYPE)
+        #
+        # Read request body
+        #
+        x = waitForDeferred(noDataFromStream(request.stream))
+        yield x
+        try:
+            x.getResult()
+        except ValueError, e:
+            log.error("Error while handling MKCOL body: %s" % (e,))
+            raise HTTPError(responsecode.UNSUPPORTED_MEDIA_TYPE)
 
-    ignored = waitForDeferred(mkcollection(self.fp))  
-    yield ignored
-    ignored = ignored.getResult()
+        ignored = waitForDeferred(mkcollection(self.fp))  
+        yield ignored
+        ignored = ignored.getResult()
 
-    log.debug("__mkcol registering with parent")
-    self._registerWithParent()
+        log.debug("__mkcol registering with parent")
+        self._registerWithParent()
     
-    log.debug("__mkcol updating metadata")
-    self._updateMetadata()
+        log.debug("__mkcol updating metadata")
+        self._updateMetadata()
     
-    log.debug("done MKCOL request")   
-    yield responsecode.CREATED
+        log.debug("done MKCOL request")   
+        yield responsecode.CREATED
 
-  def http_MKCOL(self, request):
+    def http_MKCOL(self, request):
         """
         Respond to a MKCOL request. (RFC 2518, section 8.3)
         """     
@@ -116,3 +116,9 @@ class mkcolMixin:
         #return self.put(request.stream)
         #put = deferredGenerator(self.put)
         #return put(request.stream)
+    
+    def preconditions_MKCOL(self, request):
+        """
+        Allowed in principle (override dissalow in Safe).
+        """
+        pass
