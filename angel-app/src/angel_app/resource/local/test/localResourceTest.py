@@ -30,14 +30,28 @@ legalMatters = """
 
 author = """Vincent Kraeutler 2007"""
 
-
+import os
 import unittest
+from angel_app.resource.local.internal.resource import Crypto
+import angel_app.resource.local.basic as bb
+
+from angel_app.config import config
+AngelConfig = config.getConfig()
+repositoryPath = AngelConfig.get("common","repository")
 
 class BasicResourceTest(unittest.TestCase):
     
+    testDirPath = os.path.sep.join([repositoryPath, "TEST"])
 
     def setUp(self):
-        pass
+        os.mkdir(self.testDirPath)
+        self.dirResource = Crypto(self.testDirPath) 
+        self.dirResource._registerWithParent()  
+        self.dirResource._updateMetadata()
+        
+    def tearDown(self):
+        self.dirResource._deRegisterWithParent()  
+        os.rmdir(self.testDirPath)
 
     def testWriteNewFile(self):
         raise "not implemented"
@@ -47,13 +61,13 @@ class BasicResourceTest(unittest.TestCase):
         """
         @return: a C{True} if this resource is accessible, C{False} otherwise.
         """
-        raise "not implemented"
+        assert self.dirResource.exists()
     
     def testLocation(self):
         """
         @return the resource's path relative to the site root.
         """
-        raise "not implemented"
+        assert self.dirResource.relativePath() == "/TEST"
     
     def testIsCollection(self):
         """
@@ -61,25 +75,22 @@ class BasicResourceTest(unittest.TestCase):
         @return: a C{True} if this resource is a collection resource, C{False}
             otherwise.
         """
-        raise "not implemented"
+        assert self.dirResource.isCollection()
 
     def testResourceID(self):
         """
         @return: the id of the resource as C{String}.
         """
-        raise "not implemented"
 
-    def testRelativePath(self):
-        """
-        @return the path of the resource with respect to the site root
-        """
-        raise "not implemented"
+        assert type(self.dirResource.resourceID().toxml()) == type("")
         
     def testRevision(self):
         """
         @return: a C{int} corresponding to the revision number of this resource
         """
-        raise "not implemented"
+        revisionNumber = self.dirResource.revisionNumber()
+        assert type(revisionNumber) == type(0)
+        assert revisionNumber >= 0
 
     def testFindChildren(self):
         """
@@ -91,7 +102,8 @@ class BasicResourceTest(unittest.TestCase):
         """
         @return: an object that minimally supports the read() method, which in turn returns the stream contents as a string.
         """
-        raise "not implemented"
+        stream = self.dirResource.getResponseStream()
+        assert self.dirResource.getResponseStream().read() == bb.REPR_DIRECTORY
 
     def testGetProperty(self):
         """
