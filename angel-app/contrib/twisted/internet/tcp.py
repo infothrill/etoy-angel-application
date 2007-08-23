@@ -663,7 +663,6 @@ class Server(Connection):
 
         This indicates the server's address.
         """
-        log.err("BAR: " + `(self.socket.getsockname())`)
         aa = self.socket.getsockname()
         # more IPv6 hackery
         return address.IPv4Address('TCP', *((aa[0], aa[1]) + ('INET',)))
@@ -674,7 +673,6 @@ class Server(Connection):
 
         This indicates the client's address.
         """
-        log.err("BAZ:" + `self.client`)
         # this is most certainly not an IPv4 address, but hey...
         return address.IPv4Address('TCP', *((self.client[0], self.client[1]) + ('INET',)))
         #return address.IPv4Address('TCP', *(self.client + ('INET',)))
@@ -810,7 +808,6 @@ class Port(base.BasePort, _SocketCloser):
                         break
                     raise
 
-                log.err("FOO: " + `addr`)
                 # IPv6 workaround
                 #protocol = self.factory.buildProtocol(self._buildAddr(addr))
                 protocol = self.factory.buildProtocol(self._buildAddr((addr[0], addr[1])))
