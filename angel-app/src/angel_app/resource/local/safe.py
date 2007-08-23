@@ -8,6 +8,14 @@ from angel_app.log import getLogger
 
 log = getLogger(__name__)
 
+def forbidden(method):
+    """
+    This method results in a FORBIDDEN response.
+    """
+    error = "Denying " + method + " request."
+    log.warn(error)
+    raise HTTPError(StatusResponse(responsecode.FORBIDDEN, error))
+
 class Safe(DAVFile):
     """
     This implements a safe WebDAV resource, in that all requests to modifiy
@@ -34,47 +42,40 @@ class Safe(DAVFile):
         """
         Disallowed.
         """
-        log.warn("Denying MKCOL request.")
-        return responsecode.FORBIDDEN
+        forbidden("MKCOL") 
     
     def http_DELETE(self, request):
         """
         Disallowed.
         """
-        log.warn("Denying DELETE request.")
-        return responsecode.FORBIDDEN
+        forbidden("DELETE") 
 
     def http_COPY(self, request):
         """
         Disallowed.
         """
-        log.warn("Denying COPY request.")
-        return responsecode.FORBIDDEN
+        forbidden("COPY")
     
     def http_LOCK(self, request):
         """
         Disallowed.
         """
-        log.warn("Denying LOCK request.")
-        return responsecode.FORBIDDEN  
+        forbidden("LOCK")
 
     def http_MOVE(self, request):
         """
         Disallowed.
         """
-        log.warn("Denying MOVE request.")
-        return responsecode.FORBIDDEN  
+        forbidden("MOVE") 
     
     def http_PROPPATCH(self, request):
         """
         Disallowed.
         """
-        log.warn("Denying PROPPATCH request.")
-        return responsecode.FORBIDDEN  
+        forbidden("PROPPATCH") 
            
     def http_UNLOCK(self, request):
         """
         Disallowed.
         """
-        log.warn("Denying UNLOCK request.")
-        return responsecode.FORBIDDEN  
+        forbidden("UNLOCK")  
