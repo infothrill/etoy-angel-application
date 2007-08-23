@@ -33,7 +33,7 @@ author = """Vincent Kraeutler 2007"""
 
 import unittest
 from angel_app.resource.local.external.resource import External as EResource
-from angel_app.resource.local.internal.resource import Crypto as IResource
+from angel_app.resource.local.internal.resource import Crypto
 
 from angel_app.config import config
 AngelConfig = config.getConfig()
@@ -45,10 +45,27 @@ from twisted.web2 import responsecode
 import os 
 
 class MethodTest(unittest.TestCase):
+
+    
+    testDirPath = os.path.sep.join([repositoryPath, "TEST"])
+
+    def setUp(self):
+        try:
+            os.mkdir(self.testDirPath)
+        except:
+            pass
+        self.dirResource = Crypto(self.testDirPath) 
+        self.dirResource._registerWithParent()  
+        self.dirResource._updateMetadata()
+        
+    def tearDown(self):
+        self.dirResource._deRegisterWithParent()  
+        os.rmdir(self.testDirPath)
         
     def testDenyRemoteResourceModification(self):
         """
         Assert that all modification requests for the root resource are denied.
+        For this test to run, you need a running instance of the provider.
         """
         
         from angel_app.resource.remote.clone import Clone
@@ -58,10 +75,10 @@ class MethodTest(unittest.TestCase):
         assert cc.ping(), "Test resource root unreachable."
         
         # fake resource, modification of which should be disallowed 
-        dd = Clone("localhost", providerport, "/NOT_ALLOWED")
+        dd = Clone("localhost", providerport, "/TEST")
         
         methodsAndExpectedResponseCodes = [
-                                           ("MKCOL", responsecode.FORBIDDEN),
+                                           ("MKCOL", responsecode.NOT_ALLOWED),
                                            ("DELETE", responsecode.FORBIDDEN),
                                            ("PUT", responsecode.FORBIDDEN),
                                            ("PROPPATCH", responsecode.BAD_REQUEST),
@@ -73,8 +90,4 @@ class MethodTest(unittest.TestCase):
             response = dd._performRequest(method)
             assert response.status == expect, \
                 method + " must not be allowed, received: " + `response.status` + " " + response.read()
-        
-        #response = dd.mkCol()
-        
-        #assert response.status == responsecode.FORBIDDEN, "MKCOL must not be allowed."
 
