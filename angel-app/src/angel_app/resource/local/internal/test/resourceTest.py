@@ -30,30 +30,48 @@ legalMatters = """
 
 author = """Vincent Kraeutler 2007"""
 
+from angel_app.resource.local.external.resource import External as EResource
+from angel_app.resource.local.internal.resource import Crypto as IResource
 
 import unittest
 from angel_app.resource.local.internal.resource import Crypto
 import angel_app.resource.local.basic as bb
+from angel_app.resource.remote.clone import Clone
 
 from angel_app.config import config
 AngelConfig = config.getConfig()
 repositoryPath = AngelConfig.get("common","repository")
+from twisted.web2 import responsecode
 
 import os 
 
 class ResourceTest(unittest.TestCase):
+    """
+    Requires a running local instance of the presenter.
+    """
     
     testDirPath = os.path.sep.join([repositoryPath, "TEST"])
+    testClone = Clone(
+                      host = "localhost", 
+                      port = AngelConfig.getint("presenter","listenPort"),
+                      path = "/TEST")
+    
 
     def setUp(self):
-        os.mkdir(self.testDirPath)
+        try:
+            os.mkdir(self.testDirPath)
+        except:
+            pass
         self.dirResource = Crypto(self.testDirPath) 
         self.dirResource._registerWithParent()  
         self.dirResource._updateMetadata()
         
     def tearDown(self):
-        self.dirResource._deRegisterWithParent()  
-        os.rmdir(self.testDirPath)
+        self.dirResource._deRegisterWithParent()
+        try:
+            os.rmdir(self.testDirPath)
+        except:
+            pass
     
     def testSigning(self):
         """
@@ -65,3 +83,27 @@ class ResourceTest(unittest.TestCase):
         assert dirResource.exists(), "Test directory does not exist." 
         assert dirResource.verify(), "Test directory is not valid."
         assert dirResource.contentSignature() == dirResource.sign()
+        
+    def testDenyRemoteResourceModification(self):
+        """
+        Assert that all modification requests for the root resource are denied.
+        For this test to run, you need a running instance of the provider.
+        """
+        
+        assert self.testClone.ping(), \
+            "Test resource unreachable. Make sure you have a running instance of the presenter."
+        
+        methodsAndExpectedResponseCodes = [
+                                           ("MKCOL", responsecode.NOT_ALLOWED),
+                                           
+                                           ("PUT", responsecode.FORBIDDEN),
+                                           ("PROPPATCH", responsecode.FORBIDDEN),
+                                           ("MOVE", responsecode.BAD_REQUEST),
+                                           ("COPY", responsecode.BAD_REQUEST),
+                                           ("DELETE", responsecode.FORBIDDEN)
+                                           ]
+        
+        for method, expect in methodsAndExpectedResponseCodes:
+            response = self.testClone._performRequest(method)
+            assert response.status == expect, \
+                method + " must not be allowed, received: " + `response.status` + " " + response.read()
