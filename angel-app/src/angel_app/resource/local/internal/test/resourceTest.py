@@ -43,6 +43,9 @@ AngelConfig = config.getConfig()
 repositoryPath = AngelConfig.get("common","repository")
 from twisted.web2 import responsecode
 
+from angel_app.log import getLogger
+log = getLogger(__name__)
+
 import os 
 
 class ResourceTest(unittest.TestCase):
@@ -89,22 +92,36 @@ class ResourceTest(unittest.TestCase):
         """
         Assert that all modification requests for the root resource are denied.
         For this test to run, you need a running instance of the provider.
+        
+        Consider using the litmus test suite for in-depth testing.
         """
         
         assert self.testClone.ping(), \
             "Test resource unreachable. Make sure you have a running instance of the presenter."
         
         methodsAndExpectedResponseCodes = [
+                                           # first, we make a collection -- this should fail, because it already exists
                                            ("MKCOL", responsecode.NOT_ALLOWED),
                                            
-                                           ("PUT", responsecode.FORBIDDEN),
+                                           # next, we overwrite the collection with an empty file -- this is legal
+                                           ("PUT", responsecode.NO_CONTENT),
+                                           
+                                           # next, we send a malformed proppatch request -- either way, we don't
+                                           # support proppatch on the internal interface
                                            ("PROPPATCH", responsecode.FORBIDDEN),
+                                           
+                                           # move and copy the resource without a destination:
                                            ("MOVE", responsecode.BAD_REQUEST),
                                            ("COPY", responsecode.BAD_REQUEST),
-                                           ("DELETE", responsecode.NO_CONTENT)
+                                           
+                                           # delete the resource
+                                           ("DELETE", responsecode.NO_CONTENT),
+                                           
+                                           # create the original collection
+                                           ("MKCOL", responsecode.CREATED),
                                            ]
         
         for method, expect in methodsAndExpectedResponseCodes:
             response = self.testClone._performRequest(method)
             assert response.status == expect, \
-                method + " wrong status code returned. expected: " + `response.status` + " found: " + response.read()
+                method + " wrong status code returned. expected: " + `expect` + " found: " + `response.status`
