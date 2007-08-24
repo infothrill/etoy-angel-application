@@ -80,7 +80,7 @@ class Putable(object):
         
         if os.path.exists(self.fp.path):
             log.debug("deleting: " + self.fp.path)
-            response = self.delete()
+            response = self.delete(uri = self.relativeURL())
             log.debug("__putDelete: " + `response`)
             checkResponse(response, "delete", responsecode.NO_CONTENT)
             success_code = responsecode.NO_CONTENT
