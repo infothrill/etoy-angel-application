@@ -60,7 +60,8 @@ class ResourceTest(unittest.TestCase):
     def setUp(self):
         try:
             os.mkdir(self.testDirPath)
-        except:
+        except OSError, e:
+            # test resource already exists
             pass
         self.dirResource = Crypto(self.testDirPath) 
         self.dirResource._registerWithParent()  
@@ -100,10 +101,10 @@ class ResourceTest(unittest.TestCase):
                                            ("PROPPATCH", responsecode.FORBIDDEN),
                                            ("MOVE", responsecode.BAD_REQUEST),
                                            ("COPY", responsecode.BAD_REQUEST),
-                                           ("DELETE", responsecode.FORBIDDEN)
+                                           ("DELETE", responsecode.NO_CONTENT)
                                            ]
         
         for method, expect in methodsAndExpectedResponseCodes:
             response = self.testClone._performRequest(method)
             assert response.status == expect, \
-                method + " must not be allowed, received: " + `response.status` + " " + response.read()
+                method + " wrong status code returned. expected: " + `response.status` + " found: " + response.read()
