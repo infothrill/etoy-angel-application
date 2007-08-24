@@ -32,7 +32,7 @@ author = """Vincent Kraeutler 2007"""
 
 
 import unittest
-from angel_app.resource.local.external.resource import External as EResource
+from angel_app.resource.local.basic import Basic as EResource
 from angel_app.resource.local.internal.resource import Crypto
 
 from angel_app.config import config

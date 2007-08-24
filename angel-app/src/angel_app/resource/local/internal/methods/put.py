@@ -126,7 +126,8 @@ class Putable(object):
 
     def preconditions_PUT(self, request):
         """
-        Disallowed.
+        Override safe setting.
+        @see: safe.py
         """
         pass
         

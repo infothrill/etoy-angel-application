@@ -11,7 +11,6 @@ from angel_app.resource.local.dirlist import DirectoryLister
 from zope.interface import implements
 from angel_app.resource import IResource
 from angel_app.resource.local.safe import Safe
-from angel_app.resource.local.external.methods.proppatch import ProppatchMixin
 from angel_app.log import getLogger
 from angel_app.contrib import uuid
 from angel_app.contrib.ezPyCrypto import key as ezKey
@@ -356,10 +355,12 @@ class Basic(PropertyManagerMixin, Safe):
         if not self.exists():
             return responsecode.NOT_FOUND
 
+        print self.fp.path + " " + self.fp.isdir()
+
         if self.fp.isdir():
             return self.renderDirectory(req)
-
-        return self.renderFile()
+        else:
+            return self.renderFile()
 
     def renderDirectory(self, req):
         if req.uri[-1] != "/":

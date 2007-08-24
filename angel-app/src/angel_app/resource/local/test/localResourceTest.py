@@ -35,6 +35,9 @@ import unittest
 from angel_app.resource.local.internal.resource import Crypto
 import angel_app.resource.local.basic as bb
 
+from twisted.web2.dav.element import rfc2518
+from angel_app.elements import Children
+
 from angel_app.config import config
 AngelConfig = config.getConfig()
 repositoryPath = AngelConfig.get("common","repository")
@@ -52,9 +55,6 @@ class BasicResourceTest(unittest.TestCase):
     def tearDown(self):
         self.dirResource._deRegisterWithParent()  
         os.rmdir(self.testDirPath)
-
-    def testWriteNewFile(self):
-        raise "not implemented"
     
         
     def testExists(self):
@@ -81,7 +81,6 @@ class BasicResourceTest(unittest.TestCase):
         """
         @return: the id of the resource as C{String}.
         """
-
         assert type(self.dirResource.resourceID().toxml()) == type("")
         
     def testRevision(self):
@@ -96,36 +95,21 @@ class BasicResourceTest(unittest.TestCase):
         """
         @return: an iterable over C{uri}.
         """
-        raise "not implemented"
+        assert self.dirResource.childLinks().qname() == Children.qname()
     
     def testStream(self):
         """
         @return: an object that minimally supports the read() method, which in turn returns the stream contents as a string.
         """
-        stream = self.dirResource.getResponseStream()
-        assert self.dirResource.getResponseStream().read() == bb.REPR_DIRECTORY
-
-    def testGetProperty(self):
+        stream = self.dirResource.open()
+        assert self.dirResource.open().read() == bb.REPR_DIRECTORY
+        
+    def testPropertyIO(self):
         """
-        Reads the given property on this resource.
-        @param property: an empty L{davxml.WebDAVElement} class or instance, or
-            a qname tuple.
-        @return: a L{davxml.WebDAVElement} instance
-            containing the value of the given property.
+        Set a property, read it back out and compare it with the original.
         """
-        raise "not implemented"
-
-    def testWriteProperties(self):
-        """
-        Writes the given property on this resource.
-        @param properties a the list of elements.requiredKeys
-        """
-        raise "not implemented"
-
-    def testListProperties(self):
-        """
-        @param request: the request being processed.
-        @return: a deferred iterable of qnames for all properties defined for
-            this resource.
-        """
-        raise "not implemented"
+        testProperty = rfc2518.Collection()
+        self.dirResource.deadProperties().set(testProperty)
+        assert testProperty.qname() in self.dirResource.deadProperties().list()
+        outProperty = self.dirResource.deadProperties().get(testProperty.qname())
+        assert testProperty.toxml() == outProperty.toxml()

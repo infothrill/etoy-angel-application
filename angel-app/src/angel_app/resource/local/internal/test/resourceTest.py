@@ -30,7 +30,7 @@ legalMatters = """
 
 author = """Vincent Kraeutler 2007"""
 
-from angel_app.resource.local.external.resource import External as EResource
+from angel_app.resource.local.basic import Basic as EResource
 from angel_app.resource.local.internal.resource import Crypto as IResource
 
 import unittest
@@ -106,9 +106,8 @@ class ResourceTest(unittest.TestCase):
                                            # next, we overwrite the collection with an empty file -- this is legal
                                            ("PUT", responsecode.NO_CONTENT),
                                            
-                                           # next, we send a malformed proppatch request -- either way, we don't
-                                           # support proppatch on the internal interface
-                                           ("PROPPATCH", responsecode.FORBIDDEN),
+                                           # next, we send a malformed proppatch request,
+                                           ("PROPPATCH", responsecode.BAD_REQUEST),
                                            
                                            # move and copy the resource without a destination:
                                            ("MOVE", responsecode.BAD_REQUEST),

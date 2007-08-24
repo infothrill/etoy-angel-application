@@ -3,7 +3,7 @@ from angel_app.log import getLogger
 from twisted.web2 import stream
 from twisted.web2.dav.element import rfc2518
 from angel_app import elements
-from angel_app.resource.local.internal.methods import copy, delete, lock, mkcol, move, put
+from angel_app.resource.local.internal.methods import copy, delete, lock, mkcol, move, put, proppatch
 from angel_app.resource.local.basic import Basic
 from angel_app.contrib.ezPyCrypto import key as ezKey
 from angel_app.resource.remote.client import inspectResource
@@ -23,6 +23,7 @@ class Crypto(
              mkcol.mkcolMixin,
              move.moveMixin,
              put.Putable, 
+             proppatch.ProppatchMixin,
              Basic):
     """
     WebDAV resource interface for presenter.
