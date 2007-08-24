@@ -83,7 +83,7 @@ class DAVFile (DAVResource, File):
         """
         See L{IDAVResource.isCollection}.
         """
-        if not os.path.exists(self.fp.path): return False
+        if not self.fp.exists(): return False
         for child in self.listChildren(): return True
         return self.fp.isdir()
 
