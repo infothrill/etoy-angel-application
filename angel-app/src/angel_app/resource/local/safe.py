@@ -1,5 +1,6 @@
 from twisted.web2.dav.static import DAVFile
 from twisted.web2 import responsecode
+from twisted.web2.http import StatusResponse
 from twisted.web2.http import HTTPError
 from twisted.web2 import http, stream
 from twisted.web2.dav.xattrprops import xattrPropertyStore
@@ -37,6 +38,12 @@ class Safe(DAVFile):
         Level 2 compliance implies support for LOCK, UNLOCK
         """
         return ("1", "2")
+
+    def preconditions_PUT(self, request):
+        """
+        Disallowed.
+        """
+        forbidden("PUT") 
 
     def preconditions_MKCOL(self, request):
         """
