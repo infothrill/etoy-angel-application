@@ -51,37 +51,37 @@ class Safe(DAVFile):
         """
         forbidden("MKCOL") 
     
-    def http_DELETE(self, request):
+    def preconditions_DELETE(self, request):
         """
         Disallowed.
         """
         forbidden("DELETE") 
 
-    def http_COPY(self, request):
+    def preconditions_COPY(self, request):
         """
         Disallowed.
         """
         forbidden("COPY")
     
-    def http_LOCK(self, request):
+    def preconditions_LOCK(self, request):
         """
         Disallowed.
         """
         forbidden("LOCK")
 
-    def http_MOVE(self, request):
+    def preconditions_MOVE(self, request):
         """
         Disallowed.
         """
         forbidden("MOVE") 
     
-    def http_PROPPATCH(self, request):
+    def preconditions_PROPPATCH(self, request):
         """
         Disallowed.
         """
         forbidden("PROPPATCH") 
            
-    def http_UNLOCK(self, request):
+    def preconditions_UNLOCK(self, request):
         """
         Disallowed.
         """
