@@ -12,7 +12,6 @@ from zope.interface import implements
 from angel_app.resource import IResource
 from angel_app.resource.local.safe import Safe
 from angel_app.resource.local.external.methods.proppatch import ProppatchMixin
-from angel_app.resource.local.resourceMixins import deleteable
 from angel_app.log import getLogger
 from angel_app.contrib import uuid
 from angel_app.contrib.ezPyCrypto import key as ezKey
@@ -30,7 +29,7 @@ repository = FilePath(AngelConfig.get("common","repository"))
 
 REPR_DIRECTORY = "directory" #This is the string content representation of a directory
 
-class Basic(PropertyManagerMixin, deleteable.Deletable, Safe):
+class Basic(PropertyManagerMixin, Safe):
     """
     An extension to Safe, that implements common metadata operations.
     """

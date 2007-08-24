@@ -48,7 +48,7 @@ class mkcolMixin:
         log.debug("calling __checkSpot")
 
         if os.path.exists(self.fp.path):
-            log.error("Attempt to create collection where file exists: %s"
+            log.warn("Attempt to create collection where resource exists: %s"
                 % (self.fp.path,))
             raise HTTPError(responsecode.NOT_ALLOWED)
 
