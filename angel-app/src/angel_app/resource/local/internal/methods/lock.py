@@ -246,6 +246,9 @@ class Lockable(object):
     """
     def preconditions_LOCK(self, request):
         return deferredGenerator(self.__lockPreconditions)(request)
+    
+    def preconditions_UNLOCK(self, request):
+        pass
 
 
     def assertNotLocked(self, request):
