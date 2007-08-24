@@ -123,4 +123,10 @@ class Putable(object):
         return deferredGenerator(self._put)(request.stream)
         #return deferredGenerator(self._put)(request.stream).addCallback(inspectWithResponse(self))
         #return deferredGenerator(self._put)(request.stream).addCallback(nonblockingInspection(self))
+
+    def preconditions_PUT(self, request):
+        """
+        Disallowed.
+        """
+        pass
         
