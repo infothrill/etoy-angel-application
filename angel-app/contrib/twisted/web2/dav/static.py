@@ -28,6 +28,7 @@ WebDAV-aware static resources.
 
 __all__ = ["DAVFile"]
 
+import os
 from twisted.python import log
 from twisted.web2.static import File
 from twisted.web2.dav import davxml
@@ -83,7 +84,7 @@ class DAVFile (DAVResource, File):
         """
         See L{IDAVResource.isCollection}.
         """
-        if not self.fp.exists(): return False
+        if not os.path.exists(self.fp.path): return False
         for child in self.listChildren(): return True
         return self.fp.isdir()
 
