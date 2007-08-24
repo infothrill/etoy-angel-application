@@ -50,7 +50,7 @@ class Crypto(
             pks = self.parent().publicKeyString()
         
         if pks == None:
-            raise "Unable to look up public key for resource: " + self.fp.path
+            raise KeyError, "Unable to look up public key for resource: " + self.fp.path
         
         log.debug("keys on key ring: " + " ".join(Crypto.keyRing.keys()))
         
@@ -60,7 +60,7 @@ class Crypto(
             for key in Crypto.keyRing.keys():
                 error += key
             log.warn(error)
-            raise error
+            raise KeyError, error
         
         return Crypto.keyRing[pks]
   
@@ -169,9 +169,11 @@ class Crypto(
         
         try: 
             self.secretKey()
-        except:
+        except KeyError, e:
+            error = "Crypto: no key available for resource: " + self.fp.path
+            error += `e`
             # we don't even have a private key
-            log.debug("Crypto: no key available for resource: " + self.fp.path)
+            log.debug(error)
             return False
 
         
@@ -309,7 +311,7 @@ class Crypto(
         log.debug("called update on: " + self.fp.path)
         
         if not self.isWritableFile(): 
-            raise "not authorized to perform update of signed meta data"
+            raise RuntimeError, "not authorized to perform update of signed meta data"
 
         if self.isEncrypted():
             self.encrypt()
