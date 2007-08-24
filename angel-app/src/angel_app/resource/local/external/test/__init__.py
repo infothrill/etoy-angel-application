@@ -1,2 +1,0 @@
-all = ["methodTest",
-       "resourceTest"]
