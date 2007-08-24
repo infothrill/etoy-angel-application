@@ -1,10 +1,10 @@
 from angel_app.resource.local.basic import Basic
-from angel_app.resource.local.external.methods import delete, mkcol, proppatch, put
+from angel_app.resource.local.external.methods import proppatch
 
 from angel_app.log import getLogger
 log = getLogger(__name__)
 
-class External(proppatch.ProppatchMixin, put.PutMixin,  mkcol.MkcolMixin, delete.DeleteMixin, Basic):
+class External(proppatch.ProppatchMixin, Basic):
     """
     An AngelFile, as seen on the external (unsafe) network interface.
     """

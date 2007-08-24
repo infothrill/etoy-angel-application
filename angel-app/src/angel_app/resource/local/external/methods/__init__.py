@@ -1,4 +1,4 @@
-all = ["delete", "mkcol","proppatch", "put"]
+all = ["proppatch"]
 
 """
 Mixins for AngelFile behaviour. Each mixin implements one WebDAV method (PUT, LOCK, etc.).
