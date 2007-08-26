@@ -16,4 +16,4 @@ Handlers for HTTP/WebDAV methods specific to this class are implemented as mixin
 """
 
 all = ["basic","dirlist", "external", "internal", 
-       "util", "safe", "resourceMixins", "propertyManager", "transaction"]
+       "util", "safe", "resourceMixins", "propertyManager"]
