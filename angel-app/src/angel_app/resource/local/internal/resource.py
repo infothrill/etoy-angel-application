@@ -3,7 +3,7 @@ from angel_app.log import getLogger
 from twisted.web2 import stream
 from twisted.web2.dav.element import rfc2518
 from angel_app import elements
-from angel_app.resource.local.internal.methods import copy, delete, lock, mkcol, move, put, proppatch
+from angel_app.resource.local.internal.methods import copy, delete, lock, mkcol, move, put
 from angel_app.resource.local.basic import Basic
 from angel_app.contrib.ezPyCrypto import key as ezKey
 from angel_app.resource.remote.client import inspectResource
@@ -22,8 +22,7 @@ class Crypto(
              delete.Deletable, 
              mkcol.mkcolMixin,
              move.moveMixin,
-             put.Putable, 
-             proppatch.ProppatchMixin,
+             put.Putable,
              Basic):
     """
     WebDAV resource interface for presenter.
@@ -38,6 +37,12 @@ class Crypto(
         Basic.__init__(self, path, defaultType, indexNames)
          
         self.defaultValues[elements.ResourceID] = lambda x : util.makeResourceID(x.relativePath())
+
+    def davComplianceClasses(self):
+        """
+        Level 2 compliance implies support for LOCK, UNLOCK, which we support on the internal interface.
+        """
+        return ("1", "2")
                     
     def secretKey(self):
         """
@@ -52,8 +57,6 @@ class Crypto(
         
         if pks == None:
             raise KeyError, "Unable to look up public key for resource: " + self.fp.path
-        
-        log.debug("keys on key ring: " + " ".join(Crypto.keyRing.keys()))
         
         if pks not in Crypto.keyRing.keys():
             error = "Unable to look up secret key for public key %s on resource: %s. Found: " \
@@ -135,12 +138,12 @@ class Crypto(
         Therefore, it is not possible to use a directory's name as the 
         value to be signed.
         """
-        log.debug("signing file: " + self.fp.path)
-
         signature = self._computeContentHexDigest()
+        
         self.deadProperties().set(
                                   elements.ContentSignature.fromString( signature )
                                   )
+        
         self.deadProperties().set(
                                   elements.PublicKeyString.fromString( self.secretKey().exportKey() )
                                   )
@@ -171,10 +174,11 @@ class Crypto(
         try: 
             self.secretKey()
         except KeyError, e:
-            error = "Crypto: no key available for resource: " + self.fp.path
+            error = "Crypto: no key available for resource: " + self.fp.path + "\n"
             error += `e`
             # we don't even have a private key
-            log.debug(error)
+            log.info(error)
+            print error
             return False
 
         
@@ -248,40 +252,25 @@ class Crypto(
         """
         Add this resource to its parent's child elements.
         """
-        log.debug("entering _registerWithParent for " + self.fp.path)
 
         if self.isRepositoryRoot():
-            log.msg("Can not register root resource with parent.")
+            raise RuntimeError, "Can not register root resource with parent."
         
-        pdp = self.parent().deadProperties()
-        
-        oc = pdp.get(elements.Children.qname()).children
-        
-        for cc in oc:
-            if str(cc.childOfType(rfc2518.HRef)) == self.quotedResourceName():
-                log.debug(self.fp.path + ": this resource is already registered with the parent")
-                return
+        oc = [cc for cc in self.parent().childLinks().children]
 
-        # build the child element
-        ic = elements.Child(*[
-                         rfc2518.HRef(self.quotedResourceName()),
-                         elements.UUID(str(self.keyUUID())),
-                         self.resourceID()
-                         ])
-        
-        # create the updated list of new children
-        if ic not in oc:
-            nc = [cc for cc in oc] + [ic]
-        else:
-            nc = oc
+        ic = self.getChildElement()
 
-        # build the children element
+        if ic in oc:
+            # this resource is already registered with the parent"
+            return
+
+        # append this child element to the parents child elements
+        nc = oc + [ic]
         ce = elements.Children(*nc)
         
-        # add to parent and seal parent
-        pdp.set(ce)  
+        # add to parent and seal parent             
+        pdp = self.parent().set(ce)  
         self.parent().seal()          
-        log.debug("exiting _registerWithParent")
     
         
         

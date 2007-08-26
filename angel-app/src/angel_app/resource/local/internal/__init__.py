@@ -1,1 +1,1 @@
-all = ["methods", "resource", "util"]
+all = ["methods", "resource"]

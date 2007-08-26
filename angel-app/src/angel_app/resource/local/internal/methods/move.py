@@ -37,6 +37,3 @@ class moveMixin:
     def http_MOVE(self, request):
         
         return hm(self, request).addCallback(self._changeRegister(request))
-    
-    def preconditions_MOVE(self, request):
-        pass

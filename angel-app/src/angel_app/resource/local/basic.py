@@ -5,12 +5,12 @@ from twisted.web2.dav.xattrprops import xattrPropertyStore
 from twisted.web2.dav.element import rfc2518
 from twisted.web2.dav import davxml
 from twisted.python.filepath import FilePath
+from twisted.web2.dav.static import DAVFile
 from angel_app import elements
 from angel_app.resource.local.dirlist import DirectoryLister
 
 from zope.interface import implements
 from angel_app.resource import IResource
-from angel_app.resource.local.safe import Safe
 from angel_app.log import getLogger
 from angel_app.contrib import uuid
 from angel_app.contrib.ezPyCrypto import key as ezKey
@@ -28,17 +28,15 @@ repository = FilePath(AngelConfig.get("common","repository"))
 
 REPR_DIRECTORY = "directory" #This is the string content representation of a directory
 
-class Basic(PropertyManagerMixin, Safe):
-    """
-    An extension to Safe, that implements common metadata operations.
-    """
+class Basic(PropertyManagerMixin, DAVFile):
+    
     implements(IResource.IAngelResource)
     
     def __init__(self, path,
                  defaultType="text/plain",
                  indexNames=None):
         PropertyManagerMixin.__init__(self)
-        Safe.__init__(self, path, defaultType, indexNames)
+        DAVFile.__init__(self, path, defaultType, indexNames)
         
         # disallow the creation of resources outside of the repository
         self.assertInRepository()
@@ -59,7 +57,7 @@ class Basic(PropertyManagerMixin, Safe):
 
     def contentLength(self):
         if not self.isEncrypted():
-            return super(Safe, self).contentLength()
+            return super(DAVFile, self).contentLength()
         else:
             # getting the content length for an encrypted
             # file requires decryption of the file.
@@ -161,18 +159,22 @@ class Basic(PropertyManagerMixin, Safe):
         """
         Returns true if the resource is referenced by the parent resource.
         """
-        return self in self.parent().metaDataChildren()
+        return self.getChildElement() in self.parent().childLinks()
     
     def exists(self):
         """
         @rtype boolean
         @return true, if the corresponding file exists. If the resource is not the root resource, it must additionally be
             referenced by the parent collection.
-        """    
-        if self.isRepositoryRoot(): 
-            return os.path.exists(self.fp.path)
-        else: 
-            return self.referenced() and os.path.exists(self.fp.path)
+        """   
+        if not os.path.exists(self.fp.path): 
+
+            return False 
+
+        if not self.isRepositoryRoot(): 
+            return self.referenced()
+        else:
+            return True
 
     def removeIfUnreferenced(self):
         """
@@ -285,6 +287,16 @@ class Basic(PropertyManagerMixin, Safe):
     def childLinks(self):
         return self.get(elements.Children)
 
+    def getChildElement(self):
+        """
+        @return the child element for this resource.
+        """
+        return elements.Child(*[
+                         rfc2518.HRef(self.quotedResourceName()),
+                         elements.UUID(str(self.keyUUID())),
+                         self.resourceID()
+                         ])
+
     def metaDataChildren(self):
         """
         The children of this resource as specified in the resource metadata.
@@ -306,21 +318,15 @@ class Basic(PropertyManagerMixin, Safe):
         
         children = self.childLinks().children
 
-        #validatedChildren = []
-        #for child in children:
-        #    sf = self.createSimilarFile(self.fp.path + os.sep + urllib.unquote(str(child.childOfType(davxml.HRef))))
-        #    if os.path.exists(sf.fp.path): # and str(sf.keyUUID()) == str(child.childOfType(elements.UUID).children[0]):
-        #        validatedChildren.append(sf)
         links = [str(child.childOfType(davxml.HRef)) for child in children]
-        #return validatedChildren
         return [self.createSimilarFile(self.fp.path + os.sep + urllib.url2pathname(link))
                 for link in links]
 
 
     def publicKeyString(self):
-        
-        log.debug("retrieving public key string for: " + self.fp.path)
-        
+        """
+        @return: the string representation of the resource's public key.
+        """
         return self.getAsString(elements.PublicKeyString)
  
     def keyUUID(self):

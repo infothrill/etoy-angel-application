@@ -5,7 +5,6 @@ from twisted.web2 import responsecode
 from twisted.web2.http import HTTPError, StatusResponse
 from twisted.web2.dav.http import ResponseQueue, statusForFailure
 from angel_app import elements
-from angel_app.resource.local.internal.util import inspectWithResponse
 from angel_app.log import getLogger
 
 log = getLogger(__name__)

@@ -110,15 +110,3 @@ class mkcolMixin:
         """     
     
         return deferredGenerator(self.__mkcol)(request)#.addCallback(inspectWithResponse(self))
-    
-        #return self.put(request.stream)
-        #return deferredGenerator(self.__mkcol)(request)
-        #return self.put(request.stream)
-        #put = deferredGenerator(self.put)
-        #return put(request.stream)
-    
-    def preconditions_MKCOL(self, request):
-        """
-        Allowed in principle (override dissalow in Safe).
-        """
-        pass

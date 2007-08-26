@@ -41,20 +41,29 @@ from angel_app.elements import Children
 from angel_app.config import config
 AngelConfig = config.getConfig()
 repositoryPath = AngelConfig.get("common","repository")
+import os
 
 class BasicResourceTest(unittest.TestCase):
     
     testDirPath = os.path.sep.join([repositoryPath, "TEST"])
 
     def setUp(self):
-        os.mkdir(self.testDirPath)
+        try:
+            os.mkdir(self.testDirPath)
+        except OSError, e:
+            print `e`
+
         self.dirResource = Crypto(self.testDirPath) 
-        self.dirResource._registerWithParent()  
+        self.dirResource._registerWithParent()
         self.dirResource._updateMetadata()
         
     def tearDown(self):
-        self.dirResource._deRegisterWithParent()  
-        os.rmdir(self.testDirPath)
+        self.dirResource._deRegisterWithParent()
+        try:
+            os.rmdir(self.testDirPath)
+        except OSError, e:
+            print "not a directory"
+            os.remove(self.testDirPath)
     
         
     def testExists(self):

@@ -1,6 +1,6 @@
-all = ["copy", "delete", "lock", "mkcol", "move", "proppatch", "put"]
+all = ["copy", "delete", "lock", "mkcol", "move", "put"]
 
 """
-Mixins for AngelFile behaviour. Each mixin implements one WebDAV method (PUT, LOCK, etc.).
-I feel this is cleaner than wilfredo's bindmethods() - approach.
+Mixins for AngelFile-specific (i.e. extending standard twisted.dav) behaviour, where required. 
+Each mixin implements one WebDAV method (PUT, LOCK, etc.).
 """

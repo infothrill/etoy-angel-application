@@ -3,11 +3,7 @@ Behaviour of "local" resources. I.e. locally stored resources, that are exposed 
 
 The layout of these packages follows this pattern:
 
-safe.Safe defines a "safe" WebDAV resource (inherited from twisted.web2.dav Resource), 
-i.e. a resource where all writing operations have been disabled. However, read-only methods such as 
-GET, HEAD, PROPFIND remain exposed.
-
-basic.Basic extends safe.Safe with functionality needed by all angel-app WebDAV resources, such as
+basic.Basic extends DAVFile with functionality needed by all angel-app WebDAV resources, such as
 the self.parent() method.
 
 internal.resource.Crypto extends basic.Basic and provides additional methods for destructive updates,
@@ -20,5 +16,4 @@ Handlers for HTTP/WebDAV methods specific to this class are implemented as mixin
 """
 
 all = ["basic","dirlist", "external", "internal", 
-       "util", "safe", "resourceMixins", "propertyManager", 
-       "standardPreconditions", "transaction"]
+       "util", "safe", "resourceMixins", "propertyManager", "transaction"]

@@ -27,8 +27,8 @@ def dance(options):
     providerport = AngelConfig.getint("provider", "listenPort")
     repository = AngelConfig.get("common", "repository")
 
-    from angel_app.resource.local.basic import Basic
-    root = Basic(repository)
+    from angel_app.resource.local.external import resource
+    root = resource.External(repository)
 
     from twisted.web2 import server
     from twisted.web2 import channel

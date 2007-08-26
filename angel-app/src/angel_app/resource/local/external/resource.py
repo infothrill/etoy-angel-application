@@ -1,11 +1,12 @@
-from twisted.web2.dav.static import DAVFile
+from angel_app.resource.local.basic import Basic
+
+from twisted.internet.defer import Deferred
 from twisted.web2 import responsecode
 from twisted.web2.http import StatusResponse
 from twisted.web2.http import HTTPError
-from twisted.web2 import http, stream
-from twisted.web2.dav.xattrprops import xattrPropertyStore
-from angel_app import elements
+
 from angel_app.log import getLogger
+from angel_app.resource.local.external.checkRemoteForClone import checkGettingClient
 
 log = getLogger(__name__)
 
@@ -17,27 +18,25 @@ def forbidden(method):
     log.warn(error)
     raise HTTPError(StatusResponse(responsecode.FORBIDDEN, error))
 
-class Safe(DAVFile):
+
+class External(Basic):
     """
-    This implements a safe WebDAV resource, in that all requests to modifiy
-    this resource are denied.
+    WebDAV resource interface for provider. All destructive methods are forbidden.
+
+    Additionally, the External resource class is responsible for inserting new clone references
+    into the network. Specifically, ater a GET request has been successfully handled, a method
+    is dispathced that verifies if the host from which the GET request originated is now itself
+    offering a clone of that resource (see http_GET for details).
     """
     
     def __init__(self, path,
                  defaultType="text/plain",
                  indexNames=None):
-        DAVFile.__init__(self, path, defaultType, indexNames)
         
-    def __eq__(self, other):
-        try:
-            return self.fp.path == other.fp.path
-        except: return False
+        Basic.__init__(self, path, defaultType, indexNames)
 
-    def davComplianceClasses(self):
-        """
-        Level 2 compliance implies support for LOCK, UNLOCK
-        """
-        return ("1", "2")
+# forbidden method follow
+
 
     def preconditions_PUT(self, request):
         """

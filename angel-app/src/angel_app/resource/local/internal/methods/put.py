@@ -7,10 +7,10 @@ from twisted.python.failure import Failure
 from twisted.internet.defer import deferredGenerator, waitForDeferred
 from twisted.web2.stream import readIntoFile
 from twisted.web2.dav.http import statusForFailure
+from twisted.web2.dav.method.put import preconditions_PUT as twisted_preconditions_PUT
 
 from twisted.web2.dav.fileop import checkResponse
 from angel_app.log import getLogger
-from angel_app.resource.local.internal.util import inspectWithResponse
 import angel_app.singlefiletransaction
 import os
 
@@ -121,13 +121,4 @@ class Putable(object):
         Respond to a PUT request. (RFC 2518, section 8.7)
         """
         return deferredGenerator(self._put)(request.stream)
-        #return deferredGenerator(self._put)(request.stream).addCallback(inspectWithResponse(self))
-        #return deferredGenerator(self._put)(request.stream).addCallback(nonblockingInspection(self))
-
-    def preconditions_PUT(self, request):
-        """
-        Override safe setting.
-        @see: safe.py
-        """
-        pass
         

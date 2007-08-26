@@ -46,11 +46,9 @@ class CloneTest(unittest.TestCase):
         from angel_app.resource.remote.clone import Clone
         cc = Clone("80.219.195.84", 6221)
         assert False == cc.ping()
-        print "timeout A: ", socket.getdefaulttimeout()
         
-        dd = Clone("missioneternity.org")
+        dd = Clone("localhost")
         assert True == dd.ping()
-        print "timeout B: ", socket.getdefaulttimeout()
         
         assert oldTimeOut == socket.getdefaulttimeout()
 

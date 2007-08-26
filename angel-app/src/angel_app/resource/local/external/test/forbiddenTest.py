@@ -62,7 +62,11 @@ class ForbiddenTest(unittest.TestCase):
         
     def tearDown(self):
         self.dirResource._deRegisterWithParent()  
-        os.rmdir(self.testDirPath)
+        try:
+            os.rmdir(self.testDirPath)
+        except OSError, e:
+            print "not a directory"
+            os.remove(self.testDirPath)
         
     def testDenyRemoteResourceModification(self):
         """
@@ -91,5 +95,5 @@ class ForbiddenTest(unittest.TestCase):
         for method, expect in methodsAndExpectedResponseCodes:
             response = dd._performRequest(method)
             assert response.status == expect, \
-                method + " must not be allowed, received: " + `expect` + " " + response.status
+                method + " must not be allowed, expected: " + `expect` + " received: " + `response.status`
 
