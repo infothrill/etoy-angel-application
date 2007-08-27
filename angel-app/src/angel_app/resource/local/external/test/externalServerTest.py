@@ -31,18 +31,59 @@ legalMatters = """
 author = """Vincent Kraeutler 2007"""
 
 
-import unittest
+from angel_app import elements
+from angel_app.config import config
 from angel_app.resource.local.basic import Basic as EResource
 from angel_app.resource.local.internal.resource import Crypto
+from angel_app.resource.remote import clone
+from twisted.web2 import responsecode
+from twisted.web2.dav.element import rfc2518
+import os 
+import unittest
 
-from angel_app.config import config
+
 AngelConfig = config.getConfig()
 repositoryPath = AngelConfig.get("common","repository")
 providerport = AngelConfig.getint("provider","listenPort")
 
-from twisted.web2 import responsecode
+           
+def makePushBody(localClone, elements = elements.requiredKeys):
+    """
+    Generate the DAVDocument representation of the required properties of the local clone.
+    """
+    
+    def makeSetElement(elements):
+        return rfc2518.Set(
+                         rfc2518.PropertyContainer(element))
+        
+    cc = clone.Clone("localhost", providerport, localClone.relativeURL())
+    pList = [makeSetElement(element) for element in
+             [localClone.deadProperties().get(el.qname()) for el in elements]
+              + [clone.clonesToElement([cc])]]
+    
+    pu = rfc2518.PropertyUpdate(*pList)
+    return pu.toxml()
 
-import os 
+def performPushRequest(self, localClone, elements = elements.requiredKeys):
+    """
+    Push the relevant properties of a local clone to the remote clone via a PROPPATCH request.
+    @param elements is a list of property elements we want to push out to the remote clone
+    """
+    pb = makePushBody(localClone, elements)
+    log.debug("pushing metadata:" + pb + " for clone " + `self`)
+    resp = self._performRequest(
+                                     method = "PROPPATCH", 
+                                     body = pb
+                                     )
+    # we probably ignore the returned data, but who knows
+    data = resp.read()
+    if resp.status != responsecode.MULTI_STATUS:
+        if resp.status == responsecode.NOT_FOUND:
+            raise CloneNotFoundError("Clone %s not found, response code is: %s, data is %s" % (`self`, `resp.status`, data) )
+        else:
+            raise CloneError("must receive a MULTI_STATUS response for PROPPATCH, otherwise something's wrong, got: " + `resp.status` +\
+                    data)
+
 
 class ForbiddenTest(unittest.TestCase):
     """
@@ -96,14 +137,51 @@ class ForbiddenTest(unittest.TestCase):
             assert response.status == expect, \
                 method + " must not be allowed, expected: " + `expect` + " received: " + `response.status`
 
+        
+    def testAllowRemoteResourceRead(self):
+        """
+        Perform read-only requests on remote resource
+        """
+        
+        from angel_app.resource.remote.clone import Clone
+        
+        cc = Clone()
+        
+        assert cc.ping(), "Test resource root unreachable."
+        
+        # fake resource, modification of which should be disallowed 
+        dd = Clone("localhost", providerport, "/TEST/")
+        
+        methodsAndExpectedResponseCodes = [
+                                           ("GET", responsecode.OK),
+                                           ("PROPFIND", responsecode.MULTI_STATUS),
+                                           ]
+        
+        for method, expect in methodsAndExpectedResponseCodes:
+            response = dd._performRequest(method)
+            assert response.status == expect, \
+                method + " -- got wrong status code, expected: " + `expect` + " received: " + `response.status`
+
+
+        # path without trailing backslash affords redirecto for directories
+        dd = Clone("localhost", providerport, "/TEST")
+        
+        methodsAndExpectedResponseCodes = [
+                                           ("GET", responsecode.MOVED_PERMANENTLY),
+                                           ]
+        
+        for method, expect in methodsAndExpectedResponseCodes:
+            response = dd._performRequest(method)
+            assert response.status == expect, \
+                method + " -- got wrong status code, expected: " + `expect` + " received: " + `response.status`
+
 
     def testProppatch(self):
         """
         Assert (except for PROPPATCH) that all modification requests for the root resource are denied.
         For this test to run, you need a running instance of the provider.
         """
-        
-        from angel_app.resource.remote import clone
+
         
         # fake resource, modification of which should be disallowed 
         dd = clone.Clone("localhost", providerport, "/TEST")
@@ -116,7 +194,7 @@ class ForbiddenTest(unittest.TestCase):
         assert (response.status == responsecode.BAD_REQUEST), \
             "Request with empty body must fail with 400 BAD_REQUEST. Received: " + `response.status`
             
-        body = clone.makePushBody(self.dirResource)
+        body = makePushBody(self.dirResource)
         
         response = dd._performRequest(method, body = body)
         assert (response.status == responsecode.FORBIDDEN), \
