@@ -68,7 +68,7 @@ class ForbiddenTest(unittest.TestCase):
             print "not a directory"
             os.remove(self.testDirPath)
         
-    def _testDenyRemoteResourceModification(self):
+    def testDenyRemoteResourceModification(self):
         """
         Assert (except for PROPPATCH) that all modification requests for the root resource are denied.
         For this test to run, you need a running instance of the provider.
