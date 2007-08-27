@@ -105,12 +105,10 @@ class ForbiddenTest(unittest.TestCase):
         
         from angel_app.resource.remote import clone
         
-        cc = clone.Clone()
-        
-        assert cc.ping(), "Test resource root unreachable. Make sure you have a running provider instance."
-        
         # fake resource, modification of which should be disallowed 
         dd = clone.Clone("localhost", providerport, "/TEST")
+        
+        assert dd.ping(), "Test resource root unreachable. Make sure you have a running provider instance."
         
         method = "PROPPATCH"
         
@@ -120,9 +118,14 @@ class ForbiddenTest(unittest.TestCase):
             
         body = clone.makePushBody(self.dirResource)
         
-        print body
-        
         response = dd._performRequest(method, body = body)
         assert (response.status == responsecode.FORBIDDEN), \
             "Request with extensive property update must fail with 403 FORBIDDEN. Received: " + `response.status`
+            
+        body = clone.makeCloneBody(self.dirResource)
+        response = dd._performRequest(method, body = body)
+        
+        # TODO: we might want to add a detailed analysis of the MULTI_STATUS response here.
+        assert (response.status == responsecode.MULTI_STATUS), \
+            "Request with well-formed property update must succeed with MULTI_STATUS response. Received: " + `response.status`
 

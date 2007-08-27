@@ -60,17 +60,22 @@ class ProppatchMixin:
                        responsecode.NOT_FOUND, error))
 
     def apply(self, requestProperties, request):
-
+        """
+        @param requestProperties: properties to be applied
+        @param request: the request object
+        @return a MULTISTATUS response object containing the response for each request property.
+                
+        we're being overly general here -- i.e. handling of multiple property responses
+        when we know from previous validation that only one property may be supplied.
+        however, this code works, so we might as well keep it.
+        """
         responses = PropertyStatusResponseQueue(
                                     "PROPPATCH", 
                                     request.uri, 
                                     responsecode.NO_CONTENT)
         
         dp = self.deadProperties()
-        
-        # we're being overly general here -- i.e. handling of multiple property responses
-        # when we know from previous validation that only one property may be supplied.
-        # however, this code works, so we might as well keep it.
+
         propertyResponses = [(property, cloneHandler(property, dp, request))
                              for property in requestProperties]
         
@@ -96,7 +101,7 @@ class ProppatchMixin:
             raise HTTPError(StatusResponse(responsecode.FORBIDDEN, error))
         
         # apply the changes
-        yield self.apply(cloneField, request)
+        yield self.apply([cloneField], request)
 
         
     def http_PROPPATCH(self, request):
@@ -141,9 +146,15 @@ def validateBodyXML(doc):
             "All SET tags must contain exactly one PropertyContainer tag."
         
     propertyContainer = child.children[0]
-    assert (1 == len(propertyContainer.children) and isinstance(propertyContainer.children[0], elements.Clone)), \
-        "The property container must contain an update request for exactly one clone."
-        
+    log.info("foo: " + child.toxml())
+    assert (1 == len(propertyContainer.children) and isinstance(propertyContainer.children[0], elements.Clones)), \
+        "The property container must contain exactly one clones element."
+    
+    clones = propertyContainer.children[0]
+    log.info("foo: " + clones.toxml())
+    assert (1 == len(clones.children) and isinstance(clones.children[0], elements.Clone)), \
+        "The Clones element must contain exactly one clone element."
+    
     # return the clone element
     return propertyContainer.children[0]
                 
@@ -173,10 +184,9 @@ def cloneHandler(property, store, request):
     store if we want.
     """
     from angel_app.resource.remote.clone import clonesFromElement, clonesToElement
-    try:
-        residentClones = clonesFromElement(store.get(elements.Clones))
-    except ValueError, e:
-        log.warn("Failed to read clones on PROPPATCH. Possibly none set yet? Error: \n" + `e`)
+    if store.contains(elements.Clones.qname()):
+        residentClones = clonesFromElement(store.get(elements.Clones.qname()))
+    else:
         residentClones = []
         
     if len(residentClones) >= maxclones: 
@@ -195,8 +205,7 @@ def cloneHandler(property, store, request):
         response = StatusResponse(responsecode.BAD_REQUEST, error)
         return Failure(exc_value=HTTPError(response))
             
-    log.info("foo adding clone: " + `newClone` + " to resource " + self.fp.path)   
-    return defaultHandler(clonesToElement(residentClones + [newClone]), store, responses)     
+    return defaultHandler(clonesToElement(residentClones + [newClone]), store)     
 
             
             # up until revision 572, there was some validation code in here, that would check

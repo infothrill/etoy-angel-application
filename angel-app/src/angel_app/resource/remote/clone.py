@@ -448,6 +448,17 @@ def makePushBody(localClone, elements = elements.requiredKeys):
     pu = davxml.PropertyUpdate(*pList)
     return pu.toxml()
 
+def makeCloneBody(localClone):
+    """
+    Make a PROPPATCH body from the local clone for registration with a remote node.
+    """
+    cc = Clone("localhost", providerport, localClone.relativeURL())
+    cloneElement = elements.Clone(rfc2518.HRef(`cc`))
+    clonesElement = elements.Clones(*[cloneElement])
+    setElement = rfc2518.Set(rfc2518.PropertyContainer(clonesElement))
+    propertyUpdateElement = rfc2518.PropertyUpdate(setElement)
+    return propertyUpdateElement.toxml()
+
 def getClonesOf(clonesList):
     """
     TODO: this should probably be replaced by a generator
