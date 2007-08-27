@@ -1,19 +1,19 @@
-from twisted.web2 import responsecode
-from twisted.web2.dav.element import rfc2518
-from twisted.web2.dav import davxml
 from angel_app import elements
-#from angel_app.resource.remote import util
-from angel_app.resource import IResource
-from zope.interface import implements
+from angel_app.config import config
 from angel_app.contrib.ezPyCrypto import key
 from angel_app.log import getLogger
+from angel_app.resource import IResource
+from httplib import HTTPConnection
+from twisted.web2 import responsecode
+from twisted.web2.dav import davxml
+from twisted.web2.dav.element import rfc2518
+from zope.interface import implements
 import urlparse
+#from angel_app.resource.remote import util
 
 log = getLogger(__name__)
 
-from httplib import HTTPConnection
 
-from angel_app.config import config
 AngelConfig = config.getConfig()
 providerport = AngelConfig.getint("provider","listenPort")
 
@@ -342,8 +342,6 @@ class Clone(object):
                                 for element in elements.signedKeys
                                 ])
         
-        #log.debug("Clone: " + toBeVerified)
-        
         pubKey = key()
         try:
             pubKey.importKey(self.publicKeyString())
@@ -371,49 +369,6 @@ class Clone(object):
             return clonesFromElement(prop)
         except:
             return []
-
-    def putFile(self, stream):
-        """
-        Push the file contents, after pushing the relevant properties of a local parent clone to the 
-        remote parent clone via a PROPPATCH request.
-        
-        @see performPushRequest
-        
-        TODO: read the file lazily (needs re-work of _performRequest!)
-        """
-        resp = self._performRequest(method = "PUT", body = stream.read())
-
-    def mkCol(self):
-        """
-        Make a remote collection, after pushing the relevant properties of a local parent clone to the 
-        remote parent clone via a PROPPATCH request.
-        """
-        resp = self._performRequest(method = "MKCOL", body = "")
-        log.debug("response on MKCOL: " + `resp.status`)
-        return resp
-
-
-    def performPushRequest(self, localClone, elements = elements.requiredKeys):
-        """
-        Push the relevant properties of a local clone to the remote clone via a PROPPATCH request.
-        @param elements is a list of property elements we want to push out to the remote clone
-        """
-        pb = makePushBody(localClone, elements)
-        log.debug("pushing metadata:" + pb + " for clone " + `self`)
-        resp = self._performRequest(
-                                     method = "PROPPATCH", 
-                                     body = pb
-                                     )
-        
-        # we probably ignore the returned data, but who knows
-        data = resp.read()
-        if resp.status != responsecode.MULTI_STATUS:
-            if resp.status == responsecode.NOT_FOUND:
-                raise CloneNotFoundError("Clone %s not found, response code is: %s, data is %s" % (`self`, `resp.status`, data) )
-            else:
-                raise CloneError("must receive a MULTI_STATUS response for PROPPATCH, otherwise something's wrong, got: " + `resp.status` +\
-                    data)
-
    
 def makePropfindRequestBody(properties):
     """
@@ -424,35 +379,12 @@ def makePropfindRequestBody(properties):
                 rfc2518.PropertyContainer(
                       *[property() for property in properties]
                       )).toxml()
-           
-def makePushBody(localClone, elements = elements.requiredKeys):
-    """
-    Generate the DAVDocument representation of the required properties of the local clone.
-    """
-    
-    def makeSetElement(elements):
-        return rfc2518.Set(
-                         rfc2518.PropertyContainer(element))
-    
-    
-    for el in elements:
-        log.debug("makePushBody: " + localClone.deadProperties().get(el.qname()).toxml())
-        
-    cc = Clone("localhost", providerport, localClone.relativeURL())
-    pList = [makeSetElement(element) for element in
-             [localClone.deadProperties().get(el.qname()) for el in elements]
-              + [clonesToElement([cc])]]
-    
-    log.debug(`pList`)
-    
-    pu = davxml.PropertyUpdate(*pList)
-    return pu.toxml()
 
-def makeCloneBody(localClone):
+def makeCloneBody(localResource):
     """
     Make a PROPPATCH body from the local clone for registration with a remote node.
     """
-    cc = Clone("localhost", providerport, localClone.relativeURL())
+    cc = Clone("localhost", providerport, localResource.relativeURL())
     cloneElement = elements.Clone(rfc2518.HRef(`cc`))
     clonesElement = elements.Clones(*[cloneElement])
     setElement = rfc2518.Set(rfc2518.PropertyContainer(clonesElement))
