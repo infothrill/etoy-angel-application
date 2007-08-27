@@ -70,7 +70,7 @@ class ForbiddenTest(unittest.TestCase):
         
     def testDenyRemoteResourceModification(self):
         """
-        Assert that all modification requests for the root resource are denied.
+        Assert (except for PROPPATCH) that all modification requests for the root resource are denied.
         For this test to run, you need a running instance of the provider.
         """
         
@@ -87,7 +87,6 @@ class ForbiddenTest(unittest.TestCase):
                                            ("MKCOL", responsecode.FORBIDDEN),
                                            ("DELETE", responsecode.FORBIDDEN),
                                            ("PUT", responsecode.FORBIDDEN),
-                                           ("PROPPATCH", responsecode.BAD_REQUEST),
                                            ("MOVE", responsecode.FORBIDDEN),
                                            ("COPY", responsecode.FORBIDDEN)
                                            ]
@@ -96,4 +95,30 @@ class ForbiddenTest(unittest.TestCase):
             response = dd._performRequest(method)
             assert response.status == expect, \
                 method + " must not be allowed, expected: " + `expect` + " received: " + `response.status`
+
+
+    def testDenyRemoteResourceModification(self):
+        """
+        Assert (except for PROPPATCH) that all modification requests for the root resource are denied.
+        For this test to run, you need a running instance of the provider.
+        """
+        
+        from angel_app.resource.remote.clone import Clone
+        
+        cc = Clone()
+        
+        assert cc.ping(), "Test resource root unreachable."
+        
+        # fake resource, modification of which should be disallowed 
+        dd = Clone("localhost", providerport, "/TEST")
+        
+        methodsAndExpectedResponseCodes = [
+                                           ("PROPPATCH", responsecode.BAD_REQUEST),
+                                           ]
+        
+        for method, expect in methodsAndExpectedResponseCodes:
+            response = dd._performRequest(method)
+            assert response.status == expect, \
+                method + " must not be allowed, expected: " + `expect` + " received: " + `response.status`
+
 
