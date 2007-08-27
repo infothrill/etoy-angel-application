@@ -68,10 +68,11 @@ class ProppatchMixin:
         
         dp = self.deadProperties()
         
-        propertyResponses = [
-                             (property, cloneHandler(property, dp, request))
-                             for property in requestProperties
-                             ]
+        # we're being overly general here -- i.e. handling of multiple property responses
+        # when we know from previous validation that only one property may be supplied.
+        # however, this code works, so we might as well keep it.
+        propertyResponses = [(property, cloneHandler(property, dp, request))
+                             for property in requestProperties]
         
         for (property, response) in propertyResponses:
             responses.add(response, property)
@@ -90,8 +91,9 @@ class ProppatchMixin:
         try:
             cloneField = validateBodyXML(doc)
         except AssertionError, e:
-            log.error(`e`)
-            raise HTTPError(StatusResponse(responsecode.BAD_REQUEST, `e`))
+            error = "PROPPATCH request body does not validate. Error: " + str(e)
+            log.info(error)
+            raise HTTPError(StatusResponse(responsecode.FORBIDDEN, error))
         
         # apply the changes
         yield self.apply(cloneField, request)
@@ -117,8 +119,8 @@ def readRequestBody(request):
         error = "Request XML body is required."
         log.error(error)
         raise HTTPError(StatusResponse(responsecode.BAD_REQUEST, error))
-
-    yield doc
+    else:
+        yield doc
 
 def validateBodyXML(doc):
     """
@@ -193,7 +195,7 @@ def cloneHandler(property, store, request):
         response = StatusResponse(responsecode.BAD_REQUEST, error)
         return Failure(exc_value=HTTPError(response))
             
-    log.info("adding clone: " + `newClone` + " to resource " + self.fp.path)   
+    log.info("foo adding clone: " + `newClone` + " to resource " + self.fp.path)   
     return defaultHandler(clonesToElement(residentClones + [newClone]), store, responses)     
 
             

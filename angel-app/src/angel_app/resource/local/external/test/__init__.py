@@ -1,1 +1,1 @@
-all = ["forbiddenTest"]
+all = ["externalServerTest"]

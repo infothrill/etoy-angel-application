@@ -68,7 +68,7 @@ class ForbiddenTest(unittest.TestCase):
             print "not a directory"
             os.remove(self.testDirPath)
         
-    def testDenyRemoteResourceModification(self):
+    def _testDenyRemoteResourceModification(self):
         """
         Assert (except for PROPPATCH) that all modification requests for the root resource are denied.
         For this test to run, you need a running instance of the provider.
@@ -97,28 +97,32 @@ class ForbiddenTest(unittest.TestCase):
                 method + " must not be allowed, expected: " + `expect` + " received: " + `response.status`
 
 
-    def testDenyRemoteResourceModification(self):
+    def testProppatch(self):
         """
         Assert (except for PROPPATCH) that all modification requests for the root resource are denied.
         For this test to run, you need a running instance of the provider.
         """
         
-        from angel_app.resource.remote.clone import Clone
+        from angel_app.resource.remote import clone
         
-        cc = Clone()
+        cc = clone.Clone()
         
-        assert cc.ping(), "Test resource root unreachable."
+        assert cc.ping(), "Test resource root unreachable. Make sure you have a running provider instance."
         
         # fake resource, modification of which should be disallowed 
-        dd = Clone("localhost", providerport, "/TEST")
+        dd = clone.Clone("localhost", providerport, "/TEST")
         
-        methodsAndExpectedResponseCodes = [
-                                           ("PROPPATCH", responsecode.BAD_REQUEST),
-                                           ]
+        method = "PROPPATCH"
         
-        for method, expect in methodsAndExpectedResponseCodes:
-            response = dd._performRequest(method)
-            assert response.status == expect, \
-                method + " must not be allowed, expected: " + `expect` + " received: " + `response.status`
-
+        response = dd._performRequest(method)
+        assert (response.status == responsecode.BAD_REQUEST), \
+            "Request with empty body must fail with 400 BAD_REQUEST. Received: " + `response.status`
+            
+        body = clone.makePushBody(self.dirResource)
+        
+        print body
+        
+        response = dd._performRequest(method, body = body)
+        assert (response.status == responsecode.FORBIDDEN), \
+            "Request with extensive property update must fail with 403 FORBIDDEN. Received: " + `response.status`
 
