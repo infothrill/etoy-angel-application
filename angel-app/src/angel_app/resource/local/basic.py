@@ -361,8 +361,6 @@ class Basic(PropertyManagerMixin, DAVFile):
         if not self.exists():
             return responsecode.NOT_FOUND
 
-        print self.fp.path + " " + self.fp.isdir()
-
         if self.fp.isdir():
             return self.renderDirectory(req)
         else:
