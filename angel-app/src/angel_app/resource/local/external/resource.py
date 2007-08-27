@@ -6,7 +6,7 @@ from twisted.web2.http import StatusResponse
 from twisted.web2.http import HTTPError
 
 from angel_app.log import getLogger
-from angel_app.resource.local.external.checkRemoteForClone import checkGettingClient
+from angel_app.resource.local.external.methods import proppatch
 
 log = getLogger(__name__)
 
@@ -19,7 +19,7 @@ def forbidden(method):
     raise HTTPError(StatusResponse(responsecode.FORBIDDEN, error))
 
 
-class External(Basic):
+class External(proppatch.ProppatchMixin, Basic):
     """
     WebDAV resource interface for provider. All destructive methods are forbidden.
 
@@ -72,13 +72,7 @@ class External(Basic):
         """
         Disallowed.
         """
-        forbidden("MOVE") 
-    
-    def preconditions_PROPPATCH(self, request):
-        """
-        Disallowed.
-        """
-        forbidden("PROPPATCH") 
+        forbidden("MOVE")  
            
     def preconditions_UNLOCK(self, request):
         """

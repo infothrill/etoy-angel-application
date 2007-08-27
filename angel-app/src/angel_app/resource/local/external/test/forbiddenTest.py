@@ -87,7 +87,7 @@ class ForbiddenTest(unittest.TestCase):
                                            ("MKCOL", responsecode.FORBIDDEN),
                                            ("DELETE", responsecode.FORBIDDEN),
                                            ("PUT", responsecode.FORBIDDEN),
-                                           ("PROPPATCH", responsecode.FORBIDDEN),
+                                           ("PROPPATCH", responsecode.BAD_REQUEST),
                                            ("MOVE", responsecode.FORBIDDEN),
                                            ("COPY", responsecode.FORBIDDEN)
                                            ]

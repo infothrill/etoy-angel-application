@@ -54,144 +54,27 @@ class ProppatchMixin:
     def preconditions_PROPPATCH(self, request):
         
         if not os.path.exists(self.fp.path):
-            log.error("File not found: %s" % (self.fp.path,))
-            raise HTTPError(responsecode.NOT_FOUND)
-
-    def authenticate(self, request, requestProperties):
-        """
-        A PROPPATCH request is accepted exactly if the signable meta data and 
-        the corresponding signature match, and the public key of the request is
-        the same as the public key of the local resource.
-        """
-        
-        def __get(element):
-            return requestProperties[element.name]
-        
-        def __string(strings):
-            return "".join([str(ss) for ss in strings])
-        
-        def __both(element):
-            return __string(__get(element).children)
-        
-        def __xml(element):
-            return __get(element).toxml()
-        
-        try: 
-            lid = self.resourceID()
-        except:
-            # TODO: review -- this is a potential security hole if not handled right,
-            # but we are going to be careful, aren't we?
-            return True
-        rid = __get(elements.ResourceID)
-        if not lid == rid:
-            log.info("resource ID's for PROPPATCH don't match. Local: %s, remote: %s" % (lid, rid))
-            return False
-        
-        sig = __both(elements.MetaDataSignature)
-        keyString = __both(elements.PublicKeyString)
-        
-        if keyString != self.publicKeyString():
-            error = "denied attempt to PROPPATCH %s with wrong key from host %s " % \
-                (self.fp.path, str(request.remoteAddr.host))
-            log.info(error)
+            error = "File not found: %s" % (self.fp.path,)
+            log.error(error)
             raise HTTPError(StatusResponse(
-                                   responsecode.UNAUTHORIZED, error))
-        
-        signable = __string([
-                     __xml(element)
-                    for element in elements.signedKeys
-                    ])
+                       responsecode.NOT_FOUND, error))
 
-        log.debug("PROPPATCH: signable:" + `signable`)
-        pubKey = angel_app.contrib.ezPyCrypto.key()
-        pubKey.importKey(keyString)
-        isValid = pubKey.verifyString(signable, sig)
-        log.debug("PROPPATCH request signature is valid: " + `isValid`)
-        return isValid
-        
-            
-
-    def apply(self, requestProperties, request, uri):
+    def apply(self, requestProperties, request):
 
         responses = PropertyStatusResponseQueue(
                                     "PROPPATCH", 
-                                    uri, 
+                                    request.uri, 
                                     responsecode.NO_CONTENT)
         
         dp = self.deadProperties()
         
-        def defaultHandler(property, store, responses):
-            try:
-                if store.contains(property.qname()) and (store.get(property.qname()) == property):
-                    log.debug("Supplied property: %s identical to available property: %s. Not updating resource."
-                              % (property.toxml(), store.get(property.qname()))
-                              )
-                else:
-                    log.debug("storing property: " + `property`)
-                    store.set(property)
-
-            except ValueError, err:
-                log.error("Failed to add property " + `property` + ". Failed with error :" + err)
-                responses.add(
-                        Failure(
-                            exc_value=HTTPError(
-                                StatusResponse(
-                                   responsecode.BAD_REQUEST, str(err)))),
-                        property
-                    )
-                
-        def cloneHandler(property, store, request, responses):
-            """
-            The host from which the request originates must have access to a local clone,
-            store if we want.
-            """
-            from angel_app.resource.remote.clone import clonesFromElement, clonesToElement
-            try:
-                residentClones = clonesFromElement(dp.get(elements.Clones))
-            except:
-                residentClones = []
-            if len(residentClones) >= maxclones: return
-            
-            address = str(request.remoteAddr.host)
-            try:
-                newClone = clonesFromElement(property)[0]
-                newClone.host = address
-       
-            except:
-                log.warn("received malformed clone:" + `property` + "from host:" + `address`)
-                return
-            
-            log.info("adding clone: " + `newClone` + " to resource " + self.fp.path)   
-            defaultHandler(clonesToElement(residentClones + [newClone]), store, responses)     
-
-            
-            # up until revision 572, there was some validation code in here, that would check
-            # back on the source clone to verify its existence and reachability. this leads
-            # to spurious hangs, since the source of the proppatch may (and will) be the provider
-            # process on the local host -- in which case we have reached a deadlock. the code
-            # has therefore been removed.
-            
+        propertyResponses = [
+                             (property, cloneHandler(property, dp, request))
+                             for property in requestProperties
+                             ]
         
-        for property in requestProperties:
-            log.debug("proppatch applying: " + property.toxml())
-            log.debug("proppatch applying: " + `property.__class__`)
-            try:
-                if property.__class__ == elements.Clones:
-                    cloneHandler(property, dp, request, responses)
-                    log.debug("OK")
-                elif property.__class__ in elements.requiredKeys:
-                    defaultHandler(property, dp, responses)
-                    log.debug("OK")
-                else: # we don't generally accept unsigned material
-                    responses.add(responsecode.UNAUTHORIZED, property)
-                    log.debug("UNAUTHORIZED")
-            except:
-                responses.add(Failure(), property)
-            else:
-                responses.add(responsecode.OK, property)
-      
-        # remove all unreferenced children
-        self.familyPlanning()
+        for (property, response) in propertyResponses:
+            responses.add(response, property)
         
         return MultiStatusResponse([responses.response()])
 
@@ -203,21 +86,15 @@ class ProppatchMixin:
         yield doc
         doc = doc.getResult()
         
-        # perform basic validation
-        validateBodyXML(doc)
-        
-        # extract the properties to be patched
-        requestProperties = getRequestProperties(doc)
-        
-        # authenticate
-        isValid = self.authenticate(request, requestProperties)
-        if not isValid:
-            raise HTTPError(StatusResponse(
-                       responsecode.FORBIDDEN, "The PROPPATCH certificate is not valid."))
+        # perform basic validation, and extract the clone field to be updated
+        try:
+            cloneField = validateBodyXML(doc)
+        except AssertionError, e:
+            log.error(`e`)
+            raise HTTPError(StatusResponse(responsecode.BAD_REQUEST, `e`))
         
         # apply the changes
-        yield self.apply(requestProperties.values(), request, request.uri)
-
+        yield self.apply(cloneField, request)
 
         
     def http_PROPPATCH(self, request):
@@ -233,7 +110,7 @@ def readRequestBody(request):
         yield doc
         doc = doc.getResult()
     except ValueError, e:
-        log.error("Error while handling PROPPATCH body: %s" % (e,))
+        log.error("Error while reading PROPPATCH body: %s" % (e,))
         raise HTTPError(StatusResponse(responsecode.BAD_REQUEST, str(e)))
 
     if doc is None:
@@ -243,46 +120,85 @@ def readRequestBody(request):
 
     yield doc
 
-def getRequestProperties(doc):
-    """
-    We assume that doc has alredy been validated via validateBodyXML.
-    """
-    
-    # get the contents of all the prop elements
-    childList = [
-                 child.children[0].children[0]
-                 for child in doc.root_element.children
-                 ]
-            
-    for child in childList:
-            log.info(child.name)
-            
-    return dict([
-                 (child.name, child)
-                 for child in childList
-                 ])
-
 def validateBodyXML(doc):
     """
-    Parse request
+    Perform syntactical validation of the request body.
+    @param doc: the request body as a davxml document. 
     """
-    update = doc.root_element
-    if not isinstance(update, davxml.PropertyUpdate):
-        error = ("Request XML body must be a propertyupdate element."
-                 % (davxml.PropertyUpdate.sname(),))
-        log.error(error)
-        raise HTTPError(StatusResponse(responsecode.BAD_REQUEST, error))
+    assert isinstance(doc.root_element, davxml.PropertyUpdate), \
+        "Request XML body must be a propertyupdate element. Found: " + `update.sname()`
     
-    for child in update.children:
+    assert 1 == len(doc.root_element.children), "Only one PROPPATCH instruction allowed."
+    
+    child = doc.root_element.children[0]
         
-        if not isinstance(child, davxml.Set):
-            error = "We don't currently allow property removal via proppatch. Only SET tags are allowed."
-            raise HTTPError(StatusResponse(responsecode.BAD_REQUEST, error))
+    assert isinstance(child, davxml.Set), \
+        "The PROPPATCH instruction must be a SET instruction. Found: " + `child.sname()`
         
-        if not len(child.children) == 1:
-            error = "All SET tags must contain exactly one PropertyContainer tag."
-            raise HTTPError(StatusResponse(responsecode.BAD_REQUEST, error))
+    assert (1 == len(child.children) and isinstance(child.children[0], davxml.PropertyContainer)), \
+            "All SET tags must contain exactly one PropertyContainer tag."
         
-        if not isinstance(child.children[0], davxml.PropertyContainer):
-            error = "All SET tags must contain exactly one PropertyContainer tag."
-            raise HTTPError(StatusResponse(responsecode.BAD_REQUEST, error))
+    propertyContainer = child.children[0]
+    assert (1 == len(propertyContainer.children) and isinstance(propertyContainer.children[0], elements.Clone)), \
+        "The property container must contain an update request for exactly one clone."
+        
+    # return the clone element
+    return propertyContainer.children[0]
+                
+def defaultHandler(property, store):
+    """
+    Add an individual property.
+    
+    @param property: the property to be stored
+    @param store: where to store the property
+    @return: the response for this property
+    """
+    try:
+        if store.contains(property.qname()) and (store.get(property.qname()) == property):
+            pass
+        else:
+            store.set(property)
+        return responsecode.OK
+
+    except ValueError, err:
+        return Failure(exc_value=HTTPError(
+                                StatusResponse(
+                                   responsecode.BAD_REQUEST, str(err))))
+                
+def cloneHandler(property, store, request):
+    """
+    The host from which the request originates must have access to a local clone,
+    store if we want.
+    """
+    from angel_app.resource.remote.clone import clonesFromElement, clonesToElement
+    try:
+        residentClones = clonesFromElement(store.get(elements.Clones))
+    except ValueError, e:
+        log.warn("Failed to read clones on PROPPATCH. Possibly none set yet? Error: \n" + `e`)
+        residentClones = []
+        
+    if len(residentClones) >= maxclones: 
+        error = "Too many clones. Not adding."
+        log.info(error)
+        response = StatusResponse(responsecode.BAD_REQUEST, error)
+        return Failure(exc_value=HTTPError(response))
+            
+    address = str(request.remoteAddr.host)
+    try:
+        newClone = clonesFromElement(property)[0]
+        newClone.host = address
+       
+    except Exception, e:
+        log.warn("received malformed clone:" + `property` + "from host:" + `address` + ". Error: \n" + `e`)
+        response = StatusResponse(responsecode.BAD_REQUEST, error)
+        return Failure(exc_value=HTTPError(response))
+            
+    log.info("adding clone: " + `newClone` + " to resource " + self.fp.path)   
+    return defaultHandler(clonesToElement(residentClones + [newClone]), store, responses)     
+
+            
+            # up until revision 572, there was some validation code in here, that would check
+            # back on the source clone to verify its existence and reachability. this leads
+            # to spurious hangs, since the source of the proppatch may (and will) be the provider
+            # process on the local host -- in which case we have reached a deadlock. the code
+            # has therefore been removed.

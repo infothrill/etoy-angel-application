@@ -103,8 +103,8 @@ class ResourceTest(unittest.TestCase):
                                            # first, we make a collection -- this should fail, because it already exists
                                            ("MKCOL", responsecode.NOT_ALLOWED),
                                            
-                                           # next, we overwrite the collection with an empty file -- this is legal
-                                           ("PUT", responsecode.NO_CONTENT),
+                                           # next, we attempt to overwrite the collection with an empty file
+                                           ("PUT", responsecode.FORBIDDEN),
                                            
                                            # next, we send a malformed proppatch request,
                                            ("PROPPATCH", responsecode.BAD_REQUEST),
