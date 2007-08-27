@@ -1,16 +1,16 @@
-from twisted.web2.dav.element import rfc2518
 from angel_app import elements
+from angel_app.config import config
+from angel_app.log import getLogger
 from angel_app.resource.local.basic import Basic
 from angel_app.resource.remote.clone import Clone, splitParse, cloneFromElement, clonesFromElement
 from angel_app.resource.util import urlPathFromPath
-import urllib
+from twisted.web2.dav.element import rfc2518
 import os 
-from angel_app.log import getLogger
+import urllib
 
 log = getLogger(__name__)
 
 # get config:
-from angel_app.config import config
 AngelConfig = config.getConfig()
 repository = AngelConfig.get("common","repository")
 maxclones = AngelConfig.getint("common","maxclones")
@@ -83,8 +83,6 @@ def getLocalCloneList(af):
     @return the local list of clones of the root directory.
     @rtype [Clone]
     """
-    #log.debug(getLocalCloneURLList(af))
-    #return [cloneFromGunk(splitParse(url)) for url in getLocalCloneURLList(af)]
     return getLocalCloneURLList(af)
 
 def _ensureLocalValidity(resource, referenceClone):
@@ -147,43 +145,6 @@ def _ensureLocalValidity(resource, referenceClone):
     log.debug("resource is now valid: " + `resource.verify()`)
         
     resource.familyPlanning()
-                
-def _updateBadClone(af, bc):  
-    """
-    attempts to update a bad clone using the (supposedly good)
-    local resource. returns a list of all clones for which this update was successful.
-    
-    @param af the local resource
-    @param bc the bad clones
-    """
-
-    if bc.host == "localhost":
-        # the local resource must be valid when we call this function, so no update necessary
-        return
-        
-    if not bc.ping():
-        # the remote clone is unreachable, ignore for now
-        return
-        
-    log.debug("updating invalid clone: " + `bc`)
-        
-    # push the resource
-    if not af.isCollection():
-        bc.putFile(open(af.fp.path))
-    else:
-        # it's a collection, which by definition does not have "contents",
-        # instead, just make sure it exists:
-        if not bc.exists():
-            log.info("remote collection resource does not exist yet, creating collection")
-            bc.mkCol()
-    
-    # push the resource metadata
-    try:
-        bc.performPushRequest(af)
-        return True
-    except:
-        log.warn("metadata push failed on bad clone: " + `bc`)
-        return False
 
 def getResourceID(resource):
     """
@@ -255,12 +216,6 @@ def inspectResource(path = repository):
     log.debug("reference clone: " + `rc` + " local path " + af.fp.path)
 
     _ensureLocalValidity(af, rc)
-
-    # update all invalid clones with the meta data of the reference clone,
-    # we need at least an empty clone list locally, so the updates can be performed
-    for bc in badClones: 
-        if _updateBadClone(af, bc):
-            goodClones.append(bc)
 
     storeClones(af, goodClones, unreachableClones)
     
