@@ -171,7 +171,9 @@ To address the first point, we require that the reference of the parent to the c
 We can address the second point in a similar fashion, by requiring that a link to a child additionally contains the information necessary to validate that child, to be precise: the child's identifier and public key (or, for efficiency reasons, a checksum thereof). Links to children are signed metadata fields. How the parent of a given resource may be found efficiently will be discussed later in the text, though obviously each resource could contain a signed metadata field equivalent to a child reference.
 
 \begin{figure}[ht!]
+\begin{center}
 \includegraphics[scale=0.9]{figures/eps/fileSystem.eps}
+\end{center}
 \caption{
 A comparison of a standard file system (left), and the proposed redundant file system (right). Parent-child relationships are indicated using arrows, clone relationships are indicated using dotted lines.
 }
@@ -180,7 +182,9 @@ A comparison of a standard file system (left), and the proposed redundant file s
 We can summarize the above: \emph{a clone of a resource may be recovered if there exists a clone that is referenced by a valid clone of the parent}. Note that this (recursive) criterion contains no information regarding the location of either the resource's clone or the parent's clone, implying (proof by induction) that \emph{if for each resource there exists at least one valid clone, referenced by a valid clone of the corresponding parent, the whole tree of resources may be recovered, if a valid clone of \textbf{the root resource} is available}. We call such a system a\label{typeOne} \textbf{Type I recoverable system}. The current prototype of the angel-application is such a system.
 
 \begin{figure}[ht!]
+\begin{center}
 \includegraphics[scale=0.9]{figures/eps/fullyConnected.eps}
+\end{center}
 \caption{
 Illustration of a fully connected resource graph (clone relationships have been left out for clarity). All file-type resources (previously leaf nodes) reference the root resource. Every resource may be reached from every other resource by following a sequence of arrows.
 }
@@ -196,7 +200,9 @@ The above suggests a straightforward implementation of the central registry of r
 
 
 \begin{figure}[ht!]
+\begin{center}
 \includegraphics[scale=0.9]{figures/eps/mount.eps}
+\end{center}
 \caption{
 A a resource in network \textbf{A} references the root resource of another network \textbf{B} (dashed arrow). Clone relationships have been left out for clarity. While in general, the two networks will be associated with different physical locations and belong to different users, the semantics of the link between the two networks are identical to the ones of intra-network links. 
 }
@@ -437,7 +443,7 @@ Johanna Svenningsson, 2006.
 \bibitem{mstore} MyriadStore: APeer-to-PeerBackupSystem, Birgir Stefansson and Antonios Thodis, 2006. 
 \bibitem{freenet} Protecting Free Expression Online with Freenet. Ian Clarke, Scott G.Miller, Theodore W.Hong, Oskar Sandberg, and Brandon Wiley. IEEE internetcomputing,  2002.
 \bibitem{gfs} The Google File System, Sanjay Ghemawat, Howard Gobioff, and Shun-Tak Leung, available online.
-\bibitem{svn} The Subversion Version Control System, available at online.
+\bibitem{svn} The Subversion Version Control System, available online.
 \bibitem{darcs} The Darcs Revision Control System, available online.
 \end{thebibliography}
 
