@@ -239,8 +239,10 @@ class Basic(PropertyManagerMixin, DAVFile):
         Returns the relative path with respect to the repository root as an absolute path,
         i.e. ${repository}/foo becomes "/foo", for the repository itself, "/" is returned.
         """
-        if self.isRepositoryRoot(): return os.sep
-        else: return os.sep + os.sep.join(self.fp.segmentsFrom(repository))
+        path = os.sep + os.sep.join(self.fp.segmentsFrom(repository))
+        if self.isCollection() and not self.isRepositoryRoot():
+            path += os.sep
+        return path
     
     def relativeURL(self):
         """
