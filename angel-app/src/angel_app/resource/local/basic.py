@@ -283,6 +283,12 @@ class Basic(PropertyManagerMixin, DAVFile):
     def clones(self):
         """
         Return the list of clones stored with this resource.
+        
+        Note that this will recursively initialize the clone field all parent resources, 
+        until one parent is found that does have clones. Will raise a RuntimeError if the root node has no
+        clones.
+        
+        @see propertyManager.inheritClones
         """
         return self.get(elements.Clones)
 
