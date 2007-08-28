@@ -76,7 +76,7 @@ class BasicResourceTest(unittest.TestCase):
         """
         @return the resource's path relative to the site root.
         """
-        assert self.dirResource.relativePath() == "/TEST"
+        assert self.dirResource.relativePath() == "/TEST/"
     
     def testIsCollection(self):
         """
@@ -99,6 +99,16 @@ class BasicResourceTest(unittest.TestCase):
         revisionNumber = self.dirResource.revisionNumber()
         assert type(revisionNumber) == type(0)
         assert revisionNumber >= 0
+        
+    def testPath(self):
+        "The test resource is a directory, hence the relative URL"
+        import urllib
+        url = self.dirResource.relativeURL()
+        path = self.dirResource.relativePath()
+        if self.dirResource.isCollection():
+            assert url[-1] == "/"
+            assert path[-1] == os.sep
+        assert urllib.url2pathname(url) == path
 
     def testFindChildren(self):
         """
