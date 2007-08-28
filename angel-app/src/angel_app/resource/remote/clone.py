@@ -424,14 +424,21 @@ def getMostCurrentClones(clonesList):
 
 
 def splitParse(cloneUri):
+    """
+    DEPRECATED. This method is EVIL. Look for better alternative.
+    
+    @return the triple (host, port, path), where host is hostname or IP, 
+    port is a port number, and path is a URL-encoded path name. Path may be the empty string.
+    """
     host, rest = cloneUri.split(":")
     fragments = rest.split("/")
     port = int(fragments[0])
     
-    if len(fragments) > 1:
-        return host, port, "/" + "/".join(fragments[1:])
+    if 1 == len(fragments):
+        return (host, port, "")
     
-    return (host, port)
+    pathSegments = fragments[1:]
+    return (host, port, "/" + "/".join(pathSegments))
 
 def cloneFromGunk(gunk):
     assert len(gunk) > 1
