@@ -150,7 +150,7 @@ class Basic(PropertyManagerMixin, DAVFile):
         if self.isRepositoryRoot(): 
             return os.sep
         else: 
-            return self.relativePath().split(os.sep)[-1]
+            return self.fp.segmentsFrom(repository)[-1]
         
     def quotedResourceName(self):
         return urllib.quote(self.resourceName())
@@ -239,8 +239,9 @@ class Basic(PropertyManagerMixin, DAVFile):
         Returns the relative path with respect to the repository root as an absolute path,
         i.e. ${repository}/foo becomes "/foo", for the repository itself, "/" is returned.
         """
+        if self.isRepositoryRoot(): return os.sep
         path = os.sep + os.sep.join(self.fp.segmentsFrom(repository))
-        if self.isCollection() and not self.isRepositoryRoot():
+        if self.isCollection():
             path += os.sep
         return path
     

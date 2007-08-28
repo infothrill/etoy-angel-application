@@ -84,6 +84,12 @@ def performPushRequest(self, localClone, elements = elements.requiredKeys):
             raise CloneError("must receive a MULTI_STATUS response for PROPPATCH, otherwise something's wrong, got: " + `resp.status` +\
                     data)
 
+def runRequest(clone, method, expect):
+    response = clone._performRequest(method)
+    assert response.status == expect, \
+        method + " -- got wrong status code, expected: " + `expect` + " received: " + `response.status` + "\n" + \
+        response.read()
+
 
 class ForbiddenTest(unittest.TestCase):
     """
@@ -117,12 +123,9 @@ class ForbiddenTest(unittest.TestCase):
         
         from angel_app.resource.remote.clone import Clone
         
-        cc = Clone()
-        
-        assert cc.ping(), "Test resource root unreachable."
-        
         # fake resource, modification of which should be disallowed 
         dd = Clone("localhost", providerport, "/TEST")
+        assert dd.ping(), "Test resource root unreachable."
         
         methodsAndExpectedResponseCodes = [
                                            ("MKCOL", responsecode.FORBIDDEN),
@@ -133,9 +136,7 @@ class ForbiddenTest(unittest.TestCase):
                                            ]
         
         for method, expect in methodsAndExpectedResponseCodes:
-            response = dd._performRequest(method)
-            assert response.status == expect, \
-                method + " must not be allowed, expected: " + `expect` + " received: " + `response.status`
+            runRequest(dd, method, expect)
 
         
     def testAllowRemoteResourceRead(self):
@@ -145,12 +146,10 @@ class ForbiddenTest(unittest.TestCase):
         
         from angel_app.resource.remote.clone import Clone
         
-        cc = Clone()
-        
-        assert cc.ping(), "Test resource root unreachable."
-        
         # fake resource, modification of which should be disallowed 
         dd = Clone("localhost", providerport, "/TEST/")
+        assert dd.ping(), "Test resource root unreachable. Make sure you have a provider instance running."
+        assert self.dirResource.exists()
         
         methodsAndExpectedResponseCodes = [
                                            ("GET", responsecode.OK),
@@ -158,23 +157,22 @@ class ForbiddenTest(unittest.TestCase):
                                            ]
         
         for method, expect in methodsAndExpectedResponseCodes:
-            response = dd._performRequest(method)
-            assert response.status == expect, \
-                method + " -- got wrong status code, expected: " + `expect` + " received: " + `response.status`
+            runRequest(dd, method, expect)
 
 
-        # path without trailing backslash affords redirecto for directories
+    def testCollectionRedirect(self):
+        """
+        path without trailing backslash affords redirect for directories
+        """
+                
+        from angel_app.resource.remote.clone import Clone
+        
         dd = Clone("localhost", providerport, "/TEST")
         
-        methodsAndExpectedResponseCodes = [
-                                           ("GET", responsecode.MOVED_PERMANENTLY),
-                                           ]
+        methodsAndExpectedResponseCodes = [("GET", responsecode.MOVED_PERMANENTLY)]
         
         for method, expect in methodsAndExpectedResponseCodes:
-            response = dd._performRequest(method)
-            assert response.status == expect, \
-                method + " -- got wrong status code, expected: " + `expect` + " received: " + `response.status`
-
+            runRequest(dd, method, expect)
 
     def testProppatch(self):
         """

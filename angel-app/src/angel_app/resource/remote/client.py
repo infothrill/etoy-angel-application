@@ -15,76 +15,6 @@ AngelConfig = config.getConfig()
 repository = AngelConfig.get("common","repository")
 maxclones = AngelConfig.getint("common","maxclones")
 
-
-
-def getLocalCloneURLList(af):
-    """
-    @param af -- an AngelFile
-    """
-    #print elements.Clones().toxml()
-    clones = []
-    
-    try:
-        log.debug("getting clones from resource: " + af.fp.path)
-        clones += [cloneFromElement(cc) for cc in af.clones().children]
-        #clones += [cloneFromGunk(splitParse(str(cc.children[0].children[0]))) for cc in af.clones().children]
-    except:
-        log.warn("no clones with resource: " + af.fp.path)
-        pass
-
-    if af.parent():
-        try:
-            log.debug("getting clones from parent resource " + af.parent().fp.path)
-            
-            def assertTrailingSlash(path):
-                if len(path) == 0: path = '/' # catch the situation when looking for parent == repository dir
-                return path[-1] == "/" and path or path + "/"
-                
-            def quotedName():
-                return urllib.quote(af.resourceName())
-            
-            pathGuess = assertTrailingSlash(
-                                            urlPathFromPath(af.parent().relativePath())
-                                            ) + quotedName()
-            
-            def cloneFromParentClone(cc):
-                cloneInfo = splitParse(str(cc.children[0].children[0]))
-                assert len(cloneInfo) in range(2, 4)
-                if len(cloneInfo) == 2:
-                    host, port = cloneInfo
-                    path = pathGuess
-                else:
-                    host, port, path = cloneInfo
-                    path = assertTrailingSlash(path) + quotedName()
-                    
-                return Clone(host, port, path)
-            
-            pclones = [cloneFromParentClone(cc) for cc in af.parent().clones().children]
-            log.debug("clones with parent resource: " + `pclones`)
-            clones += pclones
-        except:
-            # we have no clones on this file
-            import traceback
-            log.warn(traceback.print_exc())
-            pass    
-    
-    # make sure that collections are terminated with a "/", because
-    # twisted redirects requests to collections that lack it...
-    if af.isCollection():
-        for cc in clones:
-            if not cc.path[-1] == "/":
-                cc.path = cc.path + "/"
-    
-    return clones
-    #return [str(clone.children[0].children[0]) for clone in clones]
-
-def getLocalCloneList(af):
-    """
-    @return the local list of clones of the root directory.
-    @rtype [Clone]
-    """
-    return getLocalCloneURLList(af)
-
 def _ensureLocalValidity(resource, referenceClone):
     """
     Make sure that the local clone is valid and up-to-date, by synchronizing from a reference
@@ -146,19 +76,6 @@ def _ensureLocalValidity(resource, referenceClone):
         
     resource.familyPlanning()
 
-def getResourceID(resource):
-    """
-    the resource ID delivered with the parent is actually more trustworthy, 
-    because it has just been updated, however, the root directory has no parent....
-    TODO: review
-    """
-    if resource.isRepositoryRoot():
-        # root directory
-        return resource.resourceID()
-    else:
-        from angel_app.resource.local.util import getResourceIDFromParentLinks
-        return getResourceIDFromParentLinks(resource)
-
 def storeClones(af, goodClones, unreachableClones):
 
     # fill in only non-duplicates    
@@ -179,10 +96,8 @@ def storeClones(af, goodClones, unreachableClones):
         # guard against DOS and xattr overflow
         if len(clonesToBeStored) >= maxclones: break
     
-    newClones = elements.Clones(*[
-                    elements.Clone(rfc2518.HRef(`cc`)) for cc in clonesToBeStored
-                    ])
-    af.deadProperties().set(newClones)
+    cloneElements = clonesToElement(clonesToBeStored)
+    af.deadProperties().set(cloneElements)
 
 def inspectResource(path = repository):
 
@@ -197,7 +112,7 @@ def inspectResource(path = repository):
     standin = (af.exists() and af) or (af.parent().exists() and af.parent()) or None
     if standin == None: raise StopIteration
     pubKey = standin.publicKeyString()
-    startingClones = getLocalCloneList(af)
+    startingClones = af.clones()
     log.debug("starting out iteration with: " + `startingClones`)
     resourceID = getResourceID(af)
     log.debug("starting out iteration with resourceID: " + `resourceID`)

@@ -9,18 +9,10 @@ from twisted.web2.http import HTTPError, StatusResponse
 from angel_app import elements
 from angel_app.resource.local import util
 
+import time
+
 from angel_app.log import getLogger
 log = getLogger(__name__)
-
-def resourceID(resource):
-    """
-    Provide a default resource ID for the metadata initialization.
-    """
-    if resource.isRepositoryRoot():
-        return util.makeResourceID(resource.relativePath())
-            
-    else:
-        return util.getResourceIDFromParentLinks(resource)
 
 def getOnePublicKey(resource):
     """
@@ -33,17 +25,62 @@ def getOnePublicKey(resource):
     else:
         return resource.parent().publicKeyString()
 
+  
+def inheritClones(resource):
+    """
+    Inherit the clones list from the parent resource -- useful for initialization.
+    
+    Note that this will recursively initialize the clone field all parent resources, 
+    until one parent is found that does have clones. Will raise a RuntimeError if the root node has no
+    clones.
+    """
+    if resource.isRepositoryRoot():
+        raise RuntimeError, "Root resource can not inherit clones, since it has no parent."
+
+    from angel_app.resource.remote import clone
+        
+    parentClones = clone.clonesFromElement(resource.parent().clones())
+    
+    def adaptPaths(parentClone):
+        """
+        Given a parent's clone, generate a tentative clone for this resource by appending
+        the resource's name to the path of the parent's clone.
+        
+        @param parentClone: a clone instance of the parent.
+        @return : a tentative clone instance of this resource.
+        """
+        newPath = parentClone.path
+        if newPath[-1] != "/":
+            newPath += "/"
+        newPath += resource.quotedResourceName()
+        return clone.Clone(
+                           parentClone.host, 
+                           parentClone.port, 
+                           newPath)
+        
+    inheritedClones = map(adaptPaths, parentClones)
+    clonesElement = clone.clonesToElement(inheritedClones)
+    return clonesElement
+
+
+
+def makeResourceID(relativePath = ""):
+    """
+    Generate a new resourceID for a (new) resource.
+    """
+    return relativePath + `time.gmtime()`
+
 # a map from xml-elements corresponding to metadata fields to functions taking a resource 
 # and returning appropriate values for those metadata fields
 defaultMetaData = {
-                   elements.Revision           : lambda x: "0",
-                   elements.Encrypted          : lambda x: "0",
-                   elements.PublicKeyString    : lambda x: getOnePublicKey(x),
-                   elements.ContentSignature   : lambda x: "",
-                   elements.MetaDataSignature  : lambda x: "",
-                   elements.ResourceID         : lambda x: resourceID(x),
-                   elements.Clones             : lambda x: None,
-                   elements.Children           : lambda x: None
+                   elements.Revision           : lambda x: elements.Revision.fromString("0"),
+                   elements.Encrypted          : lambda x: elements.Encrypted.fromString("0"),
+                   elements.PublicKeyString    : lambda x: elements.PublicKeyString.fromString(getOnePublicKey(x)),
+                   elements.ContentSignature   : lambda x: elements.ContentSignature.fromString(""),
+                   elements.MetaDataSignature  : lambda x: elements.MetaDataSignature.fromString(""),
+                   elements.ResourceID         : lambda x: elements.ResourceID.fromString(makeResourceID(x.relativePath())),
+                   elements.Clones             : lambda x: inheritClones(x),
+                   elements.Children           : lambda x: elements.Children()
                    }
 
 class PropertyManagerMixin:
@@ -69,14 +106,7 @@ class PropertyManagerMixin:
         # but we have an initializer   
         if element in self.defaultValues.keys():
             df = self.defaultValues[element](self)
-            log.debug("Setting property %s to default value %s." % (`element`, `df`))
-            if None == df:
-                me = element()
-            else:
-                me = element(df)
-                
-            self.set(me)
-            
+            self.set(df)
             return self.deadProperties().get(element.qname())
         
         else:

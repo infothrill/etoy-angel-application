@@ -30,7 +30,6 @@ from urllib import quote, unquote
 from urlparse import urlsplit
 from os import sep
 from angel_app.contrib import uuid
-import time
 from twisted.web2.dav.element import rfc2518
 import urllib
 
@@ -148,41 +147,6 @@ class StringReaderTest(unittest.TestCase):
 
 def uuidFromPublicKeyString(publicKey):    
     return uuid.UUID( getHashObject(publicKey).hexdigest()[:32] )
-
-
-def makeResourceID(relativePath = ""):
-    """
-    Generate a new resourceID for a (new) resource.
-    """
-    return relativePath + `time.gmtime()`
-
-def getResourceIDFromParentLinks(resource):
-    """
-    Extracts the resource's ID from the Child links of the parent.
-    """
-    if resource.isRepositoryRoot():
-        # root directory
-        return makeResourceID(resource.relativePath())
-    else:
-        # otherwise, take the resourceID delivered from the parent
-        children = resource.parent().deadProperties().get(elements.Children.qname()).children
-        
-        # make a list of all linked resource names
-        linkedResourceNames = [str(child.childOfType(rfc2518.HRef.qname())) for child in children]
-        
-        # get the index of the child we're actually interested in
-        try:
-            linkIndex = linkedResourceNames.index(resource.quotedResourceName())
-        except ValueError:
-            log.error("Could not find resource %s in parent's links." % resource.quotedResourceName())
-            # re-raise the exception
-            raise
-        
-    # this is the child we actually want
-    child = children[linkIndex]
-    log.debug("child for resourceID: " + `child`)
-        
-    return str(child.childOfType(elements.ResourceID.qname()).children[0])
 
 if __name__ == "__main__":
     unittest.main()

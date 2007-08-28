@@ -123,6 +123,25 @@ class BasicResourceTest(unittest.TestCase):
         stream = self.dirResource.open()
         assert self.dirResource.open().read() == bb.REPR_DIRECTORY
         
+        
+    def testClones(self):
+        """
+        Since the dirResource was freshly created, it's clones must all be inherited from the parent.
+        """
+        clones = self.dirResource.clones()
+        parentClones = self.dirResource.parent().clones()
+        assert len(clones.children) == len(parentClones.children)
+        
+    def testDefaultProperties(self):
+        """
+        All default property initializers must return WebDAVElement instances which
+        are of the same type as the element requested.
+        """
+        from angel_app.resource.local.propertyManager import defaultMetaData
+        for element in defaultMetaData.keys():
+            assert element.qname() == defaultMetaData[element](self.dirResource).qname()
+        
+        
     def testPropertyIO(self):
         """
         Set a property, read it back out and compare it with the original.

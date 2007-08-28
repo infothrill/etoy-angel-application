@@ -35,8 +35,6 @@ class Crypto(
                  indexNames=None):
         
         Basic.__init__(self, path, defaultType, indexNames)
-         
-        self.defaultValues[elements.ResourceID] = lambda x : util.makeResourceID(x.relativePath())
 
     def davComplianceClasses(self):
         """
@@ -67,14 +65,6 @@ class Crypto(
             raise KeyError, error
         
         return Crypto.keyRing[pks]
-  
-    def _inheritClones(self):
-        """
-        Inherit the clones list from the parent resource -- useful for initialization.
-        """
-        self.deadProperties().set(
-                                  self.parent().deadProperties().get(
-                                                                     elements.Clones.qname()))
           
     def _updateMetadata(self): 
         """
