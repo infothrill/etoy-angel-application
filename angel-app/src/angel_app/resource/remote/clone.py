@@ -327,7 +327,9 @@ class Clone(object):
         @rtype string
         @return the public key string of the clone.
         """
-        return self.propertyFindBody(elements.MetaDataSignature)
+        signature = self.propertyFindBody(elements.MetaDataSignature)
+        print signature
+        return signature
     
     
     def validate(self):
@@ -443,20 +445,23 @@ def splitParse(cloneUri):
 def cloneFromGunk(gunk):
     assert len(gunk) > 1
     assert len(gunk) < 4
-    if len(gunk) == 2: return Clone(gunk[0], gunk[1])
-    else: return Clone(gunk[0], gunk[1], gunk[2])
+    if len(gunk) == 2: 
+        return Clone(gunk[0], gunk[1])
+    else:
+        return Clone(gunk[0], gunk[1], gunk[2])
     
     
 def cloneFromElement(cc):
     """
-    Takes an child element of the Clones element and returns a Clone instance.
+    Takes a child element of the Clones element and returns a Clone instance.
     """
     return cloneFromGunk(splitParse(str(cc.children[0].children[0])))
 
 
 def clonesFromElement(cloneElement):
     """
-    Takes a Clone element and returns a list of corresponding Clone instances
+    @param cloneElement a Clones element 
+    @return a list of corresponding Clone instances
     """
     return [cloneFromElement(cc) for cc in cloneElement.children]
 

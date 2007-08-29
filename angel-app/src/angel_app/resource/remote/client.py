@@ -113,14 +113,12 @@ def inspectResource(path = repository):
     if standin == None: raise StopIteration
     pubKey = standin.publicKeyString()
     startingClones = af.clones()
-    log.debug("starting out iteration with: " + `startingClones`)
-    resourceID = getResourceID(af)
-    log.debug("starting out iteration with resourceID: " + `resourceID`)
+    resourceID = af.resourceID()
 
     goodClones, badClones, unreachableClones = iterateClones(startingClones, pubKey, resourceID)
     
     if goodClones == []:
-        log.debug("no valid clones found for " + path)
+        log.info("no valid clones found for " + path)
         raise StopIteration
     
     log.debug("inspectResource: valid clones: " + `goodClones`)

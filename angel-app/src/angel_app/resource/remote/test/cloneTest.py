@@ -32,6 +32,13 @@ author = """Vincent Kraeutler 2007"""
 
 
 import unittest
+import os
+from angel_app.resource.remote import client
+from angel_app.resource.local import basic
+
+from angel_app.config import config
+AngelConfig = config.getConfig()
+repositoryPath = AngelConfig.get("common","repository")
 
 class CloneTest(unittest.TestCase):
     
@@ -48,9 +55,34 @@ class CloneTest(unittest.TestCase):
         assert False == cc.ping()
         
         dd = Clone("localhost")
-        assert True == dd.ping()
+        assert True == dd.ping(), "Make sure you have a local provider instance running."
         
         assert oldTimeOut == socket.getdefaulttimeout()
+        
+    def testInspectResource(self):
+        """
+        One inspection should exit happily, or raise StopIteration upon termination.
+        """
+        
+        # look at the root, this is most often trivial.
+        try:
+            client.inspectResource()
+        except StopIteration, e:
+            pass
+        assert True
+        
+        # look at MISSION ETERNITY
+        path = os.sep.join([repositoryPath, "MISSION ETERNITY"])
+        af = basic.Basic(path)
+        if not os.path.exists(path): 
+            return
+        
+        try:
+            client.inspectResource(path)
+            assert af.verify()
+        except StopIteration, e:
+            pass
+        assert True
 
         
     
