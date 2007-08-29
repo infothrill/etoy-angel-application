@@ -146,12 +146,10 @@ def validateBodyXML(doc):
             "All SET tags must contain exactly one PropertyContainer tag."
         
     propertyContainer = child.children[0]
-    log.info("foo: " + child.toxml())
     assert (1 == len(propertyContainer.children) and isinstance(propertyContainer.children[0], elements.Clones)), \
         "The property container must contain exactly one clones element."
     
     clones = propertyContainer.children[0]
-    log.info("foo: " + clones.toxml())
     assert (1 == len(clones.children) and isinstance(clones.children[0], elements.Clone)), \
         "The Clones element must contain exactly one clone element."
     
