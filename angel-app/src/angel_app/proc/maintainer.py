@@ -50,21 +50,15 @@ def dance(options):
     while 1:
         log.info("sleep timeout between resource inspections is: " + `sleepTime`)
         startTime = int(time.time())
-        try:
 
-            # register with the tracker
-            from angel_app.tracker.connectToTracker import connectToTracker
-            stats = connectToTracker()
-
+        # register with the tracker
+        from angel_app.tracker.connectToTracker import connectToTracker
+        stats = connectToTracker()
+    
+        time.sleep(sleepTime)
+        for ii in graphWalker(repository, getChildren, toEvaluate):
             time.sleep(sleepTime)
-            for ii in graphWalker(repository, getChildren, toEvaluate):
-                 time.sleep(sleepTime)
-                 continue
-                             
-        except:
-            log.warn("an error occured while traversing the tree: type %s, value %s" % (`sys.exc_info()[0]`, `sys.exc_info()[1]`), exc_info = sys.exc_info())
-            log.warn("restarting in %s seconds" % `sleepTime`)
-            time.sleep(sleepTime)
+            continue
         
         elapsedTime = int(time.time()) - startTime
         if elapsedTime > traversalTime:
