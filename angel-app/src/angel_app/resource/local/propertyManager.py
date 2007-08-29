@@ -35,11 +35,11 @@ def inheritClones(resource):
     clones.
     """
     if resource.isRepositoryRoot():
-        raise RuntimeError, "Root resource can not inherit clones, since it has no parent."
+        return elements.Clones() # Root resource can not inherit clones, since it has no parent.
 
     from angel_app.resource.remote import clone
         
-    parentClones = clone.clonesFromElement(resource.parent().clones())
+    parentClones = resource.parent().clones()
     
     def adaptPaths(parentClone):
         """

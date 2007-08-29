@@ -291,7 +291,8 @@ class Basic(PropertyManagerMixin, DAVFile):
         
         @see propertyManager.inheritClones
         """
-        return self.get(elements.Clones)
+        from angel_app.resource.remote import clone
+        return clone.clonesFromElement(self.get(elements.Clones))
 
     def childLinks(self):
         return self.get(elements.Children)
