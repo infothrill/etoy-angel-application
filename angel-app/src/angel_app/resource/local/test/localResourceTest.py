@@ -130,7 +130,7 @@ class BasicResourceTest(unittest.TestCase):
         """
         clones = self.dirResource.clones()
         parentClones = self.dirResource.parent().clones()
-        assert len(clones.children) == len(parentClones.children)
+        assert len(clones) == len(parentClones)
         
     def testDefaultProperties(self):
         """
