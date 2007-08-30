@@ -328,7 +328,6 @@ class Clone(object):
         @return the public key string of the clone.
         """
         signature = self.propertyFindBody(elements.MetaDataSignature)
-        print signature
         return signature
     
     

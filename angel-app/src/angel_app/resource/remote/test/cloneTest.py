@@ -33,6 +33,7 @@ author = """Vincent Kraeutler 2007"""
 
 import unittest
 import os
+from angel_app.resource.remote import clone
 from angel_app.resource.remote import client
 from angel_app.resource.local import basic
 
@@ -44,7 +45,9 @@ class CloneTest(unittest.TestCase):
     
 
     def setUp(self):
-        pass
+        self.testClone = clone.Clone("localhost")
+        assert self.testClone.ping(), "make sure you have a local instance of the provider running."
+        self.testResource = basic.Basic(repositoryPath)
 
     def testPing(self):
         import socket
@@ -83,6 +86,17 @@ class CloneTest(unittest.TestCase):
         except StopIteration, e:
             pass
         assert True
-
+        
+    def testRevision(self):
+        revision = self.testClone.revision()
+        assert type(revision) == type(0)
+        assert revision >= 0
+        
+    def testSignature(self):
+        signature = self.testClone.metaDataSignature()
+        from angel_app.contrib.ezPyCrypto import key
+        k = key()
+        k.importKey(self.testResource.publicKeyString())
+        assert k.verifyString(self.testResource.signableMetadata(), signature), "metadata signature validation failed"
         
     
