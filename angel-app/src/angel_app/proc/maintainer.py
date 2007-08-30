@@ -21,7 +21,7 @@ def postConfigInit():
 
 def dance(options):
     from angel_app.log import getLogger
-    from angel_app.resource.remote import client, setup
+    from angel_app.resource.remote import client
     from angel_app.graph import graphWalker
     from angel_app.resource.local.basic import Basic
     from angel_app.config import config
@@ -30,7 +30,6 @@ def dance(options):
     AngelConfig = config.getConfig()
     repository = AngelConfig.get("common", "repository")
     log.info("starting inspection loop at: " + repository)
-    setup.setupDefaultPeers()
 
     def getChildren(path):
         children = [cc.fp.path for cc in Basic(path).metaDataChildren()]

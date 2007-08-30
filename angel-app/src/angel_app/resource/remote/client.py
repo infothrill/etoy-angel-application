@@ -119,7 +119,7 @@ def inspectResource(path = repository):
     
     if goodClones == []:
         log.info("no valid clones found for " + path)
-        raise StopIteration
+        return
     
     log.debug("inspectResource: valid clones: " + `goodClones`)
     
