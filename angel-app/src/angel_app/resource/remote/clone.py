@@ -222,9 +222,7 @@ class Clone(object):
                 raise CloneError("must receive a MULTI_STATUS response for PROPFIND, otherwise something's wrong, got: " + `resp.status`)
 
 
-        doc = davxml.WebDAVDocument.fromString(resp.read())
-        propertiesFromPropfindResponse(doc)
-        return doc
+        return davxml.WebDAVDocument.fromString(resp.read())
     
     def _getProperties(self, properties):
         """
