@@ -3,10 +3,7 @@ def bootInit():
     Method to be called in __main__ before anything else. This method cannot rely on any
     framework being initialised, e.g. no logging, no exception catching etc.
     """    
-    # TODO: ugly twisted workaround to provide angel_app xml elements
-    from twisted.web2.dav.element import parser
-    from angel_app import elements
-    parser.registerElements(elements)
+    pass
     
     
 def postConfigInit():
