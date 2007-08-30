@@ -200,38 +200,25 @@ class Clone(object):
         return response
     
     
-    def propFindAsXml(self, properties):
+    def propertiesDocument(self, properties):
         """
         @rtype string
         @return the raw XML body of the multistatus response corresponding to the respective PROPFIND request.
         """  
-        #log.debug("running PROPFIND on clone " + `self` + " for properties " + `properties` + " with body " + self.__makePropfindRequestBody(properties))
         resp = self._performRequest(
                               method = "PROPFIND", 
                               headers = {"Depth" : 0}, 
                               body = makePropfindRequestBody(properties)
                               )
 
-        data = resp.read()
-
         if resp.status != responsecode.MULTI_STATUS:
             if resp.status == responsecode.NOT_FOUND:
-                raise CloneNotFoundError("Clone %s not found, response code is: %s, data is %s" % (self, `resp.status`, data) )
+                raise CloneNotFoundError("Clone %s not found, response code is: %s" % (self, `resp.status`))
             else:
-                raise CloneError("must receive a MULTI_STATUS response for PROPFIND, otherwise something's wrong, got: " + `resp.status` +\
-                    data)
+                raise CloneError("must receive a MULTI_STATUS response for PROPFIND, otherwise something's wrong, got: " + `resp.status`)
 
-        #log.debug("PROPFIND body: " + data)
-        return data
+        return davxml.WebDAVDocument.fromString(resp.read())
     
-    def propertiesDocument(self, properties):
-        """
-        @rtype WebDAVDocument
-        @return the properties as a davxml document tree.
-        """
-        xmlProps = self.propFindAsXml(properties)
-        return davxml.WebDAVDocument.fromString(xmlProps)
-
 
     def propertyFindBodyXml(self, property):
         """
@@ -249,9 +236,7 @@ class Clone(object):
         @rtype string
         @return the body of a property consisting of just PCDATA.
         """
-        log.info("Performing lookup for property " + `property.qname()` +" on remote host.")
         propertyDocument = self.propertiesDocument([property])
-        log.debug("returned for property "  + `property.qname()` + ": " + propertyDocument.toxml())
         # points to the first dav "prop"-element
         properties = propertyDocument.root_element.children[0].children[1].children[0]
         
@@ -266,7 +251,6 @@ class Clone(object):
         """
         
         if property.qname() in self.propertyCache.keys():
-            log.debug("property " + `property` + " returned from local cache.")
             properties = self.propertyCache[property.qname()]   
             return "".join([str(ee) for ee in properties.children])
         else:
