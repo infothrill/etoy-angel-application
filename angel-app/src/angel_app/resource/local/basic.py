@@ -365,7 +365,7 @@ class Basic(PropertyManagerMixin, DAVFile):
         be signed.
         """
         try:
-            sm = "".join([self.getXml(key) for key in elements.signedKeys])
+            sm = "".join([self.get(key).toxml() for key in elements.signedKeys])
             log.debug("signable meta data for " + self.fp.path + ":" + sm)
             return sm
         except Exception, e:

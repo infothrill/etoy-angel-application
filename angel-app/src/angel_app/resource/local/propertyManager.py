@@ -121,12 +121,6 @@ class PropertyManagerMixin:
             error = "Resource %s not found in xattr lookup." % self.fp.path
             log.warn(error)
             raise HTTPError(StatusResponse(responsecode.NOT_FOUND, error))
-            
-    def getXml(self, element):
-        """
-        @return the metadata element corresponding to davXMLTextElement
-        """
-        return  self.get(element).toxml()
         
     def set(self, element):
         
