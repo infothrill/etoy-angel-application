@@ -69,20 +69,26 @@ class Basic(PropertyManagerMixin, DAVFile):
         @rtype int
         @return the revision number. if not already set, it is initialized to 1.
         """
-        return int(self.getAsString(elements.Revision))
+        return int(str(self.get(elements.Revision)))
 
     def isEncrypted(self):
         """
         @rtype boolean
         @return whether the file is encrypted. 
         """
-        return int(self.getAsString(elements.Encrypted)) == 1
+        return int(str(self.get(elements.Encrypted))) == 1
 
     def contentSignature(self):
         """
         @return: the checksum of the resource content
         """
-        return self.getAsString(elements.ContentSignature)
+        return str(self.get(elements.ContentSignature))
+    
+    def metaDataSignature(self):
+        """
+        @return the signature of the signed metadata
+        """
+        return str(self.get(elements.MetaDataSignature))
     
     def verify(self):
         if not self.exists():
@@ -90,10 +96,10 @@ class Basic(PropertyManagerMixin, DAVFile):
             return False
         
         try:
-            pk = self.getAsString(elements.PublicKeyString)
+            pk = self.publicKeyString()
             cs = self.contentSignature()
             sm = self.signableMetadata()
-            ms = self.getAsString(elements.MetaDataSignature)
+            ms = self.metaDataSignature()
         except:
             log.debug("Basic.verify(): False, invalid metadata")
             return False
@@ -337,7 +343,7 @@ class Basic(PropertyManagerMixin, DAVFile):
         """
         @return: the string representation of the resource's public key.
         """
-        return self.getAsString(elements.PublicKeyString)
+        return str(self.get(elements.PublicKeyString))
  
     def keyUUID(self):
         """

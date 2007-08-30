@@ -99,6 +99,15 @@ class BasicResourceTest(unittest.TestCase):
         revisionNumber = self.dirResource.revisionNumber()
         assert type(revisionNumber) == type(0)
         assert revisionNumber >= 0
+
+    def testPublicKey(self):
+        """
+        Make sure the stored public key is a valid ezPyCrypto key.
+        """
+        from angel_app.contrib.ezPyCrypto import key
+        publicKeyString = self.dirResource.publicKeyString()
+        k = key()
+        k.importKey(publicKeyString)
         
     def testPath(self):
         "The test resource is a directory, hence the relative URL"

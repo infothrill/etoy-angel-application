@@ -121,13 +121,6 @@ class PropertyManagerMixin:
             error = "Resource %s not found in xattr lookup." % self.fp.path
             log.warn(error)
             raise HTTPError(StatusResponse(responsecode.NOT_FOUND, error))
-    
-    def getAsString(self, element):
-        return "".join([
-                        str(child) for child in 
-                       self.get(element).children
-                                                 ])
-        
             
     def getXml(self, element):
         """
