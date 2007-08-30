@@ -28,3 +28,8 @@ all = [
        "version",
        "wx"
        ]
+
+# register xml elements with parser. see task #3500
+from twisted.web2.dav.element.parser import registerElements
+from angel_app import elements
+registerElements(elements)
