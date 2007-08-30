@@ -32,6 +32,8 @@ class Clone(object):
     """
     implements(IResource.IAngelResource)
     
+    cachedProperties = elements.signedKeys + [elements.MetaDataSignature, rfc2518.ResourceType, elements.Clones]
+    
     def __init__(self, host = "localhost", port = providerport, path = "/"):
         """
         @rtype Clone
@@ -71,15 +73,14 @@ class Clone(object):
         if not url[1] == self.host + ":" + `self.port`:
             raise CloneError("Invalid host for clone: " + `self`)
         # as of python 2.5, we will also be able to do this:
-        # assert url.port == self.port
+        # assert url.port == self.port                         
         
-    def updateCache(self):
-        response = self.propertiesDocument(elements.signedKeys + [elements.MetaDataSignature, rfc2518.ResourceType])
-        responseElement = response.root_element.childOfType(rfc2518.Response)
-        availableProperties = responseElement.childrenOfType(rfc2518.PropertyStatus)[0]
-        # the second entry will contain the properties for which the request failed.
-        
-        properties = availableProperties.childOfType(rfc2518.PropertyContainer).children
+    def __updateCache(self):
+        """
+        A single PROPFIND request can request multiple properties. Use this method to update the cache
+        of all properties we will likely need.
+        """
+        properties = okProperties(self.__propertiesDocument(self.cachedProperties))
         for property in properties:
             self.propertyCache[property.qname()] = property                            
         
@@ -200,8 +201,11 @@ class Clone(object):
         return response
     
     
-    def propertiesDocument(self, properties):
+    def __propertiesDocument(self, properties):
         """
+        Perform a PROPFIND request on the clone, returning the response body as an xml document.
+        DO NOT use this directly. Use getProperties instead.
+        
         @rtype string
         @return the raw XML body of the multistatus response corresponding to the respective PROPFIND request.
         """  
@@ -217,50 +221,66 @@ class Clone(object):
             else:
                 raise CloneError("must receive a MULTI_STATUS response for PROPFIND, otherwise something's wrong, got: " + `resp.status`)
 
-        return davxml.WebDAVDocument.fromString(resp.read())
+
+        doc = davxml.WebDAVDocument.fromString(resp.read())
+        propertiesFromPropfindResponse(doc)
+        return doc
     
-
-    def propertyFindBodyXml(self, property):
+    def _getProperties(self, properties):
         """
-        @param property an WebDAVElement corresponding to the property we want to get
-        @return the XML of a property find body as appropriate for the supplied property
-        @rtype string
-        """
-        return self.propertiesDocument([property]
-                         ).root_element.children[0].children[1].children[0].children[0].toxml()
-
-
-    
-    def uncachedPropertyFindBody(self, property):
-        """
-        @rtype string
-        @return the body of a property consisting of just PCDATA.
-        """
-        propertyDocument = self.propertiesDocument([property])
-        # points to the first dav "prop"-element
-        properties = propertyDocument.root_element.children[0].children[1].children[0]
+        Perform a PROPPFIND request on the clone, asserting a successful query for all properties.
+        Add all returned properties to the cache.
         
-        return "".join([str(ee) for ee in properties.children[0].children])
-    
-    def propertyFindBody(self, property):
+        @param a list of property xml elements.
+        @return a davxml.PropertyContainer element containing the requested properties
         """
-        @rtype string
-        @return the body of a property consisting of just PCDATA.
+        propertyDoc = self.__propertiesDocument(properties)
         
-        TODO: this caching scheme could be much improved.
+        okp =  okProperties(propertyDoc)
+        
+        # cache the properties for later re-use    
+        for pp in okp.children:
+            self.propertyCache[pp.qname()] = pp 
+            
+        return okp
+    
+    def getProperties(self, properties):
+        """
+        Same as _getProperties, but with a cache lookup step in between.
+        
+        @return a davxml.PropertyContainer
+        @see _getProperties
         """
         
-        if property.qname() in self.propertyCache.keys():
-            properties = self.propertyCache[property.qname()]   
-            return "".join([str(ee) for ee in properties.children])
+        # check if one of the requested properties is not in the cache
+        allCached = True
+        for pp in properties:
+            if pp.qname() not in self.propertyCache.keys():
+                allCached = False
+                break
+            
+        if not allCached:
+            returned = self._getProperties(properties)
         else:
-            log.debug("property " + `property` + " not cached.")
-            return self.uncachedPropertyFindBody(property)
+            props = [self.propertyCache[p.qname()] for p in properties]       
+            returned = davxml.PropertyContainer(*props)
+            
+        return returned
+        
+    def getProperty(self, property):
+        """
+        Quite like getProperties, but for a single property only. In contrast to
+        getProperties, it doesn't return a davxml.PropertyContainer, but an element
+        of the same type as the argument element.
+        
+        @return the property with a value
+        """
+        return self.getProperties([property]).childOfType(property)
     
 
     def exists(self): 
         """
-        Existence does not imply validity.
+        Keep in mind that existence does not imply validity.
         """
         try:
             response = self._performRequest(method = "HEAD", body = "")
@@ -271,7 +291,7 @@ class Clone(object):
     
     def ping(self):
         """
-        If an HTTP request can be performed, the remote host is up.
+        @return whether the remote host is reachable
         """
         try:
             response = self._performRequestWithTimeOut()
@@ -280,12 +300,11 @@ class Clone(object):
             return False  
 
     def isCollection(self):
-         log.debug("isCollection(): " + self.propertyFindBody(rfc2518.ResourceType) + " " + rfc2518.Collection.sname())
-         return self.propertyFindBody(rfc2518.ResourceType) == rfc2518.Collection.sname()
+         return self.getProperty(rfc2518.ResourceType) == rfc2518.Collection.sname()
     
     
     def resourceID(self):
-        return self.propertyFindBody(elements.ResourceID)
+        return str(self.getProperty(elements.ResourceID))
     
     
     def revision(self):
@@ -294,7 +313,7 @@ class Clone(object):
         @return the clone's revision number.
         """
         try:
-            return int(self.propertyFindBody(elements.Revision))
+            return int(str(self.getProperty(elements.Revision)))
         except:
             log.warn("no revision found on clone: " + `self`)
             return -1
@@ -304,14 +323,14 @@ class Clone(object):
         @rtype string
         @return the public key string of the clone.
         """
-        return self.propertyFindBody(elements.PublicKeyString)
+        return str(self.getProperty(elements.PublicKeyString))
     
     def metaDataSignature(self):
         """
         @rtype string
         @return the public key string of the clone.
         """
-        signature = self.propertyFindBody(elements.MetaDataSignature)
+        signature = str(self.getProperty(elements.MetaDataSignature))
         return signature
     
     
@@ -323,7 +342,7 @@ class Clone(object):
         
         
         toBeVerified = "".join([
-                                self.propertyFindBodyXml(element)
+                                self.getProperty(element).toxml()
                                 for element in elements.signedKeys
                                 ])
         
@@ -347,9 +366,7 @@ class Clone(object):
         """
 
         try:
-            prop = self.propertiesDocument(
-                                       [elements.Clones]
-                                       ).root_element.children[0].children[1].children[0]
+            prop = self.getProperty(elements.Clones)
                                        
             return clonesFromElement(prop)
         except:
@@ -364,6 +381,64 @@ def makePropfindRequestBody(properties):
                 rfc2518.PropertyContainer(
                       *[property() for property in properties]
                       )).toxml()
+                      
+def propertiesFromPropfindResponse(response):
+    """
+    Unwrap the actual property elements from a PROPFIND response.
+    
+    @param response: a MULTISTATUS response element
+    
+    @return a pair of lists of xml element objects. the first entry contains the properties for which the
+    request succeeded, the second pair contains those for which it failed.
+    
+    @see twisted.web2.dav.method.propfind
+    """
+    
+    responses = response.root_element.childrenOfType(davxml.PropertyStatusResponse)
+    assert 1 == len(responses), "We only do depth = 0 queries, so must receive responses for exactly 1 url."
+    response = responses[0]
+
+    # get the url
+    url = response.childOfType(davxml.HRef).children[0]
+    # TODO: this should in fact be the clone's self.path, we could check this, too
+    
+    propstats = response.childrenOfType(davxml.PropertyStatus)
+    
+    propertiesByResponseCode = {}
+    
+    for ps in propstats:
+        status = ps.childOfType(davxml.Status)       
+        responseCode = int(str(status).split()[-2])
+        # TODO: we should test that this is indeed a valid response code
+        prop = ps.childOfType(davxml.PropertyContainer)
+        propertiesByResponseCode[responseCode] = prop
+        
+    return propertiesByResponseCode
+
+def okProperties(response):
+    """
+    In addition to the validation carrid out by propertiesFromPropfindResponse,    
+    assert that the request succeeded for all requested properties. Raise a KeyError otherwise.
+    
+    @param the response body
+    @return: a davxml.PropertyContainer of all properties for which the request succeeded.
+    
+    @see propertiesFromPropfindResponse
+    """
+    
+    propertiesByResponseCode = propertiesFromPropfindResponse(response)
+    
+    if not (1 == len(propertiesByResponseCode.keys())):
+        notOKCodes = [kk for kk in propertiesByResponseCode.keys() if kk != responsecode.OK]
+        notOKResponses = [propertiesByResponseCode[kk] for kk in notOKCodes]
+        errorProperties = "\n".join([rr.toxml() for rr in notOKResponses])
+        raise KeyError, "Property requests failed for: " + errorProperties
+    
+    # no requests failed, return the OK responses
+    return propertiesByResponseCode[responsecode.OK]
+                        
+        
+
 
 def makeCloneBody(localResource):
     """
