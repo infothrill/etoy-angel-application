@@ -82,7 +82,7 @@ def purgeTmpPathAndSetup():
     shutil.rmtree(getTmpPath(), ignore_errors = True) # FIXME: do we want to catch errors here?
     setup()
 
-class SingleFileTransaction:
+class SingleFileTransaction(object):
     """
     This class provides an interface to safely work with files.
     The idea is to use a standard python file object for doing

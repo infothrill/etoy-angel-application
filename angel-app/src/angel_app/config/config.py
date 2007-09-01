@@ -45,7 +45,7 @@ def getConfig(configfile = None):
 		configObject = Config(configfile)
 	return configObject
 
-class Config:
+class Config(object):
     """
     This is a basic configuration engine that provides access to the 
     configuration file of angel-app. In case there is no config file,

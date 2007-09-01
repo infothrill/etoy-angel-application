@@ -73,7 +73,7 @@ def startProcesses(privateMode = False):
         procManager.startServicing(process)
 
 
-class ExternalProcess:
+class ExternalProcess(object):
     """
     Class to represent an external process. It really is just a container for
     some variables.
@@ -89,7 +89,7 @@ class ExternalProcess:
     def setTransport(self, val):
         self.transport = val
 
-class ExternalProcessManager:
+class ExternalProcessManager(object):
     """
     This class can be used to manage (start/stop/restart) forked off
     processes. It uses the twisted matrix library and its
