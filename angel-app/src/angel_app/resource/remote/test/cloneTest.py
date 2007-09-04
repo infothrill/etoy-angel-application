@@ -72,7 +72,7 @@ class CloneTest(unittest.TestCase):
             client.inspectResource()
         except StopIteration, e:
             pass
-        assert True
+        assert self.testResource.verify()
         
         # look at MISSION ETERNITY
         path = os.sep.join([repositoryPath, "MISSION ETERNITY"])

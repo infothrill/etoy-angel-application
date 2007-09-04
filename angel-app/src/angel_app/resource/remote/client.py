@@ -5,8 +5,11 @@ from angel_app.resource.local.basic import Basic
 from angel_app.resource.remote.clone import Clone, splitParse, cloneFromElement, clonesFromElement
 from angel_app.resource.util import urlPathFromPath
 from twisted.web2.dav.element import rfc2518
+import angel_app.singlefiletransaction
 import os 
 import urllib
+import random
+
 
 log = getLogger(__name__)
 
@@ -14,6 +17,31 @@ log = getLogger(__name__)
 AngelConfig = config.getConfig()
 repository = AngelConfig.get("common","repository")
 maxclones = AngelConfig.getint("common","maxclones")
+
+def readResponseIntoFile(resource, referenceClone):
+    t = angel_app.singlefiletransaction.SingleFileTransaction()
+    bufsize = 8192 # 8 kB
+    safe = t.open(resource.fp.path, 'wb')
+    readstream = referenceClone.stream()
+    EOF = False
+    while not EOF:
+        data = readstream.read(bufsize)
+        if len(data) == 0:
+            EOF = True
+        else:
+            safe.write(data)
+    t.commit() # TODO: only commit if the download worked!
+
+
+def updateMetaData(resource, referenceClone):    
+    # then update the metadata
+    keysToBeUpdated = elements.signedKeys + [elements.MetaDataSignature]
+    rp = referenceClone.propertiesDocument(keysToBeUpdated)
+    re = rp.root_element.childOfType(rfc2518.Response).childOfType(rfc2518.PropertyStatus).childOfType(rfc2518.PropertyContainer)
+    for sk in keysToBeUpdated:
+        dd = re.childOfType(sk)
+        resource.deadProperties().set(dd)
+        
 
 def _ensureLocalValidity(resource, referenceClone):
     """
@@ -33,61 +61,42 @@ def _ensureLocalValidity(resource, referenceClone):
     else:
         if (not resource.exists()) or (referenceClone.revision() > resource.revisionNumber()):
 
-            # update the file contents, if necessary
-            log.debug("_ensureLocalValidity: updating file contents for " + 
-                              resource.fp.path)
-
-            import angel_app.singlefiletransaction
-            t = angel_app.singlefiletransaction.SingleFileTransaction()
-            bufsize = 8192 # 8 kB
-            safe = t.open(resource.fp.path, 'wb')
-            readstream = referenceClone.stream()
-            EOF = False
-            while not EOF:
-                #log.debug("====DOWNLOADING====")
-                data = readstream.read(bufsize)
-                if len(data) == 0:
-                    EOF = True
-                else:
-                    safe.write(data)
-            t.commit() # TODO: only commit if the download worked!
+            readResponseIntoFile(resource, referenceClone)
             
            
     if not resource.verify() or (referenceClone.revision() > resource.revisionNumber()):
-        # then update the metadata
-        
-        keysToBeUpdated = elements.signedKeys + [elements.MetaDataSignature]
-        
-        log.debug("updating metadata for invalid local resource: " + resource.fp.path)
-        rp = referenceClone.propertiesDocument(keysToBeUpdated)
-        re = rp.root_element.childOfType(rfc2518.Response
-                     ).childOfType(rfc2518.PropertyStatus
-                   ).childOfType(rfc2518.PropertyContainer)
-        
-        for sk in keysToBeUpdated:
-            dd = re.childOfType(sk)
-            resource.deadProperties().set(dd)
-            
-        log.debug("_ensureLocalValidity, local clone's signed keys are now: " + resource.signableMetadata())   
-    
-    # tell the referene clone we're now also hosting this resource
-    referenceClone.performPushRequest(resource)
-    log.debug("resource is now valid: " + `resource.verify()`)
+        updateMetaData(resource, referenceClone)   
         
     resource.familyPlanning()
+    
 
 def storeClones(af, goodClones, unreachableClones):
+    """
+    We're interested in storing a (maximum number) of clones of "sufficient quality".
+    The "better" a clone, the more we would like to keep it. What is "good" in this context?
+    If we've just validated a clone (i.e. it's a member of the goodClones list), that should
+    certainly count as good. However, in the case were we have few good clones, 
+    we might even want to store clones that were unreachable -- after all, perhaps the host
+    they're on was just temporarily offline?
+    
+    @param af: the local resource
+    @param goodClones: good clones of this resource
+    @param unreachableClones: unreachableClones of this resource
+    
+    @see:  iterateClones
+    """
+    
+    # set up a queue of good clones and unreachable clones, both in randomized sequence
+    gc = copy.copy(goodClones)
+    random.shuffle(gc)
+    
+    uc = copy.copy(unreachableClones)
+    random.shuffle(uc)
+    
+    clonesWeMightStore = gc + uc
 
     # fill in only non-duplicates    
-    clonesToBeStored = []
-    
-    # in decreasing order of how much we like them:
-    ourProviderListenPort = AngelConfig.getint("provider","listenPort")
-    
-    # gradually filter out the unreachable clones
-    someUnreachableOnes = unreachableClones[:len(unreachableClones)]
-    clonesWeMightStore = goodClones +  [Clone("localhost", ourProviderListenPort, af.relativeURL())]  + someUnreachableOnes
-    
+    clonesToBeStored = []    
     for clone in clonesWeMightStore:
         # take only non-duplicates
         if clone not in clonesToBeStored:
@@ -99,40 +108,27 @@ def storeClones(af, goodClones, unreachableClones):
     cloneElements = clonesToElement(clonesToBeStored)
     af.deadProperties().set(cloneElements)
 
+
 def inspectResource(path = repository):
 
-    log.debug("inspecting resource: " + path)
     af = Basic(path)
-    
-    # at this point, we have no guarantee that a local clone actually
-    # exists. however, we do know that the parent exists, because it has
-    # been inspected before
 
-
-    standin = (af.exists() and af) or (af.parent().exists() and af.parent()) or None
-    if standin == None: raise StopIteration
-    pubKey = standin.publicKeyString()
-    startingClones = af.clones()
-    resourceID = af.resourceID()
-
-    goodClones, badClones, unreachableClones = iterateClones(startingClones, pubKey, resourceID)
+    goodClones, badClones, unreachableClones = \
+        iterateClones(
+                      af.clones(), 
+                      af.publicKeyString(), 
+                      af.resourceID())
     
     if goodClones == []:
         log.info("no valid clones found for " + path)
         return
     
-    log.debug("inspectResource: valid clones: " + `goodClones`)
-    
     # the valid clones should all be identical, pick any one that exists for future reference
-    rc = goodClones[0]
-    
-    log.debug("reference clone: " + `rc` + " local path " + af.fp.path)
+    rc = random.choice(goodClones)
 
     _ensureLocalValidity(af, rc)
 
     storeClones(af, goodClones, unreachableClones)
-    
-    log.debug("DONE")
     
     
 
