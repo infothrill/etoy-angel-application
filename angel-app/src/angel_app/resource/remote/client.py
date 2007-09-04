@@ -40,7 +40,37 @@ def updateMetaData(resource, referenceClone):
     for key in keysToBeUpdated:
         pp = referenceClone.getProperty(key)
         resource.set(pp)
+
+def syncContents(resource, referenceClone):
+    """
+    Synchronize the contents of the resource from the reference clone.
+    """
+    path = resource.fp.path
+    
+
+    if referenceClone.isCollection():
+        # handle directory
         
+        if resource.exists() and not resource.isCollection():
+            os.remove(path)
+        if not resource.exists():
+            os.mkdir(path)
+    
+    else:
+        # handle file
+        readResponseIntoFile(resource, referenceClone)
+
+    
+def sync(resource, referenceClone):
+    """
+    Update the resource from the reference clone, by updating the contents,
+    then the metadata, in that order.
+    
+    @return whether the update succeeded.
+    """ 
+    syncContents(resource, referenceClone)
+    updateMetaData(resource, referenceClone)  
+    
 
 def _ensureLocalValidity(resource, referenceClone):
     """
@@ -50,21 +80,16 @@ def _ensureLocalValidity(resource, referenceClone):
     @param resource the local resource
     @param referenceClone a (valid, up-to-date) reference resource, which may be remote
     """
-    
-    
-    # first, make sure the local clone is fine:
-    if referenceClone.isCollection():
-        if not resource.exists():
-            from twisted.web2.dav.fileop import mkcollection
-            mkcollection(resource.fp)
-    else:
-        if (not resource.exists()) or (referenceClone.revision() > resource.revisionNumber()):
 
-            readResponseIntoFile(resource, referenceClone)
-            
-           
-    if not resource.verify() or (referenceClone.revision() > resource.revisionNumber()):
-        updateMetaData(resource, referenceClone)   
+    old = referenceClone.revision() > resource.revisionNumber()
+    
+    if resource.exists() and resource.verify() and not old:
+        # all is fine
+        return
+
+    sync(resource, referenceClone)
+    
+    assert resource.verify(), "Resource invalid after update."
         
     resource.familyPlanning()
     
