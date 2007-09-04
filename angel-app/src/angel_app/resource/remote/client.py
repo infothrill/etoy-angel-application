@@ -36,11 +36,10 @@ def readResponseIntoFile(resource, referenceClone):
 def updateMetaData(resource, referenceClone):    
     # then update the metadata
     keysToBeUpdated = elements.signedKeys + [elements.MetaDataSignature]
-    rp = referenceClone.propertiesDocument(keysToBeUpdated)
-    re = rp.root_element.childOfType(rfc2518.Response).childOfType(rfc2518.PropertyStatus).childOfType(rfc2518.PropertyContainer)
-    for sk in keysToBeUpdated:
-        dd = re.childOfType(sk)
-        resource.deadProperties().set(dd)
+    
+    for key in keysToBeUpdated:
+        pp = referenceClone.getProperty(key)
+        resource.set(pp)
         
 
 def _ensureLocalValidity(resource, referenceClone):
