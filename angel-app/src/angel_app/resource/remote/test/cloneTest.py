@@ -36,6 +36,7 @@ import os
 from angel_app.resource.remote import clone
 from angel_app.resource.remote import client
 from angel_app.resource.local import basic
+from angel_app import elements
 
 from angel_app.config import config
 AngelConfig = config.getConfig()
@@ -61,6 +62,19 @@ class CloneTest(unittest.TestCase):
         assert True == dd.ping(), "Make sure you have a local provider instance running."
         
         assert oldTimeOut == socket.getdefaulttimeout()
+ 
+ 
+    def testCache(self):
+        """
+        Assert proper cache management.
+        """
+        assert self.testClone.propertyCache == {}, "At the beginning, the cache must be empty."
+        self.testClone.resourceID()
+        assert elements.ResourceID.qname() in self.testClone.propertyCache, "After a request, the cache must be non-empty."
+        
+        for ee in self.testClone.cachedProperties:
+            assert ee.qname() in self.testClone.propertyCache.keys(), "Property %s must now be in the cache." % `ee`
+  
         
     def testInspectResource(self):
         """
@@ -80,9 +94,12 @@ class CloneTest(unittest.TestCase):
         if not os.path.exists(path): 
             return
         
+        me = clone.Clone("missioneternity.org")
+        assert me.ping(), "missioneternity.org must be reachable for this test."
+        
         try:
             client.inspectResource(path)
-            assert af.verify()
+            assert af.verify(), "resource does not verify after inspection."
         except StopIteration, e:
             pass
         assert True

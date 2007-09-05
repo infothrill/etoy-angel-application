@@ -80,7 +80,7 @@ class Clone(object):
         A single PROPFIND request can request multiple properties. Use this method to update the cache
         of all properties we will likely need.
         """
-        properties = okProperties(self.__propertiesDocument(self.cachedProperties))
+        properties = okProperties(self._propertiesDocument(self.cachedProperties))
         for property in properties:
             self.propertyCache[property.qname()] = property                            
         
@@ -128,11 +128,8 @@ class Clone(object):
         
         @see Clone.ping
         """
-        log.debug("attempting " + method + " connection with timeout of " + `timeout `+ " second to: " + \
-                  self.host + ":" + `self.port` + " " + self.path) 
         
         import socket
-        log.debug("socket default time out is now: " + `socket.getdefaulttimeout()`)
         conn = HTTPConnection(self.host, self.port)
         oldTimeOut = socket.getdefaulttimeout()
         socket.setdefaulttimeout(timeout)
@@ -176,14 +173,10 @@ class Clone(object):
                own request() method (not relying on httplib) and going
                down the rabbit hole on urlencoding/multipart mime content encoding etc.
         """
-        # a default socket timeout leads to socket.error: (35, 'Resource temporarily unavailable'), so we disable it
-        #import socket
-        #socket.setdefaulttimeout(60)
-        log.debug("attempting " + method + " connection to: " + self.host + ":" + `self.port` + " " + self.path) 
         conn = HTTPConnection(self.host, self.port)
         headers["content-length"] = str(len(body))
         conn.connect() 
-        #conn.sock.settimeout(10.0) # FIXME: implement a timeout on connect
+
         conn.request(
                  method, 
                  self.path,
@@ -201,7 +194,7 @@ class Clone(object):
         return response
     
     
-    def __propertiesDocument(self, properties):
+    def _propertiesDocument(self, properties):
         """
         Perform a PROPFIND request on the clone, returning the response body as an xml document.
         DO NOT use this directly. Use getProperties instead.
@@ -232,7 +225,7 @@ class Clone(object):
         @param a list of property xml elements.
         @return a davxml.PropertyContainer element containing the requested properties
         """
-        propertyDoc = self.__propertiesDocument(properties)
+        propertyDoc = self._propertiesDocument(properties)
         
         okp =  okProperties(propertyDoc)
         
@@ -258,7 +251,10 @@ class Clone(object):
                 break
             
         if not allCached:
-            returned = self._getProperties(properties)
+            # since we need to make a request anyway, we 
+            # might as well request frequently needed elements -- but avoid duplicates
+            rp = self.cachedProperties + [pp for pp in properties if pp not in self.cachedProperties]
+            returned = self._getProperties(rp)
         else:
             props = [self.propertyCache[p.qname()] for p in properties]       
             returned = davxml.PropertyContainer(*props)
@@ -405,8 +401,8 @@ def propertiesFromPropfindResponse(response):
     propertiesByResponseCode = {}
     
     for ps in propstats:
-        status = ps.childOfType(davxml.Status)       
-        responseCode = int(str(status).split()[-2])
+        status = ps.childOfType(davxml.Status)    
+        responseCode = int(str(status).split()[1])
         # TODO: we should test that this is indeed a valid response code
         prop = ps.childOfType(davxml.PropertyContainer)
         propertiesByResponseCode[responseCode] = prop
@@ -426,7 +422,7 @@ def okProperties(response):
     
     propertiesByResponseCode = propertiesFromPropfindResponse(response)
     
-    if not (1 == len(propertiesByResponseCode.keys())):
+    if propertiesByResponseCode.keys() != [responsecode.OK]:
         notOKCodes = [kk for kk in propertiesByResponseCode.keys() if kk != responsecode.OK]
         notOKResponses = [propertiesByResponseCode[kk] for kk in notOKCodes]
         errorProperties = "\n".join([rr.toxml() for rr in notOKResponses])

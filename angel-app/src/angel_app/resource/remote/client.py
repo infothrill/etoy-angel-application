@@ -2,13 +2,14 @@ from angel_app import elements
 from angel_app.config import config
 from angel_app.log import getLogger
 from angel_app.resource.local.basic import Basic
-from angel_app.resource.remote.clone import Clone, splitParse, cloneFromElement, clonesFromElement
+from angel_app.resource.remote.clone import Clone, clonesToElement
 from angel_app.resource.util import urlPathFromPath
 from twisted.web2.dav.element import rfc2518
 import angel_app.singlefiletransaction
 import os 
 import urllib
 import random
+import copy
 
 
 log = getLogger(__name__)
@@ -72,7 +73,7 @@ def sync(resource, referenceClone):
     updateMetaData(resource, referenceClone)  
     
 
-def _ensureLocalValidity(resource, referenceClone):
+def ensureLocalValidity(resource, referenceClone):
     """
     Make sure that the local clone is valid and up-to-date, by synchronizing from a reference
     clone, if necessary.
@@ -150,7 +151,7 @@ def inspectResource(path = repository):
     # the valid clones should all be identical, pick any one that exists for future reference
     rc = random.choice(goodClones)
 
-    _ensureLocalValidity(af, rc)
+    ensureLocalValidity(af, rc)
 
     storeClones(af, goodClones, unreachableClones)
     
