@@ -73,7 +73,7 @@ def getDefaultConfigObj():
     maxsleeptime = 100
     
     [mounttab]
-    "http://missioneternity.org:6221" = "/MISSION ETERNITY"
+    "http://missioneternity.org:6221/" = "MISSION ETERNITY"
 
     """ % ( defaults )
 
