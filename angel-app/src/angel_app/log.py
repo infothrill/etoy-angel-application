@@ -253,7 +253,7 @@ def __addConsoleHandler():
     #console.setLevel(logging.WARN) # for the console logger, we always use DEBUG!
     # set a format which is simpler for console use
     AngelConfig = angel_app.config.config.getConfig()
-    formatstring = AngelConfig.get('common', 'consolelogformat', True)
+    formatstring = AngelConfig.get('common', 'consolelogformat')
     formatter = logging.Formatter(formatstring)
     # tell the handler to use this format
     console.setFormatter(formatter)
@@ -269,7 +269,7 @@ def __addRotatingFileHandler():
     fileHandler.setLevel(__getConfiguredLogLevel())
     # set a format which is simpler for console use
     AngelConfig = angel_app.config.config.getConfig()
-    formatstring = AngelConfig.get('common', 'logformat', True)
+    formatstring = AngelConfig.get('common', 'logformat')
     formatter = logging.Formatter(formatstring)
     # tell the handler to use this format
     fileHandler.setFormatter(formatter)    
@@ -320,14 +320,14 @@ def getLoggingFilters():
     log = getLogger(__name__)
     from angel_app.config.config import getConfig
     angelConfig = getConfig()
-    if not angelConfig.config.has_section(sectionname):
+    if not angelConfig.has_section(sectionname):
         log.warn("No section '%s' in config file, skipping" % sectionname)
         return []
     filters = []
     #print "=======LOGGING CONFIG================"
     #print "Default LOGLEVEL: " + str(__getConfiguredLogLevel())
-    for logfilter in angelConfig.config.options(sectionname):
-        level = angelConfig.config.get(sectionname, logfilter)
+    for logfilter in angelConfig.config[sectionname].keys():
+        level = angelConfig.get(sectionname, logfilter)
         if not digits.match(level):
             level = loglevelToInt(level)
         #print "LOGLEVEL " + str(level) + " for " + logfilter

@@ -1,216 +1,231 @@
 """
-Basic configuration getter for angel-app 
+Module providing config file facilities through configObj
+
+Sample usage:
+
+    cfg = getConfig()
+    if cfg.has_section('common'):
+        cfg.get('common', 'logdir')
+        # or:
+        cfg.config['common']['logdir']
+
 """
+__author__ = "Paul Kremer"
 
-legalMatters = """
- Copyright (c) 2006, etoy.VENTURE ASSOCIATION
- All rights reserved.
- 
- Redistribution and use in source and binary forms, with or without modification, 
- are permitted provided that the following conditions are met:
- *  Redistributions of source code must retain the above copyright notice, 
-    this list of conditions and the following disclaimer.
- *  Redistributions in binary form must reproduce the above copyright notice, 
-    this list of conditions and the following disclaimer in the documentation 
-    and/or other materials provided with the distribution.
- *  Neither the name of etoy.CORPORATION nor the names of its contributors may be used to 
-    endorse or promote products derived from this software without specific prior 
-    written permission.
- 
- THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY 
- EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES 
- OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT 
- SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, 
- SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT 
- OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) 
- HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, 
- OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS 
- SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
-"""
+import sys
+import unittest
+import os
 
-author = """Paul Kremer, 2006"""
+from angel_app.contrib.cfgobj.configobj import ConfigObj
+from angel_app.contrib.cfgobj.validate import Validator, VdtValueError
 
-from os import environ, path
-from ConfigParser import SafeConfigParser
-import angel_app.log
-
-configObject = None # holder for a Config object
-
-def getConfig(configfile = None):
-	"""
-	Returns an instance of Config()
-	"""
-	global configObject
-	if configObject == None:
-		configObject = Config(configfile)
-	return configObject
-
-class Config(object):
+def isValidConfig(cfgObj):
     """
-    This is a basic configuration engine that provides access to the 
-    configuration file of angel-app. In case there is no config file,
-    this class will create one with default values on __del__. The path
-    to the config file is currently restricted to $HOME/.angelrc.
-    Comment lines in the config file will get stripped off if it is
-    rewritten. The directory $HOME/.angel-app will automatically get
-    created if needed.
-
-	<p>
-	In angel-app, you will most probably not instantiate this class
-    directly, but use the routine "getConfig()" in this module.
-	</p>
-
-    <p>
-    See the documentation of the python SafeConfigParser module for
-    information on the configuration file syntax.
-    </p>
+    Method to validate the parsed config against the config_spec from _configspec_lines()
+    
+    See the configObj documentation for further information
     """
+    validation_result = cfgObj.validate(Validator(), preserve_errors=True)
+    if not validation_result == True:
+        raise Exception, "The configuration failed to be validated: %s" % (validation_result)
+    return True
 
+def getDefaultConfigObj():
+    """
+    Return a configobj instance with default values
+    """
+    from logging.handlers import DEFAULT_TCP_LOGGING_PORT
+
+    #some defaults have to be computed first:
+    defaults = {
+            "angelhome" : os.path.join(os.environ["HOME"], ".angel-app"),
+            "repository" : os.path.join(os.environ["HOME"], ".angel-app", "repository"),
+            "keyring" : os.path.join(os.environ["HOME"], ".angel-app", "keyring"),
+            "logdir" : os.path.join(os.environ["HOME"], ".angel-app", "log"),
+            "loglistenport" : str(DEFAULT_TCP_LOGGING_PORT),
+            "logformat" : '%(asctime)s %(levelname)-6s %(name)-20s - %(message)s',
+            "consolelogformat" : '%(levelname)-6s %(name)-20s - %(message)s'
+                }
+    
+    # create a string for the default config:
+    defaultconfig_txt = """
+    [common]
+    angelhome = "%(angelhome)s"
+    repository =  "%(repository)s"
+    keyring = "%(keyring)s"
+    logdir = "%(logdir)s"
+    maxclones = 5
+    loglevel = INFO
+    loglistenport = %(loglistenport)s
+    logformat = '%(logformat)s'
+    consolelogformat = '%(consolelogformat)s'
+    
+    [presenter]
+    listenPort = 6222
+    listenInterface = localhost
+    
+    [provider]
+    listenPort = 6221
+    
+    [maintainer]
+    initialsleep = 1 # it's nice to be fast on the first traversal
+    treetraversaltime = 86400 # we want a tree traversal to take about one day after the initial sync
+    maxsleeptime = 100
+    
+    [mounttab]
+    "http://missioneternity.org:6221" = "/MISSION ETERNITY"
+
+    """ % ( defaults )
+
+    cfg = ConfigObj(defaultconfig_txt.splitlines(), configspec = _configspec_lines())
+    cfg.interpolation = False
+    assert isValidConfig(cfg) == True
+    return cfg
+
+def _configspec_lines():
+    """
+    Returns the textual config specification for use in validation and type-conversion
+    """
+    config_spec = """
+    [common]
+    angelhome = string
+    repository =  string
+    keyring = string
+    logdir = string
+    maxclones = integer(min=1, max=20)
+    loglevel = option('DEBUG', 'INFO', 'WARN', 'ERR', 'FATAL', default='INFO')
+    loglistenport = integer(min=1025)
+    logformat = string
+    consolelogformat = string
+    
+    [presenter]
+    listenPort = integer(min=1025)
+    listenInterface = string
+    
+    [provider]
+    listenPort = integer(min=1025)
+    
+    [maintainer]
+    initialsleep = integer(min=1)
+    treetraversaltime = integer(min=600)
+    maxsleeptime = integer(min=2)    
+    """
+    return config_spec.splitlines()
+
+def getDefaultConfigFilePath():
+    """
+    Returns the filename pointing to the default configuration file.
+    """
+    home = os.environ["HOME"]
+    return os.path.join(home, ".angelrc");
+
+configObject = None # holder for a ConfigWrapper object
+def getConfig(configfilename = getDefaultConfigFilePath()):
+    """
+    Implements a singleton for getting a ConfigWrapper object
+
+    @return: ConfigWrapper instance
+    """
+    global configObject
+    
+    if configObject == None:
+        if configfilename is None: configfilename = getDefaultConfigFilePath()
+        configObject = ConfigWrapper(configfilename)
+    return configObject
+
+
+configObj = None # holder for a configObj object
+def getConfigObj(configfilename = getDefaultConfigFilePath()):
+    """
+    Implements a singleton for getting a configObj object with user values and default values
+    for unconfigured options.
+
+    @return: configObj instance
+    """
+    global configObj
+    if configObj == None:
+        user_config = ConfigObj(configfilename, configspec = _configspec_lines())
+        user_config.interpolation = False
+        configObj = getDefaultConfigObj()
+        configObj.merge(user_config)
+        assert isValidConfig(configObj) == True
+    return configObj
+
+
+class ConfigWrapper(object):
+    """
+    The only purpose of this class is to serve as a compatibility interface for our old
+    config class which provided the get() getint() and getboolean() methods.
+
+   <p>
+   In angel-app, you will most probably not instantiate this class
+    directly, but use the method "getConfig()" in this module.
+   </p>
+   """
     def __init__(self, configfilepath = None):
-        self.cfgvars = {}
-        if configfilepath == None:
-            self.cfgvars["mainconfigfile"] = self.getDefaultConfigFilePath()
-        else:
-            self.cfgvars["mainconfigfile"] = configfilepath
+        self.configfilename = configfilepath
+        self.config = getConfigObj(configfilepath)
 
-        self.config = SafeConfigParser()
-        self.config.optionxform = str # overwrite method to remain case sensitive
-        self.config.read(self.cfgvars["mainconfigfile"])
-        self.bootstrapping = True
-		#dump entire config file (debug)
-		#for section in self.config.sections():
-		#	getLogger("config").debug(section)
-		#	for option in self.config.options(section):
-		#		getLogger("config").debug(" " + option + "=" + self.config.get(section, option))
+    def has_section(self, section):
+        return self.config.has_key(section)
 
-    def getDefaultConfigFilePath(self):
-        home = environ["HOME"]
-        return path.join(home, ".angelrc");
+    def get(self, *args):
+        assert len(args) > 0
+        temp = self.config[args[0]]
+        if len(args) > 1:
+            for arg in args[1:]:
+                temp = temp[arg]
+        return temp
+
+    def getint(self, *args):
+        value = self.get(*args)
+        return int(value)
+        
+    def getboolean(self, *args):
+        value = self.get(*args)
+        return bool(value)
 
     def getConfigFilename(self):
-        return self.cfgvars["mainconfigfile"]
-
-    def get(self, section, key, raw = False):
-        self.__checkGetter(section, key)
-        val = self.config.get(section, key, raw)
-        angel_app.log.getLogger("config").debug("get(%s, %s) returns '%s'", section, key, val)
-        return val
-
-    def getint(self, section, key):
-        self.__checkGetter(section, key)
-        val = self.config.getint(section, key)
-        angel_app.log.getLogger("config").debug("getint(%s, %s) returns '%d'", section, key, val)
-        return val
-
-    def getboolean(self, section, key):
-        self.__checkGetter(section, key)
-        val = self.config.getboolean(section, key)
-        angel_app.log.getLogger("config").debug("getboolean(%s, %s) returns '%s'", section, key, val)
-        return val
-
-    def __checkGetter(self, section, option):
-        """
-        Convenience method to make sure the section and option are
-        allowed and valid.
-        """
-        self.__checkSection(section)
-        self.__checkOption(section, option)
-
-    def __isAllowedSection(self, section):
-        """
-        This checks the given sectionname against the hard-coded list
-        of allowed section names.
-        """
-        allowedSections = ["presenter", "common", "maintainer", "provider"]
-        if not section in allowedSections:
-            return False
-        else:
-            return True
-
-    def __getDefaultValue(self, section, key):
-        """
-        Return the default option value for the given section and key.
-
-        This is usually only called during the first run of the
-        application.
-
-        Attention:
-          - all keys must be lower case!
-          - all values in the dictionary defaultValues must be of type string
-        """
-        s = section.lower()
-        k = key.lower()
-        from logging.handlers import DEFAULT_TCP_LOGGING_PORT
-        defaultValues = {
-                         "common" : {
-                                    "angelhome": path.join(environ["HOME"], ".angel-app"),
-                                    "repository": path.join(environ["HOME"], ".angel-app", "repository"),
-                                    "keyring": path.join(environ["HOME"], ".angel-app", "keyring"),
-                                    "logdir": path.join(environ["HOME"], ".angel-app", "log"),
-                                    "maxclones": str(5),
-                                    "loglevel": "INFO",
-                                    # FIXME: %(funcName)s is only available in Python 2.5 ;-(
-                                    # %(filename)s:%(lineno)d is not used, because we get useless __init__.py after packaging
-                                    "logformat": '%(asctime)s %(levelname)-6s %(name)-20s - %(message)s',
-                                    "consolelogformat": '%(levelname)-6s %(name)-20s - %(message)s',
-                                    "loglistenport" : str(DEFAULT_TCP_LOGGING_PORT)
-                                    }, 
-                         "presenter": { "listenport": "6222", "listeninterface": "localhost" }, 
-						 "provider" : { "listenport": "6221" },
-						 "maintainer" : {
-                                         # it's nice to be fast on the first traversal
-                                         "initialsleep": "1",
-                                         # we want a tree traversal to take about one day after the initial synch
-                                         "treetraversaltime" : str(24 * 3600),
-                                         "maxsleeptime" : str(100)
-                                         }
-                         }
-        if k not in defaultValues[s]:
-            return False
-        else:
-            return defaultValues[s][k]
-
-    def __checkSection(self, section):
-        """
-        Makes sure the given section is allowed and eventually adds it
-        to the config file (if not present yet).
-        """
-        if not self.__isAllowedSection(section):
-            raise NameError, "ConfigError: Section name '"+section+"' is not allowed"
-        if not self.config.has_section(section):
-            self.config.add_section(section)
-            self.commit()
-
-    def __checkOption(self, section, key):
-        """
-        Makes sure the given option is allowed and eventually adds it
-        to the config file (if not present yet).
-        """
-        if not self.config.has_option(section, key):
-            if not self.__getDefaultValue(section, key):
-                raise NameError, "ConfigError: Section '"+section+"' has no option '"+key+"' and there is no default value available"
-            else:
-                self.config.set(section, key, self.__getDefaultValue(section, key)) 
-                self.commit()
-
+        return self.configfilename
+    
     def commit(self):
-        """
-        Commits the current values of the config object to the config
-        file. This method is currently called automatically whenever a
-        configuration value is changed through set/get. We do not
-        implement this in the destructor, because in the destructor we
-        cannot be sure about which stuff is already garbage collected
-        during shutdown and so it might fail there.
-        """
-        if self.bootstrapping:
-            return
-        configfilePath = self.cfgvars["mainconfigfile"]
-        if not path.exists(configfilePath):
-            angel_app.log.getLogger("config").info("Creating a new, empty config file in '"+configfilePath+"'")
-        angel_app.log.getLogger("config").info("committing the config file to '"+configfilePath+"'")
-        from angel_app.singlefiletransaction import SingleFileTransaction
-        t = SingleFileTransaction()
-        f = t.open(configfilePath, 'w')
-        self.config.write(f)
-        f.close()
-        t.commit()
+        raise Exception, "Must yet be implemented" # TODO
+
+
+class ConfigTestCase(unittest.TestCase):
+    
+    def setUp(self):
+        unittest.TestCase.setUp(self)
+    
+    def tearDown(self):
+        unittest.TestCase.tearDown(self)
+        
+    def testDefaultConfigObj(self):
+        default_config = getDefaultConfigObj()
+        sections = default_config.keys()
+        # just make sure we can do a 2-level depth loop into sections/values:
+        for s in sections:
+            bla = "%s:" % ( s )
+            for ss in default_config[s].keys():
+                bla2 = "\t%s : %s" % ( ss, default_config[s][ss])
+        
+    def testGetRealConfigObj(self):
+        self.assertTrue(os.path.isfile(getDefaultConfigFilePath()))
+        config = ConfigObj(getDefaultConfigFilePath())
+        bla = config.keys()
+        
+    def testGetMergedConfigObj(self):
+        config = getConfigObj()
+        self.assertFalse(config == None)
+        bla = config.keys()
+        
+    def testConfigCompat(self):
+        configObj = getConfigObj()
+        self.assertTrue(type(configObj['provider']['listenPort']) == type(1))
+        config = getConfig()
+        self.assertTrue(config != None)
+        self.assertTrue(type(config.get('provider', 'listenPort')) == type(1))
+        
+if __name__ == '__main__':
+    unittest.main()
+
