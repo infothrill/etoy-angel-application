@@ -1,1 +1,5 @@
-all = ["uuid", "ezPyCrypto"]
+all = [
+       "uuid",
+       "ezPyCrypto",
+       "cfgobj"
+       ]

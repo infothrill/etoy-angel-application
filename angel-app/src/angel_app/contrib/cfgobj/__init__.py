@@ -1,0 +1,4 @@
+all = [
+       "configobj",
+       "validate",
+       ]
