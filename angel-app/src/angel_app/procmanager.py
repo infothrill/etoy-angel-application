@@ -229,7 +229,7 @@ class ExternalProcessManager(object):
         if processObj.failures > 5:
             self.log.warn("service %s keeps failing!", protocol)
         if processObj.failures > 10:
-            self.log.warn("Stopping service of %s because of too many failures", protocol)
+            self.log.error("Stopping service of %s because of too many failures", protocol)
             self.stopServicing(processObj)
         # when a process end, the default is to just start it again,
         # the start routine knows if the process must really  be started again
