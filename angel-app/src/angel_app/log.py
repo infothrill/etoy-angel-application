@@ -49,8 +49,7 @@ import logging
 import angel_app.config.config
 from twisted.python import log as twistedlog
 
-from twisted.python.filepath import FilePath
-from os import environ, path, mkdir, linesep
+from os import path, mkdir
 
 DEBUG = False # this will start printing to the console if set to True
 """
@@ -224,7 +223,7 @@ def __configLoggerBasic():
     # the way to call basicConfig() changed from version 2.3 to version 2.4
     # to be able to run in 2.3 (although with slightly messy logging), we detect this here:
     from platform import python_version_tuple
-    (major,minor,patchlevel) = python_version_tuple()
+    (major, minor, dummy) = python_version_tuple()
     major = int(major)
     minor = int(minor)
     if (major >=2 and minor > 3 ):
@@ -263,7 +262,6 @@ def __addConsoleHandler():
 
 
 def __addRotatingFileHandler():
-    import logging.handlers # needed to instiate the RotatingFileHandler
     # define a file Handler:
     fileHandler = logging.handlers.RotatingFileHandler(getAngelLogFilename(), 'a', log_maxbytes, log_backupcount)
     fileHandler.setLevel(__getConfiguredLogLevel())
@@ -281,7 +279,6 @@ def __addRotatingFileHandler():
 def __addSocketHandler():
     from angel_app.config.config import getConfig
     angelConfig = getConfig()
-    import logging.handlers # needed to instiate the SocketHandler
     # define a socket Handler:
     socketHandler = logging.handlers.SocketHandler('localhost', angelConfig.getint("common", "loglistenport"))
     socketHandler.setLevel(__getConfiguredLogLevel())
@@ -314,7 +311,6 @@ def getLoggingFilters():
     presenter.twisted = INFO
     provider.angel_app.resource.local.external.methods.proppatch = INFO
     """
-    import re
     digits = re.compile("\d+")
     sectionname = 'logfilters'
     log = getLogger(__name__)
