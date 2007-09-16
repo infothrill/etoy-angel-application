@@ -10,7 +10,7 @@ TRUNK August/September 2007
  * updated welcome screen
  * slightly fixed html layout of provider
  * added "files" into application bundle (right now only contains GPL)
- * minimal GUI renames/woording polish
+ * minimal GUI renames/wording polish
 
 0.1.6 April 17 2007
  * added "Export public crypto key..." entry in "File" menu
