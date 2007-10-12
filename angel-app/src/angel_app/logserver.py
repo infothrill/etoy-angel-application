@@ -28,7 +28,7 @@ legalMatters = """
  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
 """
 
-author = """Paul Kremer, 2007"""
+__author__ = """Paul Kremer, 2007"""
 
 """
 """
@@ -87,7 +87,7 @@ class LoggingProtocol(Protocol):
                 break
 
     def handleLogRecord(self, record):
-        logger = logging.getLogger(record.name)
+        dummylogger = logging.getLogger(record.name)
         # N.B. EVERY record gets logged. This is because Logger.handle
         # is normally called AFTER logger-level filtering. If you want
         # to do filtering, do it at the client end to save wasting
@@ -98,6 +98,9 @@ class LoggingProtocol(Protocol):
 
 
 def startLoggingServer():
+    """
+    Will start listening to the configured tcp port using the twisted reactor.listenTCP() call
+    """
     factory = Factory()
     factory.protocol = LoggingProtocol
     from angel_app.config.config import getConfig

@@ -12,12 +12,11 @@ Sample usage:
 """
 __author__ = "Paul Kremer"
 
-import sys
 import unittest
 import os
 
 from angel_app.contrib.cfgobj.configobj import ConfigObj
-from angel_app.contrib.cfgobj.validate import Validator, VdtValueError
+from angel_app.contrib.cfgobj.validate import Validator
 
 def isValidConfig(cfgObj):
     """
@@ -157,12 +156,12 @@ class ConfigWrapper(object):
     The only purpose of this class is to serve as a compatibility interface for our old
     config class which provided the get() getint() and getboolean() methods.
 
-   <p>
-   In angel-app, you will most probably not instantiate this class
+    <p>
+    In angel-app, you will most probably not instantiate this class
     directly, but use the method "getConfig()" in this module.
-   </p>
-   """
-    def __init__(self, configfilepath = None):
+    </p>
+    """
+    def __init__(self, configfilepath = getDefaultConfigFilePath()):
         self.configfilename = configfilepath
         self.config = getConfigObj(configfilepath)
 
@@ -205,19 +204,18 @@ class ConfigTestCase(unittest.TestCase):
         sections = default_config.keys()
         # just make sure we can do a 2-level depth loop into sections/values:
         for s in sections:
-            bla = "%s:" % ( s )
             for ss in default_config[s].keys():
-                bla2 = "\t%s : %s" % ( ss, default_config[s][ss])
+                default_config[s][ss]
         
     def testGetRealConfigObj(self):
         self.assertTrue(os.path.isfile(getDefaultConfigFilePath()))
         config = ConfigObj(getDefaultConfigFilePath())
-        bla = config.keys()
+        config.keys()
         
     def testGetMergedConfigObj(self):
         config = getConfigObj()
         self.assertFalse(config == None)
-        bla = config.keys()
+        config.keys()
         
     def testConfigCompat(self):
         configObj = getConfigObj()

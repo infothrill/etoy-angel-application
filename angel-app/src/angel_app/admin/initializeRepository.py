@@ -1,8 +1,16 @@
+import os
+ 
 from angel_app.log import getLogger
 from angel_app.config.config import getConfig
 log = getLogger(__name__)
 
 def getMountTab():
+    """
+    Fetches the configured mounts and returns a 2 dimensional list with
+    device - mountpoint values.
+    
+    @return: list of lists
+    """
     angelConfig = getConfig()
     mounttab = []
     if angelConfig.has_section('mounttab'):
@@ -34,11 +42,10 @@ def initializeRepository():
     reSign()
     
     from angel_app.admin.resourceProperties import setMountPoint
-    from twisted.python.filepath import FilePath
     from angel_app.admin.resourceProperties import absPath
     
     fstab = getMountTab()
     for mount in fstab:
         log.info("mounting '%s' to '%s'" % (mount[0], mount[1]))
-        if not FilePath(absPath(mount[1])).exists():
+        if not os.path.exists(absPath(mount[1])):
             setMountPoint(mount[1], mount[0])
