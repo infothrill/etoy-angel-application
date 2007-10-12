@@ -66,6 +66,11 @@ class CloneTest(unittest.TestCase):
         assert True == dd.ping(), "Make sure you have a local provider instance running."
         
         assert oldTimeOut == socket.getdefaulttimeout()
+        
+    def testIsCollection(self):
+        
+        assert self.testClone.isCollection() == True
+        
  
  
     def testCache(self):

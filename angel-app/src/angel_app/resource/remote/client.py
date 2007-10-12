@@ -37,7 +37,7 @@ def updateMetaData(resource, referenceClone):
     
     for key in keysToBeUpdated:
         pp = referenceClone.getProperty(key)
-        resource.set(pp)
+        resource.deadProperties().set(pp)
 
 def syncContents(resource, referenceClone):
     """

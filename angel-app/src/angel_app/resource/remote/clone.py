@@ -295,7 +295,10 @@ class Clone(object):
             return False  
 
     def isCollection(self):
-         return self.getProperty(rfc2518.ResourceType) == rfc2518.Collection.sname()
+        """
+        TODO: this currently works 
+        """
+        return self.getProperty(rfc2518.ResourceType).children[0].sname() == rfc2518.Collection.sname()
      
     def findChildren(self):
          raise NotImplementedError    
