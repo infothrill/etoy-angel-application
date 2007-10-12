@@ -1,11 +1,11 @@
 """
 Utility script to force resigning the repository root
 """
+import os
 
 from angel_app.log import getLogger
 log = getLogger(__name__)
 
-import os
 from angel_app.resource.local.basic import Basic
 from angel_app.resource.local.internal.resource import Crypto
 from angel_app.config import config
@@ -53,8 +53,6 @@ def setMountPoint(mountPoint, URLToMount):
     log.info("attempting to mount: " + URLToMount + " at " + mountPoint)
     import urlparse
     
-    import os
-    
     pp = absPath(mountPoint)
     
     assert not os.path.exists(pp), "Can't create mount point where resource exists: " + pp
@@ -71,7 +69,7 @@ def setMountPoint(mountPoint, URLToMount):
     
     host, port = host.split(":")
     if port == "": 
-        from angel_app.resource.remote.setup import providerPublicListenPort # default port of other peers
+        from angel_app.config.defaults import providerPublicListenPort # default port of other peers
         port = providerPublicListenPort
         
     cc = clone.Clone(host, int(port), path)
