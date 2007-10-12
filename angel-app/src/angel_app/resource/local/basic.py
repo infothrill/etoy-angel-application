@@ -94,50 +94,42 @@ class Basic(DAVFile):
         """
         @return: the checksum of the resource content
         """
-        return str(self.get(elements.ContentSignature))
+        return str(self.deadProperties().get(elements.ContentSignature.qname()))
     
     def metaDataSignature(self):
         """
         @return the signature of the signed metadata
         """
-        return str(self.get(elements.MetaDataSignature))
-    
-    def verify(self):
-        if not self.exists():
-            log.debug("Basic.verify(): False, file does not exist")
-            return False
-        
-        try:
-            pk = self.publicKeyString()
-            cs = self.contentSignature()
-            sm = self.signableMetadata()
-            ms = self.metaDataSignature()
-        except:
-            log.debug("Basic.verify(): False, invalid metadata")
-            return False
-        
-        dataIsCorrect = False
+        return str(self.deadProperties().get(elements.MetaDataSignature.qname()))
+
+
+    def dataIsCorrect(self):
+        cs = self.contentSignature()
         if cs == self._computeContentHexDigest():
-            dataIsCorrect = True
-            log.debug("data signature for file '%s' is correct: %s" % (self.fp.path, cs) )
+            log.debug("data signature for file '%s' is correct: %s" % (self.fp.path, cs))
+            return True
         else:
-            log.info("data signature for file '%s' is incorrect: %s" % (self.fp.path, cs) )
+            log.info("data signature for file '%s' is incorrect: %s" % (self.fp.path, cs))
             return False
-        
+
+    def metaDataIsCorrect(self):
+
         publicKey = ezKey()
-        publicKey.importKey(pk)
+        publicKey.importKey(self.publicKeyString())
+        
+        sm = self.signableMetadata()
+        ms = self.metaDataSignature()
         
         log.debug(ms)
         log.debug(sm)
         try:
-            metaDataIsCorrect = publicKey.verifyString(sm, ms)
+            return publicKey.verifyString(sm, ms)
         except:
             log.info("Can not verify metadata %s against signature %s" % (sm, ms))
             return False
-        
-        log.debug("meta data signature for file " + self.fp.path + " is correct: " + `metaDataIsCorrect`)
-            
-        return dataIsCorrect and metaDataIsCorrect
+    
+    def verify(self):
+        return (self.dataIsCorrect() and self.metaDataIsCorrect())
     
     def _computeContentHexDigest(self):
         """
