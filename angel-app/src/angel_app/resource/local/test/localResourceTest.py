@@ -98,7 +98,7 @@ class BasicResourceTest(unittest.TestCase):
         """
         @return: a C{int} corresponding to the revision number of this resource
         """
-        revisionNumber = self.dirResource.revisionNumber()
+        revisionNumber = self.dirResource.revision()
         assert type(revisionNumber) == type(0)
         assert revisionNumber >= 0
 

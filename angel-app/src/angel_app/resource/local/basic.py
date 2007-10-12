@@ -52,6 +52,13 @@ class Basic(DAVFile):
             return util.StringReader(REPR_DIRECTORY)
         else:
             return self.fp.open()
+        
+    def stream(self):
+        """
+        alias for interface compliance.
+        TODO: decide on eiter open() or stream()
+        """
+        return self.open()
 
     def contentLength(self):
         if not self.isEncrypted():
@@ -61,8 +68,14 @@ class Basic(DAVFile):
             # file requires decryption of the file.
             # let's just pretend we don't know
             return None
+        
+    def getProperty(self, element):
+        """
+        Return a resource property by element.
+        """
+        return self.deadProperties().get(element)
        
-    def revisionNumber(self):
+    def revision(self):
         """
         @rtype int
         @return the revision number. if not already set, it is initialized to 1.
@@ -223,7 +236,7 @@ class Basic(DAVFile):
         """
         self.findChildren("1")
 
-    def findChildren(self, depth):
+    def findChildren(self, depth = "0"):
         """ 
         @rtype [Filepath]
         @return child nodes of this node. Optionally (and by default),

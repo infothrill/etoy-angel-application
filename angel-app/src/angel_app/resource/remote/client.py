@@ -79,7 +79,7 @@ def ensureLocalValidity(resource, referenceClone):
     @param referenceClone a (valid, up-to-date) reference resource, which may be remote
     """
 
-    old = referenceClone.revision() > resource.revisionNumber()
+    old = referenceClone.revision() > resource.revision()
     
     if resource.exists() and resource.verify() and not old:
         # all is fine

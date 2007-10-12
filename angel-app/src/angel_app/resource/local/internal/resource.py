@@ -137,7 +137,7 @@ class Crypto(
         """
         Increase the revision number by one, if it not initialized, set it to 1.
         """
-        nn = self.revisionNumber() + 1
+        nn = self.revision() + 1
         log.debug("revision number for " + self.fp.path +" now at: " + `nn`)
         self.deadProperties().set(elements.Revision.fromString(`nn`))
         return int(nn)
@@ -299,7 +299,7 @@ class Crypto(
         # certainly not going to hurt if we do this:
         self.fp.restat()
         
-        log.debug(self.fp.path + " now at revision: " + `self.revisionNumber()`) 
+        log.debug(self.fp.path + " now at revision: " + `self.revision()`) 
         if recursionLimit > 0:
             self.updateParent(recursionLimit - 1)
             
