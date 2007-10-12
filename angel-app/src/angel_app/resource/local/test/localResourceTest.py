@@ -145,8 +145,10 @@ class BasicResourceTest(unittest.TestCase):
         are of the same type as the element requested.
         """
         from angel_app.resource.local.propertyManager import defaultMetaData
+        dp = self.dirResource.deadProperties()
         for element in defaultMetaData.keys():
-            assert element.qname() == defaultMetaData[element](self.dirResource).qname()
+            dme = defaultMetaData[element]
+            assert element.qname() == dme(dp).qname()
         
         
     def testPropertyIO(self):
@@ -156,5 +158,5 @@ class BasicResourceTest(unittest.TestCase):
         testProperty = rfc2518.Collection()
         self.dirResource.deadProperties().set(testProperty)
         assert testProperty.qname() in self.dirResource.deadProperties().list()
-        outProperty = self.dirResource.deadProperties().get(testProperty.qname())
+        outProperty = self.dirResource.deadProperties().get(testProperty)
         assert testProperty.toxml() == outProperty.toxml()

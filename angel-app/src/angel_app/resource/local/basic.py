@@ -16,7 +16,7 @@ from angel_app.contrib.ezPyCrypto import key as ezKey
 import os
 import urllib
 from angel_app.resource.local import util
-from angel_app.resource.local.propertyManager import PropertyManagerMixin
+from angel_app.resource.local.propertyManager import PropertyManager
 
 log = getLogger(__name__)
 
@@ -27,20 +27,19 @@ repository = FilePath(AngelConfig.get("common","repository"))
 
 REPR_DIRECTORY = "directory" #This is the string content representation of a directory
 
-class Basic(PropertyManagerMixin, DAVFile):
+class Basic(DAVFile):
     
     implements(IResource.IAngelResource)
     
     def __init__(self, path,
                  defaultType="text/plain",
                  indexNames=None):
-        PropertyManagerMixin.__init__(self)
         DAVFile.__init__(self, path, defaultType, indexNames)
         
         # disallow the creation of resources outside of the repository
         self.assertInRepository()
         
-        self._dead_properties = xattrPropertyStore(self)
+        self._dead_properties = PropertyManager(self)
 
     def contentAsString(self):
         return self.open().read()
@@ -68,14 +67,14 @@ class Basic(PropertyManagerMixin, DAVFile):
         @rtype int
         @return the revision number. if not already set, it is initialized to 1.
         """
-        return int(str(self.get(elements.Revision)))
+        return int(str(self.deadProperties().get(elements.Revision)))
 
     def isEncrypted(self):
         """
         @rtype boolean
         @return whether the file is encrypted. 
         """
-        return int(str(self.get(elements.Encrypted))) == 1
+        return int(str(self.deadProperties().get(elements.Encrypted))) == 1
 
     def contentSignature(self):
         """
@@ -145,7 +144,7 @@ class Basic(PropertyManagerMixin, DAVFile):
         """
         @see IResource
         """ 
-        return self.get(elements.ResourceID)
+        return self.deadProperties().get(elements.ResourceID)
     
     def resourceName(self):
         """
@@ -297,10 +296,10 @@ class Basic(PropertyManagerMixin, DAVFile):
         @see propertyManager.inheritClones
         """
         from angel_app.resource.remote import clone
-        return clone.clonesFromElement(self.get(elements.Clones))
+        return clone.clonesFromElement(self.deadProperties().get(elements.Clones))
 
     def childLinks(self):
-        return self.get(elements.Children)
+        return self.deadProperties().get(elements.Children)
 
     def getChildElement(self):
         """
@@ -342,7 +341,7 @@ class Basic(PropertyManagerMixin, DAVFile):
         """
         @return: the string representation of the resource's public key.
         """
-        return str(self.get(elements.PublicKeyString))
+        return str(self.deadProperties().get(elements.PublicKeyString))
  
     def keyUUID(self):
         """
@@ -364,7 +363,7 @@ class Basic(PropertyManagerMixin, DAVFile):
         be signed.
         """
         try:
-            sm = "".join([self.get(key).toxml() for key in elements.signedKeys])
+            sm = "".join([self.deadProperties().get(key).toxml() for key in elements.signedKeys])
             log.debug("signable meta data for " + self.fp.path + ":" + sm)
             return sm
         except Exception, e:

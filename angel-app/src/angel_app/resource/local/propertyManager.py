@@ -6,6 +6,7 @@ import time
 
 from twisted.web2 import responsecode
 from twisted.web2.http import HTTPError, StatusResponse
+from twisted.web2.dav.xattrprops import xattrPropertyStore
 
 from angel_app import elements
 from angel_app.log import getLogger
@@ -72,18 +73,23 @@ def makeResourceID(relativePath = ""):
 defaultMetaData = {
                    elements.Revision           : lambda x: elements.Revision.fromString("0"),
                    elements.Encrypted          : lambda x: elements.Encrypted.fromString("0"),
-                   elements.PublicKeyString    : lambda x: elements.PublicKeyString.fromString(getOnePublicKey(x)),
+                   elements.PublicKeyString    : lambda x: elements.PublicKeyString.fromString(getOnePublicKey(x.resource)),
                    elements.ContentSignature   : lambda x: elements.ContentSignature.fromString(""),
                    elements.MetaDataSignature  : lambda x: elements.MetaDataSignature.fromString(""),
-                   elements.ResourceID         : lambda x: elements.ResourceID.fromString(makeResourceID(x.relativePath())),
-                   elements.Clones             : lambda x: inheritClones(x),
+                   elements.ResourceID         : lambda x: elements.ResourceID.fromString(makeResourceID(x.resource.relativePath())),
+                   elements.Clones             : lambda x: inheritClones(x.resource),
                    elements.Children           : lambda x: elements.Children()
                    }
 
-class PropertyManagerMixin:
+class PropertyManager(xattrPropertyStore):
+    """
+    I am an xattrPropertyStore with default values.
     
-    def __init__(self):
-
+    TODO: consider adding default value handling for contains() and listProperties()
+    """
+    
+    def __init__(self, resource):
+        super(PropertyManager, self).__init__(resource)
         # create a per-instance copy of the default generators
         self.defaultValues = dict(defaultMetaData.items())
 
@@ -92,29 +98,30 @@ class PropertyManagerMixin:
         try:
             self.assertExistence()
         except:
-            log.info("failed to look up element %s for resource %s" % (`element`, self.fp.path))
+            log.info("failed to look up element %s for resource %s" % (`element`, self.resource.fp.path))
             raise
         
         # the property is available in the property store
-        if self.deadProperties().contains(element.qname()):
-            return self.deadProperties().get(element.qname())
+        if super(PropertyManager, self).contains(element.qname()):
+            return super(PropertyManager, self).get(element.qname())
         
         # the property is not available in the property store,
         # but we have an initializer   
         if element in self.defaultValues.keys():
             df = self.defaultValues[element](self)
             self.set(df)
-            return self.deadProperties().get(element.qname())
+            return super(PropertyManager, self).get(element.qname())
         
         else:
-            raise KeyError("Attribute for element %s not found on resource %s." % (`element`, self.fp.path))
+            raise KeyError("Attribute for element %s not found on resource %s." % 
+                           (`element`, self.resource.fp.path))
     
     def assertExistence(self):
         """
         Raise and log an appropriate error if the resource does not exist on the file system.
         """
         import os.path
-        if not os.path.exists(self.fp.path):
+        if not os.path.exists(self.resource.fp.path):
             error = "Resource %s not found in xattr lookup." % self.fp.path
             log.warn(error)
             raise HTTPError(StatusResponse(responsecode.NOT_FOUND, error))
@@ -123,6 +130,6 @@ class PropertyManagerMixin:
         
         self.assertExistence()
         
-        self.deadProperties().set(element)
+        super(PropertyManager, self).set(element)
             
             
