@@ -30,15 +30,18 @@ legalMatters = """
 
 author = """Vincent Kraeutler 2007"""
 
+from angel_app.config import config
+from angel_app.elements import Children
+from angel_app.resource.IResource import IAngelResource
+from angel_app.resource.local.basic import Basic
+from angel_app.resource.local.internal.resource import Crypto
+from twisted.web2.dav.element import rfc2518
+import angel_app.resource.local.basic as bb
 import os
 import unittest
-from angel_app.resource.local.internal.resource import Crypto
-import angel_app.resource.local.basic as bb
+import zope.interface.verify
 
-from twisted.web2.dav.element import rfc2518
-from angel_app.elements import Children
 
-from angel_app.config import config
 AngelConfig = config.getConfig()
 repositoryPath = AngelConfig.get("common","repository")
 
@@ -160,3 +163,10 @@ class BasicResourceTest(unittest.TestCase):
         assert testProperty.qname() in self.dirResource.deadProperties().list()
         outProperty = self.dirResource.deadProperties().get(testProperty)
         assert testProperty.toxml() == outProperty.toxml()
+        
+    def testInterfaceCompliance(self):
+        """
+        Verify interface compliance.
+        """
+        assert IAngelResource.implementedBy(Basic)
+        assert zope.interface.verify.verifyClass(IAngelResource, Basic)

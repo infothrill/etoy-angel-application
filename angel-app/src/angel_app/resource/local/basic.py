@@ -1,27 +1,27 @@
-from twisted.web2 import responsecode
-from twisted.web2.http import HTTPError
-from twisted.web2 import http, stream
-from twisted.web2.dav.xattrprops import xattrPropertyStore
-from twisted.web2.dav.element import rfc2518
-from twisted.web2.dav import davxml
-from twisted.python.filepath import FilePath
-from twisted.web2.dav.static import DAVFile
 from angel_app import elements
-from angel_app.resource.local.dirlist import DirectoryLister
-
-from zope.interface import implements
-from angel_app.resource import IResource
-from angel_app.log import getLogger
+from angel_app.config import config
 from angel_app.contrib.ezPyCrypto import key as ezKey
+from angel_app.log import getLogger
+from angel_app.resource import IResource
+from angel_app.resource.local import util
+from angel_app.resource.local.dirlist import DirectoryLister
+from angel_app.resource.local.propertyManager import PropertyManager
+from twisted.python.filepath import FilePath
+from twisted.web2 import http, stream
+from twisted.web2 import responsecode
+from twisted.web2.dav import davxml
+from twisted.web2.dav.element import rfc2518
+from twisted.web2.dav.static import DAVFile
+from twisted.web2.dav.xattrprops import xattrPropertyStore
+from twisted.web2.http import HTTPError
+from zope.interface import implements
 import os
 import urllib
-from angel_app.resource.local import util
-from angel_app.resource.local.propertyManager import PropertyManager
+
 
 log = getLogger(__name__)
 
 # get config:
-from angel_app.config import config
 AngelConfig = config.getConfig()
 repository = FilePath(AngelConfig.get("common","repository"))
 

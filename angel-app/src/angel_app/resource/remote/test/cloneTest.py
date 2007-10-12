@@ -31,14 +31,18 @@ legalMatters = """
 author = """Vincent Kraeutler 2007"""
 
 
-import unittest
-import os
-from angel_app.resource.remote import clone
-from angel_app.resource.remote import client
-from angel_app.resource.local import basic
 from angel_app import elements
-
 from angel_app.config import config
+from angel_app.resource.IResource import IAngelResource
+from angel_app.resource.local import basic
+from angel_app.resource.remote import client
+from angel_app.resource.remote import clone
+from angel_app.resource.remote.clone import Clone
+import os
+import unittest
+import zope.interface.verify
+
+
 AngelConfig = config.getConfig()
 repositoryPath = AngelConfig.get("common","repository")
 
@@ -115,5 +119,11 @@ class CloneTest(unittest.TestCase):
         k = key()
         k.importKey(self.testResource.publicKeyString())
         assert k.verifyString(self.testResource.signableMetadata(), signature), "metadata signature validation failed"
-        
+
+    def testInterfaceCompliance(self):
+        """
+        Verify interface compliance.
+        """
+        assert IAngelResource.implementedBy(Clone)
+        assert zope.interface.verify.verifyClass(IAngelResource, Clone)      
     
