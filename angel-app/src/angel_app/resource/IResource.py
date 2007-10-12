@@ -38,44 +38,44 @@ class IAngelResource(zope.interface.Interface):
     Angel-app resource interface specification.
     """
     
-    def exists(self):
+    def exists():
         """
         @return: a C{True} if this resource is accessible, C{False} otherwise.
         """
     
-    def isCollection(self):
+    def isCollection():
         """
         Checks whether this resource is a collection resource / directory.
         @return: a C{True} if this resource is a collection resource, C{False}
             otherwise.
         """
 
-    def resourceID(self):
+    def resourceID():
         """
         @return: the id of the resource as C{String}.
         """
 
-    def relativePath(self):
+    def relativePath():
         """
         @return the path of the resource with respect to the site root
         """
         
-    def revision(self):
+    def revision():
         """
         @return: a C{int} corresponding to the revision number of this resource
         """
 
-    def findChildren(self):
+    def findChildren():
         """
         @return: an iterable over C{uri}.
         """
     
-    def stream(self):
+    def stream():
         """
         @return: an object that minimally supports the read() method, which in turn returns the stream contents as a string.
         """
 
-    def getProperty(self, property):
+    def getProperty(property):
         """
         Reads the given property on this resource.
         @param property: an empty L{davxml.WebDAVElement} class or instance, or
