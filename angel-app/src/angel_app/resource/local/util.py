@@ -26,14 +26,12 @@ legalMatters = """
 
 author = """Vincent Kraeutler, 2006"""
 
-from urllib import quote, unquote
+from urllib import unquote
 from urlparse import urlsplit
 from os import sep
-from angel_app.contrib import uuid
-from twisted.web2.dav.element import rfc2518
-import urllib
 
-from angel_app import elements
+from angel_app.contrib import uuid
+
 from angel_app.log import getLogger
 log = getLogger(__name__)
 # get config:
@@ -43,7 +41,7 @@ repository = AngelConfig.get("common","repository")
 
 def resourceFromURI(uri, resourceClass):
     # TODO clean up
-    (scheme, host, path, query, fragment) = urlsplit(uri)
+    (dummyscheme, dummyhost, path, dummyquery, dummyfragment) = urlsplit(uri)
     segments = path.split("/")
     assert segments[0] == "", "URL path didn't begin with '/': %s" % (path,)
     segments = map(unquote, segments[1:])
@@ -58,8 +56,9 @@ def getHashObject(data = None):
     and can be used for more condensed code.
     This method exists solely for python version compatibility.
     """
+    # TODO: on python 2.5, remove sha module and use hashlib only
     from platform import python_version_tuple
-    (major,minor,patchlevel) = python_version_tuple()
+    (major, minor, dummypatchlevel) = python_version_tuple()
     major = int(major)
     minor = int(minor)
     if (major >=2 and minor < 5 ):
@@ -68,7 +67,7 @@ def getHashObject(data = None):
             obj = sha.new(data)
         else:
             obj = sha.new()            
-    else:
+    else: # python 2.5 + only
         import hashlib
         obj = hashlib.sha1()
         if data:

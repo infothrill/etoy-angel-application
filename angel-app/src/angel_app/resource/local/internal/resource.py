@@ -2,15 +2,9 @@ import os
 from angel_app.log import getLogger
 from twisted.web2 import stream
 from twisted.web2.dav.element import rfc2518
-from angel_app import elements
 from angel_app.resource.local.internal.methods import copy, delete, lock, mkcol, move, put
 from angel_app.resource.local.basic import Basic
-from angel_app.contrib.ezPyCrypto import key as ezKey
-from angel_app.resource.remote.client import inspectResource
-from angel_app.resource.local import util
 from angel_app import elements
-
-import urllib
 
 log = getLogger(__name__)
 # DO NOT EXPOSE THIS KEY!!!!
@@ -259,7 +253,7 @@ class Crypto(
         ce = elements.Children(*nc)
         
         # add to parent and seal parent             
-        pdp = self.parent().set(ce)  
+        dummypdp = self.parent().set(ce)  
         self.parent().seal()          
     
         

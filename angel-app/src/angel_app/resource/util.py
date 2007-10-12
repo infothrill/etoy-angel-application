@@ -48,7 +48,7 @@ def pathFromAbsoluteURI(uri):
     """
     Unquote an absolute URL to afford a file system path
     """    
-    (scheme, host, path, query, fragment) = urlsplit(uri)
+    (dummyscheme, dummyhost, path, dummyquery, dummyfragment) = urlsplit(uri)
     segments = path.split("/")
     assert segments[0] == "", "URL path didn't begin with '/': %s" % (path,)
     segments = map(unquote, segments[1:])

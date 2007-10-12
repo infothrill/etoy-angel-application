@@ -10,7 +10,7 @@ import stat
 import time
 
 # twisted imports
-from twisted.web2 import iweb, resource, http, http_headers
+from twisted.web2 import resource, http, http_headers
 
 def formatFileSize(size):
     if size < 1024:
@@ -24,7 +24,6 @@ def formatFileSize(size):
 
 def formatClones(path):
     from angel_app.resource.local import basic
-    from angel_app.resource.remote.clone import cloneFromElement
     
     try:
         return ", ".join([              
@@ -84,7 +83,7 @@ class DirectoryLister(resource.Resource):
                     })
             else:
                 from twisted.web2.static import getTypeAndEncoding
-                mimetype, encoding = getTypeAndEncoding(
+                mimetype, dummyencoding = getTypeAndEncoding(
                     path,
                     self.contentTypes, self.contentEncodings, self.defaultType)
                 

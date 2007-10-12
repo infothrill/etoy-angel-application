@@ -4,6 +4,7 @@ The main GUI module.
 
 import wx
 import os
+
 import angel_app.wx.platform.wrap as platformwrap
 import angel_app.wx.masterthread
 from angel_app.config import config

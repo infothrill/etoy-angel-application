@@ -36,7 +36,6 @@ from twisted.web2.dav import davxml
 from twisted.web2.dav.http import MultiStatusResponse, PropertyStatusResponseQueue
 from twisted.internet.defer import deferredGenerator, waitForDeferred
 from angel_app import elements
-import angel_app.contrib.ezPyCrypto
 from angel_app.log import getLogger
 import os
 

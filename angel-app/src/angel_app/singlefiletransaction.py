@@ -181,8 +181,6 @@ import unittest
 class SingleFileTransactionTest(unittest.TestCase):
 
     def setUp(self):
-        import tempfile
-        import os
         self.testdir = tempfile.mkdtemp('tmp', 'unittest', os.getcwd())
         self.teststring = "Lorem Ipsum is simply dummy text of the printing and typesetting industry.\n"
         self.teststring2 = "This is on a new line.\n"
@@ -190,7 +188,6 @@ class SingleFileTransactionTest(unittest.TestCase):
         self.t = SingleFileTransaction(self.testdir)
 
     def testWriteNewFile(self):
-        import os
         #t = SingleFileTransaction(self.testdir)
         safe = self.t.open(self.testfilename, 'wb')
         safe.write(self.teststring)
@@ -248,7 +245,6 @@ class SingleFileTransactionTest(unittest.TestCase):
         self.assertEqual(expectedcontent, open(self.testfilename).read())
 
     def tearDown(self):
-        import shutil
         shutil.rmtree(self.testdir)
 
 if __name__ == "__main__":

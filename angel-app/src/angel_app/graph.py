@@ -38,7 +38,7 @@ def walkTest(root = os.getcwd(), recursionLimit = 3):
     """
     
     def te(node, rl):
-        root, visitedNodes, name = node[:3]
+        dummyroot, visitedNodes, name = node[:3]
         if rl < 0: raise StopIteration
         return (
                 os.sep.join(visitedNodes + [name])[1:],

@@ -1,14 +1,16 @@
+from httplib import HTTPConnection
+import urlparse
+
+from twisted.web2 import responsecode
+from twisted.web2.dav import davxml
+from twisted.web2.dav.element import rfc2518
+from zope.interface import implements
+
 from angel_app import elements
 from angel_app.config import config
 from angel_app.contrib.ezPyCrypto import key
 from angel_app.log import getLogger
 from angel_app.resource import IResource
-from httplib import HTTPConnection
-from twisted.web2 import responsecode
-from twisted.web2.dav import davxml
-from twisted.web2.dav.element import rfc2518
-from zope.interface import implements
-import urlparse
 #from angel_app.resource.remote import util
 
 log = getLogger(__name__)
@@ -67,7 +69,6 @@ class Clone(object):
             raise CloneError("Need absolute path for clone. Got: " + self.path)
         
     def validateHostPort(self):
-        import urlparse
         # if the clone is valid, we must be able to reconstruct the host, port, path from the string representation
         url = urlparse.urlsplit("http://" + `self`)
         if not url[1] == self.host + ":" + `self.port`:
@@ -288,7 +289,7 @@ class Clone(object):
         @return whether the remote host is reachable
         """
         try:
-            response = self._performRequestWithTimeOut()
+            dummyresponse = self._performRequestWithTimeOut()
             return True
         except:
             return False  

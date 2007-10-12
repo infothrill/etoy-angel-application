@@ -1,12 +1,12 @@
-from angel_app import elements
-from angel_app.log import getLogger
-from twisted.python.failure import Failure
-from twisted.web2 import responsecode
-from twisted.web2.dav.http import ResponseQueue, statusForFailure
-from twisted.web2.http import HTTPError, StatusResponse
-from urlparse import urlsplit
 import os, urllib
 
+from twisted.python.failure import Failure
+from twisted.web2 import responsecode
+from twisted.web2.dav.http import ResponseQueue
+from twisted.web2.http import HTTPError, StatusResponse
+from urlparse import urlsplit
+
+from angel_app.log import getLogger
 log = getLogger(__name__)
 
 class Deletable(object):

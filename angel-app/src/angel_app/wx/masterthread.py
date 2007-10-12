@@ -8,9 +8,9 @@ import os
 import sys
 import signal
 import time
-import angel_app.log
 import subprocess
      
+import angel_app.log
 """
 Class for the thread running our external process in its own thread.
 Responsible for starting all relevant angel-app components

@@ -188,6 +188,7 @@ class ExternalProcessManager(object):
         """
         Method to physically stop the given process in synchronous fashion.
         """
+        import twisted.internet.error.ProcessExitedAlready
         self.log.info("stopping process %s", processObj.protocol)
         if not processObj.transport == None:
             self.log.debug("trying to kill process")
@@ -237,7 +238,7 @@ class ExternalProcessManager(object):
         self.startProcess(processObj, self.startendedprocessdelay)
     
     def __findProcessWithProtocol(self, protocol):
-        for k, v in self.procDict.iteritems():
+        for k,dummyv in self.procDict.iteritems():
             if k.protocol == protocol:
                 return k
         self.log.error("Could not find the process that ended")

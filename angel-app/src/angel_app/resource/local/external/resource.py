@@ -1,6 +1,5 @@
 from angel_app.resource.local.basic import Basic
 
-from twisted.internet.defer import Deferred
 from twisted.web2 import responsecode
 from twisted.web2.http import StatusResponse
 from twisted.web2.http import HTTPError

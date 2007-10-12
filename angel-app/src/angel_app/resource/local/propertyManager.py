@@ -2,15 +2,12 @@
 Provide a Mapping from XML-elements to xattr keys.
 Handle initialization of attributes with default values.
 """
+import time
 
 from twisted.web2 import responsecode
 from twisted.web2.http import HTTPError, StatusResponse
 
 from angel_app import elements
-from angel_app.resource.local import util
-
-import time
-
 from angel_app.log import getLogger
 log = getLogger(__name__)
 

@@ -12,7 +12,6 @@ from angel_app.resource.local.dirlist import DirectoryLister
 from zope.interface import implements
 from angel_app.resource import IResource
 from angel_app.log import getLogger
-from angel_app.contrib import uuid
 from angel_app.contrib.ezPyCrypto import key as ezKey
 import os
 import urllib

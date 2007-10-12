@@ -1,13 +1,11 @@
 from twisted.web2 import responsecode
 from twisted.web2.http import HTTPError, StatusResponse
-from angel_app import elements
 
 
 from twisted.python.failure import Failure
 from twisted.internet.defer import deferredGenerator, waitForDeferred
 from twisted.web2.stream import readIntoFile
 from twisted.web2.dav.http import statusForFailure
-from twisted.web2.dav.method.put import preconditions_PUT as twisted_preconditions_PUT
 
 from twisted.web2.dav.fileop import checkResponse
 from angel_app.log import getLogger

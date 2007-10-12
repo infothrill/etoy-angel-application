@@ -1,1 +1,5 @@
-all = ["main", "masterthread", "platform"]
+all = [
+       "main",
+       "masterthread",
+       "platform"
+       ]

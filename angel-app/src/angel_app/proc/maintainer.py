@@ -42,17 +42,16 @@ def dance(options):
     sleepTime = AngelConfig.getint("maintainer", "initialsleep")
     traversalTime = AngelConfig.getint("maintainer", "treetraversaltime")
     maxSleepTime = AngelConfig.getint("maintainer", "maxsleeptime")
-    import sys
     while 1:
         log.info("sleep timeout between resource inspections is: " + `sleepTime`)
         startTime = int(time.time())
 
         # register with the tracker
         from angel_app.tracker.connectToTracker import connectToTracker
-        stats = connectToTracker()
+        dummystats = connectToTracker()
     
         time.sleep(sleepTime)
-        for ii in graphWalker(repository, getChildren, toEvaluate):
+        for dummyii in graphWalker(repository, getChildren, toEvaluate):
             time.sleep(sleepTime)
             continue
         
@@ -72,7 +71,7 @@ def boot():
     parser.add_option("-d", "--daemon", dest="daemon", help="daemon mode?", default='')
     parser.add_option("-c", "--config", dest="config", help="alternative config file", default=None)
     parser.add_option("-l", "--log", dest="networklogging", help="use network logging?", action="store_true" , default=False)
-    (options, args) = parser.parse_args()
+    (options, dummyargs) = parser.parse_args()
 
     # setup/configure config system
     from angel_app.config.config import getConfig

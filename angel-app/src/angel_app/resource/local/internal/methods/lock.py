@@ -7,12 +7,9 @@ Provides minimalistic LOCK request support required to be WebDAV Level 2 complia
 Only exclusive (see L{assertExclusiveLock}) write (see L{assertWriteLock}) locks are supported.
 Timeout headers are ignored (RFC 2518, Section 9.8).
 """
-from twisted.web2 import responsecode
-
 __all__ = ["http_LOCK"]
 
-from angel_app.log import getLogger
-from twisted.internet.defer import deferredGenerator, waitForDeferred, maybeDeferred
+from twisted.internet.defer import deferredGenerator, waitForDeferred
 from twisted.web2 import responsecode, stream, http_headers
 from twisted.web2.http import HTTPError, Response, StatusResponse
 from twisted.web2.dav import davxml
@@ -20,7 +17,7 @@ from twisted.web2.dav.util import davXMLFromStream
 from twisted.web2.dav.element.rfc2518 import LockInfo
 
 from angel_app.contrib.uuid import uuid4
-
+from angel_app.log import getLogger
 log = getLogger(__name__)
 
 

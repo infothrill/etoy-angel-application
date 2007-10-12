@@ -15,5 +15,11 @@ Handlers for HTTP/WebDAV methods specific to this class are implemented as mixin
 (one module per WebDAV method) in external.method.
 """
 
-all = ["basic","dirlist", "external", "internal", 
-       "util", "safe", "resourceMixins", "propertyManager"]
+all = [
+       "external",
+       "internal", 
+       "basic",
+       "dirlist",
+       "propertyManager"
+       "util",
+       ]

@@ -1,16 +1,13 @@
+import os
+import random
+import copy
+
 from angel_app import elements
 from angel_app.config import config
 from angel_app.log import getLogger
 from angel_app.resource.local.basic import Basic
-from angel_app.resource.remote.clone import Clone, clonesToElement
-from angel_app.resource.util import urlPathFromPath
-from twisted.web2.dav.element import rfc2518
+from angel_app.resource.remote.clone import clonesToElement
 import angel_app.singlefiletransaction
-import os 
-import urllib
-import random
-import copy
-
 
 log = getLogger(__name__)
 
@@ -138,7 +135,7 @@ def inspectResource(path = repository):
 
     af = Basic(path)
 
-    goodClones, badClones, unreachableClones = \
+    goodClones, dummybadClones, unreachableClones = \
         iterateClones(
                       af.clones(), 
                       af.publicKeyString(), 
@@ -167,7 +164,6 @@ def iterateClones(cloneSeedList, publicKeyString, resourceID):
     @rtype ([Clone], [Clone])
     @return a tuple of ([the list of valid clones], [the list of checked clones])
     """  
-    import copy
     toVisit = copy.copy(cloneSeedList)
     visited = []
     good = []
