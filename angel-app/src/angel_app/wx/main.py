@@ -48,6 +48,10 @@ class AngelMainFrame(wx.Frame):
         self.file_menu.Append(ID_FILE_EXPORT_KEY, "E&xport personal ANGEL KEY...", "Export personal ANGEL KEY...")
         self.Bind(wx.EVT_MENU, self.on_file_export_key, id=ID_FILE_EXPORT_KEY)
 
+        ID_FILE_PURGE_REPO = wx.NewId()
+        self.file_menu.Append(ID_FILE_PURGE_REPO, "Purge repository", "Purge repository")
+        self.Bind(wx.EVT_MENU, self.on_file_purge_repository, id=ID_FILE_PURGE_REPO)
+
         self.file_menu.Append(wx.ID_EXIT, "E&xit", "Terminate the program")
         self.Bind(wx.EVT_MENU, self.doExit, id=wx.ID_EXIT)
         self.file_menu.Append(wx.ID_CLOSE, "Q&uit", "Quit")
@@ -131,8 +135,40 @@ class AngelMainFrame(wx.Frame):
         print "Exiting on user request"
         self.Close(True)
 
+    def on_file_purge_repository(self, evt):
+        max = 3
+        dlg = wx.ProgressDialog("Purging",
+                               "Please wait while the repository is purged",
+                               maximum = max,
+                               parent=self,
+                               style = wx.PD_APP_MODAL)
+        if self.daemon.isAlive():
+            self.daemon.stop()
+        dlg.Update(1)
+        
+        success = False
+        if not self.daemon.isAlive():
+            from angel_app.admin.directories import removeDirectory 
+            removeDirectory('repository')
+            dlg.Update(2)
+            self.daemon.run()
+            dlg.Update(3)
+            dlg.Destroy()
+            success = True
+        else:
+            dlg.Destroy()
+            
+        if not success:
+            dlg = wx.MessageDialog(self, 'Error',
+                                   'The repository could not be purged!',
+                                   wx.OK | wx.ICON_ERROR
+                                   #wx.YES_NO | wx.NO_DEFAULT | wx.CANCEL | wx.ICON_INFORMATION
+                                   )
+            dlg.ShowModal()
+            dlg.Destroy()
+        return 1
+ 
     def on_file_export_key(self, evt):
-        keyfiletoexport = "default.key"
         saveasfilename = "ANGEL.key"
         wildcard = "Key files (*.key)|*.key|"     \
                    "All files (*.*)|*.*"
@@ -170,7 +206,6 @@ class AngelMainFrame(wx.Frame):
         dlg.Destroy()
 
     def on_file_import_key(self, evt):
-        import os
         # This is how you pre-establish a file filter so that the dialog
         # only shows the extension(s) you want it to.
         wildcard = "Key files (*.key)|*.key|"     \
