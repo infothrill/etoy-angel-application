@@ -43,11 +43,6 @@ class IAngelResource(zope.interface.Interface):
         @return: a C{True} if this resource is accessible, C{False} otherwise.
         """
     
-    def location(self):
-        """
-        @return the resource's path relative to the site root.
-        """
-    
     def isCollection(self):
         """
         Checks whether this resource is a collection resource / directory.
@@ -87,18 +82,5 @@ class IAngelResource(zope.interface.Interface):
             a qname tuple.
         @return: a L{davxml.WebDAVElement} instance
             containing the value of the given property.
-        """
-
-    def writeProperties(self, properties):
-        """
-        Writes the given property on this resource.
-        @param properties a the list of elements.requiredKeys
-        """
-
-    def listProperties(self):
-        """
-        @param request: the request being processed.
-        @return: a deferred iterable of qnames for all properties defined for
-            this resource.
         """
 
