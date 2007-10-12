@@ -36,6 +36,12 @@ import zope.interface
 class IAngelResource(zope.interface.Interface):
     """
     Angel-app resource interface specification.
+    
+    See 
+    http://twistedmatrix.com/projects/core/documentation/howto/components.html#auto0
+    and 
+    http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/528872
+    for what seem like the only usable descriptions of zope.interface.
     """
     
     def exists():
