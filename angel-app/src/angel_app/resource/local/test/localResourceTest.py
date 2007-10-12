@@ -41,7 +41,6 @@ from angel_app.elements import Children
 from angel_app.config import config
 AngelConfig = config.getConfig()
 repositoryPath = AngelConfig.get("common","repository")
-import os
 
 class BasicResourceTest(unittest.TestCase):
     
@@ -62,7 +61,7 @@ class BasicResourceTest(unittest.TestCase):
         try:
             os.rmdir(self.testDirPath)
         except OSError, e:
-            print "not a directory"
+            print "not a directory" + `e`
             os.remove(self.testDirPath)
     
         
@@ -129,7 +128,6 @@ class BasicResourceTest(unittest.TestCase):
         """
         @return: an object that minimally supports the read() method, which in turn returns the stream contents as a string.
         """
-        stream = self.dirResource.open()
         assert self.dirResource.open().read() == bb.REPR_DIRECTORY
         
         
