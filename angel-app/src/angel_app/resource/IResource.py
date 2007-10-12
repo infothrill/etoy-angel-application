@@ -60,11 +60,6 @@ class IAngelResource(zope.interface.Interface):
         """
         @return: the id of the resource as C{String}.
         """
-
-    def relativePath():
-        """
-        @return the path of the resource with respect to the site root
-        """
         
     def revision():
         """
