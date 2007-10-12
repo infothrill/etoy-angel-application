@@ -228,7 +228,7 @@ class Clone(object):
         """
         propertyDoc = self._propertiesDocument(properties)
         
-        okp =  okProperties(propertyDoc)
+        okp =  okProperties(self, propertyDoc)
         
         # cache the properties for later re-use    
         for pp in okp.children:
@@ -412,7 +412,7 @@ def propertiesFromPropfindResponse(response):
         
     return propertiesByResponseCode
 
-def okProperties(response):
+def okProperties(clone, response):
     """
     In addition to the validation carrid out by propertiesFromPropfindResponse,    
     assert that the request succeeded for all requested properties. Raise a KeyError otherwise.
@@ -429,7 +429,7 @@ def okProperties(response):
         notOKCodes = [kk for kk in propertiesByResponseCode.keys() if kk != responsecode.OK]
         notOKResponses = [propertiesByResponseCode[kk] for kk in notOKCodes]
         errorProperties = "\n".join([rr.toxml() for rr in notOKResponses])
-        raise KeyError, "Property requests failed for: " + errorProperties
+        raise KeyError, "Clone: " + `clone` + "Property requests failed for: " + errorProperties
     
     # no requests failed, return the OK responses
     return propertiesByResponseCode[responsecode.OK]

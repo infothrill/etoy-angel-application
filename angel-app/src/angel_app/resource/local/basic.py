@@ -80,14 +80,15 @@ class Basic(DAVFile):
         @rtype int
         @return the revision number. if not already set, it is initialized to 1.
         """
-        return int(str(self.deadProperties().get(elements.Revision)))
+        return int(str(self.deadProperties().get(elements.Revision.qname())))
 
     def isEncrypted(self):
         """
         @rtype boolean
         @return whether the file is encrypted. 
         """
-        return int(str(self.deadProperties().get(elements.Encrypted))) == 1
+        isEncrypted = self.deadProperties().get(elements.Encrypted.qname())
+        return int(str(isEncrypted)) == 1
 
     def contentSignature(self):
         """
@@ -157,7 +158,7 @@ class Basic(DAVFile):
         """
         @see IResource
         """ 
-        return self.deadProperties().get(elements.ResourceID)
+        return self.deadProperties().get(elements.ResourceID.qname())
     
     def resourceName(self):
         """
@@ -309,10 +310,11 @@ class Basic(DAVFile):
         @see propertyManager.inheritClones
         """
         from angel_app.resource.remote import clone
-        return clone.clonesFromElement(self.deadProperties().get(elements.Clones))
+        clonesElement = self.deadProperties().get(elements.Clones.qname())
+        return clone.clonesFromElement(clonesElement)
 
     def childLinks(self):
-        return self.deadProperties().get(elements.Children)
+        return self.deadProperties().get(elements.Children.qname())
 
     def getChildElement(self):
         """
@@ -354,7 +356,7 @@ class Basic(DAVFile):
         """
         @return: the string representation of the resource's public key.
         """
-        return str(self.deadProperties().get(elements.PublicKeyString))
+        return str(self.deadProperties().get(elements.PublicKeyString.qname()))
  
     def keyUUID(self):
         """
@@ -376,7 +378,7 @@ class Basic(DAVFile):
         be signed.
         """
         try:
-            sm = "".join([self.deadProperties().get(key).toxml() for key in elements.signedKeys])
+            sm = "".join([self.deadProperties().get(key.qname()).toxml() for key in elements.signedKeys])
             log.debug("signable meta data for " + self.fp.path + ":" + sm)
             return sm
         except Exception, e:

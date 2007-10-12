@@ -58,7 +58,7 @@ def makePushBody(localClone, elements = elements.requiredKeys):
         
     cc = clone.Clone("localhost", providerport, localClone.relativeURL())
     pList = [makeSetElement(element) for element in
-             [localClone.deadProperties().get(el) for el in elements]
+             [localClone.deadProperties().get(el.qname()) for el in elements]
               + [clone.clonesToElement([cc])]]
     
     pu = rfc2518.PropertyUpdate(*pList)

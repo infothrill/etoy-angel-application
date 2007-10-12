@@ -7,6 +7,7 @@ import time
 from twisted.web2 import responsecode
 from twisted.web2.http import HTTPError, StatusResponse
 from twisted.web2.dav.xattrprops import xattrPropertyStore
+from twisted.web2.dav.element.base import WebDAVElement
 
 from angel_app import elements
 from angel_app.log import getLogger
@@ -71,14 +72,14 @@ def makeResourceID(relativePath = ""):
 # a map from xml-elements corresponding to metadata fields to functions taking a resource 
 # and returning appropriate values for those metadata fields
 defaultMetaData = {
-                   elements.Revision           : lambda x: elements.Revision.fromString("0"),
-                   elements.Encrypted          : lambda x: elements.Encrypted.fromString("0"),
-                   elements.PublicKeyString    : lambda x: elements.PublicKeyString.fromString(getOnePublicKey(x.resource)),
-                   elements.ContentSignature   : lambda x: elements.ContentSignature.fromString(""),
-                   elements.MetaDataSignature  : lambda x: elements.MetaDataSignature.fromString(""),
-                   elements.ResourceID         : lambda x: elements.ResourceID.fromString(makeResourceID(x.resource.relativePath())),
-                   elements.Clones             : lambda x: inheritClones(x.resource),
-                   elements.Children           : lambda x: elements.Children()
+                   elements.Revision.qname()           : lambda x: elements.Revision.fromString("0"),
+                   elements.Encrypted.qname()          : lambda x: elements.Encrypted.fromString("0"),
+                   elements.PublicKeyString.qname()    : lambda x: elements.PublicKeyString.fromString(getOnePublicKey(x.resource)),
+                   elements.ContentSignature.qname()   : lambda x: elements.ContentSignature.fromString(""),
+                   elements.MetaDataSignature.qname()  : lambda x: elements.MetaDataSignature.fromString(""),
+                   elements.ResourceID.qname()         : lambda x: elements.ResourceID.fromString(makeResourceID(x.resource.relativePath())),
+                   elements.Clones.qname()             : lambda x: inheritClones(x.resource),
+                   elements.Children.qname()           : lambda x: elements.Children()
                    }
 
 class PropertyManager(xattrPropertyStore):
@@ -93,28 +94,30 @@ class PropertyManager(xattrPropertyStore):
         # create a per-instance copy of the default generators
         self.defaultValues = dict(defaultMetaData.items())
 
-    def get(self, element):
+    def get(self, qname):
+        
+        assert type(qname) == type(WebDAVElement.qname())
         
         try:
             self.assertExistence()
         except:
-            log.info("failed to look up element %s for resource %s" % (`element`, self.resource.fp.path))
+            log.info("failed to look up element %s for resource %s" % (`qname`, self.resource.fp.path))
             raise
         
         # the property is available in the property store
-        if super(PropertyManager, self).contains(element.qname()):
-            return super(PropertyManager, self).get(element.qname())
+        if super(PropertyManager, self).contains(qname):
+            return super(PropertyManager, self).get(qname)
         
         # the property is not available in the property store,
         # but we have an initializer   
-        if element in self.defaultValues.keys():
-            df = self.defaultValues[element](self)
+        if qname in self.defaultValues.keys():
+            df = self.defaultValues[qname](self)
             self.set(df)
-            return super(PropertyManager, self).get(element.qname())
+            return super(PropertyManager, self).get(qname)
         
         else:
             raise KeyError("Attribute for element %s not found on resource %s." % 
-                           (`element`, self.resource.fp.path))
+                           (`qname`, self.resource.fp.path))
     
     def assertExistence(self):
         """

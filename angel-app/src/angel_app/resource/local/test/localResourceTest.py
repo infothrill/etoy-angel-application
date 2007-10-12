@@ -151,7 +151,7 @@ class BasicResourceTest(unittest.TestCase):
         dp = self.dirResource.deadProperties()
         for element in defaultMetaData.keys():
             dme = defaultMetaData[element]
-            assert element.qname() == dme(dp).qname()
+            assert element == dme(dp).qname()
         
         
     def testPropertyIO(self):
@@ -161,7 +161,7 @@ class BasicResourceTest(unittest.TestCase):
         testProperty = rfc2518.Collection()
         self.dirResource.deadProperties().set(testProperty)
         assert testProperty.qname() in self.dirResource.deadProperties().list()
-        outProperty = self.dirResource.deadProperties().get(testProperty)
+        outProperty = self.dirResource.deadProperties().get(testProperty.qname())
         assert testProperty.toxml() == outProperty.toxml()
         
     def testInterfaceCompliance(self):
