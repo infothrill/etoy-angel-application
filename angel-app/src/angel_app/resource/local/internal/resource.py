@@ -223,7 +223,7 @@ class Crypto(
         log.debug(`self.parent()`)
         pdp = pp.deadProperties()
         
-        oc = pdp.get(elements.Children).children
+        oc = pdp.get(elements.Children.qname()).children
         
         log.debug("resourceName: " + self.resourceName())     
         nc = [cc for cc in oc if not str(cc.childOfType(rfc2518.HRef)) == self.quotedResourceName()]
