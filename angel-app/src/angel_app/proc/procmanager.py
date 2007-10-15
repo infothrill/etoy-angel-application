@@ -30,16 +30,23 @@ legalMatters = """
 
 author = """Paul Kremer, 2007"""
 
+import os
+
 from twisted.internet.protocol import ProcessProtocol
 from twisted.internet import reactor
-import os
+from angel_app.log import getLogger
+
+log = getLogger(__name__)
 
 binpath = os.getcwd() # this is used to find the scripts, so be sure to import this module before changing the working directory
 
 def startProcesses(privateMode = False):
     """
     This method ties together the classes in this module and
-    instantiates/initializes and starts external processes.
+    instantiates/initializes and starts the complete suite of external
+    processes.
+
+    @param privateMode: boolean, if True, will not start the "presenter" 
     """
     import sys
     procManager = ExternalProcessManager()
@@ -62,7 +69,7 @@ def startProcesses(privateMode = False):
          (MaintainerProtocol(), "maintainer.py")
          ]
     if privateMode == False:
-         apps.append((PresenterProtocol(), "presenter.py"))
+        apps.append((PresenterProtocol(), "presenter.py"))
 
     for protocol, scriptName in apps:
         process = ExternalProcess()
@@ -71,7 +78,6 @@ def startProcesses(privateMode = False):
         process.setExecutable(sys.executable)
         process.setArgs(args = [sys.executable, os.path.join(binpath, scriptName), '-l', '-c', cfg])
         procManager.startServicing(process)
-
 
 class ExternalProcess(object):
     """
@@ -270,6 +276,7 @@ class ExternalProcessProtocol(ProcessProtocol):
         self.transport.closeStdin()
 
     def outReceived(self, data):
+        print  data
         self.log.info("STDOUT from '%s': %s", self.__class__.__name__, data)
 
     def errReceived(self, data):
@@ -280,7 +287,7 @@ class ExternalProcessProtocol(ProcessProtocol):
         self.procManager.endedProcess(self, reason)
 
 """
-the next 3 classes are merely here for providing a specific class name for each external process we run
+the next classes are merely here for providing a specific class name for each external process we run
 """
 class PresenterProtocol(ExternalProcessProtocol):
     pass
@@ -288,16 +295,11 @@ class ProviderProtocol(ExternalProcessProtocol):
     pass
 class MaintainerProtocol(ExternalProcessProtocol):
     pass
+class MasterProtocol(ExternalProcessProtocol):
+    pass
 class TestProtocol(ExternalProcessProtocol):
     pass
 
-# TODO: add test code to module
-#test/debug code:
-#    testProcess = angel_app.procmanager.ExternalProcess()
-#    testProcess.setProtocol(angel_app.procmanager.TestProtocol())
-#    testProcess.setExecutable("/sw/bin/sleep")
-#    testProcess.setArgs(args = ["/sw/bin/sleep", '5']) 
-#    procManager.startServicing(testProcess)
-#    reactor.callLater(4, procManager.restartServicing, presenterProcess)
-
+if __name__ == '__main__':
+    pass
 

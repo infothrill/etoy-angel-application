@@ -64,7 +64,7 @@ def boot():
     initializeLogging(appname, loghandlers)
 
     if len(options.daemon) > 0:
-        from angel_app import daemonizer
+        from angel_app.proc import daemonizer
         daemonizer.startstop(action=options.daemon, stdout=appname+'.stdout', stderr=appname+'.stderr', pidfile=appname+'.pid')
 
     return options

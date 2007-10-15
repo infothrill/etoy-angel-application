@@ -26,7 +26,7 @@ def boot():
     postConfigInit()
     angelConfig.bootstrapping = False
 
-    appname = "wxmaster"
+    appname = "gui"
     # setup/configure logging
     from angel_app.log import initializeLogging
     loghandlers = ['file', 'console'] # always log to file

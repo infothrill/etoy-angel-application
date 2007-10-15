@@ -1,3 +1,8 @@
+"""
+This module contains code to start the master process correctly, e.g. it contains mostly
+bootstrapping-code for the process.
+"""
+
 from angel_app.proc.common import postConfigInit
 
 def bootInit():
@@ -14,7 +19,7 @@ def boot():
     parser.add_option("-d", "--daemon", dest="daemon", help="daemon mode?", default='')
     parser.add_option("-c", "--config", dest="config", help="alternative config file", default=None)
     parser.add_option("-p", "--private", dest="private", help="private mode (no presenter)", action="store_true", default=False)
-    (options, args) = parser.parse_args()
+    (options, dummyargs) = parser.parse_args()
 
     appname = "master"
 
@@ -31,10 +36,10 @@ def boot():
         loghandlers.append('console')
     initializeLogging(appname, loghandlers)
 
-    import angel_app.procmanager # import before daemonizing
+    import angel_app.proc.procmanager # import before daemonizing
 
     if len(options.daemon) > 0:
-        from angel_app import daemonizer
+        from angel_app.proc import daemonizer
         daemonizer.startstop(action=options.daemon, stdout=appname+'.stdout', stderr=appname+'.stderr', pidfile=appname+'.pid')
     return options
 
@@ -49,14 +54,13 @@ def dance(options):
     initializeRepository.initializeRepository()
 
     import angel_app.logserver
-    import angel_app.procmanager
+    import angel_app.proc.procmanager
     angel_app.logserver.startLoggingServer()
     # start processes _after_ starting the logging server!
-    angel_app.procmanager.startProcesses(options.private)
+    angel_app.proc.procmanager.startProcesses(options.private)
     from twisted.internet import reactor
     reactor.run()
     
 if __name__ == '__main__':
     options = boot()
     dance(options)
-
