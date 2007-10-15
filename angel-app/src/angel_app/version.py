@@ -14,3 +14,7 @@ def getBuildString():
     # NOTE: VERSION and BUILD_ID number MUST be set during packaging! (most simply through sed/search+replace)
     b = "#!#BUILD_ID#!#"
     return b
+
+def getPythonVersionString():
+    import platform
+    return platform.python_version()
