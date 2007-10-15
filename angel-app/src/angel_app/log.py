@@ -149,7 +149,7 @@ def setup():
     if not path.exists(angelLogPath):
         mkdir(angelLogPath)
     elif not path.isdir(angelLogPath):
-        raise "Filesystem entry '%s' occupied, cannot create directory here." % angelLogPath
+        raise Exception, "Filesystem entry '%s' occupied, cannot create directory here." % angelLogPath
 
 def enableHandler(handlername, handler = None):
     if handlername == "console":
@@ -159,12 +159,10 @@ def enableHandler(handlername, handler = None):
     if handlername == "file":
         __addRotatingFileHandler()
     if handlername == "wx":
-        handler.setLevel(logging.DEBUG) # for the console logger, we always use DEBUG!
-        # set a format which is simpler for console use
-        formatter = logging.Formatter('%(name)s %(levelname)-6s %(filename)s:%(lineno)d %(message)s')
-        # tell the handler to use this format
-        handler.setFormatter(formatter)
         logging.getLogger().addHandler(handler)
+
+def removeHandler(handler):
+    logging.getLogger().removeHandler(handler)
 
 def getReady():
     """
