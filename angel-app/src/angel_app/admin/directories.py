@@ -31,5 +31,7 @@ def removeDirectory(name):
     dirs = {
             'repository' : AngelConfig.get("common", "repository")
             }
-    shutil.rmtree(dirs[name], ignore_errors = False)
+    # only try to remove if it exists ;-)
+    if os.path.exists(dirs[name]):
+        shutil.rmtree(dirs[name], ignore_errors = False)
 
