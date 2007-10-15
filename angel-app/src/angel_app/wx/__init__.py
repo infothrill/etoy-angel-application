@@ -1,5 +1,6 @@
 all = [
+       "about",
+       "log",
        "main",
-       "masterthread",
        "platform"
        ]

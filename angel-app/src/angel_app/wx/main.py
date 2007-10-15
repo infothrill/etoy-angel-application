@@ -2,13 +2,18 @@
 The main GUI module.
 """
 
-import wx
 import os
+import wx
 
+import angel_app.proc.subprocessthread as masterthread
 import angel_app.wx.platform.wrap as platformwrap
-import angel_app.wx.masterthread
 from angel_app.config import config
 AngelConfig = config.getConfig()
+
+from angel_app.log import getLogger
+log = getLogger(__name__)
+
+_ = wx.GetTranslation
 
 M221E_LOGO_SMALL = os.path.join(platformwrap.getResourcePath(), "images", "m221elogosmall.jpg")
 LICENSE_TEXTFILE = os.path.join(platformwrap.getResourcePath(), "files", "GPL.txt")
@@ -23,7 +28,7 @@ class AngelMainFrame(wx.Frame):
         By default, also starts the p2p process automatically on start-up
         """
         wx.Frame.__init__(self, parent, ID, title, wx.DefaultPosition, wx.Size(823, 548))
-        
+        self.frames = []
         # define the menus
         self.menu_bar  = wx.MenuBar()
   
@@ -52,10 +57,16 @@ class AngelMainFrame(wx.Frame):
         self.file_menu.Append(ID_FILE_PURGE_REPO, "Purge repository", "Purge repository")
         self.Bind(wx.EVT_MENU, self.on_file_purge_repository, id=ID_FILE_PURGE_REPO)
 
+        ID_WINDOW_LOG = wx.NewId()
+        self.file_menu.Append(ID_WINDOW_LOG, "L&og console", "Log console")
+        self.Bind(wx.EVT_MENU, self.on_log_console, id=ID_WINDOW_LOG)
+
         self.file_menu.Append(wx.ID_EXIT, "E&xit", "Terminate the program")
         self.Bind(wx.EVT_MENU, self.doExit, id=wx.ID_EXIT)
+
         self.file_menu.Append(wx.ID_CLOSE, "Q&uit", "Quit")
         self.Bind(wx.EVT_MENU, self.doExit, id=wx.ID_CLOSE)
+
         self.menu_bar.Append(self.file_menu, "&File")
 
         # network menu
@@ -90,6 +101,10 @@ class AngelMainFrame(wx.Frame):
         self.help_menu.Append(ID_HELP_LICENSE, "S&oftware License", "Software License")
         self.Bind(wx.EVT_MENU, self.on_help_license, id=ID_HELP_LICENSE)
 
+        #ID_HELP_TEST = wx.NewId()
+        #self.help_menu.Append(ID_HELP_TEST, "Test", "Test")
+        #self.Bind(wx.EVT_MENU, self.on_test, id=ID_HELP_TEST)
+
         self.menu_bar.Append(self.help_menu, "&Help")
 
         self.SetMenuBar(self.menu_bar)
@@ -98,20 +113,23 @@ class AngelMainFrame(wx.Frame):
         self.SetBackgroundColour(wx.WHITE)
         self.bitmap = wx.Bitmap(M221E_WELCOME_SCREEN)
         wx.EVT_PAINT(self, self.OnPaint)
-        #self.static_text = wx.StaticText(self, -1, "MISSION ETERNITY's Angel-App",style=wx.ALIGN_CENTRE)
 
         self.Centre()
 
-        _daemon = angel_app.wx.masterthread.MasterThread()
-        _daemon.setDaemon(True)
-        _daemon.start() # TODO: shall we always start master on init??
-        self.daemon = _daemon
+        self.daemon = masterthread.MasterThread()
+        self.daemon.setDaemon(True)
+        self.daemon.start()
 
         self.sb = AngelStatusBar(self, self.daemon)
         self.SetStatusBar(self.sb)
 
         self.Bind(wx.EVT_CLOSE, self.OnQuit)
 
+    def on_log_console(self, eventt):
+        from angel_app.wx.log import LogFrame
+        self.logwin = LogFrame()
+        self.logwin.Show(True)
+        self.frames.append(self.logwin)
 
     def OnPaint(self, event):
         """
@@ -132,10 +150,33 @@ class AngelMainFrame(wx.Frame):
         """
         Exits the application explicitly
         """
-        print "Exiting on user request"
+        log.info("Exiting on user request")
+        # TODO: how to clean up old frames that are possibly still open?
+        try: # the frames might be gone already.... 
+            for frame in self.frames:
+                frame.Destroy()
+        except:
+            pass
         self.Close(True)
 
+    def askIFPurgeRepository(self):
+        questiontext = 'By purging your repository, you delete all locally stored data. Are you sure you want to purge the repository?' 
+        dlg = wx.MessageDialog(self, questiontext, 'Warning',
+                               wx.ICON_QUESTION | wx.YES_NO | wx.NO_DEFAULT
+                               )
+        res = dlg.ShowModal()
+        dlg.Destroy()
+        if res == wx.ID_YES:
+            return True
+        else:
+            return False
+        
     def on_file_purge_repository(self, evt):
+        if not self.askIFPurgeRepository():
+            return
+
+        # remember the current state of the p2p proc:
+        was_alive = self.daemon.isAlive()
         max = 3
         dlg = wx.ProgressDialog("Purging",
                                "Please wait while the repository is purged",
@@ -151,7 +192,8 @@ class AngelMainFrame(wx.Frame):
             from angel_app.admin.directories import removeDirectory 
             removeDirectory('repository')
             dlg.Update(2)
-            self.daemon.run()
+            if was_alive:
+                self.daemon.run()
             dlg.Update(3)
             dlg.Destroy()
             success = True
@@ -248,7 +290,7 @@ class AngelMainFrame(wx.Frame):
                 dlg.Destroy()
                 self.sb.SetStatusText("Crypto key import canceled", 0)
                 return False
-               #self.log.WriteText('You entered: %s\n' % keynamedlg.GetValue())    
+                #self.log.WriteText('You entered: %s\n' % keynamedlg.GetValue())    
 
             f = open(path, 'rb')
             from angel_app.admin.secretKey import importKey
@@ -288,6 +330,7 @@ class AngelMainFrame(wx.Frame):
         Starts the p2p process if not running
         """
         if not self.daemon.isAlive():
+            log.info("Starting the p2p process")
             self.daemon.run()
 
     def on_net_stop(self, event):
@@ -295,6 +338,7 @@ class AngelMainFrame(wx.Frame):
         Stops the p2p process if running
         """
         if self.daemon.isAlive():
+            log.info("Stopping the p2p process")
             self.daemon.stop()
     
     def on_repo_in_filemanager(self, event):
@@ -308,33 +352,21 @@ class AngelMainFrame(wx.Frame):
         
     def on_about_request(self, event):
         """
-        Shows a dialogue with an icon, version, build number and copyright and authors
+        Shows the about window
         """
-        from angel_app.version import getVersionString
-        from angel_app.version import getBuildString
-        # unicode copyright symbol: \u00A9
-        authors = ("Vincent Kraeutler", "Paul Kremer")
-        dlg = wx.MessageDialog(self, u'Version %s Build (%s)\n\n\u00A9 Copyright 2006-2007 etoy.VENTURE ASSOCIATION, all rights reserved.\n\nProgrammers: %s\n' % (getVersionString() , getBuildString(), ", ".join(authors)),
-                               'ANGEL APPLICATION',
-                               wx.OK | wx.ICON_INFORMATION
-                               )
-        dlg.CenterOnParent()
-        dlg.ShowModal()
-        dlg.Destroy()
+        from angel_app.wx.about import AboutWindow 
+        aboutWindow = AboutWindow(self, -1, _("About"), style=wx.DEFAULT_DIALOG_STYLE)
+        aboutWindow.CentreOnScreen()
+        aboutWindow.Show(True)
         
     def on_help_license(self, event):
         """
         Shows the license in a scroll box
         """
-        licensefile = open(LICENSE_TEXTFILE)
-        text = licensefile.read()
-        licensefile.close()
-
-        from wx.lib.dialogs import ScrolledMessageDialog
-        dlg = ScrolledMessageDialog(self, text, 'ANGEL APPLICATION License Information')
-        dlg.CenterOnParent()
-        dlg.ShowModal()
-        dlg.Destroy()
+        from angel_app.wx.about import LicenseWindow 
+        licenseWindow = LicenseWindow(self, -1, _("Licence"), size=(500, 400), style=wx.DEFAULT_FRAME_STYLE)
+        licenseWindow.CenterOnScreen()
+        licenseWindow.Show(True)
 
     def on_help_presenter(self, event):
         """
@@ -375,13 +407,13 @@ class AngelStatusBar(wx.StatusBar):
     - currently selected menu
     - p2p status (running/stopped)
     """
-    def __init__(self, parent, masterproc):
+    def __init__(self, parent, p2pProc):
         """
         Constructor, takes an additional parameter pointing to the
         thread object runing the p2p process. Initializes a timer to
         see if the p2p process is running.
         """
-        self.masterproc = masterproc
+        self.masterproc = p2pProc
         wx.StatusBar.__init__(self, parent, -1)
 
         # This status bar has one field
@@ -389,10 +421,10 @@ class AngelStatusBar(wx.StatusBar):
         # Sets the three fields to be relative widths to each other.
         self.SetStatusWidths([-2,-1])
 
-        # We're going to use a timer to drive a 'clock' in the last
-        # field.
+        # We're going to use a timer to drive a status of the p2p-process
+        # in the last field.
         self.timer = wx.PyTimer(self.Notify)
-        self.timer.Start(1000)
+        self.timer.Start(1001)
         self.Notify()
 
     def Notify(self):
@@ -401,9 +433,9 @@ class AngelStatusBar(wx.StatusBar):
         set the status bar text accordingly.
         """
         if self.masterproc.isAlive():
-            status = "p2p running"
+            status = _("p2p running")
         else:
-            status = "p2p stopped"
+            status = _("p2p stopped")
         self.SetStatusText(status, 1)
 
 
