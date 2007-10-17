@@ -11,8 +11,6 @@ from zope.interface import implements
 class PropertyManager(object):
     """
     I am an xattrPropertyStore with default values.
-    
-    TODO: consider adding default value handling for contains() and listProperties()
     """
     implements(IReadonlyPropertyManager)
    
