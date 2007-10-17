@@ -122,7 +122,7 @@ class Clone(object):
 
   
     def stream(self):
-        response = self._performRequest()
+        response = self.remote.performRequest()
         if response.status != responsecode.OK:
             raise "must receive an OK response for GET, otherwise something's wrong"
         return response
@@ -136,7 +136,7 @@ class Clone(object):
         @rtype string
         @return the raw XML body of the multistatus response corresponding to the respective PROPFIND request.
         """  
-        resp = self._performRequest(
+        resp = self.remote.performRequest(
                               method = "PROPFIND", 
                               headers = {"Depth" : 0}, 
                               body = makePropfindRequestBody(properties)
@@ -211,7 +211,7 @@ class Clone(object):
         Keep in mind that existence does not imply validity.
         """
         try:
-            response = self._performRequest(method = "HEAD", body = "")
+            response = self.remote.performRequest(method = "HEAD", body = "")
             return response.status == responsecode.OK
         except:
             return False       
@@ -222,7 +222,7 @@ class Clone(object):
         @return whether the remote host is reachable
         """
         try:
-            dummyresponse = self._performRequestWithTimeOut()
+            dummyresponse = self.remote.performRequestWithTimeOut()
             return True
         except:
             return False  
