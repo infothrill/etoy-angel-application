@@ -1,14 +1,15 @@
-import os
+from angel_app import elements
+from angel_app.config.internal import loadKeysFromFile
 from angel_app.log import getLogger
+from angel_app.resource.local.basic import Basic
+from angel_app.resource.local.internal.methods import copy, delete, lock, mkcol, move, put
 from twisted.web2 import stream
 from twisted.web2.dav.element import rfc2518
-from angel_app.resource.local.internal.methods import copy, delete, lock, mkcol, move, put
-from angel_app.resource.local.basic import Basic
-from angel_app import elements
+import os
+import urllib
 
 log = getLogger(__name__)
 # DO NOT EXPOSE THIS KEY!!!!
-from angel_app.config.internal import loadKeysFromFile
 
 class Crypto(
              lock.Lockable,
@@ -226,7 +227,7 @@ class Crypto(
         oc = pdp.get(elements.Children.qname()).children
         
         log.debug("resourceName: " + self.resourceName())     
-        nc = [cc for cc in oc if not str(cc.childOfType(rfc2518.HRef)) == self.quotedResourceName()]
+        nc = [cc for cc in oc if not str(cc.childOfType(rfc2518.HRef)) == urllib.quote(self.resourceName())]
         
         pdp.set(elements.Children(*nc))
         pp.seal()
