@@ -91,6 +91,17 @@ def runRequest(clone, method, expect):
         response.read()
 
 
+def makeCloneBody(localResource):
+    """
+    Make a PROPPATCH body from the local clone for registration with a remote node.
+    """
+    cc = Clone("localhost", providerport, localResource.relativeURL())
+    cloneElement = elements.Clone(rfc2518.HRef(`cc`))
+    clonesElement = elements.Clones(*[cloneElement])
+    setElement = rfc2518.Set(rfc2518.PropertyContainer(clonesElement))
+    propertyUpdateElement = rfc2518.PropertyUpdate(setElement)
+    return propertyUpdateElement.toxml()
+
 class ForbiddenTest(unittest.TestCase):
     """
     I make sure that all destructive method calls are forbidden on the external interface.
@@ -198,7 +209,7 @@ class ForbiddenTest(unittest.TestCase):
         assert (response.status == responsecode.FORBIDDEN), \
             "Request with extensive property update must fail with 403 FORBIDDEN. Received: " + `response.status`
             
-        body = clone.makeCloneBody(self.dirResource)
+        body = makeCloneBody(self.dirResource)
         response = dd._performRequest(method, body = body)
         
         # TODO: we might want to add a detailed analysis of the MULTI_STATUS response here.

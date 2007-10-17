@@ -436,42 +436,6 @@ def okProperties(clone, response):
     
     # no requests failed, return the OK responses
     return propertiesByResponseCode[responsecode.OK]
-                        
-        
-
-
-def makeCloneBody(localResource):
-    """
-    Make a PROPPATCH body from the local clone for registration with a remote node.
-    """
-    cc = Clone("localhost", providerport, localResource.relativeURL())
-    cloneElement = elements.Clone(rfc2518.HRef(`cc`))
-    clonesElement = elements.Clones(*[cloneElement])
-    setElement = rfc2518.Set(rfc2518.PropertyContainer(clonesElement))
-    propertyUpdateElement = rfc2518.PropertyUpdate(setElement)
-    return propertyUpdateElement.toxml()
-
-def getClonesOf(clonesList):
-    """
-    TODO: this should probably be replaced by a generator
-    
-    @type clonesList [Clone]
-    @param clonesList list of clones we want to get the clones from
-    @rtype [Clone]
-    @return list of clones of the clones in clonesList, except the clones stored on the localhost
-    """
-    cc = []
-    for clone in clonesList:
-        cc += [Clone(host, port) for host, port in clone.cloneList()]
-    return cc
-
-def getUncheckedClones(clonesList, checkedClones):
-    """
-    @rtype ([Clone], [Clone])
-    @return (cc, checkedClones + cc), where cc ist the list of clones in clonesList which are not in checkedClones
-    """
-    cc = [clone for clone in clonesList if clone not in checkedClones]
-    return cc, checkedClones + cc
 
 
 def splitParse(cloneUri):
