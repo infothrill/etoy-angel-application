@@ -23,9 +23,15 @@ class Resource(object):
         pass
     
     def getPropertyManager(self):
+        """
+        @see: IReadOnlyPropertyManager
+        """
         raise NotImplementedError("Must be provided by subclass")
     
     def getContentManager(self):
+        """
+        @see: IReadOnlyContentManager
+        """
         raise NotImplementedError("Must be provided by subclass")
 
     def stream(self):
@@ -179,8 +185,6 @@ class Resource(object):
         """
         try:
             sm = "".join([self.deadProperties().get(key.qname()).toxml() for key in elements.signedKeys])
-            log.debug("signable meta data for " + self.fp.path + ":" + sm)
             return sm
         except Exception, e:
-            log.error("Basic: invalid meta data: " + `e`)
             raise

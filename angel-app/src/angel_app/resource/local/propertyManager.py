@@ -11,6 +11,7 @@ from twisted.web2.dav.element.base import WebDAVElement
 
 from angel_app import elements
 from angel_app.log import getLogger
+from angel_app.resource.IReadonlyPropertyManager import IReadonlyPropertyManager
 log = getLogger(__name__)
 
 def getOnePublicKey(resource):
@@ -88,6 +89,7 @@ class PropertyManager(xattrPropertyStore):
     
     TODO: consider adding default value handling for contains() and listProperties()
     """
+    implements(IReadonlyPropertyManager)
     
     def __init__(self, resource):
         super(PropertyManager, self).__init__(resource)

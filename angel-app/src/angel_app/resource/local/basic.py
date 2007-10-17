@@ -2,7 +2,7 @@ from angel_app import elements
 from angel_app.config import config
 from angel_app.contrib.ezPyCrypto import key as ezKey
 from angel_app.log import getLogger
-from angel_app.resource import IResource
+from angel_app.resource.resource import Resource
 from angel_app.resource.local import util
 from angel_app.resource.local.dirlist import DirectoryLister
 from angel_app.resource.local.propertyManager import PropertyManager
@@ -26,9 +26,11 @@ repository = FilePath(AngelConfig.get("common","repository"))
 
 REPR_DIRECTORY = "directory" #This is the string content representation of a directory
 
-class Basic(DAVFile):
-    
-    implements(IResource.IAngelResource)
+class Basic(Resource, DAVFile):
+    """
+    Inheritance scheme: Resource provides high-level angel-app resource compliance,
+    DAVFile provides most http_METHODS.
+    """
     
     def __init__(self, path,
                  defaultType="text/plain",
@@ -39,6 +41,9 @@ class Basic(DAVFile):
         self.assertInRepository()
         
         self._dead_properties = PropertyManager(self)
+        
+    def getProperyManager(self):
+        return self.deadProperties()
 
     def contentAsString(self):
         return self.open().read()
@@ -67,89 +72,6 @@ class Basic(DAVFile):
             # file requires decryption of the file.
             # let's just pretend we don't know
             return None
-        
-    def getProperty(self, element):
-        """
-        Return a resource property by element.
-        """
-        return self.deadProperties().get(element)
-       
-    def revision(self):
-        """
-        @rtype int
-        @return the revision number. if not already set, it is initialized to 1.
-        """
-        return int(str(self.deadProperties().get(elements.Revision.qname())))
-
-    def isEncrypted(self):
-        """
-        @rtype boolean
-        @return whether the file is encrypted. 
-        """
-        isEncrypted = self.deadProperties().get(elements.Encrypted.qname())
-        return int(str(isEncrypted)) == 1
-
-    def contentSignature(self):
-        """
-        @return: the checksum of the resource content
-        """
-        return str(self.deadProperties().get(elements.ContentSignature.qname()))
-    
-    def metaDataSignature(self):
-        """
-        @return the signature of the signed metadata
-        """
-        return str(self.deadProperties().get(elements.MetaDataSignature.qname()))
-
-
-    def dataIsCorrect(self):
-        cs = self.contentSignature()
-        if cs == self._computeContentHexDigest():
-            log.debug("data signature for file '%s' is correct: %s" % (self.fp.path, cs))
-            return True
-        else:
-            log.info("data signature for file '%s' is incorrect: %s" % (self.fp.path, cs))
-            return False
-
-    def metaDataIsCorrect(self):
-
-        publicKey = ezKey()
-        publicKey.importKey(self.publicKeyString())
-        
-        sm = self.signableMetadata()
-        ms = self.metaDataSignature()
-        
-        log.debug(ms)
-        log.debug(sm)
-        try:
-            return publicKey.verifyString(sm, ms)
-        except:
-            log.info("Can not verify metadata %s against signature %s" % (sm, ms))
-            return False
-    
-    def verify(self):
-        return (self.dataIsCorrect() and self.metaDataIsCorrect())
-    
-    def _computeContentHexDigest(self):
-        """
-        @return hexdigest for content of self
-        """
-        hash = util.getHashObject()
-        f = self.open()
-        bufsize = 4096 # 4 kB
-        while True:
-            buf = f.read(bufsize)
-            if len(buf) == 0:
-                break
-            hash.update(buf)
-        f.close()
-        return hash.hexdigest()
-
-    def resourceID(self):
-        """
-        @see IResource
-        """ 
-        return self.deadProperties().get(elements.ResourceID.qname())
     
     def resourceName(self):
         """
@@ -212,6 +134,12 @@ class Basic(DAVFile):
             return True
         
         return False
+    
+    def verify(self):
+        """
+        DEPRECATED.
+        """
+        return self.validate()
     
     def garbageCollect(self):
         
@@ -290,23 +218,6 @@ class Basic(DAVFile):
                                   self.fp.parent().path
                                   )
 
-    def clones(self):
-        """
-        Return the list of clones stored with this resource.
-        
-        Note that this will recursively initialize the clone field all parent resources, 
-        until one parent is found that does have clones. Will raise a RuntimeError if the root node has no
-        clones.
-        
-        @see propertyManager.inheritClones
-        """
-        from angel_app.resource.remote import clone
-        clonesElement = self.deadProperties().get(elements.Clones.qname())
-        return clone.clonesFromElement(clonesElement)
-
-    def childLinks(self):
-        return self.deadProperties().get(elements.Children.qname())
-
     def getChildElement(self):
         """
         @return the child element for this resource.
@@ -342,39 +253,6 @@ class Basic(DAVFile):
         return [self.createSimilarFile(self.fp.path + os.sep + urllib.url2pathname(link))
                 for link in links]
 
-
-    def publicKeyString(self):
-        """
-        @return: the string representation of the resource's public key.
-        """
-        return str(self.deadProperties().get(elements.PublicKeyString.qname()))
- 
-    def keyUUID(self):
-        """
-        @return a SHA checksum of the public key string. We only take the first 16 bytes to be convertible
-        to a UUID>
-        """
-        return util.uuidFromPublicKeyString(self.publicKeyString())
-
-    def sigUUID(self):
-        """
-        @return a SHA checksum of the resource's signature. We only take the first 16 bytes to be convertible
-        to a UUID>
-        """
-        return util.uuidFromPublicKeyString(self.get(elements.MetaDataSignature))
-
-    def signableMetadata(self):
-        """
-        Returns a string representation of the metadata that needs to
-        be signed.
-        """
-        try:
-            sm = "".join([self.deadProperties().get(key.qname()).toxml() for key in elements.signedKeys])
-            log.debug("signable meta data for " + self.fp.path + ":" + sm)
-            return sm
-        except Exception, e:
-            log.error("Basic: invalid meta data: " + `e`)
-            raise
 
     def render(self, req):
         """You know what you doing. override render method (for GET) in twisted.web2.static.py"""
