@@ -437,6 +437,16 @@ def okProperties(clone, response):
     # no requests failed, return the OK responses
     return propertiesByResponseCode[responsecode.OK]
 
+def makeCloneBody(localResource):
+    """
+    Make a PROPPATCH body from the local clone for registration with a remote node.
+    """
+    cc = Clone("localhost", providerport, localResource.relativeURL())
+    cloneElement = elements.Clone(rfc2518.HRef(`cc`))
+    clonesElement = elements.Clones(*[cloneElement])
+    setElement = rfc2518.Set(rfc2518.PropertyContainer(clonesElement))
+    propertyUpdateElement = rfc2518.PropertyUpdate(setElement)
+    return propertyUpdateElement.toxml()
 
 def splitParse(cloneUri):
     """
