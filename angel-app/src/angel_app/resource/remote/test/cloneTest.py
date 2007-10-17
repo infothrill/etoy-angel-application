@@ -81,7 +81,7 @@ class CloneTest(unittest.TestCase):
         self.testClone.resourceID()
         assert elements.ResourceID.qname() in self.testClone.getPropertyManager().propertyCache, "After a request, the cache must be non-empty."
         
-        for ee in self.testClone.cachedProperties:
+        for ee in self.testClone.getPropertyManager().cachedProperties:
             assert ee.qname() in self.testClone.getPropertyManager().propertyCache.keys(), "Property %s must now be in the cache." % `ee`
   
         

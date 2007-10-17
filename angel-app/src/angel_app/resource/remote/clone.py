@@ -53,10 +53,14 @@ class Clone(Resource):
         self.validatePath()
         self.validateHostPort()
         
-        self.remote = HTTPRemote(self.host, self.port, self.path)
+        self.updateRemote(HTTPRemote(self.host, self.port, self.path))
        
     def getPropertyManager(self):
-        return PropertyManager(self.remote)
+        return self.propertyManager
+    
+    def updateRemote(self, remote):
+        self.remote = remote
+        self.propertyManager = PropertyManager(remote)
      
     def validatePath(self):
         from urllib import url2pathname, pathname2url
@@ -89,7 +93,7 @@ class Clone(Resource):
                 path = redirectURL[2]
                 assert path != ""
                 self.path = path
-                self.remote = HTTPRemote(self.host, self.port, self.path)
+                self.updateRemote(HTTPRemote(self.host, self.port, self.path))
                 log.info("redirecting to: " + `path`)
             except:
                 error = "redirection url invalid: " + `redirectURL`
