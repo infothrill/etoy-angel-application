@@ -170,3 +170,12 @@ class BasicResourceTest(unittest.TestCase):
         """
         assert IAngelResource.implementedBy(Basic)
         assert zope.interface.verify.verifyClass(IAngelResource, Basic)
+        
+    def testInterfaceCompliance(self):
+        """
+        Verify interface compliance.
+        """
+        from angel_app.resource.IReadonlyPropertyManager import IReadonlyPropertyManager
+        from angel_app.resource.local.propertyManager import PropertyManager
+        assert IReadonlyPropertyManager.implementedBy(PropertyManager)
+        assert zope.interface.verify.verifyClass(IReadonlyPropertyManager, PropertyManager)  
