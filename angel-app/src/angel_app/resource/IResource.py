@@ -84,4 +84,9 @@ class IAngelResource(zope.interface.Interface):
         @return: a L{davxml.WebDAVElement} instance
             containing the value of the given property.
         """
+        
+    def validate():
+        """
+        Validate the given resource by checksumming.
+        """
 
