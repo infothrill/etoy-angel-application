@@ -12,7 +12,6 @@ from twisted.web2 import responsecode
 from twisted.web2.dav import davxml
 from twisted.web2.dav.element import rfc2518
 from twisted.web2.dav.static import DAVFile
-from twisted.web2.dav.xattrprops import xattrPropertyStore
 from twisted.web2.http import HTTPError
 from zope.interface import implements
 import os
