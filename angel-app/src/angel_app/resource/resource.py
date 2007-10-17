@@ -43,9 +43,6 @@ class Resource(object):
     
     def isCollection(self):
         return self.getPropertyManager().isCollection()
-    
-    def findChildren(self):
-        return self.getPropertyManager().findChildren()
 
     def contentLength(self):
         return self.getContentManager().contentLength() 
