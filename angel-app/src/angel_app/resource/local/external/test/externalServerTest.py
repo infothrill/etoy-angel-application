@@ -71,7 +71,7 @@ def performPushRequest(self, localClone, elements = elements.requiredKeys):
     """
     pb = makePushBody(localClone, elements)
     log.debug("pushing metadata:" + pb + " for clone " + `self`)
-    resp = self._performRequest(
+    resp = self.remote.performRequest(
                                      method = "PROPPATCH", 
                                      body = pb
                                      )
@@ -85,7 +85,7 @@ def performPushRequest(self, localClone, elements = elements.requiredKeys):
                     data)
 
 def runRequest(clone, method, expect):
-    response = clone._performRequest(method)
+    response = clone.remote.performRequest(method)
     assert response.status == expect, \
         method + " -- got wrong status code, expected: " + `expect` + " received: " + `response.status` + "\n" + \
         response.read()
@@ -187,18 +187,18 @@ class ForbiddenTest(unittest.TestCase):
         
         method = "PROPPATCH"
         
-        response = dd._performRequest(method)
+        response = dd.remote.performRequest(method)
         assert (response.status == responsecode.BAD_REQUEST), \
             "Request with empty body must fail with 400 BAD_REQUEST. Received: " + `response.status`
             
         body = makePushBody(self.dirResource)
         
-        response = dd._performRequest(method, body = body)
+        response = dd.remote.performRequest(method, body = body)
         assert (response.status == responsecode.FORBIDDEN), \
             "Request with extensive property update must fail with 403 FORBIDDEN. Received: " + `response.status`
             
         body = clone.makeCloneBody(self.dirResource)
-        response = dd._performRequest(method, body = body)
+        response = dd.remote.performRequest(method, body = body)
         
         # TODO: we might want to add a detailed analysis of the MULTI_STATUS response here.
         assert (response.status == responsecode.MULTI_STATUS), \

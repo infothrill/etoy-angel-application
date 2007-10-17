@@ -30,7 +30,6 @@ from urllib import unquote
 from urlparse import urlsplit
 from os import sep
 
-from angel_app.contrib import uuid
 
 from angel_app.log import getLogger
 log = getLogger(__name__)
@@ -64,9 +63,6 @@ def getHexDigestForFile(fp):
         myFile.close()
     return hash.hexdigest()
 
-
-def uuidFromPublicKeyString(publicKey):    
-    return uuid.UUID( getHashObject(publicKey).hexdigest()[:32] )
 
 if __name__ == "__main__":
     unittest.main()

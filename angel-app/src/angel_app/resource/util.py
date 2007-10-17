@@ -26,12 +26,14 @@ legalMatters = """
 
 author = """Vincent Kraeutler, 2006"""
 
+from angel_app.config import config
+from angel_app.contrib import uuid
+from os import sep
 from urllib import quote, unquote
 from urlparse import urlsplit
-from os import sep
+
 
 # get config:
-from angel_app.config import config
 AngelConfig = config.getConfig()
 repository = AngelConfig.get("common","repository")
 
@@ -83,3 +85,7 @@ def getHashObject(data = None):
             obj = hashlib.sha1()            
     return obj
 
+
+
+def uuidFromPublicKeyString(publicKey):    
+    return uuid.UUID( getHashObject(publicKey).hexdigest()[:32] )

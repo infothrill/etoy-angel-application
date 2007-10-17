@@ -97,6 +97,12 @@ class PropertyManager(xattrPropertyStore):
         # create a per-instance copy of the default generators
         self.defaultValues = dict(defaultMetaData.items())
 
+    def isCollection(self):
+        """
+        This is ass-backwards, but isCollection is provided by DAVFile.
+        """
+        return resource.isCollection()
+
     def get(self, qname):
         
         assert type(qname) == type(WebDAVElement.qname())

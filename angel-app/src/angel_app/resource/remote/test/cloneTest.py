@@ -77,12 +77,12 @@ class CloneTest(unittest.TestCase):
         """
         Assert proper cache management.
         """
-        assert self.testClone.propertyCache == {}, "At the beginning, the cache must be empty."
+        assert self.testClone.getPropertyManager().propertyCache == {}, "At the beginning, the cache must be empty."
         self.testClone.resourceID()
-        assert elements.ResourceID.qname() in self.testClone.propertyCache, "After a request, the cache must be non-empty."
+        assert elements.ResourceID.qname() in self.testClone.getPropertyManager().propertyCache, "After a request, the cache must be non-empty."
         
         for ee in self.testClone.cachedProperties:
-            assert ee.qname() in self.testClone.propertyCache.keys(), "Property %s must now be in the cache." % `ee`
+            assert ee.qname() in self.testClone.getPropertyManager().propertyCache.keys(), "Property %s must now be in the cache." % `ee`
   
         
     def testInspectResource(self):

@@ -121,6 +121,6 @@ class ResourceTest(unittest.TestCase):
                                            ]
         
         for method, expect in methodsAndExpectedResponseCodes:
-            response = self.testClone._performRequest(method)
+            response = self.testClone.remote.performRequest(method)
             assert response.status == expect, \
                 method + " wrong status code returned. expected: " + `expect` + " found: " + `response.status`

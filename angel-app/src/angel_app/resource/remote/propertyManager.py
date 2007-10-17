@@ -1,10 +1,12 @@
 """
 Provide a Mapping from XML-elements to PROPFIND requests.
 """
-from zope.interface import implements
-from angel_app.resource.IReadonlyPropertyManager import IReadonlyPropertyManager
 from angel_app import elements
+from angel_app.resource.IReadonlyPropertyManager import IReadonlyPropertyManager
+from twisted.web2 import responsecode
+from twisted.web2.dav import davxml
 from twisted.web2.dav.element import rfc2518
+from zope.interface import implements
 
 class PropertyManager(object):
     """
@@ -17,6 +19,7 @@ class PropertyManager(object):
     cachedProperties = elements.signedKeys + [elements.MetaDataSignature, rfc2518.ResourceType, elements.Clones]  
   
     def __init__(self, remote):
+        self.propertyCache = {}
         self.remote = remote
         
     def get(self, qname):
