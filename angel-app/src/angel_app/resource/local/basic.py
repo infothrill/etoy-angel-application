@@ -110,27 +110,7 @@ class Basic(DAVFile, Resource):
         DEPRECATED.
         """
         return self.validate()
-    
-    def familyPlanning(self):
-        """
-        Remove all direct children that are not (properly) referenced.
-        """
-        self.findChildren("1")
-
-    def findChildren(self, depth = "0"):
-        """ 
-        @rtype [Filepath]
-        @return child nodes of this node. Optionally (and by default),
-        child nodes which have the deleted flag set can be ignored.
-        """
-        
-        children = super(Basic, self).findChildren(depth)
-
-        return [
-                cc for 
-                cc in children
-                if not cc[0].removeIfUnreferenced()
-                ]
+            
 
     def relativePath(self):
         """

@@ -88,8 +88,9 @@ def ensureLocalValidity(resource, referenceClone):
     sync(resource, referenceClone)
     
     assert resource.verify(), "Resource invalid after update."
-        
-    resource.familyPlanning()
+    
+    # even a valid resource may be unreferenced by the parent (i think TODO: check)    
+    resource.garbageCollect()
     
 
 def storeClones(af, goodClones, unreachableClones):
