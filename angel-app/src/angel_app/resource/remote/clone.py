@@ -474,15 +474,6 @@ def getUncheckedClones(clonesList, checkedClones):
     return cc, checkedClones + cc
 
 
-def getMostCurrentClones(clonesList):
-    """
-    @rtype [Clone]
-    @return the most current clones from the clonesList
-    """
-    newest = max([clone.revision() for clone in clonesList])    
-    return [clone for clone in clonesList if clone.revision() == newest]
-
-
 def splitParse(cloneUri):
     """
     DEPRECATED. This method is EVIL. Look for better alternative.
