@@ -51,19 +51,9 @@ class Basic(DAVFile, Resource):
     
     def getContentManager(self):
         return self.contentManager
-
-    def contentLength(self):
-        if not self.isEncrypted():
-            return super(DAVFile, self).contentLength()
-        else:
-            # getting the content length for an encrypted
-            # file requires decryption of the file.
-            # let's just pretend we don't know
-            return None
     
     def resourceName(self):
-        """
-        
+        """    
         @return the "file name" of the resource, return "/" for the repository root
         """
         if self.isRepositoryRoot(): 

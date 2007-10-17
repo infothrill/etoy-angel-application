@@ -24,12 +24,7 @@ class ContentManager(AbstractReadonlyContentManager):
                 raise HTTPError(responsecode.NOT_FOUND)
             else:
                 raise
-        return f
-    
+        
     def contentLength(self):
-        # TODO: defaults to GET request, but we're only interested in the header...
-        rr = self.remote.performRequest() 
-        clh = rr.getheader("content-length")
-        cl = int(clh)
-        return cl
+        return super(DAVFile, self.resource).contentLength()
         
