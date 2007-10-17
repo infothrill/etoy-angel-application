@@ -16,6 +16,7 @@ Handlers for HTTP/WebDAV methods specific to this class are implemented as mixin
 """
 
 all = [
+       "contentManager",
        "external",
        "internal", 
        "basic",

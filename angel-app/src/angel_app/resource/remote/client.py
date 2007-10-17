@@ -20,7 +20,7 @@ def readResponseIntoFile(resource, referenceClone):
     t = angel_app.singlefiletransaction.SingleFileTransaction()
     bufsize = 8192 # 8 kB
     safe = t.open(resource.fp.path, 'wb')
-    readstream = referenceClone.stream()
+    readstream = referenceClone.open()
     EOF = False
     while not EOF:
         data = readstream.read(bufsize)

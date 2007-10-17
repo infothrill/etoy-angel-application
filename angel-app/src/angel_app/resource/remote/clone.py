@@ -1,18 +1,17 @@
-from httplib import HTTPConnection
-import urlparse
-
-from twisted.web2 import responsecode
-from twisted.web2.dav import davxml
-from twisted.web2.dav.element import rfc2518
-from zope.interface import implements
-
 from angel_app import elements
 from angel_app.config import config
 from angel_app.log import getLogger
 from angel_app.resource import IResource
+from angel_app.resource.remote.contentManager import ContentManager
 from angel_app.resource.remote.httpRemote import HTTPRemote
-from angel_app.resource.resource import Resource
 from angel_app.resource.remote.propertyManager import PropertyManager
+from angel_app.resource.resource import Resource
+from httplib import HTTPConnection
+from twisted.web2 import responsecode
+from twisted.web2.dav import davxml
+from twisted.web2.dav.element import rfc2518
+from zope.interface import implements
+import urlparse
 
 log = getLogger(__name__)
 
@@ -56,11 +55,18 @@ class Clone(Resource):
         self.updateRemote(HTTPRemote(self.host, self.port, self.path))
        
     def getPropertyManager(self):
+        """
+        @see updateRemote
+        """
         return self.propertyManager
+    
+    def getContentManager(self):
+        return self.contentManager
     
     def updateRemote(self, remote):
         self.remote = remote
         self.propertyManager = PropertyManager(remote)
+        self.contentManager = ContentManager(remote)
      
     def validatePath(self):
         from urllib import url2pathname, pathname2url
@@ -113,12 +119,6 @@ class Clone(Resource):
     
     def __hash__(self):
         return `self`.__hash__()
-  
-    def stream(self):
-        response = self.remote.performRequest()
-        if response.status != responsecode.OK:
-            raise "must receive an OK response for GET, otherwise something's wrong"
-        return response
     
 
     def exists(self): 
@@ -140,10 +140,7 @@ class Clone(Resource):
             dummyresponse = self.remote.performRequestWithTimeOut()
             return True
         except:
-            return False  
-     
-    def findChildren(self):
-         raise NotImplementedError    
+            return False   
 
         
     def cloneList(self):

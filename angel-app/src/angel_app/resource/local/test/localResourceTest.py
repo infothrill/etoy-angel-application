@@ -33,10 +33,10 @@ author = """Vincent Kraeutler 2007"""
 from angel_app.config import config
 from angel_app.elements import Children
 from angel_app.resource.IResource import IAngelResource
+from angel_app.resource.abstractContentManager import REPR_DIRECTORY
 from angel_app.resource.local.basic import Basic
 from angel_app.resource.local.internal.resource import Crypto
 from twisted.web2.dav.element import rfc2518
-import angel_app.resource.local.basic as bb
 import os
 import unittest
 import zope.interface.verify
@@ -131,7 +131,7 @@ class BasicResourceTest(unittest.TestCase):
         """
         @return: an object that minimally supports the read() method, which in turn returns the stream contents as a string.
         """
-        assert self.dirResource.open().read() == bb.REPR_DIRECTORY
+        assert self.dirResource.open().read() == REPR_DIRECTORY
         
         
     def testClones(self):

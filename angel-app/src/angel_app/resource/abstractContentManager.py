@@ -1,5 +1,6 @@
 """
-Interface to be provided by all angel-app resouce content managers.
+Partial implementation of IReadOnlyContentManager, as far as that can be done for both
+local and remote resources.
 """
 
 legalMatters = """
@@ -30,33 +31,30 @@ legalMatters = """
 
 author = """Vincent Kraeutler, 2007"""
 
+import StringIO
 
-import zope.interface
+REPR_DIRECTORY = "directory" #This is the string content representation of a directory
 
-class IReadonlyContentManager(zope.interface.Interface):
+class AbstractReadonlyContentManager(object):
     """
-    Part of the Angel-app resource interface specification.
+    Partial implementation of IReadOnlyContentManager, as far as that can be done for both
+    local and remote resources.
     
-    See 
-    http://twistedmatrix.com/projects/core/documentation/howto/components.html#auto0
-    and 
-    http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/528872
-    for what seem like the only usable descriptions of zope.interface.
-    
-    TODO: flesh out details of error handling HERE (not in the implementing classes)
+    @see IReadOnlyContentManager
     """
     
-    def open():
+    def __init__(self, resource):
+        self.resource = resource
+    
+    def open(self):
         """
         @return a (read-only) file-like object.
         """
-        
-    def contentLength():
-        """
-        Return length of contents in bytes (integer). Note that this is the number of bytes
-        required to store/transmit the file which (for encrypted files) may be different from
-        the size of the file when it's decrypted/viewed.
-        
-        @return length of contents in bytes (integer)
-        """
+        if self.resource.isCollection():
+            return StringIO.StringIO(REPR_DIRECTORY)
+        else:
+            return self.openFile()
+    
+    def openFile(self):
+        raise NotImplementedError
 

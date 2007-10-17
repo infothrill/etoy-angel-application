@@ -12,6 +12,7 @@ The angel-app defines three types of "views" on resources.
 
 """
 all = [
+        "abstractContentManager",
         "basic", 
         "IReadOnlyContentManager", 
         "IReadOnlyPropertyManager", 

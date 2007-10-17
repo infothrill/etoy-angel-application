@@ -35,11 +35,11 @@ class Resource(object):
         """
         raise NotImplementedError("Must be provided by subclass")
 
-    def stream(self):
+    def open(self):
         """
         @return a stream-like object that has the read() and close() methods, to read the contents of the local resource
         """
-        return self.getContentManager().stream()
+        return self.getContentManager().open()
     
     def isCollection(self):
         return self.getPropertyManager().isCollection()
@@ -117,7 +117,7 @@ class Resource(object):
         @return hexdigest for content of self
         """
         hash = util.getHashObject()
-        f = self.stream()
+        f = self.open()
         bufsize = 4096 # 4 kB
         while True:
             buf = f.read(bufsize)

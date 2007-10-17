@@ -71,7 +71,7 @@ class IAngelResource(zope.interface.Interface):
         @return: an iterable over C{uri}.
         """
     
-    def stream():
+    def open():
         """
         @return: an object that minimally supports the read() method, which in turn returns the stream contents as a string.
         """

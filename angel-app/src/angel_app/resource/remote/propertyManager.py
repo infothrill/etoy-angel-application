@@ -1,6 +1,3 @@
-"""
-Provide a Mapping from XML-elements to PROPFIND requests.
-"""
 from angel_app import elements
 from angel_app.resource.IReadonlyPropertyManager import IReadonlyPropertyManager
 from twisted.web2 import responsecode
@@ -10,7 +7,7 @@ from zope.interface import implements
 
 class PropertyManager(object):
     """
-    I am an xattrPropertyStore with default values.
+    Provide a Mapping from XML-elements to (the results of) PROPFIND requests.    
     """
     implements(IReadonlyPropertyManager)
    

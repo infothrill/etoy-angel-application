@@ -5,6 +5,7 @@ from angel_app.log import getLogger
 from angel_app.resource.local import util
 from angel_app.resource.local.dirlist import DirectoryLister
 from angel_app.resource.local.propertyManager import PropertyManager
+from angel_app.resource.local.contentManager import ContentManager
 from angel_app.resource.resource import Resource
 from twisted.python.filepath import FilePath
 from twisted.web2 import http, stream
@@ -25,8 +26,6 @@ log = getLogger(__name__)
 AngelConfig = config.getConfig()
 repository = FilePath(AngelConfig.get("common","repository"))
 
-REPR_DIRECTORY = "directory" #This is the string content representation of a directory
-
 class Basic(DAVFile, Resource):
     """
     Inheritance scheme: Resource provides high-level angel-app resource compliance,
@@ -43,27 +42,13 @@ class Basic(DAVFile, Resource):
         
         self._dead_properties = PropertyManager(self)
         
+        self.contentManager = ContentManager(self)
+        
     def getPropertyManager(self):
         return self.deadProperties()
-
-    def contentAsString(self):
-        return self.open().read()
-
-    def open(self):
-        """
-        @return a stream-like object that has the read() and close() methods, to read the contents of the local resource
-        """
-        if self.fp.isdir():
-            return StringIO.StringIO(REPR_DIRECTORY)
-        else:
-            return self.fp.open()
-        
-    def stream(self):
-        """
-        alias for interface compliance.
-        TODO: decide on eiter open() or stream()
-        """
-        return self.open()
+    
+    def getContentManager(self):
+        return self.contentManager
 
     def contentLength(self):
         if not self.isEncrypted():
