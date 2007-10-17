@@ -28,10 +28,8 @@ def dance(options):
     repository = AngelConfig.get("common", "repository")
     log.info("starting inspection loop at: " + repository)
 
-    def getChildren(path):
-        children = [cc.fp.path for cc in Basic(path).metaDataChildren()]
-        log.debug("children of " + path + " are " + `children`)
-        return children
+    def getChildren(resource):
+        return [child for (child, path) in resource.findChildren("1")]
     
     def toEvaluate(foo, bar):
         return (client.inspectResource(foo), None)
@@ -51,7 +49,7 @@ def dance(options):
         dummystats = connectToTracker()
     
         time.sleep(sleepTime)
-        for dummyii in graphWalker(repository, getChildren, toEvaluate):
+        for dummyii in graphWalker(Basic(repository), getChildren, toEvaluate):
             time.sleep(sleepTime)
             continue
         
