@@ -48,33 +48,6 @@ def resourceFromURI(uri, resourceClass):
     path = repository + sep + sep.join(segments)
     return resourceClass(path)
 
-def getHashObject(data = None):
-    """
-    Returns an object that can create SHA-1 hash values when feeded with data
-    using the update() method.
-    Optional paramater data is passed to the constructor of the hash object,
-    and can be used for more condensed code.
-    This method exists solely for python version compatibility.
-    """
-    # TODO: on python 2.5, remove sha module and use hashlib only
-    from platform import python_version_tuple
-    (major, minor, dummypatchlevel) = python_version_tuple()
-    major = int(major)
-    minor = int(minor)
-    if (major >=2 and minor < 5 ):
-        import sha
-        if data:
-            obj = sha.new(data)
-        else:
-            obj = sha.new()            
-    else: # python 2.5 + only
-        import hashlib
-        obj = hashlib.sha1()
-        if data:
-            obj = hashlib.sha1(data)
-        else:
-            obj = hashlib.sha1()            
-    return obj
 
 def getHexDigestForFile(fp):
     hash = getHashObject()
@@ -119,30 +92,6 @@ class StringReader:
     def close(self):
         self._offset = 0
 
-import unittest
-
-class StringReaderTest(unittest.TestCase):
-
-    def setUp(self):
-        self.teststring = "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.\nThis is on a new line.\n"
-
-    def testReadClose(self):
-        reader = StringReader(self.teststring)
-        self.assertEqual(self.teststring, reader.read())
-        reader.close()
-        self.assertEqual(self.teststring, reader.read())
-        
-    def testBufferedRead(self):
-        reader = StringReader(self.teststring)
-        data = ''
-        bufsize = 5
-        while True:
-            buf = reader.read(bufsize)
-            if len(buf) == 0:
-                break
-            else:
-                data += buf
-        self.assertEqual(self.teststring, data)
 
 def uuidFromPublicKeyString(publicKey):    
     return uuid.UUID( getHashObject(publicKey).hexdigest()[:32] )

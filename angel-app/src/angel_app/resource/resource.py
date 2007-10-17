@@ -2,6 +2,7 @@ from angel_app import elements
 from angel_app.contrib.ezPyCrypto import key as ezKey
 from angel_app.log import getLogger
 from angel_app.resource import IResource
+from angel_app.resource import util
 from zope.interface import implements
 
 
@@ -41,7 +42,7 @@ class Resource(object):
         return self.getContentManager().stream()
     
     def isCollection(self):
-        return self.getContentManager().isCollection()
+        return self.getPropertyManager().isCollection()
     
     def findChildren(self):
         return self.getPropertyManager().findChildren()

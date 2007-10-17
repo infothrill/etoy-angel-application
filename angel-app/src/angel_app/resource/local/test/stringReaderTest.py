@@ -1,5 +1,5 @@
 """
-Interface to be provided by all angel-app resouce property managers.
+Tests for local resource.
 """
 
 legalMatters = """
@@ -28,35 +28,30 @@ legalMatters = """
  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
 """
 
-author = """Vincent Kraeutler, 2007"""
+author = """Paul Kremer, Vincent Kraeutler 2007"""
 
+import unittest
 
-import zope.interface
+class StringReaderTest(unittest.TestCase):
 
-class IReadonlyPropertyManager(zope.interface.Interface):
-    """
-    Part of the Angel-app resource interface specification.
-    
-    See 
-    http://twistedmatrix.com/projects/core/documentation/howto/components.html#auto0
-    and 
-    http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/528872
-    for what seem like the only usable descriptions of zope.interface.
-    
-    TODO: flesh out details of error handling HERE (not in the implementing classes)
-    TODO: consider adding contains(property) and listProperties()
-    """
-    
-    def get(property):
-        """
-        @param property: a twisted.web2.dav.davxml.WebDAVElement.qname()
-        @return the corresponding WebDAVElement
-        """
+    def setUp(self):
+        self.teststring = "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.\nThis is on a new line.\n"
+
+    def testReadClose(self):
+        reader = StringReader(self.teststring)
+        self.assertEqual(self.teststring, reader.read())
+        reader.close()
+        self.assertEqual(self.teststring, reader.read())
         
-    def isCollection():
-        """
-        Checks whether this resource is a collection resource / directory.
-        @return: a C{True} if this resource is a collection resource, C{False}
-            otherwise.
-        """
-
+    def testBufferedRead(self):
+        reader = StringReader(self.teststring)
+        data = ''
+        bufsize = 5
+        while True:
+            buf = reader.read(bufsize)
+            if len(buf) == 0:
+                break
+            else:
+                data += buf
+        self.assertEqual(self.teststring, data)
+        assert zope.interface.verify.verifyClass(IReadonlyPropertyManager, PropertyManager)  

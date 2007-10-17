@@ -26,7 +26,7 @@ repository = FilePath(AngelConfig.get("common","repository"))
 
 REPR_DIRECTORY = "directory" #This is the string content representation of a directory
 
-class Basic(Resource, DAVFile):
+class Basic(DAVFile, Resource):
     """
     Inheritance scheme: Resource provides high-level angel-app resource compliance,
     DAVFile provides most http_METHODS.
@@ -42,7 +42,7 @@ class Basic(Resource, DAVFile):
         
         self._dead_properties = PropertyManager(self)
         
-    def getProperyManager(self):
+    def getPropertyManager(self):
         return self.deadProperties()
 
     def contentAsString(self):

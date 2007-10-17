@@ -54,3 +54,32 @@ def pathFromAbsoluteURI(uri):
     segments = map(unquote, segments[1:])
     return sep.join(segments)
 
+
+def getHashObject(data = None):
+    """
+    Returns an object that can create SHA-1 hash values when feeded with data
+    using the update() method.
+    Optional paramater data is passed to the constructor of the hash object,
+    and can be used for more condensed code.
+    This method exists solely for python version compatibility.
+    """
+    # TODO: on python 2.5, remove sha module and use hashlib only
+    from platform import python_version_tuple
+    (major, minor, dummypatchlevel) = python_version_tuple()
+    major = int(major)
+    minor = int(minor)
+    if (major >=2 and minor < 5 ):
+        import sha
+        if data:
+            obj = sha.new(data)
+        else:
+            obj = sha.new()            
+    else: # python 2.5 + only
+        import hashlib
+        obj = hashlib.sha1()
+        if data:
+            obj = hashlib.sha1(data)
+        else:
+            obj = hashlib.sha1()            
+    return obj
+
