@@ -46,23 +46,3 @@ def resourceFromURI(uri, resourceClass):
     segments = map(unquote, segments[1:])
     path = repository + sep + sep.join(segments)
     return resourceClass(path)
-
-
-def getHexDigestForFile(fp):
-    hash = getHashObject()
-    if fp.isdir(): 
-        hash.update("directory") # directories always have the same signature
-    else:
-        myFile = fp.open()
-        bufsize = 4096 # 4 kB
-        while True:
-            buf = myFile.read(bufsize)
-            if len(buf) == 0:
-                break
-            hash.update(buf)
-        myFile.close()
-    return hash.hexdigest()
-
-
-if __name__ == "__main__":
-    unittest.main()
