@@ -60,9 +60,6 @@ class Basic(DAVFile, Resource):
             return os.sep
         else: 
             return self.fp.segmentsFrom(repository)[-1]
-        
-    def quotedResourceName(self):
-        return urllib.quote(self.resourceName())
     
     def referenced(self):
         """
@@ -201,36 +198,10 @@ class Basic(DAVFile, Resource):
         @return the child element for this resource.
         """
         return elements.Child(*[
-                         rfc2518.HRef(self.quotedResourceName()),
+                         rfc2518.HRef(urllib.quote(self.resourceName())()),
                          elements.UUID(str(self.keyUUID())),
                          self.resourceID()
                          ])
-
-    def metaDataChildren(self):
-        """
-        The children of this resource as specified in the resource metadata.
-        This may (under special circumstances) be different from the list
-        of children as specified in the findChildren routine, since the former
-        lists all children as found on the file system, while the latter lists
-        all children registered with the angel app. In the case of an incomplete
-        push update, the latter list contains children that are not present in
-        the former.
-        
-        TODO: this needs some more work... href parsing, validation etc.
-        
-        @see isWritable
-        @rtype [Basic] 
-        @return The children of this resource as specified in the resource metadata.
-        """
-        log.debug("Basic.metaDataChildren for resource: " + self.fp.path)
-        if not self.isCollection(): return []
-        
-        children = self.childLinks().children
-
-        links = [str(child.childOfType(davxml.HRef)) for child in children]
-        return [self.createSimilarFile(self.fp.path + os.sep + urllib.url2pathname(link))
-                for link in links]
-
 
     def render(self, req):
         """You know what you doing. override render method (for GET) in twisted.web2.static.py"""
