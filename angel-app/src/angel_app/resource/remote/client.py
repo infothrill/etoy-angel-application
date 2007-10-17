@@ -132,9 +132,7 @@ def storeClones(af, goodClones, unreachableClones):
     af.deadProperties().set(cloneElements)
 
 
-def inspectResource(path = repository):
-
-    af = Basic(path)
+def inspectResource(af):
 
     goodClones, dummybadClones, unreachableClones = \
         iterateClones(
@@ -143,7 +141,7 @@ def inspectResource(path = repository):
                       af.resourceID())
     
     if goodClones == []:
-        log.info("no valid clones found for " + path)
+        log.info("no valid clones found for " + af.fp.path)
         return
     
     # the valid clones should all be identical, pick any one that exists for future reference

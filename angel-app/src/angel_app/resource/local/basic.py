@@ -164,7 +164,7 @@ class Basic(DAVFile, Resource):
         @return the child element for this resource.
         """
         return elements.Child(*[
-                         rfc2518.HRef(urllib.quote(self.resourceName())()),
+                         rfc2518.HRef(urllib.quote(self.resourceName())),
                          elements.UUID(str(self.keyUUID())),
                          self.resourceID()
                          ])
