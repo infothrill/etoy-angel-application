@@ -14,7 +14,17 @@ class ContentManager(AbstractReadonlyContentManager):
         self.resource = resource
 
     def openFile(self):
-        return self.resource.fp.open()
+        try:
+            f = self.fp.open()
+        except IOError, e:
+            import errno
+            if e[0] == errno.EACCES:
+                raise HTTPError(responsecode.FORBIDDEN)
+            elif e[0] == errno.ENOENT:
+                raise HTTPError(responsecode.NOT_FOUND)
+            else:
+                raise
+        return f
     
     def contentLength(self):
         # TODO: defaults to GET request, but we're only interested in the header...

@@ -22,5 +22,6 @@ all = [
        "basic",
        "dirlist",
        "propertyManager"
+       "renderManager"
        "util",
        ]
