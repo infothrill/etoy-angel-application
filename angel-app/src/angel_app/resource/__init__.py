@@ -11,4 +11,12 @@ The angel-app defines three types of "views" on resources.
    liberal than on the external one.
 
 """
-all = ["basic", "local", "remote", "util"]
+all = [
+        "basic", 
+        "IReadOnlyContentManager", 
+        "IReadOnlyPropertyManager", 
+        "IResource", 
+        "local", 
+        "remote", 
+        "util"
+       ]

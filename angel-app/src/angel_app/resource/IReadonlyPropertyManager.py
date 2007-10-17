@@ -42,11 +42,20 @@ class IReadonlyPropertyManager(zope.interface.Interface):
     and 
     http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/528872
     for what seem like the only usable descriptions of zope.interface.
+    
+    TODO: flesh out details of error handling HERE (not in the implementing classes)
     """
     
     def get(property):
         """
         @param property: a twisted.web2.dav.davxml.WebDAVElement.qname()
         @return the corresponding WebDAVElement
+        """
+        
+    def isCollection():
+        """
+        Checks whether this resource is a collection resource / directory.
+        @return: a C{True} if this resource is a collection resource, C{False}
+            otherwise.
         """
 

@@ -18,9 +18,15 @@ class PropertyManager(object):
   
     def __init__(self, remote):
         self.remote = remote
-
         
-    def get(self, property):
+    def get(self, qname):
+        """
+        Deliberately broken, since the qname scheme enforced by twisted.web.dav.xattrprops
+        breaks down for PROPFIND requests.
+        """
+        raise NotImplementedError
+        
+    def getProperty(self, property):
         """
         Quite like getProperties, but for a single property only. In contrast to
         getProperties, it doesn't return a davxml.PropertyContainer, but an element
@@ -77,6 +83,12 @@ class PropertyManager(object):
             
         return returned
 
+
+    def isCollection(self):
+        """
+        TODO: this currently works 
+        """
+        return self.getProperty(rfc2518.ResourceType).children[0].sname() == rfc2518.Collection.sname()
     
     
     def _propertiesDocument(self, properties):
