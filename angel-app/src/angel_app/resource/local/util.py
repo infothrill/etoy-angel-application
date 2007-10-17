@@ -65,34 +65,6 @@ def getHexDigestForFile(fp):
     return hash.hexdigest()
 
 
-class StringReader:
-    """
-    Class to read from a string in similar fashion to a file object,
-    using the method read()
-    """
-    def __init__(self, value):
-        self.value = value
-        self._offset = 0
-        self._len = len(value)
-
-    def read(self, size = -1):
-        if size < 0: # read all until EOF
-            size = self._len - self._offset
-        elif size == 0:
-            return ''
-        else: # size > 0
-            dataleft = self._len - self._offset
-            if dataleft <= 0:  # read all until EOF
-                size = self._len - self._offset
-        start = self._offset
-        end = self._offset + size
-        self._offset = end
-        return self.value[start:end]
-
-    def close(self):
-        self._offset = 0
-
-
 def uuidFromPublicKeyString(publicKey):    
     return uuid.UUID( getHashObject(publicKey).hexdigest()[:32] )
 

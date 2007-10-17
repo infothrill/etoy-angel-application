@@ -2,10 +2,10 @@ from angel_app import elements
 from angel_app.config import config
 from angel_app.contrib.ezPyCrypto import key as ezKey
 from angel_app.log import getLogger
-from angel_app.resource.resource import Resource
 from angel_app.resource.local import util
 from angel_app.resource.local.dirlist import DirectoryLister
 from angel_app.resource.local.propertyManager import PropertyManager
+from angel_app.resource.resource import Resource
 from twisted.python.filepath import FilePath
 from twisted.web2 import http, stream
 from twisted.web2 import responsecode
@@ -14,6 +14,7 @@ from twisted.web2.dav.element import rfc2518
 from twisted.web2.dav.static import DAVFile
 from twisted.web2.http import HTTPError
 from zope.interface import implements
+import StringIO
 import os
 import urllib
 
@@ -53,7 +54,7 @@ class Basic(DAVFile, Resource):
         @return a stream-like object that has the read() and close() methods, to read the contents of the local resource
         """
         if self.fp.isdir():
-            return util.StringReader(REPR_DIRECTORY)
+            return StringIO.StringIO(REPR_DIRECTORY)
         else:
             return self.fp.open()
         
