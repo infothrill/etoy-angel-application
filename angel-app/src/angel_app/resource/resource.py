@@ -54,7 +54,7 @@ class Resource(object):
         """
         Return a resource property by element.
         """
-        return self.getPropertyManager().get(element.qname())
+        return self.getPropertyManager().getByElement(element)
        
     def revision(self):
         """

@@ -47,7 +47,7 @@ class IReadonlyPropertyManager(zope.interface.Interface):
     TODO: consider adding contains(property) and listProperties()
     """
     
-    def get(property):
+    def getByElement(property):
         """
         @param property: a twisted.web2.dav.davxml.WebDAVElement.qname()
         @return the corresponding WebDAVElement

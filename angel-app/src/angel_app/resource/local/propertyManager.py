@@ -103,6 +103,9 @@ class PropertyManager(xattrPropertyStore):
         """
         return resource.isCollection()
 
+    def getByElement(self, property):
+        return self.get(property.qname())
+
     def get(self, qname):
         
         assert type(qname) == type(WebDAVElement.qname())

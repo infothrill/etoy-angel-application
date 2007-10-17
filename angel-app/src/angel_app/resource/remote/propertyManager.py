@@ -21,13 +21,9 @@ class PropertyManager(object):
     def __init__(self, remote):
         self.propertyCache = {}
         self.remote = remote
-        
-    def get(self, qname):
-        """
-        Deliberately broken, since the qname scheme enforced by twisted.web.dav.xattrprops
-        breaks down for PROPFIND requests.
-        """
-        raise NotImplementedError
+    
+    def getByElement(self, property):
+        return self.getProperty(property)
         
     def getProperty(self, property):
         """

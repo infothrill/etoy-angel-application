@@ -113,20 +113,6 @@ class Clone(Resource):
     
     def __hash__(self):
         return `self`.__hash__()
-
-        
-    def getProperty(self, element):
-        """
-        Return a resource property by element. NOT by qname. This qname() business is
-        highly irritating, but unfortunately forced upon us by twisted.web2.dav.xattrprops.
-        The problem in this case is that while it's easy to map from property to property.qname(),
-        the reverse is difficult -- but for remote property queries we need the xml-representation
-        of the property....
-        
-        TODO: this is an ugly hack that overrides getProperty in resource.resource.Resource, so
-        we avoid the qname business. Consider rethinking.
-        """
-        return self.getPropertyManager().getProperty(element)
   
     def stream(self):
         response = self.remote.performRequest()
