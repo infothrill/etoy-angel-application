@@ -82,7 +82,7 @@ class Basic(DAVFile, Resource):
         else:
             return True
 
-    def removeIfUnreferenced(self):
+    def garbageCollect(self):
         """
         @rtype boolean
         @return true if the resource was deleted, false otherwise
@@ -93,37 +93,23 @@ class Basic(DAVFile, Resource):
         
         if os.path.exists(self.fp.path) and not self.exists():
             log.info(self.fp.path + " not referenced by parent, deleting")
-            self._recursiveDelete(self.fp.path)
+            self.remove()
             return True
+        else:
+            return False
+    
+    def remove(self):
+        # security check
+        if self.isRepositoryRoot():
+            raise Exception("Cowardly refusing to delete the root directory.")
+        shutil.rmtree(self.fp.path, ignore_errors = True)
         
-        # TODO: this is highly inefficient, since we do it once for every child, rather
-        # than just once for the parent.
-        pc = self.parent().deadProperties().get(elements.Children.qname()).children
-        
-        childIDs = [str(child.childOfType(elements.UUID)) for child in pc]
-        
-        if str(self.keyUUID()) not in childIDs:
-            log.info(self.fp.path + ": invalid signature")
-            log.info("did not find: " + str(self.keyUUID()) + " in " + `childIDs`)
-            self._recursiveDelete(self.fp.path)
-            return True
-        
-        return False
     
     def verify(self):
         """
         DEPRECATED.
         """
         return self.validate()
-    
-    def garbageCollect(self):
-        
-        self.removeIfUnreferenced()
-        
-        if not self.verify():
-            # empty the contents of the file, but retain the file itself for the metadata
-            log.info("garbage-collecting resource: " + self.fp.path)
-            open(self.fp.path, "w").close() # TODO: non-atomic
     
     def familyPlanning(self):
         """
