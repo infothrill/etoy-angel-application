@@ -137,6 +137,9 @@ class Resource(object):
             referenced by the parent collection.
         """   
         raise NotImplementedError
+    
+    def findChildren(self):
+        raise NotImplementedError
 
     def clones(self):
         """

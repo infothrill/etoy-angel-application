@@ -92,7 +92,7 @@ class CloneTest(unittest.TestCase):
         
         # look at the root, this is most often trivial.
         try:
-            client.inspectResource()
+            client.inspectResource(self.testResource)
         except StopIteration, e:
             pass
         assert self.testResource.verify()
@@ -107,7 +107,7 @@ class CloneTest(unittest.TestCase):
         assert me.ping(), "missioneternity.org must be reachable for this test."
         
         try:
-            client.inspectResource(path)
+            client.inspectResource(af)
             assert af.verify(), "resource does not verify after inspection."
         except StopIteration, e:
             pass
