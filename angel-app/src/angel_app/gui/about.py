@@ -3,7 +3,7 @@ import os
 import wx
 import wx.html
 
-import angel_app.wx.compat.wrap as platformwrap
+import angel_app.gui.compat.wrap as platformwrap
 from angel_app.version import getVersionString
 from angel_app.version import getBuildString
 from angel_app.version import getPythonVersionString

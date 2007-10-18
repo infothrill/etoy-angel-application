@@ -6,7 +6,7 @@ import os
 import wx
 
 import angel_app.proc.subprocessthread as masterthread
-import angel_app.wx.compat.wrap as platformwrap
+import angel_app.gui.compat.wrap as platformwrap
 from angel_app.config import config
 
 AngelConfig = config.getConfig()
@@ -126,7 +126,7 @@ class AngelMainFrame(wx.Frame):
         self.Bind(wx.EVT_CLOSE, self.OnQuit)
 
     def on_log_console(self, eventt):
-        from angel_app.wx.log import LogFrame
+        from angel_app.gui.log import LogFrame
         self.logwin = LogFrame()
         self.logwin.Show(True)
         self.frames.append(self.logwin)
@@ -356,7 +356,7 @@ class AngelMainFrame(wx.Frame):
         """
         Shows the about window
         """
-        from angel_app.wx.about import AboutWindow 
+        from angel_app.gui.about import AboutWindow 
         aboutWindow = AboutWindow(self, -1, _("About"), style=wx.DEFAULT_DIALOG_STYLE)
         aboutWindow.CentreOnScreen()
         aboutWindow.Show(True)
@@ -365,7 +365,7 @@ class AngelMainFrame(wx.Frame):
         """
         Shows the license in a scroll box
         """
-        from angel_app.wx.about import LicenseWindow 
+        from angel_app.gui.about import LicenseWindow 
         licenseWindow = LicenseWindow(self, -1, _("Licence"), size=(500, 400), style=wx.DEFAULT_FRAME_STYLE)
         licenseWindow.CenterOnScreen()
         licenseWindow.Show(True)

@@ -18,16 +18,16 @@ def isWindows():
 """ Do all sorts of imports, so the methods are properly wrapped"""
 
 # common code for all platforms:
-from angel_app.wx.compat.common import getResourcePath
+from angel_app.gui.compat.common import getResourcePath
 
 # platform specific code:
 if isMacOSX():
-    from angel_app.wx.compat.macosx import showRepositoryInFilemanager
-    from angel_app.wx.compat.macosx import showURLInBrowser
+    from angel_app.gui.compat.macosx import showRepositoryInFilemanager
+    from angel_app.gui.compat.macosx import showURLInBrowser
 elif isWindows():
-    from angel_app.wx.compat.win32 import showRepositoryInFilemanager
-    from angel_app.wx.compat.win32 import showURLInBrowser
+    from angel_app.gui.compat.win32 import showRepositoryInFilemanager
+    from angel_app.gui.compat.win32 import showURLInBrowser
 else: # assuming unix/linux
-    from angel_app.wx.compat.unix import showRepositoryInFilemanager
-    from angel_app.wx.compat.unix import showURLInBrowser
+    from angel_app.gui.compat.unix import showRepositoryInFilemanager
+    from angel_app.gui.compat.unix import showURLInBrowser
 

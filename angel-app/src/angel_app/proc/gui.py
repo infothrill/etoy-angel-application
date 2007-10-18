@@ -35,8 +35,8 @@ def boot():
     return True
 
 def dance(options):
-    import angel_app.wx.main
-    app = angel_app.wx.main.AngelApp(0)
+    import angel_app.gui.main
+    app = angel_app.gui.main.AngelApp(0)
     app.MainLoop()
 
 
