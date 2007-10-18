@@ -37,7 +37,8 @@ import zope.interface.verify
 
 class ResourceTest(unittest.TestCase):
     
-    testResource = Resource()
+    def setUp(self):
+        self.testResource = Resource()
 
     def testInterfaceCompliance(self):
         """

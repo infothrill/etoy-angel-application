@@ -58,35 +58,24 @@ class ResourceTest(localResourceTest.BasicResourceTest):
                       host = "localhost", 
                       port = AngelConfig.getint("presenter","listenPort"),
                       path = "/TEST")
-    
 
     def setUp(self):
         try:
             os.mkdir(self.testDirPath)
         except OSError, e:
-            # test resource already exists
-            pass
-        self.dirResource = Crypto(self.testDirPath) 
-        self.dirResource._registerWithParent()  
-        self.dirResource._updateMetadata()
-        
-    def tearDown(self):
-        self.dirResource._deRegisterWithParent()
-        try:
-            os.rmdir(self.testDirPath)
-        except:
-            pass
+            print `e`
+
+        cc = Crypto(self.testDirPath) 
+        cc._registerWithParent()
+        cc._updateMetadata()
+        self.testResource = cc
     
     def testSigning(self):
         """
         this test assumes that the following resources that i set up by hand still exist in the
         local repository.
-        """    
-        
-        dirResource = Crypto(self.testDirPath)        
-        assert dirResource.exists(), "Test directory does not exist." 
-        assert dirResource.verify(), "Test directory is not valid."
-        assert dirResource.contentSignature() == dirResource.sign()
+        """
+        assert self.testResource.contentSignature() == self.testResource.sign()
         
     def testDenyRemoteResourceModification(self):
         """

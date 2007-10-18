@@ -55,12 +55,12 @@ class BasicResourceTest(resourceTest.ResourceTest):
         except OSError, e:
             print `e`
 
-        self.resource = Crypto(self.testDirPath) 
-        self.resource._registerWithParent()
-        self.resource._updateMetadata()
+        self.testResource = Crypto(self.testDirPath) 
+        self.testResource._registerWithParent()
+        self.testResource._updateMetadata()
         
     def tearDown(self):
-        self.resource._deRegisterWithParent()
+        self.testResource._deRegisterWithParent()
         try:
             os.rmdir(self.testDirPath)
         except OSError, e:
@@ -72,17 +72,17 @@ class BasicResourceTest(resourceTest.ResourceTest):
         """
         @return: a C{True} if this resource is accessible, C{False} otherwise.
         """
-        assert self.resource.exists()
+        assert self.testResource.exists()
     
     def testLocation(self):
         """
         @return the resource's path relative to the site root.
         """
-        assert self.resource.relativePath() == "/TEST/"
+        assert self.testResource.relativePath() == "/TEST/"
         
     def testOpen(self):
         from angel_app.resource.abstractContentManager import REPR_DIRECTORY
-        assert REPR_DIRECTORY == self.resource.open().read()
+        assert REPR_DIRECTORY == self.testResource.open().read()
     
     def testIsCollection(self):
         """
@@ -90,19 +90,19 @@ class BasicResourceTest(resourceTest.ResourceTest):
         @return: a C{True} if this resource is a collection resource, C{False}
             otherwise.
         """
-        assert self.resource.isCollection()
+        assert self.testResource.isCollection()
 
     def testResourceID(self):
         """
         @return: the id of the resource as C{String}.
         """
-        assert type(self.resource.resourceID().toxml()) == type("")
+        assert type(self.testResource.resourceID().toxml()) == type("")
         
     def testRevision(self):
         """
         @return: a C{int} corresponding to the revision number of this resource
         """
-        revisionNumber = self.resource.revision()
+        revisionNumber = self.testResource.revision()
         assert type(revisionNumber) == type(0)
         assert revisionNumber >= 0
 
@@ -111,16 +111,16 @@ class BasicResourceTest(resourceTest.ResourceTest):
         Make sure the stored public key is a valid ezPyCrypto key.
         """
         from angel_app.contrib.ezPyCrypto import key
-        publicKeyString = self.resource.publicKeyString()
+        publicKeyString = self.testResource.publicKeyString()
         k = key()
         k.importKey(publicKeyString)
         
     def testPath(self):
         "The test resource is a directory, hence the relative URL"
         import urllib
-        url = self.resource.relativeURL()
-        path = self.resource.relativePath()
-        if self.resource.isCollection():
+        url = self.testResource.relativeURL()
+        path = self.testResource.relativePath()
+        if self.testResource.isCollection():
             assert url[-1] == "/"
             assert path[-1] == os.sep
         assert urllib.url2pathname(url) == path
@@ -129,21 +129,21 @@ class BasicResourceTest(resourceTest.ResourceTest):
         """
         @return: an iterable over C{uri}.
         """
-        assert self.resource.childLinks().qname() == Children.qname()
+        assert self.testResource.childLinks().qname() == Children.qname()
     
     def testStream(self):
         """
         @return: an object that minimally supports the read() method, which in turn returns the stream contents as a string.
         """
-        assert self.resource.open().read() == REPR_DIRECTORY
+        assert self.testResource.open().read() == REPR_DIRECTORY
         
         
     def testClones(self):
         """
         Since the dirResource was freshly created, it's clones must all be inherited from the parent.
         """
-        clones = self.resource.clones()
-        parentClones = self.resource.parent().clones()
+        clones = self.testResource.clones()
+        parentClones = self.testResource.parent().clones()
         assert len(clones) == len(parentClones)
         
     def testDefaultProperties(self):
@@ -152,7 +152,7 @@ class BasicResourceTest(resourceTest.ResourceTest):
         are of the same type as the element requested.
         """
         from angel_app.resource.local.propertyManager import defaultMetaData
-        dp = self.resource.deadProperties()
+        dp = self.testResource.deadProperties()
         for element in defaultMetaData.keys():
             dme = defaultMetaData[element]
             assert element == dme(dp).qname()
@@ -163,9 +163,9 @@ class BasicResourceTest(resourceTest.ResourceTest):
         Set a property, read it back out and compare it with the original.
         """
         testProperty = rfc2518.Collection()
-        self.resource.deadProperties().set(testProperty)
-        assert testProperty.qname() in self.resource.deadProperties().list()
-        outProperty = self.resource.deadProperties().get(testProperty.qname())
+        self.testResource.deadProperties().set(testProperty)
+        assert testProperty.qname() in self.testResource.deadProperties().list()
+        outProperty = self.testResource.deadProperties().get(testProperty.qname())
         assert testProperty.toxml() == outProperty.toxml()
         
     def testInterfaceCompliance(self):
