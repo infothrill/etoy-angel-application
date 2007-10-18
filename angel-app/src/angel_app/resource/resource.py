@@ -138,7 +138,7 @@ class Resource(object):
         """   
         raise NotImplementedError
     
-    def findChildren(self):
+    def children(self):
         raise NotImplementedError
 
     def clones(self):

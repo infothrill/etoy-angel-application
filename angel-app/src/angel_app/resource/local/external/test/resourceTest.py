@@ -30,19 +30,10 @@ legalMatters = """
 
 author = """Vincent Kraeutler 2007"""
 
-from angel_app.resource.IResource import IAngelResource
-from angel_app.resource.resource import Resource
-import unittest
-import zope.interface.verify
 
-class ResourceTest(unittest.TestCase):
-    
-    testResource = Resource()
+from angel_app.resource.local.test import localResourceTest
 
-    def testInterfaceCompliance(self):
-        """
-        Verify interface compliance.
-        """
-        assert IAngelResource.implementedBy(self.testResource.__class__)
-        assert zope.interface.verify.verifyClass(IAngelResource, self.testResource.__class__)      
+
+class CryptoResourceTest(localResourceTest.BasicResourceTest):
     
+    pass

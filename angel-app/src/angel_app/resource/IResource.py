@@ -66,7 +66,7 @@ class IAngelResource(zope.interface.Interface):
         @return: a C{int} corresponding to the revision number of this resource
         """
 
-    def findChildren():
+    def children():
         """
         @return: an iterable over C{uri}.
         """

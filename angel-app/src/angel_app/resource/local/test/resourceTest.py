@@ -41,11 +41,11 @@ import os
 import unittest
 import zope.interface.verify
 
-
+from angel_app.resource.test import resourceTest 
 AngelConfig = config.getConfig()
 repositoryPath = AngelConfig.get("common","repository")
 
-class BasicResourceTest(unittest.TestCase):
+class BasicResourceTest(resourceTest.ResourceTest):
     
     testDirPath = os.path.sep.join([repositoryPath, "TEST"])
 
@@ -55,12 +55,12 @@ class BasicResourceTest(unittest.TestCase):
         except OSError, e:
             print `e`
 
-        self.dirResource = Crypto(self.testDirPath) 
-        self.dirResource._registerWithParent()
-        self.dirResource._updateMetadata()
+        self.resource = Crypto(self.testDirPath) 
+        self.resource._registerWithParent()
+        self.resource._updateMetadata()
         
     def tearDown(self):
-        self.dirResource._deRegisterWithParent()
+        self.resource._deRegisterWithParent()
         try:
             os.rmdir(self.testDirPath)
         except OSError, e:
@@ -72,13 +72,17 @@ class BasicResourceTest(unittest.TestCase):
         """
         @return: a C{True} if this resource is accessible, C{False} otherwise.
         """
-        assert self.dirResource.exists()
+        assert self.resource.exists()
     
     def testLocation(self):
         """
         @return the resource's path relative to the site root.
         """
-        assert self.dirResource.relativePath() == "/TEST/"
+        assert self.resource.relativePath() == "/TEST/"
+        
+    def testOpen(self):
+        from angel_app.resource.abstractContentManager import REPR_DIRECTORY
+        assert REPR_DIRECTORY == self.resource.open().read()
     
     def testIsCollection(self):
         """
@@ -86,19 +90,19 @@ class BasicResourceTest(unittest.TestCase):
         @return: a C{True} if this resource is a collection resource, C{False}
             otherwise.
         """
-        assert self.dirResource.isCollection()
+        assert self.resource.isCollection()
 
     def testResourceID(self):
         """
         @return: the id of the resource as C{String}.
         """
-        assert type(self.dirResource.resourceID().toxml()) == type("")
+        assert type(self.resource.resourceID().toxml()) == type("")
         
     def testRevision(self):
         """
         @return: a C{int} corresponding to the revision number of this resource
         """
-        revisionNumber = self.dirResource.revision()
+        revisionNumber = self.resource.revision()
         assert type(revisionNumber) == type(0)
         assert revisionNumber >= 0
 
@@ -107,16 +111,16 @@ class BasicResourceTest(unittest.TestCase):
         Make sure the stored public key is a valid ezPyCrypto key.
         """
         from angel_app.contrib.ezPyCrypto import key
-        publicKeyString = self.dirResource.publicKeyString()
+        publicKeyString = self.resource.publicKeyString()
         k = key()
         k.importKey(publicKeyString)
         
     def testPath(self):
         "The test resource is a directory, hence the relative URL"
         import urllib
-        url = self.dirResource.relativeURL()
-        path = self.dirResource.relativePath()
-        if self.dirResource.isCollection():
+        url = self.resource.relativeURL()
+        path = self.resource.relativePath()
+        if self.resource.isCollection():
             assert url[-1] == "/"
             assert path[-1] == os.sep
         assert urllib.url2pathname(url) == path
@@ -125,21 +129,21 @@ class BasicResourceTest(unittest.TestCase):
         """
         @return: an iterable over C{uri}.
         """
-        assert self.dirResource.childLinks().qname() == Children.qname()
+        assert self.resource.childLinks().qname() == Children.qname()
     
     def testStream(self):
         """
         @return: an object that minimally supports the read() method, which in turn returns the stream contents as a string.
         """
-        assert self.dirResource.open().read() == REPR_DIRECTORY
+        assert self.resource.open().read() == REPR_DIRECTORY
         
         
     def testClones(self):
         """
         Since the dirResource was freshly created, it's clones must all be inherited from the parent.
         """
-        clones = self.dirResource.clones()
-        parentClones = self.dirResource.parent().clones()
+        clones = self.resource.clones()
+        parentClones = self.resource.parent().clones()
         assert len(clones) == len(parentClones)
         
     def testDefaultProperties(self):
@@ -148,7 +152,7 @@ class BasicResourceTest(unittest.TestCase):
         are of the same type as the element requested.
         """
         from angel_app.resource.local.propertyManager import defaultMetaData
-        dp = self.dirResource.deadProperties()
+        dp = self.resource.deadProperties()
         for element in defaultMetaData.keys():
             dme = defaultMetaData[element]
             assert element == dme(dp).qname()
@@ -159,9 +163,9 @@ class BasicResourceTest(unittest.TestCase):
         Set a property, read it back out and compare it with the original.
         """
         testProperty = rfc2518.Collection()
-        self.dirResource.deadProperties().set(testProperty)
-        assert testProperty.qname() in self.dirResource.deadProperties().list()
-        outProperty = self.dirResource.deadProperties().get(testProperty.qname())
+        self.resource.deadProperties().set(testProperty)
+        assert testProperty.qname() in self.resource.deadProperties().list()
+        outProperty = self.resource.deadProperties().get(testProperty.qname())
         assert testProperty.toxml() == outProperty.toxml()
         
     def testInterfaceCompliance(self):
@@ -169,13 +173,4 @@ class BasicResourceTest(unittest.TestCase):
         Verify interface compliance.
         """
         assert IAngelResource.implementedBy(Basic)
-        assert zope.interface.verify.verifyClass(IAngelResource, Basic)
-        
-    def testInterfaceCompliance(self):
-        """
-        Verify interface compliance.
-        """
-        from angel_app.resource.IReadonlyPropertyManager import IReadonlyPropertyManager
-        from angel_app.resource.local.propertyManager import PropertyManager
-        assert IReadonlyPropertyManager.implementedBy(PropertyManager)
-        assert zope.interface.verify.verifyClass(IReadonlyPropertyManager, PropertyManager)  
+        assert zope.interface.verify.verifyClass(IAngelResource, Basic) 

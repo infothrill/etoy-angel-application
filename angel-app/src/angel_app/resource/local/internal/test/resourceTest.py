@@ -30,25 +30,25 @@ legalMatters = """
 
 author = """Vincent Kraeutler 2007"""
 
-from angel_app.resource.local.basic import Basic as EResource
-from angel_app.resource.local.internal.resource import Crypto as IResource
-
-import unittest
-from angel_app.resource.local.internal.resource import Crypto
-import angel_app.resource.local.basic as bb
-from angel_app.resource.remote.clone import Clone
-
 from angel_app.config import config
-AngelConfig = config.getConfig()
-repositoryPath = AngelConfig.get("common","repository")
-from twisted.web2 import responsecode
-
 from angel_app.log import getLogger
-log = getLogger(__name__)
-
+from angel_app.resource.local.basic import Basic as EResource
+from angel_app.resource.local.internal.resource import Crypto
+from angel_app.resource.local.internal.resource import Crypto as IResource
+from angel_app.resource.local.test import localResourceTest
+from angel_app.resource.remote.clone import Clone
+from twisted.web2 import responsecode
+import angel_app.resource.local.basic as bb
 import os 
 
-class ResourceTest(unittest.TestCase):
+
+AngelConfig = config.getConfig()
+repositoryPath = AngelConfig.get("common","repository")
+
+log = getLogger(__name__)
+
+
+class ResourceTest(localResourceTest.BasicResourceTest):
     """
     Requires a running local instance of the presenter.
     """
