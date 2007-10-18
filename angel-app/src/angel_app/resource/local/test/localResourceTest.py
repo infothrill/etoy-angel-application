@@ -177,5 +177,5 @@ class BasicResourceTest(resourceTest.ResourceTest):
         """
         Verify interface compliance.
         """
-        assert IAngelResource.implementedBy(Basic)
-        assert zope.interface.verify.verifyClass(IAngelResource, Basic) 
+        assert IAngelResource.implementedBy(self.testResource.__class__)
+        assert zope.interface.verify.verifyClass(IAngelResource, self.testResource.__class__) 
