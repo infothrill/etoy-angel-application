@@ -163,7 +163,6 @@ class Crypto(
             error += `e`
             # we don't even have a private key
             log.info(error)
-            print error
             return False
 
         

@@ -41,18 +41,18 @@ from angel_app.resource.remote.clone import Clone
 import os
 import unittest
 import zope.interface.verify
-
+from angel_app.resource.test import resourceTest
 
 AngelConfig = config.getConfig()
 repositoryPath = AngelConfig.get("common","repository")
 
-class CloneTest(unittest.TestCase):
+class CloneTest(resourceTest.ResourceTest):
     
 
     def setUp(self):
-        self.testClone = clone.Clone("localhost")
-        assert self.testClone.ping(), "make sure you have a local instance of the provider running."
-        self.testResource = basic.Basic(repositoryPath)
+        self.testResource = clone.Clone("localhost")
+        assert self.testResource.ping(), "make sure you have a local instance of the provider running."
+        self.localTestResource = basic.Basic(repositoryPath)
 
     def testPing(self):
         import socket
@@ -69,7 +69,7 @@ class CloneTest(unittest.TestCase):
         
     def testIsCollection(self):
         
-        assert self.testClone.isCollection() == True
+        assert self.testResource.isCollection() == True
         
  
  
@@ -77,12 +77,14 @@ class CloneTest(unittest.TestCase):
         """
         Assert proper cache management.
         """
-        assert self.testClone.getPropertyManager().propertyCache == {}, "At the beginning, the cache must be empty."
-        self.testClone.resourceID()
-        assert elements.ResourceID.qname() in self.testClone.getPropertyManager().propertyCache, "After a request, the cache must be non-empty."
+        assert self.testResource.getPropertyManager().propertyCache == {}, "At the beginning, the cache must be empty."
+        self.testResource.resourceID()
+        contained = elements.ResourceID.qname() in self.testResource.getPropertyManager().propertyCache
+        assert contained, "After a request, the cache must be non-empty."
         
-        for ee in self.testClone.getPropertyManager().cachedProperties:
-            assert ee.qname() in self.testClone.getPropertyManager().propertyCache.keys(), "Property %s must now be in the cache." % `ee`
+        for ee in self.testResource.getPropertyManager().cachedProperties:
+            contained = ee.qname() in self.testResource.getPropertyManager().propertyCache.keys()
+            assert contained, "Property %s must now be in the cache." % `ee`
   
         
     def testInspectResource(self):
@@ -92,10 +94,10 @@ class CloneTest(unittest.TestCase):
         
         # look at the root, this is most often trivial.
         try:
-            client.inspectResource(self.testResource)
+            client.inspectResource(self.localTestResource)
         except StopIteration, e:
             pass
-        assert self.testResource.verify()
+        assert self.localTestResource.verify()
         
         # look at MISSION ETERNITY
         path = os.sep.join([repositoryPath, "MISSION ETERNITY"])
@@ -114,21 +116,19 @@ class CloneTest(unittest.TestCase):
         assert True
         
     def testRevision(self):
-        revision = self.testClone.revision()
+        revision = self.testResource.revision()
         assert type(revision) == type(0)
         assert revision >= 0
         
+    def testOpen(self):
+        from angel_app.resource.abstractContentManager import REPR_DIRECTORY
+        assert REPR_DIRECTORY == self.testResource.open().read()
+
+        
     def testSignature(self):
-        signature = self.testClone.metaDataSignature()
+        signature = self.testResource.metaDataSignature()
         from angel_app.contrib.ezPyCrypto import key
         k = key()
-        k.importKey(self.testResource.publicKeyString())
-        assert k.verifyString(self.testResource.signableMetadata(), signature), "metadata signature validation failed"
-
-    def testInterfaceCompliance(self):
-        """
-        Verify interface compliance.
-        """
-        assert IAngelResource.implementedBy(Clone)
-        assert zope.interface.verify.verifyClass(IAngelResource, Clone)      
+        k.importKey(self.localTestResource.publicKeyString())
+        assert k.verifyString(self.localTestResource.signableMetadata(), signature), "metadata signature validation failed"  
     
