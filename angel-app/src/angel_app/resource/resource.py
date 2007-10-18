@@ -84,10 +84,10 @@ class Resource(object):
     def _dataIsCorrect(self):
         cs = self.contentSignature()
         if cs == self._computeContentHexDigest():
-            log.debug("data signature for file '%s' is correct: %s" % (self.fp.path, cs))
+            log.debug("data signature for resource '%s' is correct: %s" % (self.resourceID(), cs))
             return True
         else:
-            log.info("data signature for file '%s' is incorrect: %s" % (self.fp.path, cs))
+            log.info("data signature for resource '%s' is incorrect: %s" % (self.resourceID(), cs))
             return False
 
     def _metaDataIsCorrect(self):
@@ -177,7 +177,7 @@ class Resource(object):
         @return a SHA checksum of the resource's signature. We only take the first 16 bytes to be convertible
         to a UUID>
         """
-        return util.uuidFromPublicKeyString(self.get(elements.MetaDataSignature))
+        return util.uuidFromPublicKeyString(self.getProperty(elements.MetaDataSignature))
 
     def signableMetadata(self):
         """
@@ -185,7 +185,7 @@ class Resource(object):
         be signed.
         """
         try:
-            sm = "".join([self.deadProperties().get(key.qname()).toxml() for key in elements.signedKeys])
+            sm = "".join([self.getProperty(key).toxml() for key in elements.signedKeys])
             return sm
         except Exception, e:
             raise

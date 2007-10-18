@@ -71,7 +71,9 @@ class CloneTest(resourceTest.ResourceTest):
         
         assert self.testResource.isCollection() == True
         
- 
+    def testValiation(self):
+        self.testResource.validate()
+
  
     def testCache(self):
         """
