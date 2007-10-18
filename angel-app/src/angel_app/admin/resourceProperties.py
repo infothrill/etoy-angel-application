@@ -111,5 +111,5 @@ def setMountPoint(mountPoint, URLToMount):
     dp.set(clonesToElement([cc]))
           
     from angel_app.resource.remote.client import inspectResource
-    inspectResource(pp)
+    inspectResource(rr)
     
