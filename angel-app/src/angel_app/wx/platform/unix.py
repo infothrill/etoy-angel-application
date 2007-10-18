@@ -13,7 +13,7 @@ import wx
 
 # TODO: review command line args (whitespaces ,special chars)
 
-import os, sys
+import os
 
 def _which (filename):
     """
