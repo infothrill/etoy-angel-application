@@ -91,17 +91,19 @@ def setMountPoint(mountPoint, URLToMount):
     # initialize all required properties -- rubbish is ok for many of them,
     # as long as we clearly state that ${URLToMount} is the original:  
     dp = rr.deadProperties()
-    dp.set(elements.PublicKeyString(
+    dp.set(elements.PublicKeyString.fromString(
                                  cc.publicKeyString()))
     
-    dp.set(elements.MetaDataSignature(
+    dp.set(elements.MetaDataSignature.fromString(
                                  cc.metaDataSignature()))
     
     dp.set(elements.ContentSignature.fromString(
                                                 rr._computeContentHexDigest() ))
+
     
-    dp.set(elements.ResourceID(
-                               cc.resourceID()))
+    rid = cc.resourceID()
+    lid = elements.ResourceID.fromString(rid)
+    dp.set(lid)
     
     rr._registerWithParent()
    
