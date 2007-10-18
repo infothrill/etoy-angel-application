@@ -66,7 +66,7 @@ class Clone(Resource):
     def updateRemote(self, remote):
         self.remote = remote
         self.propertyManager = PropertyManager(remote)
-        self.contentManager = ContentManager(remote)
+        self.contentManager = ContentManager(self)
      
     def validatePath(self):
         from urllib import url2pathname, pathname2url

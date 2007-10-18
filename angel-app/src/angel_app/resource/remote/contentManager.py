@@ -10,18 +10,18 @@ class ContentManager(AbstractReadonlyContentManager):
 
     implements(IReadonlyContentManager)
     
-    def __init__(self, remote):
-        self.remote = remote
+    def __init__(self, resource):
+        self.resource = resource
 
     def openFile(self):
-        response = self.remote.performRequest()
+        response = self.resource.performRequest()
         if response.status != responsecode.OK:
             raise "must receive an OK response for GET, otherwise something's wrong"
         return response.stream
     
     def contentLength(self):
         # TODO: defaults to GET request, but we're only interested in the header...
-        rr = self.remote.performRequest() 
+        rr = self.resource.performRequest() 
         clh = rr.getheader("content-length")
         cl = int(clh)
         return cl

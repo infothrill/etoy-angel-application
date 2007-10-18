@@ -15,7 +15,7 @@ class ContentManager(AbstractReadonlyContentManager):
 
     def openFile(self):
         try:
-            f = self.fp.open()
+            f = self.resource.fp.open()
         except IOError, e:
             import errno
             if e[0] == errno.EACCES:

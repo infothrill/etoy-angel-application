@@ -1,1 +1,5 @@
-all = ["cloneTest", "propertyManagerTest"]
+all = [
+        "cloneTest", 
+        "contentManagerTest", 
+        "propertyManagerTest"
+        ]
