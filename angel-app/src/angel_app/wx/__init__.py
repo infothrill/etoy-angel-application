@@ -2,5 +2,5 @@ all = [
        "about",
        "log",
        "main",
-       "platform"
+       "compat"
        ]

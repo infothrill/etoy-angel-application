@@ -6,8 +6,9 @@ import os
 import wx
 
 import angel_app.proc.subprocessthread as masterthread
-import angel_app.wx.platform.wrap as platformwrap
+import angel_app.wx.compat.wrap as platformwrap
 from angel_app.config import config
+
 AngelConfig = config.getConfig()
 
 from angel_app.log import getLogger
@@ -15,13 +16,11 @@ log = getLogger(__name__)
 
 _ = wx.GetTranslation
 
-M221E_LOGO_SMALL = os.path.join(platformwrap.getResourcePath(), "images", "m221elogosmall.jpg")
-LICENSE_TEXTFILE = os.path.join(platformwrap.getResourcePath(), "files", "GPL.txt")
-M221E_WELCOME_SCREEN = os.path.join(platformwrap.getResourcePath(), "images", "angel_app_welcomescreen.jpg")
-BUGREPORT_URL = "https://gna.org/support/?func=additem&group=angel-app" # use "support", because "bugs" requires a gna account
-TECHNICALREPORT_URL = "http://svn.gna.org/viewcvs/*checkout*/angel-app/trunk/angel-app/doc/report/m221e-angel-app-0.2.pdf" # TODO: this URL needs to have NO version in it!!!
-
 class AngelMainFrame(wx.Frame):
+
+    BUGREPORT_URL = "https://gna.org/support/?func=additem&group=angel-app" # use "support", because "bugs" requires a gna account
+    TECHNICALREPORT_URL = "http://svn.gna.org/viewcvs/*checkout*/angel-app/trunk/angel-app/doc/report/m221e-angel-app-0.2.pdf" # TODO: this URL needs to have NO version in it!!!
+
     def __init__(self, parent, ID, title):
         """
         The constructor, initializes the menus, the mainframe with the logo and the statusbar.
@@ -91,10 +90,10 @@ class AngelMainFrame(wx.Frame):
         self.help_menu.Append(ID_HELP_M221E, "M&ISSION ETERNITY (Website)", "http://www.missioneternity.org")
         self.Bind(wx.EVT_MENU, self.on_help_m221e, id=ID_HELP_M221E)
         ID_HELP_TECHNICALREPORT = wx.NewId()
-        self.help_menu.Append(ID_HELP_TECHNICALREPORT, "Technical Report on ANGEL APPLICATION (Online PDF)", TECHNICALREPORT_URL)
+        self.help_menu.Append(ID_HELP_TECHNICALREPORT, "Technical Report on ANGEL APPLICATION (Online PDF)", self.TECHNICALREPORT_URL)
         self.Bind(wx.EVT_MENU, self.on_help_technicalreport, id=ID_HELP_TECHNICALREPORT)
         ID_HELP_BUGREPORT = wx.NewId()
-        self.help_menu.Append(ID_HELP_BUGREPORT, "Send a b&ug report (Website)", BUGREPORT_URL)
+        self.help_menu.Append(ID_HELP_BUGREPORT, "Send a b&ug report (Website)", self.BUGREPORT_URL)
         self.Bind(wx.EVT_MENU, self.on_help_bugreport, id=ID_HELP_BUGREPORT)
         
         ID_HELP_LICENSE = wx.NewId()
@@ -111,6 +110,7 @@ class AngelMainFrame(wx.Frame):
         # end define the menus
 
         self.SetBackgroundColour(wx.WHITE)
+        M221E_WELCOME_SCREEN = os.path.join(platformwrap.getResourcePath(), "images", "angel_app_welcomescreen.jpg")
         self.bitmap = wx.Bitmap(M221E_WELCOME_SCREEN)
         wx.EVT_PAINT(self, self.OnPaint)
 
@@ -143,8 +143,9 @@ class AngelMainFrame(wx.Frame):
         """
         Handler for wx.EVT_CLOSE event
         """
-        self.daemon.stop()
+        #self.daemon.stop()
         self.Destroy()
+        self.doExit(event)
 
     def doExit(self, event):
         """
@@ -160,8 +161,8 @@ class AngelMainFrame(wx.Frame):
         self.Close(True)
 
     def askIFPurgeRepository(self):
-        questiontext = 'By purging your repository, you delete all locally stored data. Are you sure you want to purge the repository?' 
-        dlg = wx.MessageDialog(self, questiontext, 'Warning',
+        questiontext = _('By purging your repository, you delete all locally stored data. Are you sure you want to purge the repository?') 
+        dlg = wx.MessageDialog(self, questiontext, _('Warning'),
                                wx.ICON_QUESTION | wx.YES_NO | wx.NO_DEFAULT
                                )
         res = dlg.ShowModal()
@@ -178,8 +179,8 @@ class AngelMainFrame(wx.Frame):
         # remember the current state of the p2p proc:
         was_alive = self.daemon.isAlive()
         max = 3
-        dlg = wx.ProgressDialog("Purging",
-                               "Please wait while the repository is purged",
+        dlg = wx.ProgressDialog(_("Purging"),
+                               _("Please wait while the repository is purged"),
                                maximum = max,
                                parent=self,
                                style = wx.PD_APP_MODAL)
@@ -201,8 +202,8 @@ class AngelMainFrame(wx.Frame):
             dlg.Destroy()
             
         if not success:
-            dlg = wx.MessageDialog(self, 'Error',
-                                   'The repository could not be purged!',
+            dlg = wx.MessageDialog(self, _('Error'),
+                                   _('The repository could not be purged!'),
                                    wx.OK | wx.ICON_ERROR
                                    #wx.YES_NO | wx.NO_DEFAULT | wx.CANCEL | wx.ICON_INFORMATION
                                    )
@@ -241,7 +242,7 @@ class AngelMainFrame(wx.Frame):
             # TODO: error checking on export!
             #
         elif keyselectionresult == wx.ID_CANCEL:
-            self.sb.SetStatusText("personal ANGEL KEY export canceled", 0)
+            self.sb.SetStatusText(_("personal ANGEL KEY export canceled"), 0)
    
         # Destroy the dialog. Don't do this until you are done with it!
         # BAD things can happen otherwise!
@@ -257,7 +258,7 @@ class AngelMainFrame(wx.Frame):
         # Create the dialog. In this case the current directory is forced as the starting
         # directory for the dialog, and no default file name is forced.
         dlg = wx.FileDialog(
-            self, message="Import crypto key ...", defaultDir=os.getcwd(), 
+            self, message= _("Import crypto key ..."), defaultDir=os.getcwd(), 
             defaultFile="", wildcard=wildcard, style=wx.OPEN
             )
 
@@ -271,10 +272,10 @@ class AngelMainFrame(wx.Frame):
         if keyselectionresult == wx.ID_OK:
             path = dlg.GetPath()
             #self.log.WriteText('You selected "%s"' % path)
-            print 'You selected "%s"' % path
+            log.debug('User selected "%s" for key import' % path)
             keynamedlg = wx.TextEntryDialog(
-                    self, 'Please enter a name for the key (preferably something that associates the key with its usage):',
-                    'Enter key name', '')
+                    self, _('Please enter a name for the key (preferably something that associates the key with its usage):'),
+                    _('Enter key name'), '')
             keynamedlg.CenterOnParent()
             #default keyname:
             keyname = os.path.basename(path)
@@ -288,7 +289,7 @@ class AngelMainFrame(wx.Frame):
                 #print "HIT CANCEL"
                 keynamedlg.Destroy()
                 dlg.Destroy()
-                self.sb.SetStatusText("Crypto key import canceled", 0)
+                self.sb.SetStatusText(_("Crypto key import canceled"), 0)
                 return False
                 #self.log.WriteText('You entered: %s\n' % keynamedlg.GetValue())    
 
@@ -300,15 +301,15 @@ class AngelMainFrame(wx.Frame):
                 f.close()
             except NameError, err:
                 self.showErrorDialog(self, str(err))
-                self.sb.SetStatusText("Crypto key import failed", 0)
+                self.sb.SetStatusText(_("Crypto key import failed"), 0)
             if result == True:
-                self.sb.SetStatusText("Crypto key successfully imported", 0)
+                self.sb.SetStatusText(_("Crypto key successfully imported"), 0)
                 # restart the p2p process (makes sure the key is now known)
                 if self.daemon.isAlive():
                     self.daemon.stop()
                     self.daemon.run()
         elif keyselectionresult == wx.ID_CANCEL:
-                self.sb.SetStatusText("Crypto key import canceled", 0)
+                self.sb.SetStatusText(_("Crypto key import canceled"), 0)
 
         # Destroy the dialog. Don't do this until you are done with it!
         # BAD things can happen otherwise!
@@ -317,7 +318,7 @@ class AngelMainFrame(wx.Frame):
 
     def showErrorDialog(self, parent, message):
         dlg = wx.MessageDialog(parent, message,
-                               'Error:',
+                               _('Error:'),
                                wx.OK | wx.ICON_INFORMATION
                                #wx.YES_NO | wx.NO_DEFAULT | wx.CANCEL | wx.ICON_INFORMATION
                                )
@@ -337,6 +338,7 @@ class AngelMainFrame(wx.Frame):
         """
         Stops the p2p process if running
         """
+        self.daemon.stop()
         if self.daemon.isAlive():
             log.info("Stopping the p2p process")
             self.daemon.stop()
@@ -392,13 +394,13 @@ class AngelMainFrame(wx.Frame):
         """
         Opens BUGREPORT_URL in web-browser
         """
-        platformwrap.showURLInBrowser(BUGREPORT_URL)
+        platformwrap.showURLInBrowser(self.BUGREPORT_URL)
 
     def on_help_technicalreport(self, event):
         """
         Opens TECHINCALREPORT_URL in a web browser
         """
-        platformwrap.showURLInBrowser(TECHNICALREPORT_URL)
+        platformwrap.showURLInBrowser(self.TECHNICALREPORT_URL)
     
 
 class AngelStatusBar(wx.StatusBar):
