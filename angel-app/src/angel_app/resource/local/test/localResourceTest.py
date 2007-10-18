@@ -30,6 +30,7 @@ legalMatters = """
 
 author = """Vincent Kraeutler 2007"""
 
+from angel_app import elements
 from angel_app.config import config
 from angel_app.elements import Children
 from angel_app.resource.IResource import IAngelResource
@@ -78,6 +79,14 @@ class BasicResourceTest(resourceTest.ResourceTest):
 
     def testReadFile(self):
         assert self.testText == Basic(self.testFilePath).open().read()  
+        
+    def testSetProperty(self):
+        dp = self.testResource.getPropertyManager()
+        
+        testText = "foo"
+        ee = elements.ResourceID.fromString(testText)
+        dp.set(ee)
+        assert self.testResource.resourceID() == testText
     
     def testLocation(self):
         """
