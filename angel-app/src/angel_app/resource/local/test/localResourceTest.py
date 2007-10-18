@@ -67,8 +67,7 @@ class BasicResourceTest(resourceTest.ResourceTest):
         
         
     def tearDown(self):
-        Crypto(self.testDirPath)._deRegisterWithParent()
-        shutil.rmtree(self.testDirPath, ignore_errors = True)  
+        Crypto(self.testDirPath).remove() 
         
     def testExists(self):
         """

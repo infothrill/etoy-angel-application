@@ -107,12 +107,7 @@ class ForbiddenTest(unittest.TestCase):
         self.dirResource._updateMetadata()
         
     def tearDown(self):
-        self.dirResource._deRegisterWithParent()  
-        try:
-            os.rmdir(self.testDirPath)
-        except OSError, e:
-            print "not a directory"
-            os.remove(self.testDirPath)
+        self.dirResource.remove()
         
     def testDenyRemoteResourceModification(self):
         """

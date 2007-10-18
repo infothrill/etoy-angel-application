@@ -97,12 +97,6 @@ class Basic(DAVFile, Resource):
             return True
         else:
             return False
-    
-    def remove(self):
-        # security check
-        if self.isRepositoryRoot():
-            raise Exception("Cowardly refusing to delete the root directory.")
-        shutil.rmtree(self.fp.path, ignore_errors = True)
         
     
     def verify(self):
