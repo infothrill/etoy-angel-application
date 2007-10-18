@@ -54,27 +54,14 @@ class ResourceTest(localResourceTest.BasicResourceTest):
     """
     
     testDirPath = os.path.sep.join([repositoryPath, "TEST"])
-    testFilePath = os.path.sep.join([testDirPath, "file.txt"])
-    testText = "lorem ipsum"
     testClone = Clone(
                       host = "localhost", 
                       port = AngelConfig.getint("presenter","listenPort"),
                       path = "/TEST")
 
     def setUp(self):
-        try:
-            os.mkdir(self.testDirPath)
-        except OSError, e:
-            print `e`
-
-        cc = Crypto(self.testDirPath) 
-        cc._registerWithParent()
-        cc._updateMetadata()
-        self.testResource = cc
-        open(self.testFilePath, 'w').write(self.testText)
-        
-    def testReadFile(self):
-        assert self.testText == Crypto(self.testFilePath).open().read()
+        super(ResourceTest, self).setUp()
+        self.testResource = Crypto(self.testDirPath) 
     
     def testSigning(self):
         """

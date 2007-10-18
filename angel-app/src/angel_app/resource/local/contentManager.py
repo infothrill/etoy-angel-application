@@ -14,16 +14,7 @@ class ContentManager(AbstractReadonlyContentManager):
         self.resource = resource
 
     def openFile(self):
-        try:
-            return self.resource.fp.open()
-        except IOError, e:
-            import errno
-            if e[0] == errno.EACCES:
-                raise HTTPError(responsecode.FORBIDDEN)
-            elif e[0] == errno.ENOENT:
-                raise HTTPError(responsecode.NOT_FOUND)
-            else:
-                raise
+        return self.resource.fp.open()
         
     def contentLength(self):
         return super(DAVFile, self.resource).contentLength()
