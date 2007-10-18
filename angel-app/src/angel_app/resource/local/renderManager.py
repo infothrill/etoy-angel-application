@@ -2,6 +2,7 @@ from angel_app.log import getLogger
 from angel_app.resource.local.dirlist import DirectoryLister
 from twisted.web2 import http
 from twisted.web2 import responsecode
+from twisted.web2 import stream
 
 log = getLogger(__name__)
 
