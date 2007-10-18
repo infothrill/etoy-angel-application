@@ -64,21 +64,19 @@ else
 fi
 
 
-RENAMETO="angel.py" # is not allowed to contain empty spaces for now. This will set the application name that appears in the dock and other places
-BASENAME=`basename $RENAMETO .py`
+NAME="angel.py" # is not allowed to contain empty spaces for now. This will set the application name that appears in the dock and other places
+BASENAME=`basename $NAME .py`
 
 export PYTHONPATH=$PWD/contrib/:$PWD/src/:$PYTHONPATH
-cp ./src/bin/wxmaster.py ./src/bin/$RENAMETO
+cp ./src/bin/wxmaster.py ./src/bin/$NAME
 
 echo "Running py2applet..."
-py2applet --iconfile=${repo}/distrib/OSX/icons/m221e.icns ./src/bin/$RENAMETO ./src/bin/master.py ./src/bin/presenter.py ./src/bin/provider.py ./src/bin/maintainer.py > $THISTMPDIR/py2applet.log 2>&1
+py2applet --iconfile=${repo}/distrib/OSX/icons/m221e.icns ./src/bin/$NAME ./src/bin/master.py ./src/bin/presenter.py ./src/bin/provider.py ./src/bin/maintainer.py > $THISTMPDIR/py2applet.log 2>&1
 if [ $? -ne 0 ]
 then
-	rm ./src/bin/$RENAMETO
 	mv $THISTMPDIR/py2applet.log ${TMPDIR}/py2applet.log
 	error "py2applet exited with a non-zero exit code. Check ${TMPDIR}/py2applet.log for details"
 fi
-rm ./src/bin/$RENAMETO
 
 echo "Adding resources to application Bundle..."
 mkdir -p ${repo}/src/bin/$BASENAME.app/Resources/images/ || error "could not mkdir"

@@ -143,9 +143,8 @@ class AngelMainFrame(wx.Frame):
         """
         Handler for wx.EVT_CLOSE event
         """
-        #self.daemon.stop()
+        self.daemon.stop()
         self.Destroy()
-        self.doExit(event)
 
     def doExit(self, event):
         """
@@ -338,7 +337,6 @@ class AngelMainFrame(wx.Frame):
         """
         Stops the p2p process if running
         """
-        self.daemon.stop()
         if self.daemon.isAlive():
             log.info("Stopping the p2p process")
             self.daemon.stop()

@@ -10,10 +10,10 @@ def py2appletWorkaroundIgnoreMe():
 
 
 def main():
-    import angel_app.proc.wxmaster
+    import angel_app.proc.gui
 
-    options = angel_app.proc.wxmaster.boot()
-    angel_app.proc.wxmaster.dance(options)
+    options = angel_app.proc.gui.boot()
+    angel_app.proc.gui.dance(options)
 
 if __name__ == "__main__":
     main()
