@@ -663,10 +663,10 @@ class Server(Connection):
 
         This indicates the server's address.
         """
-        aa = self.socket.getsockname()
         # more IPv6 hackery
-        return address.IPv4Address('TCP', *((aa[0], aa[1]) + ('INET',)))
-        #return address.IPv4Address('TCP', *(self.socket.getsockname() + ('INET',)))
+        #aa = self.socket.getsockname()
+        # return address.IPv4Address('TCP', *((aa[0], aa[1]) + ('INET',)))
+        return address.IPv4Address('TCP', *(self.socket.getsockname() + ('INET',)))
 
     def getPeer(self):
         """Returns an IPv4Address.
@@ -674,8 +674,8 @@ class Server(Connection):
         This indicates the client's address.
         """
         # this is most certainly not an IPv4 address, but hey...
-        return address.IPv4Address('TCP', *((self.client[0], self.client[1]) + ('INET',)))
-        #return address.IPv4Address('TCP', *(self.client + ('INET',)))
+        #return address.IPv4Address('TCP', *((self.client[0], self.client[1]) + ('INET',)))
+        return address.IPv4Address('TCP', *(self.client + ('INET',)))
 
 class Port(base.BasePort, _SocketCloser):
     """I am a TCP server port, listening for connections.
@@ -692,7 +692,7 @@ class Port(base.BasePort, _SocketCloser):
     implements(interfaces.IListeningPort)
 
     #addressFamily = socket.AF_INET
-    addressFamily = socket.AF_INET6
+    #addressFamily = socket.AF_INET6
     socketType = socket.SOCK_STREAM
 
     transport = Server
@@ -809,8 +809,8 @@ class Port(base.BasePort, _SocketCloser):
                     raise
 
                 # IPv6 workaround
-                #protocol = self.factory.buildProtocol(self._buildAddr(addr))
-                protocol = self.factory.buildProtocol(self._buildAddr((addr[0], addr[1])))
+                protocol = self.factory.buildProtocol(self._buildAddr(addr))
+                #protocol = self.factory.buildProtocol(self._buildAddr((addr[0], addr[1])))
                 if protocol is None:
                     skt.close()
                     continue
