@@ -192,13 +192,24 @@ def cloneHandler(property, store, request):
         response = StatusResponse(responsecode.BAD_REQUEST, error)
         return Failure(exc_value=HTTPError(response))
             
-    address = str(request.remoteAddr.host)
+    #address = str(request.remoteAddr.host)
     try:
         newClone = clonesFromElement(property)[0]
-        newClone.host = address
+        #newClone.host = address
        
     except Exception, e:
-        log.warn("received malformed clone:" + `property` + "from host:" + `address` + ". Error: \n" + `e`)
+        log.warn("received malformed clone:" + `property` + "from host:" + `newClone.host` + ". Error: \n" + `e`)
+        response = StatusResponse(responsecode.BAD_REQUEST, error)
+        return Failure(exc_value=HTTPError(response))
+    
+    if newClone in residentClones:
+        # nothing needs to be done, pretend everything is fine
+        return responsecode.OK
+    
+    if not newClone.ping() or not newClone.exists():
+        # can't connect to the clone
+        error = "Invalid PROPPATCH request. Can't connect to clone at: " + `newClone`
+        log.info(error)
         response = StatusResponse(responsecode.BAD_REQUEST, error)
         return Failure(exc_value=HTTPError(response))
             
