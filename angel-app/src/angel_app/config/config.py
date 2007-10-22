@@ -43,7 +43,8 @@ def getDefaultConfigObj():
             "logdir" : os.path.join(os.environ["HOME"], ".angel-app", "log"),
             "loglistenport" : str(DEFAULT_TCP_LOGGING_PORT),
             "logformat" : '%(asctime)s %(levelname)-6s %(name)-20s - %(message)s',
-            "consolelogformat" : '%(levelname)-6s %(name)-20s - %(message)s'
+            "consolelogformat" : '%(levelname)-6s %(name)-20s - %(message)s',
+            "hostname" : "localhost"
                 }
     
     # create a string for the default config:
@@ -70,6 +71,7 @@ def getDefaultConfigObj():
     initialsleep = 1 # it's nice to be fast on the first traversal
     treetraversaltime = 86400 # we want a tree traversal to take about one day after the initial sync
     maxsleeptime = 100
+    hostname = localhost
     
     [mounttab]
     "http://missioneternity.org:6221/" = "MISSION ETERNITY"
@@ -130,6 +132,8 @@ def getConfig(configfilename = getDefaultConfigFilePath()):
     if configObject == None:
         if configfilename is None: configfilename = getDefaultConfigFilePath()
         configObject = ConfigWrapper(configfilename)
+        
+    configObject.commit()
     return configObject
 
 
@@ -188,7 +192,7 @@ class ConfigWrapper(object):
         return self.configfilename
     
     def commit(self):
-        raise Exception, "Must yet be implemented" # TODO
+        self.config.write(open(self.configfilename, 'w'))
 
 
 class ConfigTestCase(unittest.TestCase):
