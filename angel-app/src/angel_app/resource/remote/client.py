@@ -132,6 +132,19 @@ def storeClones(af, goodClones, unreachableClones):
     af.deadProperties().set(cloneElements)
 
 
+def broadCastAddress(localResource, destinations):
+    """
+    Broadcast availability of local clone to remote destinations.
+    
+    TODO: this needs more cowbell!
+    """
+    from angel_app.resource.remote import clone
+    requestBody = clone.makeCloneBody(localResource)
+    for clone in destinations:
+        if not clone.ping(): continue
+        if not clone.exists(): continue
+        clone.remote.performRequest(method = "PROPPATCH", body = requestBody)
+
 def inspectResource(af):
 
     goodClones, dummybadClones, unreachableClones = \
@@ -148,8 +161,8 @@ def inspectResource(af):
     rc = random.choice(goodClones)
 
     ensureLocalValidity(af, rc)
-
     storeClones(af, goodClones, unreachableClones)
+    broadCastAddress(af, goodClones)
     
     
 

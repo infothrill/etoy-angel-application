@@ -64,6 +64,9 @@ class Clone(Resource):
         return self.contentManager
     
     def updateRemote(self, remote):
+        """
+        Called when the remote clone address changes.
+        """
         self.remote = remote
         self.propertyManager = PropertyManager(remote)
         self.contentManager = ContentManager(self)
@@ -161,7 +164,10 @@ def makeCloneBody(localResource):
     """
     Make a PROPPATCH body from the local clone for registration with a remote node.
     """
-    cc = Clone("localhost", providerport, localResource.relativeURL())
+    print `AngelConfig`
+    nodename = AngelConfig.get("maintainer","nodename")
+    log.error("making clone body " + `nodename`)
+    cc = Clone(nodename, providerport, localResource.relativeURL())
     cloneElement = elements.Clone(rfc2518.HRef(`cc`))
     clonesElement = elements.Clones(*[cloneElement])
     setElement = rfc2518.Set(rfc2518.PropertyContainer(clonesElement))
