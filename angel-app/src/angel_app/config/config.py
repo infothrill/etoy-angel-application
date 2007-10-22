@@ -44,7 +44,7 @@ def getDefaultConfigObj():
             "loglistenport" : str(DEFAULT_TCP_LOGGING_PORT),
             "logformat" : '%(asctime)s %(levelname)-6s %(name)-20s - %(message)s',
             "consolelogformat" : '%(levelname)-6s %(name)-20s - %(message)s',
-            "hostname" : "localhost"
+            "nodename" : "localhost"
                 }
     
     # create a string for the default config:
@@ -71,7 +71,7 @@ def getDefaultConfigObj():
     initialsleep = 1 # it's nice to be fast on the first traversal
     treetraversaltime = 86400 # we want a tree traversal to take about one day after the initial sync
     maxsleeptime = 100
-    hostname = localhost
+    nodename = '%(nodename)s'
     
     [mounttab]
     "http://missioneternity.org:6221/" = "MISSION ETERNITY"
