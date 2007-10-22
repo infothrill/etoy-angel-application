@@ -691,7 +691,7 @@ class Port(base.BasePort, _SocketCloser):
 
     implements(interfaces.IListeningPort)
 
-    #addressFamily = socket.AF_INET
+    addressFamily = socket.AF_INET
     #addressFamily = socket.AF_INET6
     socketType = socket.SOCK_STREAM
 
