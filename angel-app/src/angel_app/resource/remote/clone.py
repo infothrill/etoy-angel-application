@@ -158,15 +158,24 @@ class Clone(Resource):
             return clonesFromElement(prop)
         except:
             return []
+        
+    def announce(localResource):
+        """
+        Inform the remote clone that we have a local clone here.
+        """
+        from angel_app.resource.remote import clone
+        requestBody = clone.makeCloneBody(localResource)
+        if not self.ping(): return False
+        if not clone.exists(): return False
+        self.remote.performRequest(method = "PROPPATCH", body = requestBody)
+        return True
 
 
 def makeCloneBody(localResource):
     """
     Make a PROPPATCH body from the local clone for registration with a remote node.
     """
-    print `AngelConfig`
     nodename = AngelConfig.get("maintainer","nodename")
-    log.error("making clone body " + `nodename`)
     cc = Clone(nodename, providerport, localResource.relativeURL())
     cloneElement = elements.Clone(rfc2518.HRef(`cc`))
     clonesElement = elements.Clones(*[cloneElement])

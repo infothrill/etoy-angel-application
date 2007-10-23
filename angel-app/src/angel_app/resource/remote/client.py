@@ -135,15 +135,9 @@ def storeClones(af, goodClones, unreachableClones):
 def broadCastAddress(localResource, destinations):
     """
     Broadcast availability of local clone to remote destinations.
-    
-    TODO: this needs more cowbell!
     """
-    from angel_app.resource.remote import clone
-    requestBody = clone.makeCloneBody(localResource)
     for clone in destinations:
-        if not clone.ping(): continue
-        if not clone.exists(): continue
-        clone.remote.performRequest(method = "PROPPATCH", body = requestBody)
+        clone.announce(localResource)
 
 def inspectResource(af):
 
