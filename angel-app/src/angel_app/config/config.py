@@ -53,7 +53,8 @@ def getDefaultConfigObj():
             "loglistenport" : str(DEFAULT_TCP_LOGGING_PORT),
             "logformat" : '%(asctime)s %(levelname)-6s %(name)-20s - %(message)s',
             "consolelogformat" : '%(levelname)-6s %(name)-20s - %(message)s',
-            "nodename" : "localhost"
+            "nodename" : "localhost",
+            "useIPv6" : "False",
                 }
     
     # create a string for the default config:
@@ -75,6 +76,7 @@ def getDefaultConfigObj():
     
     [provider]
     listenPort = 6221
+    useIPv6 = %(useIPv6)s
     
     [maintainer]
     initialsleep = 1 # it's nice to be fast on the first traversal
@@ -195,7 +197,8 @@ class ConfigWrapper(object):
         
     def getboolean(self, *args):
         value = self.get(*args)
-        return bool(value)
+        assert value in ["True", "False"]
+        return value == "True"
 
     def getConfigFilename(self):
         return self.configfilename
