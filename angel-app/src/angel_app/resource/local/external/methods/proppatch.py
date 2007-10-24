@@ -192,11 +192,8 @@ def cloneHandler(property, store, request):
         response = StatusResponse(responsecode.BAD_REQUEST, error)
         return Failure(exc_value=HTTPError(response))
             
-    #address = str(request.remoteAddr.host)
     try:
         newClone = clonesFromElement(property)[0]
-        #newClone.host = address
-       
     except Exception, e:
         log.warn("received malformed clone:" + `property` + "from host:" + `newClone.host` + ". Error: \n" + `e`)
         response = StatusResponse(responsecode.BAD_REQUEST, error)
@@ -207,11 +204,17 @@ def cloneHandler(property, store, request):
         return responsecode.OK
     
     if not newClone.ping() or not newClone.exists():
-        # can't connect to the clone
-        error = "Invalid PROPPATCH request. Can't connect to clone at: " + `newClone`
-        log.info(error)
-        response = StatusResponse(responsecode.BAD_REQUEST, error)
-        return Failure(exc_value=HTTPError(response))
+        # can't connect to the clone as advertised by "nodename",
+        # the "nodename" defaults to something marginally useful, so this might be expected,
+        # default to the request's originating ip address and try again.
+        address = str(request.remoteAddr.host)
+        newClone.host = address
+        # here, we should still expect to be fooled by NATs etc.
+        if not newClone.ping() or not newClone.exists():
+            error = "Invalid PROPPATCH request. Can't connect to clone at: " + `newClone`
+            log.info(error)
+            response = StatusResponse(responsecode.BAD_REQUEST, error)
+            return Failure(exc_value=HTTPError(response))
             
     return defaultHandler(clonesToElement(residentClones + [newClone]), store)     
 
