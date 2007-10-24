@@ -20,6 +20,79 @@ class AngelMainFrame(wx.Frame):
     BUGREPORT_URL = "https://gna.org/support/?func=additem&group=angel-app" # use "support", because "bugs" requires a gna account
     TECHNICALREPORT_URL = "http://svn.gna.org/viewcvs/*checkout*/angel-app/trunk/angel-app/doc/report/m221e-angel-app-0.2.pdf" # TODO: this URL needs to have NO version in it!!!
 
+
+        
+    def __withMenu(self, menu):
+        """
+        Return a function that will bind an item to this menu
+        """         
+        def append(text, help, action):            
+            itemID = wx.NewId()
+            menu.Append(itemID, text, help)
+            self.Bind(wx.EVT_MENU, action, id=itemID)               
+        return append
+
+    def __appendItemsToMenu(self, menu, items):
+        """
+        Append the list of items to the menu.
+        """
+        appendToMenu = self.__withMenu(menu)
+        for (text, help, action) in items:
+            appendToMenu(text, help, action)
+            
+    def __buildMenuWith(self, items):
+        menu = wx.Menu()
+        self.__appendItemsToMenu(menu, items)
+        return menu
+        
+    def __buildFileMenu(self):
+        """
+        Build/populate the File menu.
+        """              
+
+        filemanager = (platformwrap.isMacOSX() and "Finder") or "file manager"            
+        fileMenuItems = [
+            ("O&pen repository in web-browser", "Open repository in web-browser", self.on_help_presenter),
+            ("O&pen repository in %s" % filemanager, "Open repository in %s" % filemanager, self.on_repo_in_filemanager),
+            ("I&mport crypto key...", "Import crypto key...", self.on_file_import_key),
+            ("E&xport personal ANGEL KEY...", "Export personal ANGEL KEY...", self.on_file_export_key),  
+            ("Purge repository", "Purge repository", self.on_file_purge_repository),
+            ("L&og console", "Log console", self.on_log_console)  
+                         ]
+        
+        file_menu = self.__buildMenuWith(fileMenuItems)
+
+        # finally, attach "special" (i.e. with custom-id's) functionality:
+        file_menu.Append(wx.ID_PREFERENCES, _("P&references"), _("Preferences"))
+        self.Bind(wx.EVT_MENU, self.on_file_prefs, id=wx.ID_PREFERENCES)
+
+        file_menu.Append(wx.ID_EXIT, "E&xit", "Terminate the program")
+        self.Bind(wx.EVT_MENU, self.doExit, id=wx.ID_EXIT)
+
+        file_menu.Append(wx.ID_CLOSE, "Q&uit", "Quit")
+        self.Bind(wx.EVT_MENU, self.doExit, id=wx.ID_CLOSE)
+        
+        return file_menu
+
+        
+    def __buildNetworkMenu(self):
+        netMenuItems = [
+                        ("S&tart p2p service", "Start p2p service", self.on_net_start),
+                        ("S&top p2p service", "Stop p2p service", self.on_net_stop)
+                        ]
+        return self.__buildMenuWith(netMenuItems)
+    
+    def __buildHelpMenu(self):
+        helpMenuItems = [
+                         ("A&bout", "About ANGEL APPLICATION", self.on_about_request),
+                         ("ANGEL APPLICATION W&iki (Website)", "http://angelapp.missioneternity.org", self.on_help_wiki),
+                         ("M&ISSION ETERNITY (Website)", "http://www.missioneternity.org", self.on_help_m221e),
+                         ("Technical Report on ANGEL APPLICATION (Online PDF)", self.TECHNICALREPORT_URL, self.on_help_technicalreport),
+                         ("Send a b&ug report (Website)", self.BUGREPORT_URL, self.on_help_bugreport),
+                         ("S&oftware License", "Software License", self.on_help_license)
+                         ]
+        return self.__buildMenuWith(helpMenuItems)
+
     def __init__(self, parent, ID, title):
         """
         The constructor, initializes the menus, the mainframe with the logo and the statusbar.
@@ -31,83 +104,17 @@ class AngelMainFrame(wx.Frame):
         # define the menus
         self.menu_bar  = wx.MenuBar()
   
-        # File menu
-        self.file_menu = wx.Menu()
-        ID_FILE_SHOW_REPO_BROWSER = wx.NewId()
-        self.file_menu.Append(ID_FILE_SHOW_REPO_BROWSER, "O&pen repository in web-browser", "Open repository in web-browser")
-        self.Bind(wx.EVT_MENU, self.on_help_presenter, id=ID_FILE_SHOW_REPO_BROWSER)
-        ID_FILE_SHOW_REPO_FILEMANAGER = wx.NewId()
-        if platformwrap.isMacOSX():
-            filemanager = "Finder"
-        else:
-            filemanager = "file manager"
-        self.file_menu.Append(ID_FILE_SHOW_REPO_FILEMANAGER, "O&pen repository in %s" % filemanager, "Open repository in %s" % filemanager)
-        self.Bind(wx.EVT_MENU, self.on_repo_in_filemanager, id=ID_FILE_SHOW_REPO_FILEMANAGER)
-
-        ID_FILE_IMPORT_KEY = wx.NewId()
-        self.file_menu.Append(ID_FILE_IMPORT_KEY, "I&mport crypto key...", "Import crypto key...")
-        self.Bind(wx.EVT_MENU, self.on_file_import_key, id=ID_FILE_IMPORT_KEY)
-
-        ID_FILE_EXPORT_KEY = wx.NewId()
-        self.file_menu.Append(ID_FILE_EXPORT_KEY, "E&xport personal ANGEL KEY...", "Export personal ANGEL KEY...")
-        self.Bind(wx.EVT_MENU, self.on_file_export_key, id=ID_FILE_EXPORT_KEY)
-
-        ID_FILE_PURGE_REPO = wx.NewId()
-        self.file_menu.Append(ID_FILE_PURGE_REPO, "Purge repository", "Purge repository")
-        self.Bind(wx.EVT_MENU, self.on_file_purge_repository, id=ID_FILE_PURGE_REPO)
-
-        ID_FILE_LOG = wx.NewId()
-        self.file_menu.Append(ID_FILE_LOG, "L&og console", "Log console")
-        self.Bind(wx.EVT_MENU, self.on_log_console, id=ID_FILE_LOG)
-
-        self.file_menu.Append(wx.ID_PREFERENCES, _("P&references"), _("Preferences"))
-        self.Bind(wx.EVT_MENU, self.on_file_prefs, id=wx.ID_PREFERENCES)
-
-        self.file_menu.Append(wx.ID_EXIT, "E&xit", "Terminate the program")
-        self.Bind(wx.EVT_MENU, self.doExit, id=wx.ID_EXIT)
-
-        self.file_menu.Append(wx.ID_CLOSE, "Q&uit", "Quit")
-        self.Bind(wx.EVT_MENU, self.doExit, id=wx.ID_CLOSE)
-
-        self.menu_bar.Append(self.file_menu, "&File")
+        # file menu
+        self.menu_bar.Append(self.__buildFileMenu(), 
+                             "&File")
 
         # network menu
-        self.net_menu = wx.Menu()
-        ID_NET_START = wx.NewId()
-        self.net_menu.Append(ID_NET_START, "S&tart p2p service", "Start p2p service")
-        self.Bind(wx.EVT_MENU, self.on_net_start, id=ID_NET_START)
-
-        ID_NET_STOP = wx.NewId()
-        self.net_menu.Append(ID_NET_STOP, "S&top p2p service", "Stop p2p service")
-        self.Bind(wx.EVT_MENU, self.on_net_stop, id=ID_NET_STOP)
-        self.menu_bar.Append(self.net_menu, "&Network")
+        self.menu_bar.Append(self.__buildNetworkMenu(), 
+                             "&Network")
 
         # Help menu
-        self.help_menu = wx.Menu()
-        self.help_menu.Append(wx.ID_ABOUT, "A&bout", "About ANGEL APPLICATION")
-        self.Bind(wx.EVT_MENU, self.on_about_request, id=wx.ID_ABOUT)
-        ID_HELP_WIKI = wx.NewId()
-        self.help_menu.Append(ID_HELP_WIKI, "ANGEL APPLICATION W&iki (Website)", "http://angelapp.missioneternity.org")
-        self.Bind(wx.EVT_MENU, self.on_help_wiki, id=ID_HELP_WIKI)
-        ID_HELP_M221E = wx.NewId()
-        self.help_menu.Append(ID_HELP_M221E, "M&ISSION ETERNITY (Website)", "http://www.missioneternity.org")
-        self.Bind(wx.EVT_MENU, self.on_help_m221e, id=ID_HELP_M221E)
-        ID_HELP_TECHNICALREPORT = wx.NewId()
-        self.help_menu.Append(ID_HELP_TECHNICALREPORT, "Technical Report on ANGEL APPLICATION (Online PDF)", self.TECHNICALREPORT_URL)
-        self.Bind(wx.EVT_MENU, self.on_help_technicalreport, id=ID_HELP_TECHNICALREPORT)
-        ID_HELP_BUGREPORT = wx.NewId()
-        self.help_menu.Append(ID_HELP_BUGREPORT, "Send a b&ug report (Website)", self.BUGREPORT_URL)
-        self.Bind(wx.EVT_MENU, self.on_help_bugreport, id=ID_HELP_BUGREPORT)
-        
-        ID_HELP_LICENSE = wx.NewId()
-        self.help_menu.Append(ID_HELP_LICENSE, "S&oftware License", "Software License")
-        self.Bind(wx.EVT_MENU, self.on_help_license, id=ID_HELP_LICENSE)
-
-        #ID_HELP_TEST = wx.NewId()
-        #self.help_menu.Append(ID_HELP_TEST, "Test", "Test")
-        #self.Bind(wx.EVT_MENU, self.on_test, id=ID_HELP_TEST)
-
-        self.menu_bar.Append(self.help_menu, "&Help")
+        self.menu_bar.Append(self.__buildHelpMenu(), 
+                             "&Help")
 
         self.SetMenuBar(self.menu_bar)
         # end define the menus
