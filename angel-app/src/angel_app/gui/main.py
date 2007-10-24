@@ -9,7 +9,6 @@ import angel_app.proc.subprocessthread as masterthread
 import angel_app.gui.compat.wrap as platformwrap
 from angel_app.config import config
 
-AngelConfig = config.getConfig()
 
 from angel_app.log import getLogger
 log = getLogger(__name__)
@@ -27,6 +26,7 @@ class AngelMainFrame(wx.Frame):
         By default, also starts the p2p process automatically on start-up
         """
         wx.Frame.__init__(self, parent, ID, title, wx.DefaultPosition, wx.Size(823, 548))
+        self.app = wx.GetApp()
         self.frames = []
         # define the menus
         self.menu_bar  = wx.MenuBar()
@@ -56,9 +56,12 @@ class AngelMainFrame(wx.Frame):
         self.file_menu.Append(ID_FILE_PURGE_REPO, "Purge repository", "Purge repository")
         self.Bind(wx.EVT_MENU, self.on_file_purge_repository, id=ID_FILE_PURGE_REPO)
 
-        ID_WINDOW_LOG = wx.NewId()
-        self.file_menu.Append(ID_WINDOW_LOG, "L&og console", "Log console")
-        self.Bind(wx.EVT_MENU, self.on_log_console, id=ID_WINDOW_LOG)
+        ID_FILE_LOG = wx.NewId()
+        self.file_menu.Append(ID_FILE_LOG, "L&og console", "Log console")
+        self.Bind(wx.EVT_MENU, self.on_log_console, id=ID_FILE_LOG)
+
+        self.file_menu.Append(wx.ID_PREFERENCES, _("P&references"), _("Preferences"))
+        self.Bind(wx.EVT_MENU, self.on_file_prefs, id=wx.ID_PREFERENCES)
 
         self.file_menu.Append(wx.ID_EXIT, "E&xit", "Terminate the program")
         self.Bind(wx.EVT_MENU, self.doExit, id=wx.ID_EXIT)
@@ -124,7 +127,7 @@ class AngelMainFrame(wx.Frame):
         self.SetStatusBar(self.sb)
 
         self.Bind(wx.EVT_CLOSE, self.OnQuit)
-
+        
     def on_log_console(self, eventt):
         from angel_app.gui.log import LogFrame
         self.logwin = LogFrame()
@@ -346,8 +349,8 @@ class AngelMainFrame(wx.Frame):
         Opens the local private repository from presenter in the
         file manager
         """
-        interface = AngelConfig.get("presenter", "listenInterface")
-        port = AngelConfig.get("presenter", "listenPort")
+        interface = self.app.config.get("presenter", "listenInterface")
+        port = self.app.config.get("presenter", "listenPort")
         platformwrap.showRepositoryInFilemanager(interface, port)
         
     def on_about_request(self, event):
@@ -358,6 +361,17 @@ class AngelMainFrame(wx.Frame):
         aboutWindow = AboutWindow(self, -1, _("About"), style=wx.DEFAULT_DIALOG_STYLE)
         aboutWindow.CentreOnScreen()
         aboutWindow.Show(True)
+        
+    def on_file_prefs(self, event):
+        """
+        Shows the about window
+        """
+        from angel_app.gui.prefs import PrefsWindow 
+        self.prefsWindow = PrefsWindow(self, -1, _("Preferences"),
+                                        size=(-1, -1),
+                                        style=wx.DEFAULT_FRAME_STYLE)
+        self.prefsWindow.CentreOnScreen()
+        self.prefsWindow.Show(True)
         
     def on_help_license(self, event):
         """
@@ -372,8 +386,8 @@ class AngelMainFrame(wx.Frame):
         """
         Opens the local presenter website in a web browser
         """
-        interface = AngelConfig.get("presenter", "listenInterface")
-        port = AngelConfig.get("presenter", "listenPort")
+        interface = self.app.config.get("presenter", "listenInterface")
+        port = self.app.config.get("presenter", "listenPort")
         platformwrap.showURLInBrowser("http://%s:%s"% (interface, port))
 
     def on_help_wiki(self, event):
@@ -447,9 +461,11 @@ class AngelApp(wx.App):
         """
         Instantiates the main frame and shows it
         """
+        self.config = config.getConfig()
         mainframe = AngelMainFrame(None, -1, "ANGEL APPLICATION: THE CODE THAT CROSSES THE DEAD-LINE")
         mainframe.Show(True)
         self.SetTopWindow(mainframe)
+        self.test = "testing"
         return True
 
 if __name__ == '__main__':
