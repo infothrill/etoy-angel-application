@@ -1,7 +1,10 @@
-TRUNK August/September 2007
+TRUNK August-October 2007
  * adaptations for supporting teredo/IPv6
  * moving to a (nearly) purely pull-based policy
  * updating configuration management
+ * mounts are now configurable (in config file only)
+ * added preferences dialogue
+ * revamped about dialogue and license window
 
 0.1.8 April 22 2007
  * security fixes (for http-preconditions)
