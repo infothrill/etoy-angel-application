@@ -1,13 +1,22 @@
 """
 Module providing config file facilities through configObj
 
-Sample usage:
+Sample usage for getting config values:
 
     cfg = getConfig()
     if cfg.has_section('common'):
         cfg.get('common', 'logdir')
         # or:
         cfg.config['common']['logdir']
+
+Sample usage for setting values:
+
+    cfg = getConfig()
+    cfg.container['section']['path'] = '/tmp/'
+
+To save:
+
+    cfg.commit()
 
 """
 __author__ = "Paul Kremer"
@@ -94,7 +103,7 @@ def _configspec_lines():
     keyring = string
     logdir = string
     maxclones = integer(min=1, max=20)
-    loglevel = option('DEBUG', 'INFO', 'WARN', 'ERR', 'FATAL', default='INFO')
+    loglevel = option('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL', 'FATAL', default='INFO')
     loglistenport = integer(min=1025)
     logformat = string
     consolelogformat = string
@@ -167,14 +176,14 @@ class ConfigWrapper(object):
     """
     def __init__(self, configfilepath = getDefaultConfigFilePath()):
         self.configfilename = configfilepath
-        self.config = getConfigObj(configfilepath)
+        self.container = getConfigObj(configfilepath)
 
     def has_section(self, section):
-        return self.config.has_key(section)
+        return self.container.has_key(section)
 
     def get(self, *args):
         assert len(args) > 0
-        temp = self.config[args[0]]
+        temp = self.container[args[0]]
         if len(args) > 1:
             for arg in args[1:]:
                 temp = temp[arg]
@@ -192,7 +201,7 @@ class ConfigWrapper(object):
         return self.configfilename
     
     def commit(self):
-        self.config.write(open(self.configfilename, 'w'))
+        self.container.write(open(self.configfilename, 'w'))
 
 
 class ConfigTestCase(unittest.TestCase):
