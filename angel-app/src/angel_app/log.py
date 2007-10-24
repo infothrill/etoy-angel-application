@@ -230,12 +230,24 @@ def __configLoggerBasic():
     else:
         logging.basicConfig()
 
+
+def getAllowedLogLevels():
+    """
+    Utility to get a list of allowed loglevels that we know of. The list contains only strings.
+
+    @return: list
+    """
+    levelnames = ['DEBUG', 'ERROR', 'WARNING', 'CRITICAL', 'INFO']
+    return levelnames
+    
+
 def loglevelToInt(loglevel = 'NOTSET'):
     return logging._levelNames[loglevel]
 #    levels = { "NOTSET": 0, "DEBUG": 10, "INFO": 20, "WARNING": 30, "ERROR": 40, "CRITICAL": 50}
 #    if not levels.has_key(level):
 #        raise NameError, "The given loglevel %s is not defined" % level
 #    return levels[level]
+
 
 def __getConfiguredLogLevel():
     AngelConfig = angel_app.config.config.getConfig()
@@ -320,7 +332,7 @@ def getLoggingFilters():
     filters = []
     #print "=======LOGGING CONFIG================"
     #print "Default LOGLEVEL: " + str(__getConfiguredLogLevel())
-    for logfilter in angelConfig.config[sectionname].keys():
+    for logfilter in angelConfig.container[sectionname].keys():
         level = angelConfig.get(sectionname, logfilter)
         if not digits.match(level):
             level = loglevelToInt(level)
