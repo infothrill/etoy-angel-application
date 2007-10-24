@@ -57,6 +57,11 @@ class PrefsWindow(wx.Dialog):
         self.defaultPresenterPortButton = wx.Button(panelNetworkSettings, ID_onDefaultPresenterPort, _("Default"))
         gridnet.Add(self.defaultPresenterPortButton, 0, wx.ALIGN_CENTER_VERTICAL)
       
+        ID_onUseIpv6Checkbox = wx.NewId()
+        self.useIpv6Checkbox = wx.CheckBox(panelNetworkSettings, ID_onUseIpv6Checkbox, _('Use IPv6'))
+        self.useIpv6Checkbox.SetValue(self.app.config.get('provider','useIPv6'))
+        gridnet.Add(self.useIpv6Checkbox, 0, wx.ALIGN_CENTER_VERTICAL)
+        
         sbSizerNetwork.Add(gridnet, 0, wx.ALL | wx.EXPAND, 4)
 
         ######################
@@ -111,6 +116,8 @@ class PrefsWindow(wx.Dialog):
         self.Fit()
 
         # add the button event hooks:
+        wx.EVT_CHECKBOX(self, ID_onUseIpv6Checkbox, self.onUseIpv6Checkbox)
+
         wx.EVT_BUTTON(self, ID_onDefaultProviderPort, self.onDefaultProviderPort)
         wx.EVT_BUTTON(self, ID_onDefaultPresenterPort, self.onDefaultPresenterPort)
         wx.EVT_BUTTON(self, ID_ON_OK, self.onOK)
@@ -125,6 +132,10 @@ class PrefsWindow(wx.Dialog):
         """Reset to default value"""
         self.presenterPort.SetValue(u'6222')
 
+    def onUseIpv6Checkbox(self, event):
+        """use or don't use ipv6?"""
+        #print self.useIpv6Checkbox.GetValue()
+        pass
 
     def onOK(self, event):
         """
@@ -134,6 +145,7 @@ class PrefsWindow(wx.Dialog):
         self.app.config.container['provider']['listenPort'] = self.providerPort.GetValue()
         self.app.config.container['presenter']['listenPort'] = self.presenterPort.GetValue()
         self.app.config.container['common']['maxclones'] = self.maxClones.GetValue()
+        self.app.config.container['provider']['useIPv6'] = self.useIpv6Checkbox.GetValue()
 
         self.app.config.commit()
       
