@@ -1,8 +1,9 @@
 from twisted.internet import tcp
 from zope.interface import implements
 from twisted.internet.interfaces import IAddress
+import socket
 
-class IPv4Address(object):
+class IPv6Address(object):
     """
     Object representing an IPv6 socket endpoint. Copy-pasted from twisted.internet.tcp.address
 
@@ -46,23 +47,30 @@ class IPv6Server(tcp.Server):
         super(IPv6Server, self).__init__(sock, protocol, client, server, sessionno)
         
     def getHost(self):
+        """
+        @return my IPv6Address
+        """
         aa = self.socket.getsockname()
         return IPv6Address('TCP', *((aa[0], aa[1]) + ('INET',)))
         
     def getPeer(self):
-        """Returns an IPv6Address.
+        """
+        @return the peer's IPv6Address.
 
         This indicates the client's address.
         """
-        # this is most certainly not an IPv4 address, but hey...
         return IPv6Address('TCP', *((self.client[0], self.client[1]) + ('INET',)))
         #return address.IPv4Address('TCP', *(self.client + ('INET',)))
         
 class IPv6Port(tcp.Port):
     
     addressFamily = socket.AF_INET6
+    transport = IPv6Server
+    
+    def __init__(self, port, factory, backlog=50, interface='', reactor=None):
+        super(IPv6Port, self).__init__(port, factory, backlog, interface, reactor)
     
     def _buildAddr(self, addr):
-        (host, port) = addr # are these really (host, port ?) -- check
+        (host, port, dummy1, dummy2) = addr # are these really (host, port ?) -- check
         return IPv6Address('TCP', *(host, port))
     

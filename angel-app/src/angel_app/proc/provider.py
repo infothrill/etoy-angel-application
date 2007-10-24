@@ -30,6 +30,7 @@ def dance(options):
     from twisted.web2 import server
     from twisted.web2 import channel
     from twisted.internet import reactor
+    from angel_app.ipv6 import reactor as ignored
     site = server.Site(root)
     reactor.listenTCP(providerport, channel.HTTPFactory(site), 50)
     getLogger().info("Listening on port %d and serving content from %s", providerport, repository)
