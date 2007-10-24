@@ -24,7 +24,6 @@ class PrefsWindow(wx.Dialog):
         hboxCfgFile.Add(wx.StaticText(self, -1, self.app.config.getConfigFilename()), 1, wx.EXPAND, 0)
         vboxMain.Add(hboxCfgFile, 0, wx.ALL | wx.EXPAND, 4)
 
-      
         ######################
         # Network
         ######################
@@ -35,36 +34,34 @@ class PrefsWindow(wx.Dialog):
         sbSizerNetwork.Fit(panelNetworkSettings)
         vboxMain.Add(panelNetworkSettings, 0, wx.ALL | wx.EXPAND, 5)
 
+        gridnet = wx.FlexGridSizer(2, 3, 1, 1) # 3 cols
+        gridnet.AddGrowableCol(1) # second column epands
+
         #### Provider port #####
-        hboxProviderPort = wx.BoxSizer(wx.HORIZONTAL)
-        hboxProviderPort.Add(wx.StaticText(panelNetworkSettings, -1, _("Provider listen port: ")), 0, wx.ALIGN_CENTER_VERTICAL)
+        gridnet.Add(wx.StaticText(panelNetworkSettings, -1, _("Provider listen port: ")), 0, wx.ALIGN_CENTER_VERTICAL)
 
         self.providerPort = wx.TextCtrl(panelNetworkSettings, -1, unicode(self.app.config.get('provider', 'listenPort')))
-        hboxProviderPort.Add(self.providerPort, 1, wx.EXPAND, 0)
+        gridnet.Add(self.providerPort, 0, wx.ALIGN_CENTER_VERTICAL)
       
         ID_onDefaultProviderPort = wx.NewId()
         self.defaultProviderPortButton = wx.Button(panelNetworkSettings, ID_onDefaultProviderPort, _("Default"))
-        hboxProviderPort.Add(self.defaultProviderPortButton, 0, wx.ALL | wx.EXPAND)
-      
-        sbSizerNetwork.Add(hboxProviderPort, 0, wx.ALL | wx.EXPAND, 4)
+        gridnet.Add(self.defaultProviderPortButton, 0, wx.ALIGN_CENTER_VERTICAL)
 
         #### Presenter port #####
-        hboxPresenterPort = wx.BoxSizer(wx.HORIZONTAL)
-        hboxPresenterPort.Add(wx.StaticText(panelNetworkSettings, -1, _("Presenter listen port: ")), 0, wx.ALIGN_CENTER_VERTICAL)
+        gridnet.Add(wx.StaticText(panelNetworkSettings, -1, _("Presenter listen port: ")), 0, wx.ALIGN_CENTER_VERTICAL)
 
         self.presenterPort = wx.TextCtrl(panelNetworkSettings, -1, unicode(self.app.config.get('presenter', 'listenPort')))
-        hboxPresenterPort.Add(self.presenterPort, 1, wx.EXPAND, 0)
+        gridnet.Add(self.presenterPort, 0, wx.ALIGN_CENTER_VERTICAL)
       
         ID_onDefaultPresenterPort = wx.NewId()
         self.defaultPresenterPortButton = wx.Button(panelNetworkSettings, ID_onDefaultPresenterPort, _("Default"))
-        hboxPresenterPort.Add(self.defaultPresenterPortButton, 0, wx.ALL | wx.EXPAND)
+        gridnet.Add(self.defaultPresenterPortButton, 0, wx.ALIGN_CENTER_VERTICAL)
       
-        sbSizerNetwork.Add(hboxPresenterPort, 0, wx.ALL | wx.EXPAND, 4)
+        sbSizerNetwork.Add(gridnet, 0, wx.ALL | wx.EXPAND, 4)
 
         ######################
         # Other
         ######################
-
         panelTest = wx.Panel(self, -1)
         sbSizerTest = wx.StaticBoxSizer(wx.StaticBox(panelTest, -1, _("Other")), wx.VERTICAL)
         panelTest.SetSizer(sbSizerTest)
@@ -73,36 +70,32 @@ class PrefsWindow(wx.Dialog):
         vboxMain.Add(panelTest, 0, wx.ALL | wx.EXPAND, 5)
 
         gridtest = wx.FlexGridSizer(2, 2, 1, 1)
+        gridtest.AddGrowableCol(1) # second column epands
 
-        gridtest.AddGrowableCol(1)
-
+        #### Log level ####
         gridtest.Add(wx.StaticText(panelTest, -1, _("Log level: ")), 0, wx.ALIGN_CENTER_VERTICAL)
 
         from angel_app.log import getAllowedLogLevels
-        dictNames = []
-        for name in getAllowedLogLevels():
-            dictNames.append(unicode(name))
-        dictNames.sort()
-      
+        levelNames = map(unicode, getAllowedLogLevels())
+        levelNames.sort()
         self.loglevelChooser = wx.ComboBox(panelTest, wx.NewId(), 
                                     self.app.config.get('common', 'loglevel'), 
                                     wx.Point(-1, -1), 
-                                    wx.Size(-1, -1), dictNames, wx.TE_READONLY)
+                                    wx.Size(-1, -1), levelNames, wx.TE_READONLY)
+        
         gridtest.Add(self.loglevelChooser, 0, wx.EXPAND)
       
+        #### Max clones ####
         gridtest.Add(wx.StaticText(panelTest, -1, _("Max clones: ")), 0, wx.ALIGN_CENTER_VERTICAL)
         self.maxClones = wx.TextCtrl(panelTest, -1, unicode(self.app.config.get('common', 'maxclones')))
         gridtest.Add(self.maxClones, 0, wx.EXPAND)
 
         sbSizerTest.Add(gridtest, 0, wx.ALL | wx.EXPAND, 4)
         
-        # OK, buttons and events below
-
+        # OK, add OK/Cancel buttons
 
         hboxButtons = wx.BoxSizer(wx.HORIZONTAL)
 
-        wx.EVT_BUTTON(self, ID_onDefaultProviderPort, self.onDefaultProviderPort)
-        wx.EVT_BUTTON(self, ID_onDefaultPresenterPort, self.onDefaultPresenterPort)
 
         ID_ON_OK = wx.NewId()
         self.buttonOK = wx.Button(self, ID_ON_OK, _("OK"))
@@ -117,6 +110,9 @@ class PrefsWindow(wx.Dialog):
         self.SetSizer(vboxMain)
         self.Fit()
 
+        # add the button event hooks:
+        wx.EVT_BUTTON(self, ID_onDefaultProviderPort, self.onDefaultProviderPort)
+        wx.EVT_BUTTON(self, ID_onDefaultPresenterPort, self.onDefaultPresenterPort)
         wx.EVT_BUTTON(self, ID_ON_OK, self.onOK)
         wx.EVT_BUTTON(self, ID_ON_CANCEL, self.onCancel)
 
