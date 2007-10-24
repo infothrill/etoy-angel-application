@@ -30,7 +30,6 @@ def dance(options):
     from twisted.web2 import server
     from twisted.web2 import channel
     from twisted.internet import reactor
-    print AngelConfig.getboolean("provider", "useIPv6")
     if AngelConfig.getboolean("provider", "useIPv6"):
         from angel_app.ipv6 import reactor as ignored
     site = server.Site(root)
