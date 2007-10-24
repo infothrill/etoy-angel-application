@@ -15,10 +15,6 @@ class Deletable(object):
     A mixin class (for AngelFile) that implements deletion operations.
     """
     
-    #def http_DELETE(self, request):
-    #    self._deRegisterWithParent()
-    #    return super(Deletable, self).http_DELETE(request)
-    
     def http_DELETE(self, request):
         """
         Respond to a DELETE request. (RFC 2518, section 8.6)
