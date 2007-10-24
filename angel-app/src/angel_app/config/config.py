@@ -53,8 +53,6 @@ def getDefaultConfigObj():
             "loglistenport" : str(DEFAULT_TCP_LOGGING_PORT),
             "logformat" : '%(asctime)s %(levelname)-6s %(name)-20s - %(message)s',
             "consolelogformat" : '%(levelname)-6s %(name)-20s - %(message)s',
-            "nodename" : "localhost",
-            "useIPv6" : "False",
                 }
     
     # create a string for the default config:
@@ -76,13 +74,13 @@ def getDefaultConfigObj():
     
     [provider]
     listenPort = 6221
-    useIPv6 = %(useIPv6)s
+    useIPv6 = False
     
     [maintainer]
     initialsleep = 1 # it's nice to be fast on the first traversal
     treetraversaltime = 86400 # we want a tree traversal to take about one day after the initial sync
     maxsleeptime = 100
-    nodename = '%(nodename)s'
+    nodename = localhost
     
     [mounttab]
     "http://missioneternity.org:6221/" = "MISSION ETERNITY"
@@ -116,11 +114,13 @@ def _configspec_lines():
     
     [provider]
     listenPort = integer(min=1025)
+    useIPv6 = boolean(default=False)
     
     [maintainer]
     initialsleep = integer(min=1)
     treetraversaltime = integer(min=600)
     maxsleeptime = integer(min=2)    
+    nodename = string
     """
     return config_spec.splitlines()
 
@@ -197,8 +197,7 @@ class ConfigWrapper(object):
         
     def getboolean(self, *args):
         value = self.get(*args)
-        assert value in ["True", "False"]
-        return value == "True"
+        return bool(value)
 
     def getConfigFilename(self):
         return self.configfilename
