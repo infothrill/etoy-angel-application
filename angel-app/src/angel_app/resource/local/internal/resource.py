@@ -288,8 +288,11 @@ class Crypto(
         if self.isWritableFile():
             self._deRegisterWithParent()
             # else we don't own this, so can't
-            
-        shutil.rmtree(self.fp.path, ignore_errors = True)
+        
+        if self.isCollection():    
+            shutil.rmtree(self.fp.path, ignore_errors = True)
+        else:
+            os.remove(self.fp.path)
     
     def update(self, recursionLimit = 0):
         
