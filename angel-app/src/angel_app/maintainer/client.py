@@ -52,8 +52,6 @@ def getChildren(resource):
     childLinks = childLink.parseChildren(resource.childLinks())
     names = [cc.name for cc in childLinks]
     childPaths = [os.sep.join([resource.fp.path, nn]) for nn in names]
-    for pp in childPaths:
-        print "child:", pp
     childResources = [Basic(path) for path in childPaths]
     return childResources
 
