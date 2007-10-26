@@ -1,3 +1,9 @@
+"""
+Routines for synchronizing a local clone with a _single_ remote peer.
+"""
+
+
+import angel_app
 
 def syncContents(resource, referenceClone):
     """
@@ -43,7 +49,7 @@ def updateMetaData(resource, referenceClone):
         resource.deadProperties().set(pp)
         
     
-def sync(resource, referenceClone):
+def updateLocal(resource, referenceClone):
     """
     Update the resource from the reference clone, by updating the contents,
     then the metadata, in that order.
@@ -52,3 +58,13 @@ def sync(resource, referenceClone):
     """ 
     syncContents(resource, referenceClone)
     updateMetaData(resource, referenceClone)  
+    
+
+
+def broadCastAddress(localResource):
+    """
+    Broadcast availability of local clone to remote destinations.
+    """
+    for clone in localResource.clones():
+        if clone.ping() and clone.exists():
+            clone.announce(localResource)

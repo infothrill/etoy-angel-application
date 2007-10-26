@@ -1,4 +1,5 @@
 all = [
        "client",
+       "collect",
        "sync"
        ]
