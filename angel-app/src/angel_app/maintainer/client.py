@@ -8,6 +8,7 @@ from angel_app.log import getLogger
 from angel_app.resource.local.basic import Basic
 from angel_app.resource.remote.clone import clonesToElement
 import angel_app.singlefiletransaction
+from angel_app.maintainer.sync import sync
 
 log = getLogger(__name__)
 
@@ -15,60 +16,6 @@ log = getLogger(__name__)
 AngelConfig = config.getConfig()
 repository = AngelConfig.get("common","repository")
 maxclones = AngelConfig.getint("common","maxclones")
-
-def readResponseIntoFile(resource, referenceClone):
-    t = angel_app.singlefiletransaction.SingleFileTransaction()
-    bufsize = 8192 # 8 kB
-    safe = t.open(resource.fp.path, 'wb')
-    readstream = referenceClone.open()
-    EOF = False
-    while not EOF:
-        data = readstream.read(bufsize)
-        if len(data) == 0:
-            EOF = True
-        else:
-            safe.write(data)
-    t.commit() # TODO: only commit if the download worked!
-
-
-def updateMetaData(resource, referenceClone):    
-    # then update the metadata
-    keysToBeUpdated = elements.signedKeys + [elements.MetaDataSignature]
-    
-    for key in keysToBeUpdated:
-        pp = referenceClone.getProperty(key)
-        resource.deadProperties().set(pp)
-
-def syncContents(resource, referenceClone):
-    """
-    Synchronize the contents of the resource from the reference clone.
-    """
-    path = resource.fp.path
-    
-
-    if referenceClone.isCollection():
-        # handle directory
-        
-        if resource.exists() and not resource.isCollection():
-            os.remove(path)
-        if not resource.exists():
-            os.mkdir(path)
-    
-    else:
-        # handle file
-        readResponseIntoFile(resource, referenceClone)
-
-    
-def sync(resource, referenceClone):
-    """
-    Update the resource from the reference clone, by updating the contents,
-    then the metadata, in that order.
-    
-    @return whether the update succeeded.
-    """ 
-    syncContents(resource, referenceClone)
-    updateMetaData(resource, referenceClone)  
-    
 
 def ensureLocalValidity(resource, referenceClone):
     """

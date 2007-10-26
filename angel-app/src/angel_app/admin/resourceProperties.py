@@ -112,6 +112,6 @@ def setMountPoint(mountPoint, URLToMount):
     # TODO: check that the resource is already registered -- might happen in special cases
     dp.set(clonesToElement([cc]))
           
-    from angel_app.resource.remote.client import inspectResource
+    from angel_app.maintainer.client import inspectResource
     inspectResource(rr)
     

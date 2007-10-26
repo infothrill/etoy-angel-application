@@ -1,3 +1,4 @@
 all = [
-       "client"
+       "client",
+       "sync"
        ]
