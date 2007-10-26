@@ -33,15 +33,15 @@ author = """Vincent Kraeutler 2007"""
 
 from angel_app import elements
 from angel_app.config import config
+from angel_app.maintainer import client
 from angel_app.resource.IResource import IAngelResource
 from angel_app.resource.local import basic
-from angel_app.resource.remote import client
 from angel_app.resource.remote import clone
 from angel_app.resource.remote.clone import Clone
+from angel_app.resource.test import resourceTest
 import os
 import unittest
 import zope.interface.verify
-from angel_app.resource.test import resourceTest
 
 AngelConfig = config.getConfig()
 repositoryPath = AngelConfig.get("common","repository")

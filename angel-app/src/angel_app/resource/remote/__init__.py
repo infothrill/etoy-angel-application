@@ -4,7 +4,6 @@ that are exposed via a WebDAV interface.
 """
 
 all = [
-        "client", 
         "clone", 
         "contentManager",
         "httpRemote", 

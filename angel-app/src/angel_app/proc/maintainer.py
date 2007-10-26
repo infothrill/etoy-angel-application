@@ -18,7 +18,7 @@ def postConfigInit():
 
 def dance(options):
     from angel_app.log import getLogger
-    from angel_app.resource.remote import client
+    from angel_app.maintainer import client
     from angel_app.graph import graphWalker
     from angel_app.resource.local.basic import Basic
     from angel_app.config import config
