@@ -18,48 +18,14 @@ def postConfigInit():
 
 def dance(options):
     from angel_app.log import getLogger
-    from angel_app.maintainer import client
-    from angel_app.graph import graphWalker
-    from angel_app.resource.local.basic import Basic
     from angel_app.config import config
-
+    from angel_app.maintainer import client
+    
     log = getLogger("maintainer")
     AngelConfig = config.getConfig()
     repository = AngelConfig.get("common", "repository")
-    log.info("starting inspection loop at: " + repository)
-
-    def getChildren(resource):
-        return [child for (child, path) in resource.findChildren("1")]
-    
-    def toEvaluate(foo, bar):
-        return (client.inspectResource(foo), None)
-    
-    assert(Basic(repository).exists()), "Root directory (%s) not found." % repository
-
-    import time
-    sleepTime = AngelConfig.getint("maintainer", "initialsleep")
-    traversalTime = AngelConfig.getint("maintainer", "treetraversaltime")
-    maxSleepTime = AngelConfig.getint("maintainer", "maxsleeptime")
-    while 1:
-        log.info("sleep timeout between resource inspections is: " + `sleepTime`)
-        startTime = int(time.time())
-
-        # register with the tracker
-        from angel_app.tracker.connectToTracker import connectToTracker
-        dummystats = connectToTracker()
-    
-        time.sleep(sleepTime)
-        for dummyii in graphWalker(Basic(repository), getChildren, toEvaluate):
-            time.sleep(sleepTime)
-            continue
-        
-        elapsedTime = int(time.time()) - startTime
-        if elapsedTime > traversalTime:
-            sleepTime = sleepTime / 2
-        else:
-            sleepTime = sleepTime * 2 + 1
-            if sleepTime > maxSleepTime:
-                sleepTime = maxSleepTime
+    log.info("starting maintenance loop at: " + repository)
+    client.maintenanceLoop()
 
 
 def boot():

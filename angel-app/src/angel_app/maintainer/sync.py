@@ -1,8 +1,6 @@
 """
 Routines for synchronizing a local clone with a _single_ remote peer.
 """
-
-
 import angel_app
 
 def syncContents(resource, referenceClone):
@@ -11,15 +9,12 @@ def syncContents(resource, referenceClone):
     """
     path = resource.fp.path
     
-
     if referenceClone.isCollection():
-        # handle directory
-        
+        # handle directory        
         if resource.exists() and not resource.isCollection():
             os.remove(path)
         if not resource.exists():
-            os.mkdir(path)
-    
+            os.mkdir(path)   
     else:
         # handle file
         readResponseIntoFile(resource, referenceClone)
