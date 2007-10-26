@@ -1,6 +1,7 @@
 """
 Routines for synchronizing a local clone with a _single_ remote peer.
 """
+from angel_app import elements
 import angel_app
 
 def syncContents(resource, referenceClone):

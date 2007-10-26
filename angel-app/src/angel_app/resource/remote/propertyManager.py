@@ -80,9 +80,13 @@ class PropertyManager(object):
 
     def isCollection(self):
         """
-        TODO: this currently works 
+        @see IReadOnlyContentManager
         """
-        return self.getProperty(rfc2518.ResourceType).children[0].sname() == rfc2518.Collection.sname()
+        resourceType = self.getProperty(rfc2518.ResourceType)
+        if 0 == len(resourceType.children):
+            return False
+        else:
+            return resourceType.children[0].sname() == rfc2518.Collection.sname()
     
     
     def _propertiesDocument(self, properties):

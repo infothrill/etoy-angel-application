@@ -11,6 +11,7 @@ from twisted.web2.dav.xattrprops import xattrPropertyStore
 from twisted.web2.http import HTTPError, StatusResponse
 from zope.interface import implements
 import time
+import urllib
 
 
 log = getLogger(__name__)
@@ -53,13 +54,17 @@ def inheritClones(resource):
         newPath = parentClone.path
         if newPath[-1] != "/":
             newPath += "/"
-        newPath += resource.quotedResourceName()
+        newPath += urllib.quote(resource.resourceName())
         return clone.Clone(
                            parentClone.host, 
                            parentClone.port, 
                            newPath)
         
     inheritedClones = map(adaptPaths, parentClones)
+    return inheritedClones
+
+def inheritClonesElement(resource):
+    inheritedClones = inheritClones(resource)
     clonesElement = clone.clonesToElement(inheritedClones)
     return clonesElement
 
@@ -80,7 +85,7 @@ defaultMetaData = {
                    elements.ContentSignature.qname()   : lambda x: elements.ContentSignature.fromString(""),
                    elements.MetaDataSignature.qname()  : lambda x: elements.MetaDataSignature.fromString(""),
                    elements.ResourceID.qname()         : lambda x: elements.ResourceID.fromString(makeResourceID(x.resource.relativePath())),
-                   elements.Clones.qname()             : lambda x: inheritClones(x.resource),
+                   elements.Clones.qname()             : lambda x: inheritClonesElement(x.resource),
                    elements.Children.qname()           : lambda x: elements.Children()
                    }
 
@@ -137,7 +142,7 @@ class PropertyManager(xattrPropertyStore):
         """
         import os.path
         if not os.path.exists(self.resource.fp.path):
-            error = "Resource %s not found in xattr lookup." % self.fp.path
+            error = "Resource %s not found in xattr lookup." % self.resource.fp.path
             log.warn(error)
             raise HTTPError(StatusResponse(responsecode.NOT_FOUND, error))
         
