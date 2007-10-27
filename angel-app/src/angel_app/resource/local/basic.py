@@ -1,17 +1,13 @@
 from angel_app import elements
 from angel_app.config import config
-from angel_app.contrib.ezPyCrypto import key as ezKey
+from angel_app.config.internal import loadKeysFromFile
 from angel_app.log import getLogger
 from angel_app.resource.local import util
 from angel_app.resource.local.contentManager import ContentManager
-from angel_app.resource.local.dirlist import DirectoryLister
 from angel_app.resource.local.propertyManager import PropertyManager
 from angel_app.resource.local.renderManager import RenderManager
 from angel_app.resource.resource import Resource
 from twisted.python.filepath import FilePath
-from twisted.web2 import http, stream
-from twisted.web2 import responsecode
-from twisted.web2.dav import davxml
 from twisted.web2.dav.element import rfc2518
 from twisted.web2.dav.static import DAVFile
 from twisted.web2.http import HTTPError
@@ -26,6 +22,10 @@ log = getLogger(__name__)
 # get config:
 AngelConfig = config.getConfig()
 repository = FilePath(AngelConfig.get("common","repository"))
+
+# the public keys of the secret keys we have
+keyRing = loadKeysFromFile().keys()
+print keyRing
 
 class Basic(DAVFile, Resource):
     """
@@ -97,7 +97,18 @@ class Basic(DAVFile, Resource):
             return True
         else:
             return False
+
+    def isWritableFile(self):
+        """
+        A file is writable, if we're the owner of that file, i.e. if
+        the signing key associated with the file is our local public key.
         
+        Alternatively, if the file does not exist yet, it's considered writable if 
+        the parent directory exists and is writable.
+        
+        @returns True if the location is writable, False otherwise
+        """
+        return self.publicKeyString() in keyRing      
     
     def verify(self):
         """

@@ -75,6 +75,9 @@ class BasicResourceTest(resourceTest.ResourceTest):
         """
         assert self.testResource.exists()
 
+    def testIsWritable(self):
+        assert self.testResource.isWritableFile()
+        assert Basic(repositoryPath).isWritableFile()
 
     def testReadFile(self):
         assert self.testText == Basic(self.testFilePath).open().read()  
