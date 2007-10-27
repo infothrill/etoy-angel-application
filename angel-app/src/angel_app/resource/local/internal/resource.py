@@ -146,6 +146,8 @@ class Crypto(
 
     def isWritableFile(self):
         """
+        DEPRECATED. Now included in Basic.
+        
         A file is writable, if we're the owner of that file, i.e. if
         the signing key associated with the file is our local public key.
         
