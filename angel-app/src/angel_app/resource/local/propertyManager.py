@@ -37,9 +37,6 @@ def inheritClones(resource):
     until one parent is found that does have clones. Will raise a RuntimeError if the root node has no
     clones.
     """
-    if resource.isRepositoryRoot():
-        return elements.Clones() # Root resource can not inherit clones, since it has no parent.
-
     from angel_app.resource.remote import clone
         
     parentClones = resource.parent().clones()
@@ -65,6 +62,8 @@ def inheritClones(resource):
     return inheritedClones
 
 def inheritClonesElement(resource):
+    if resource.isRepositoryRoot():
+        return elements.Clones() # Root resource can not inherit clones, since it has no parent.
     inheritedClones = inheritClones(resource)
     clonesElement = clonesToElement(inheritedClones)
     return clonesElement
