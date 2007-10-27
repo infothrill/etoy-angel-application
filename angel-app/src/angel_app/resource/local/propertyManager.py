@@ -5,12 +5,13 @@ Handle initialization of attributes with default values.
 from angel_app import elements
 from angel_app.log import getLogger
 from angel_app.resource.IReadonlyPropertyManager import IReadonlyPropertyManager
+from angel_app.resource.remote.clone import clonesToElement
 from twisted.web2 import responsecode
 from twisted.web2.dav.element.base import WebDAVElement
 from twisted.web2.dav.xattrprops import xattrPropertyStore
 from twisted.web2.http import HTTPError, StatusResponse
-from angel_app.resource.remote.clone import clonesToElement
 from zope.interface import implements
+import os.path
 import time
 import urllib
 
@@ -115,6 +116,11 @@ class PropertyManager(xattrPropertyStore):
         
         assert type(qname) == type(WebDAVElement.qname())
         
+        # if the resource doesn't yet exist, return a default value
+        if not os.path.exists(self.resource.fp.path):
+            if qname in self.defaultValues.keys():
+                return self.defaultValues[qname](self)
+            
         try:
             self.assertExistence()
         except:
@@ -140,7 +146,6 @@ class PropertyManager(xattrPropertyStore):
         """
         Raise and log an appropriate error if the resource does not exist on the file system.
         """
-        import os.path
         if not os.path.exists(self.resource.fp.path):
             error = "Resource %s not found in xattr lookup." % self.resource.fp.path
             log.warn(error)
