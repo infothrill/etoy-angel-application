@@ -204,6 +204,8 @@ def cloneHandler(property, store, request):
         return responsecode.OK
     
     if not newClone.ping() or not newClone.exists():
+        error = "Invalid PROPPATCH request. Can't connect to clone at: " + `newClone` + ". Falling back to IP."
+        log.info(error)
         # can't connect to the clone as advertised by "nodename",
         # the "nodename" defaults to something marginally useful, so this might be expected,
         # default to the request's originating ip address and try again.
