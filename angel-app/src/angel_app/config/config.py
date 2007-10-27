@@ -143,8 +143,8 @@ def getConfig(configfilename = getDefaultConfigFilePath()):
     if configObject == None:
         if configfilename is None: configfilename = getDefaultConfigFilePath()
         configObject = ConfigWrapper(configfilename)
-        
-    configObject.commit()
+        if (not os.path.isfile(configfilename)): # if config was non-existant, save it
+            configObject.commit()
     return configObject
 
 
