@@ -138,6 +138,9 @@ class BasicResourceTest(resourceTest.ResourceTest):
             assert path[-1] == os.sep
         assert urllib.url2pathname(url) == path
 
+    def testIsRoot(self):
+        assert False == self.testResource.isRepositoryRoot()
+
     def testFindChildren(self):
         """
         @return: an iterable over C{uri}.
@@ -153,7 +156,7 @@ class BasicResourceTest(resourceTest.ResourceTest):
         
     def testClones(self):
         """
-        Since the dirResource was freshly created, it's clones must all be inherited from the parent.
+        Since the dirResource was freshly created, its clones must all be inherited from the parent.
         """
         clones = self.testResource.clones()
         parentClones = self.testResource.parent().clones()
