@@ -9,6 +9,7 @@ from twisted.web2 import responsecode
 from twisted.web2.dav.element.base import WebDAVElement
 from twisted.web2.dav.xattrprops import xattrPropertyStore
 from twisted.web2.http import HTTPError, StatusResponse
+from angel_app.resource.remote.clone import clonesToElement
 from zope.interface import implements
 import time
 import urllib
@@ -65,7 +66,7 @@ def inheritClones(resource):
 
 def inheritClonesElement(resource):
     inheritedClones = inheritClones(resource)
-    clonesElement = clone.clonesToElement(inheritedClones)
+    clonesElement = clonesToElement(inheritedClones)
     return clonesElement
 
 

@@ -1,6 +1,8 @@
 """
 Routines for synchronizing a local clone with a _single_ remote peer.
 """
+import os
+
 from angel_app import elements
 import angel_app
 
