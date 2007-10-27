@@ -175,7 +175,7 @@ def defaultHandler(property, store):
                                 StatusResponse(
                                    responsecode.BAD_REQUEST, str(err))))
                 
-def pingBack(clone):  
+def pingBack(clone, request):  
     """
     Determine if the clone as advertised in the PROPPATCH request is reachable.
     """
@@ -230,7 +230,7 @@ def cloneHandler(property, store, request):
         # nothing needs to be done, pretend everything is fine
         return responsecode.OK
     
-    if not pingBack(newClone):
+    if not pingBack(newClone, request):
         error = "Can't connect to you. I will ignore you."
         response = StatusResponse(responsecode.BAD_REQUEST, error)
         return Failure(exc_value=HTTPError(response))
