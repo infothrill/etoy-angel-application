@@ -175,6 +175,33 @@ def defaultHandler(property, store):
                                 StatusResponse(
                                    responsecode.BAD_REQUEST, str(err))))
                 
+def pingBack(clone):  
+    """
+    Determine if the clone as advertised in the PROPPATCH request is reachable.
+    """
+    
+    if not clone.ping() or not clone.exists():
+        error = "Invalid PROPPATCH request. Can't connect to clone at: " + `newClone` + ". Falling back to IP."
+        log.info(error)
+        # can't connect to the clone as advertised by "nodename",
+        # the "nodename" defaults to something marginally useful, so this might be expected,
+        # default to the request's originating ip address and try again.
+        address = str(request.remoteAddr.host)
+        
+        if AngelConfig.getboolean("provider", "useIPv6"):
+            # if it's an IPv6 address, we need to add '[address]' around the IP address to generate
+            # a valid url
+            address = "[" + address + "]"
+            
+        newClone.host = address
+        # here, we should still expect to be fooled by NATs etc.
+        if not newClone.ping() or not newClone.exists():
+            error = "Invalid PROPPATCH request. Can't connect to clone at: " + `newClone`
+            log.info(error)
+            return False
+        
+    return True
+            
 def cloneHandler(property, store, request):
     """
     The host from which the request originates must have access to a local clone,
@@ -203,20 +230,10 @@ def cloneHandler(property, store, request):
         # nothing needs to be done, pretend everything is fine
         return responsecode.OK
     
-    if not newClone.ping() or not newClone.exists():
-        error = "Invalid PROPPATCH request. Can't connect to clone at: " + `newClone` + ". Falling back to IP."
-        log.info(error)
-        # can't connect to the clone as advertised by "nodename",
-        # the "nodename" defaults to something marginally useful, so this might be expected,
-        # default to the request's originating ip address and try again.
-        address = str(request.remoteAddr.host)
-        newClone.host = address
-        # here, we should still expect to be fooled by NATs etc.
-        if not newClone.ping() or not newClone.exists():
-            error = "Invalid PROPPATCH request. Can't connect to clone at: " + `newClone`
-            log.info(error)
-            response = StatusResponse(responsecode.BAD_REQUEST, error)
-            return Failure(exc_value=HTTPError(response))
+    if not pingBack(newClone):
+        error = "Can't connect to you. I will ignore you."
+        response = StatusResponse(responsecode.BAD_REQUEST, error)
+        return Failure(exc_value=HTTPError(response))
             
     return defaultHandler(clonesToElement(residentClones + [newClone]), store)     
 
