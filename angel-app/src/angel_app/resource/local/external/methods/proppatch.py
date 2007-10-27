@@ -181,7 +181,7 @@ def pingBack(clone):
     """
     
     if not clone.ping() or not clone.exists():
-        error = "Invalid PROPPATCH request. Can't connect to clone at: " + `newClone` + ". Falling back to IP."
+        error = "Invalid PROPPATCH request. Can't connect to clone at: " + `clone` + ". Falling back to IP."
         log.info(error)
         # can't connect to the clone as advertised by "nodename",
         # the "nodename" defaults to something marginally useful, so this might be expected,
@@ -193,10 +193,10 @@ def pingBack(clone):
             # a valid url
             address = "[" + address + "]"
             
-        newClone.host = address
+        clone.host = address
         # here, we should still expect to be fooled by NATs etc.
-        if not newClone.ping() or not newClone.exists():
-            error = "Invalid PROPPATCH request. Can't connect to clone at: " + `newClone`
+        if not clone.ping() or not clone.exists():
+            error = "Invalid PROPPATCH request. Can't connect to clone at: " + `clone`
             log.info(error)
             return False
         
