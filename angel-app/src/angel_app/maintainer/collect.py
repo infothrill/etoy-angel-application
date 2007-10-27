@@ -109,7 +109,9 @@ def iterateClones(cloneSeedList, publicKeyString, resourceID):
     
     return good, bad, unreachable
     
-    
+def eliminateSelfReferences(clones):
+    selfReferences = ["localhost", "127.0.0.1", AngelConfig.get("maintainer","nodename")]
+    return [cc for cc in clones if cc.host not in selfReferences] 
 
 def clonesToStore(goodClones, unreachableClones):
     """
@@ -128,10 +130,10 @@ def clonesToStore(goodClones, unreachableClones):
     """
     
     # set up a queue of good clones and unreachable clones, both in randomized sequence
-    gc = copy.copy(goodClones)
+    gc = copy.copy(eliminateSelfReferences(goodClones))
     random.shuffle(gc)
     
-    uc = copy.copy(unreachableClones)
+    uc = copy.copy(eliminateSelfReferences(unreachableClones))
     random.shuffle(uc)
     
     clonesWeMightStore = gc + uc

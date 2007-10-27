@@ -44,6 +44,18 @@ def newSleepTime(currentSleepTime, startTime):
             sleepTime = maxSleepTime
     return sleepTime
 
+def isMountOfMount(resource):
+    """
+    We don't replicate other people's mount points (to avoid circular mounts).
+    @return True if this resource is a mount point of a mount point, false otherwise.
+    """
+    if resource.isWritableFile() or resource.parent().isWritableFile():
+        # either the resource or its parent belong to us. no mount of a mount
+        return False
+    elif resource.publicKeyString() == resource.parent().publicKeyString():
+        return False
+
+    return True
        
 def getChildren(resource):
     """
@@ -54,6 +66,7 @@ def getChildren(resource):
     names = [cc.name for cc in childLinks]
     childPaths = [os.sep.join([resource.fp.path, nn]) for nn in names]
     childResources = [Basic(path) for path in childPaths]
+    cleanChildren = [rr for rr in childResources if not isMountOfMount(rr)]
     return childResources
 
 def traverseResourceTree(sleepTime):
