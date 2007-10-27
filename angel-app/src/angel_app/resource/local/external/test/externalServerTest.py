@@ -118,7 +118,7 @@ class ForbiddenTest(unittest.TestCase):
         from angel_app.resource.remote.clone import Clone
         
         # fake resource, modification of which should be disallowed 
-        dd = Clone("localhost", providerport, "/TEST")
+        dd = Clone("localhost", providerport, "/TEST/")
         assert dd.ping(), "Test resource root unreachable."
         
         methodsAndExpectedResponseCodes = [
@@ -176,7 +176,7 @@ class ForbiddenTest(unittest.TestCase):
 
         
         # fake resource, modification of which should be disallowed 
-        dd = clone.Clone("localhost", providerport, "/TEST")
+        dd = clone.Clone("localhost", providerport, "/TEST/")
         
         assert dd.ping(), "Test resource root unreachable. Make sure you have a running provider instance."
         

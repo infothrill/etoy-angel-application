@@ -57,7 +57,7 @@ class ResourceTest(localResourceTest.BasicResourceTest):
     testClone = Clone(
                       host = "localhost", 
                       port = AngelConfig.getint("presenter","listenPort"),
-                      path = "/TEST")
+                      path = "/TEST/")
 
     def setUp(self):
         super(ResourceTest, self).setUp()
