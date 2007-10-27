@@ -10,7 +10,7 @@ def connectToTracker():
     
     try:
         tracker = clone.Clone("missioneternity.org", 6223)
-        statistics = tracker._performRequestWithTimeOut("GET").read()
+        statistics = tracker.remote.performRequestWithTimeOut("GET").read()
         return statistics
     except:
         return "Tracker unavailable. Try connecting later."
