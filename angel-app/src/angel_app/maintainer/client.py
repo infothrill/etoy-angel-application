@@ -24,6 +24,7 @@ def inspectResource(af):
     available valid clones, updating if necessary, and then broadcasting my existence
     to whoever is inclined to listen.
     """
+    log.info("inspecting resource: " + af.fp.path)
     update.updateResource(af)
     sync.broadCastAddress(af)
     
