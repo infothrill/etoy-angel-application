@@ -377,7 +377,7 @@ class AngelMainFrame(wx.Frame):
         Shows the about window
         """
         from angel_app.gui.about import AboutWindow 
-        aboutWindow = AboutWindow(self, -1, _("About"), style=wx.DEFAULT_DIALOG_STYLE)
+        aboutWindow = AboutWindow(self, -1, _("About"), style=wx.DEFAULT_DIALOG_STYLE|wx.STAY_ON_TOP)
         aboutWindow.CentreOnScreen()
         aboutWindow.Show(True)
         
@@ -388,7 +388,7 @@ class AngelMainFrame(wx.Frame):
         from angel_app.gui.prefs import PrefsWindow 
         self.prefsWindow = PrefsWindow(self, -1, _("Preferences"),
                                         size=(-1, -1),
-                                        style=wx.DEFAULT_FRAME_STYLE)
+                                        style=wx.DEFAULT_FRAME_STYLE|wx.STAY_ON_TOP)
         self.prefsWindow.CentreOnScreen()
         self.prefsWindow.Show(True)
         
@@ -397,7 +397,7 @@ class AngelMainFrame(wx.Frame):
         Shows the license in a scroll box
         """
         from angel_app.gui.about import LicenseWindow 
-        licenseWindow = LicenseWindow(self, -1, _("Licence"), size=(500, 400), style=wx.DEFAULT_FRAME_STYLE)
+        licenseWindow = LicenseWindow(self, -1, _("Licence"), size=(500, 400), style=wx.DEFAULT_FRAME_STYLE|wx.STAY_ON_TOP)
         licenseWindow.CenterOnScreen()
         licenseWindow.Show(True)
 
