@@ -6,8 +6,8 @@ def py2appletWorkaroundIgnoreMe():
     """
     Import the other binaries, so py2applet takes them along in the packaging process.
     """
+    import xml.sax.drivers2.drv_pyexpat
     import maintainer, presenter, provider
-
 
 def main():
     import angel_app.proc.master
