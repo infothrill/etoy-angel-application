@@ -1,6 +1,8 @@
 """
 This module contains code to start the master process correctly, e.g. it contains mostly
 bootstrapping-code for the process.
+
+Attention: due to bootstrapping issues, the sequence of imports is relevant!
 """
 
 from angel_app.proc.common import postConfigInit
@@ -18,7 +20,6 @@ def boot():
     parser = OptionParser()
     parser.add_option("-d", "--daemon", dest="daemon", help="daemon mode?", default='')
     parser.add_option("-c", "--config", dest="config", help="alternative config file", default=None)
-    parser.add_option("-p", "--private", dest="private", help="private mode (no presenter)", action="store_true", default=False)
     (options, dummyargs) = parser.parse_args()
 
     appname = "master"
@@ -28,6 +29,12 @@ def boot():
     angelConfig = getConfig(options.config)
     postConfigInit()
     angelConfig.bootstrapping = False
+    # find out which processes are enabled:
+    options.procsToStart = []
+    for name in ['provider', 'presenter', 'maintainer']:
+        if angelConfig.getboolean(name, 'enable'):
+            # remember:
+            options.procsToStart.append(name)
 
     # setup/configure logging
     from angel_app.log import initializeLogging
@@ -57,7 +64,7 @@ def dance(options):
     import angel_app.proc.procmanager
     angel_app.logserver.startLoggingServer()
     # start processes _after_ starting the logging server!
-    angel_app.proc.procmanager.startProcesses(options.private)
+    angel_app.proc.procmanager.startProcesses(options.procsToStart)
     from twisted.internet import reactor
     reactor.run()
     

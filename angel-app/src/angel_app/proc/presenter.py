@@ -1,3 +1,5 @@
+import sys
+
 def bootInit():
     """
     Method to be called in __main__ before anything else. This method cannot rely on any
@@ -44,6 +46,11 @@ def boot():
         else:
             loghandlers.append('console')
     initializeLogging(appname, loghandlers)
+
+    if angelConfig.get(appname, 'enable') == False:
+        from angel_app.log import getLogger
+        getLogger().info("%s process is disabled in the configuration, quitting." % appname)
+        sys.exit(0)
 
     if len(options.daemon) > 0:
         from angel_app.proc import daemonizer

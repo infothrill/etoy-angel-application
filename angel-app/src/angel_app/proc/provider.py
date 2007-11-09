@@ -1,3 +1,4 @@
+import sys
 
 def bootInit():
     """
@@ -35,6 +36,7 @@ def dance(options):
     site = server.Site(root)
     reactor.listenTCP(providerport, channel.HTTPFactory(site), 50)
     getLogger().info("Listening on port %d and serving content from %s", providerport, repository)
+
     reactor.run()
 
 def boot():
@@ -64,6 +66,11 @@ def boot():
         else:
             loghandlers.append('console')
     initializeLogging(appname, loghandlers)
+
+    if angelConfig.get(appname, 'enable') == False:
+        from angel_app.log import getLogger
+        getLogger().info("%s process is disabled in the configuration, quitting." % appname)
+        sys.exit(0)
 
     if len(options.daemon) > 0:
         from angel_app.proc import daemonizer

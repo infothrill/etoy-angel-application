@@ -40,7 +40,7 @@ log = getLogger(__name__)
 
 binpath = os.getcwd() # this is used to find the scripts, so be sure to import this module before changing the working directory
 
-def startProcesses(privateMode = False):
+def startProcesses(procsToStart = ['provider', 'presenter', 'maintainer']):
     """
     This method ties together the classes in this module and
     instantiates/initializes and starts the complete suite of external
@@ -64,12 +64,14 @@ def startProcesses(privateMode = False):
     angelConfig = getConfig()
     cfg = angelConfig.getConfigFilename()
 
-    apps = [
-         (ProviderProtocol(), "provider.py"), 
-         (MaintainerProtocol(), "maintainer.py")
-         ]
-    if privateMode == False:
-        apps.append((PresenterProtocol(), "presenter.py"))
+    knownProcessProtocols = {
+                            'provider': ProviderProtocol, 
+                            'presenter': PresenterProtocol, 
+                            'maintainer': MaintainerProtocol, 
+                            }
+    apps = []
+    for procToStart in procsToStart:
+        apps.append( (knownProcessProtocols[procToStart](), "%s.py" % procToStart) )
 
     for protocol, scriptName in apps:
         process = ExternalProcess()

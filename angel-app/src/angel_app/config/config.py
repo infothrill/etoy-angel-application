@@ -69,14 +69,17 @@ def getDefaultConfigObj():
     consolelogformat = '%(consolelogformat)s'
     
     [presenter]
+    enable = True
     listenPort = 6222
     listenInterface = localhost
     
     [provider]
+    enable = True
     listenPort = 6221
     useIPv6 = False
     
     [maintainer]
+    enable = True
     initialsleep = 1 # it's nice to be fast on the first traversal
     treetraversaltime = 86400 # we want a tree traversal to take about one day after the initial sync
     maxsleeptime = 100
@@ -109,14 +112,17 @@ def _configspec_lines():
     consolelogformat = string
     
     [presenter]
+    enable = boolean(default=True)
     listenPort = integer(min=1025)
     listenInterface = string
     
     [provider]
+    enable = boolean(default=True)
     listenPort = integer(min=1025)
     useIPv6 = boolean(default=False)
     
     [maintainer]
+    enable = boolean(default=True)
     initialsleep = integer(min=1)
     treetraversaltime = integer(min=600)
     maxsleeptime = integer(min=2)    
