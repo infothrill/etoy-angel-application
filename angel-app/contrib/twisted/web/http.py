@@ -1,10 +1,11 @@
 # -*- test-case-name: twisted.web.test.test_http -*-
 
-# Copyright (c) 2001-2004 Twisted Matrix Laboratories.
+# Copyright (c) 2001-2007 Twisted Matrix Laboratories.
 # See LICENSE for details.
 
 
-"""HyperText Transfer Protocol implementation.
+"""
+HyperText Transfer Protocol implementation.
 
 This is used by twisted.web.
 
@@ -29,11 +30,12 @@ import time
 import calendar
 import warnings
 import os
+from urlparse import urlparse as _urlparse
 
 from zope.interface import implements
 
 # twisted imports
-from twisted.internet import interfaces, reactor, protocol, address, task
+from twisted.internet import interfaces, reactor, protocol, address
 from twisted.protocols import policies, basic
 from twisted.python import log
 try: # try importing the fast, C version
@@ -164,6 +166,34 @@ monthname = [None,
 weekdayname_lower = [name.lower() for name in weekdayname]
 monthname_lower = [name and name.lower() for name in monthname]
 
+def urlparse(url):
+    """
+    Parse an URL into six components.
+
+    This is similar to L{urlparse.urlparse}, but rejects C{unicode} input
+    and always produces C{str} output.
+
+    @type url: C{str}
+
+    @raise TypeError: The given url was a C{unicode} string instead of a
+    C{str}.
+
+    @rtype: six-tuple of str
+    @return: The scheme, net location, path, params, query string, and fragment
+    of the URL.
+    """
+    if isinstance(url, unicode):
+        raise TypeError("url must be str, not unicode")
+    scheme, netloc, path, params, query, fragment = _urlparse(url)
+    if isinstance(scheme, unicode):
+        scheme = scheme.encode('ascii')
+        netloc = netloc.encode('ascii')
+        path = path.encode('ascii')
+        query = query.encode('ascii')
+        fragment = fragment.encode('ascii')
+    return scheme, netloc, path, params, query, fragment
+
+
 def parse_qs(qs, keep_blank_values=0, strict_parsing=0, unquote=unquote):
     """like cgi.parse_qs, only with custom unquote function"""
     d = {}
@@ -291,7 +321,7 @@ def stringToDatetime(dateString):
         time = parts[3]
     else:
         raise ValueError("Unknown datetime format %r" % dateString)
-    
+
     day = int(day)
     month = int(monthname_lower.index(month.lower()))
     year = int(year)
@@ -300,7 +330,7 @@ def stringToDatetime(dateString):
 
 def toChunk(data):
     """Convert string to a chunk.
-    
+
     @returns: a tuple of strings representing the chunked encoding of data"""
     return ("%x\r\n" % len(data), data, "\r\n")
 
@@ -401,7 +431,7 @@ class HTTPClient(basic.LineReceiver):
             b = self.__buffer.getvalue()
             self.__buffer = None
             self.handleResponse(b)
-    
+
     def handleResponsePart(self, data):
         self.__buffer.write(data)
 
@@ -430,7 +460,7 @@ class Request:
 
     Subclasses should override the process() method to determine how
     the request will be processed.
-    
+
     @ivar method: The HTTP method that was used.
     @ivar uri: The full URI that was requested (includes arguments).
     @ivar path: The path only (arguments not included).
@@ -456,7 +486,7 @@ class Request:
     etag = None
     lastModified = None
     _forceSSL = 0
-    
+
     def __init__(self, channel, queued):
         """
         @param channel: the channel we're connected to.
@@ -614,10 +644,10 @@ class Request:
         """Register a producer."""
         if self.producer:
             raise ValueError, "registering producer %s before previous one (%s) was unregistered" % (producer, self.producer)
-        
+
         self.streamingProducer = streaming
         self.producer = producer
-        
+
         if self.queued:
             producer.pauseProducing()
         else:
@@ -625,7 +655,7 @@ class Request:
 
     def unregisterProducer(self):
         """Unregister the producer."""
-        if not self.queued:        
+        if not self.queued:
             self.transport.unregisterProducer()
         self.producer = None
 
@@ -661,7 +691,7 @@ class Request:
         if self.chunked:
             # write last chunk and closing CRLF
             self.transport.write("0\r\n\r\n")
-        
+
         # log request
         if hasattr(self.channel, "factory"):
             self.channel.factory.log(self)
@@ -766,7 +796,7 @@ class Request:
         """
         self.setResponseCode(FOUND)
         self.setHeader("location", url)
-    
+
     def setLastModified(self, when):
         """Set the X{Last-Modified} time for the response to this request.
 
@@ -835,10 +865,14 @@ class Request:
         return self.received_headers
 
     def getRequestHostname(self):
-        """Get the hostname that the user passed in to the request.
+        """
+        Get the hostname that the user passed in to the request.
 
         This will either use the Host: header (if it is available) or the
         host we are listening on if the header is unavailable.
+
+        @returns: the requested hostname
+        @rtype: C{str}
         """
         return (self.getHeader('host') or
                 socket.gethostbyaddr(self.getHost()[1])[0]
@@ -874,12 +908,30 @@ class Request:
         self.host = address.IPv4Address("TCP", host, port)
 
     def getClientIP(self):
+        """
+        Return the IP address of the client who submitted this request.
+
+        @returns: the client IP address
+        @rtype: C{str}
+        """
         if isinstance(self.client, address.IPv4Address):
             return self.client.host
         else:
             return None
 
     def isSecure(self):
+        """
+        Return True if this request is using a secure transport.
+
+        Normally this method returns True if this request's HTTPChannel
+        instance is using a transport that implements ISSLTransport.
+
+        This will also return True if setHost() has been called
+        with ssl=True.
+
+        @returns: True if this request is secure
+        @rtype: C{bool}
+        """
         if self._forceSSL:
             return True
         transport = getattr(getattr(self, 'channel', None), 'transport', None)
@@ -904,8 +956,16 @@ class Request:
         except:
             log.err()
             self.user = self.password = ""
-    
+
     def getUser(self):
+        """
+        Return the HTTP user sent with this request, if any.
+
+        If no user was supplied, return the empty string.
+
+        @returns: the HTTP user, if any
+        @rtype: C{str}
+        """
         try:
             return self.user
         except:
@@ -914,6 +974,14 @@ class Request:
         return self.user
 
     def getPassword(self):
+        """
+        Return the HTTP password sent with this request, if any.
+
+        If no password was supplied, return the empty string.
+
+        @returns: the HTTP password, if any
+        @rtype: C{str}
+        """
         try:
             return self.password
         except:
@@ -943,7 +1011,7 @@ class HTTPChannel(basic.LineReceiver, policies.TimeoutMixin):
     """A receiver for HTTP requests."""
 
     maxHeaders = 500 # max number of headers allowed per request
-    
+
     length = 0
     persistent = 1
     __header = ''
@@ -961,7 +1029,7 @@ class HTTPChannel(basic.LineReceiver, policies.TimeoutMixin):
 
     def connectionMade(self):
         self.setTimeout(self.timeOut)
-    
+
     def lineReceived(self, line):
         self.resetTimeout()
 
@@ -981,7 +1049,7 @@ class HTTPChannel(basic.LineReceiver, policies.TimeoutMixin):
             # create a new Request object
             request = self.requestFactory(self, len(self.requests))
             self.requests.append(request)
-            
+
             self.__first_line = 0
             parts = line.split()
             if len(parts) != 3:
@@ -1021,7 +1089,7 @@ class HTTPChannel(basic.LineReceiver, policies.TimeoutMixin):
         if len(reqHeaders) > self.maxHeaders:
             self.transport.write("HTTP/1.1 400 Bad Request\r\n\r\n")
             self.transport.loseConnection()
-            
+
     def allContentReceived(self):
         command = self._command
         path = self._path
@@ -1101,7 +1169,7 @@ class HTTPChannel(basic.LineReceiver, policies.TimeoutMixin):
                     self.setTimeout(self._savedTimeOut)
         else:
             self.transport.loseConnection()
-    
+
     def timeoutConnection(self):
         log.msg("Timing out client: %s" % str(self.transport.getPeer()))
         policies.TimeoutMixin.timeoutConnection(self)
@@ -1118,7 +1186,7 @@ class HTTPFactory(protocol.ServerFactory):
     protocol = HTTPChannel
 
     logPath = None
-    
+
     timeOut = 60 * 60 * 12
 
     def __init__(self, logPath=None, timeout=60*60*12):

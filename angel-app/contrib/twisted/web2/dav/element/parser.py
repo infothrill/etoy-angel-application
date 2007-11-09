@@ -121,7 +121,6 @@ class WebDAVContentHandler (xml.sax.handler.ContentHandler):
             class UnknownElement (WebDAVUnknownElement):
                 namespace = tag_namespace
                 name      = tag_name
-            #print "ASFADSFADFA: name unknown: " + `name`
             element_class = UnknownElement
         else:
             element_class = elements_by_tag_name[name]

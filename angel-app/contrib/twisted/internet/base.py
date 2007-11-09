@@ -1,9 +1,10 @@
 # -*- test-case-name: twisted.test.test_internet -*-
-# Copyright (c) 2001-2004 Twisted Matrix Laboratories.
+# Copyright (c) 2001-2007 Twisted Matrix Laboratories.
 # See LICENSE for details.
 
 
-"""Very basic functionality for a Reactor implementation.
+"""
+Very basic functionality for a Reactor implementation.
 
 API Stability: stable
 
@@ -13,11 +14,10 @@ Maintainer: U{Itamar Shtull-Trauring<mailto:twisted@itamarst.org>}
 import socket # needed only for sync-dns
 from zope.interface import implements, classImplements
 
-import imp
 import sys
 import warnings
 import operator
-from heapq import heappush, heappop, heapreplace, heapify
+from heapq import heappush, heappop, heapify
 
 try:
     import fcntl
@@ -30,13 +30,14 @@ from twisted.internet.interfaces import IResolverSimple, IReactorPluggableResolv
 from twisted.internet.interfaces import IConnector, IDelayedCall
 from twisted.internet import main, error, abstract, defer, threads
 from twisted.python import log, failure, reflect
-from twisted.python.runtime import seconds, platform
+from twisted.python.runtime import seconds as runtimeSeconds, platform
 from twisted.internet.defer import Deferred, DeferredList
 from twisted.persisted import styles
 
 # This import is for side-effects!  Even if you don't see any code using it
 # in this module, don't delete it.
 from twisted.python import threadable
+
 
 class DelayedCall(styles.Ephemeral):
 
@@ -46,7 +47,8 @@ class DelayedCall(styles.Ephemeral):
     debug = False
     _str = None
 
-    def __init__(self, time, func, args, kw, cancel, reset, seconds=None):
+    def __init__(self, time, func, args, kw, cancel, reset,
+                 seconds=runtimeSeconds):
         """
         @param time: Seconds from the epoch at which to call C{func}.
         @param func: The callable to call.
@@ -115,16 +117,13 @@ class DelayedCall(styles.Ephemeral):
         elif self.called:
             raise error.AlreadyCalled
         else:
-            if self.seconds is None:
-                new_time = seconds() + secondsFromNow
-            else:
-                new_time = self.seconds() + secondsFromNow
-            if new_time < self.time:
+            newTime = self.seconds() + secondsFromNow
+            if newTime < self.time:
                 self.delayed_time = 0
-                self.time = new_time
+                self.time = newTime
                 self.resetter(self)
             else:
-                self.delayed_time = new_time - self.time
+                self.delayed_time = newTime - self.time
 
     def delay(self, secondsLater):
         """Reschedule this call for a later time
@@ -175,10 +174,7 @@ class DelayedCall(styles.Ephemeral):
         else:
             func = None
 
-        if self.seconds is None:
-            now = seconds()
-        else:
-            now = self.seconds()
+        now = self.seconds()
         L = ["<DelayedCall %s [%ss] called=%s cancelled=%s" % (
                 id(self), self.time - now, self.called, self.cancelled)]
         if func is not None:
@@ -254,14 +250,157 @@ class BlockingResolver:
         else:
             return defer.succeed(address)
 
+
+class _ThreePhaseEvent(object):
+    """
+    Collection of callables (with arguments) which can be invoked as a group in
+    a particular order.
+
+    This provides the underlying implementation for the reactor's system event
+    triggers.  An instance of this class tracks triggers for all phases of a
+    single type of event.
+
+    @ivar before: A list of the before-phase triggers containing three-tuples
+        of a callable, a tuple of positional arguments, and a dict of keyword
+        arguments
+
+    @ivar finishedBefore: A list of the before-phase triggers which have
+        already been executed.  This is only populated in the C{'BEFORE'} state.
+
+    @ivar during: A list of the during-phase triggers containing three-tuples
+        of a callable, a tuple of positional arguments, and a dict of keyword
+        arguments
+
+    @ivar after: A list of the after-phase triggers containing three-tuples
+        of a callable, a tuple of positional arguments, and a dict of keyword
+        arguments
+
+    @ivar state: A string indicating what is currently going on with this
+        object.  One of C{'BASE'} (for when nothing in particular is happening;
+        this is the initial value), C{'BEFORE'} (when the before-phase triggers
+        are in the process of being executed).
+    """
+    def __init__(self):
+        self.before = []
+        self.during = []
+        self.after = []
+        self.state = 'BASE'
+
+
+    def addTrigger(self, phase, callable, *args, **kwargs):
+        """
+        Add a trigger to the indicate phase.
+
+        @param phase: One of C{'before'}, C{'during'}, or C{'after'}.
+
+        @param callable: An object to be called when this event is triggered.
+        @param *args: Positional arguments to pass to C{callable}.
+        @param **kwargs: Keyword arguments to pass to C{callable}.
+
+        @return: An opaque handle which may be passed to L{removeTrigger} to
+            reverse the effects of calling this method.
+        """
+        if phase not in ('before', 'during', 'after'):
+            raise KeyError("invalid phase")
+        getattr(self, phase).append((callable, args, kwargs))
+        return phase, callable, args, kwargs
+
+
+    def removeTrigger(self, handle):
+        """
+        Remove a previously added trigger callable.
+
+        @param handle: An object previously returned by L{addTrigger}.  The
+            trigger added by that call will be removed.
+
+        @raise ValueError: If the trigger associated with C{handle} has already
+            been removed or if C{handle} is not a valid handle.
+        """
+        return getattr(self, 'removeTrigger_' + self.state)(handle)
+
+
+    def removeTrigger_BASE(self, handle):
+        """
+        Just try to remove the trigger.
+
+        @see removeTrigger
+        """
+        try:
+            phase, callable, args, kwargs = handle
+        except (TypeError, ValueError), e:
+            raise ValueError("invalid trigger handle")
+        else:
+            if phase not in ('before', 'during', 'after'):
+                raise KeyError("invalid phase")
+            getattr(self, phase).remove((callable, args, kwargs))
+
+
+    def removeTrigger_BEFORE(self, handle):
+        """
+        Remove the trigger if it has yet to be executed, otherwise emit a
+        warning that in the future an exception will be raised when removing an
+        already-executed trigger.
+
+        @see removeTrigger
+        """
+        phase, callable, args, kwargs = handle
+        if phase != 'before':
+            return self.removeTrigger_BASE(handle)
+        if (callable, args, kwargs) in self.finishedBefore:
+            warnings.warn(
+                "Removing already-fired system event triggers will raise an "
+                "exception in a future version of Twisted.",
+                category=DeprecationWarning,
+                stacklevel=3)
+        else:
+            self.removeTrigger_BASE(handle)
+
+
+    def fireEvent(self):
+        """
+        Call the triggers added to this event.
+        """
+        self.state = 'BEFORE'
+        self.finishedBefore = []
+        beforeResults = []
+        while self.before:
+            callable, args, kwargs = self.before.pop(0)
+            self.finishedBefore.append((callable, args, kwargs))
+            try:
+                result = callable(*args, **kwargs)
+            except:
+                log.err()
+            else:
+                if isinstance(result, Deferred):
+                    beforeResults.append(result)
+        DeferredList(beforeResults).addCallback(self._continueFiring)
+
+
+    def _continueFiring(self, ignored):
+        """
+        Call the during and after phase triggers for this event.
+        """
+        self.state = 'BASE'
+        self.finishedBefore = []
+        for phase in self.during, self.after:
+            while phase:
+                callable, args, kwargs = phase.pop(0)
+                try:
+                    callable(*args, **kwargs)
+                except:
+                    log.err()
+
+
+
 class ReactorBase(object):
-    """Default base class for Reactors.
+    """
+    Default base class for Reactors.
     """
 
     implements(IReactorCore, IReactorTime, IReactorPluggableResolver)
 
-    installed = 0
-    usingThreads = 0
+    installed = False
+    usingThreads = False
     resolver = BlockingResolver()
 
     __name__ = "twisted.internet.reactor"
@@ -272,7 +411,7 @@ class ReactorBase(object):
         self._pendingTimedCalls = []
         self._newTimedCalls = []
         self._cancellations = 0
-        self.running = 0
+        self.running = False
         self.waker = None
 
         self.addSystemEventTrigger('during', 'shutdown', self.crash)
@@ -326,9 +465,7 @@ class ReactorBase(object):
         """
         if not name:
             # XXX - This is *less than* '::', and will screw up IPv6 servers
-            #return defer.succeed('0.0.0.0')
-            # workaround for IPv6
-            return defer.succeed('::')
+            return defer.succeed('0.0.0.0')
         if abstract.isIPAddress(name):
             return defer.succeed(name)
         return self.resolver.getHostByName(name, timeout)
@@ -338,16 +475,19 @@ class ReactorBase(object):
     # IReactorCore
 
     def stop(self):
-        """See twisted.internet.interfaces.IReactorCore.stop.
+        """
+        See twisted.internet.interfaces.IReactorCore.stop.
         """
         if not self.running:
-            raise RuntimeError, "can't stop reactor that isn't running"
+            raise error.ReactorNotRunning(
+                "Can't stop reactor that isn't running.")
         self.fireSystemEvent("shutdown")
 
     def crash(self):
-        """See twisted.internet.interfaces.IReactorCore.crash.
         """
-        self.running = 0
+        See twisted.internet.interfaces.IReactorCore.crash.
+        """
+        self.running = False
 
     def sigInt(self, *args):
         """Handle a SIGINT interrupt.
@@ -383,64 +523,31 @@ class ReactorBase(object):
         self.runUntilCurrent()
         self.doIteration(delay)
 
+
     def fireSystemEvent(self, eventType):
         """See twisted.internet.interfaces.IReactorCore.fireSystemEvent.
         """
-        sysEvtTriggers = self._eventTriggers.get(eventType)
-        if not sysEvtTriggers:
-            return
-        defrList = []
-        for callable, args, kw in sysEvtTriggers[0]:
-            try:
-                d = callable(*args, **kw)
-            except:
-                log.deferr()
-            else:
-                if isinstance(d, Deferred):
-                    defrList.append(d)
-        if defrList:
-            DeferredList(defrList).addBoth(self._cbContinueSystemEvent, eventType)
-        else:
-            self.callLater(0, self._continueSystemEvent, eventType)
+        event = self._eventTriggers.get(eventType)
+        if event is not None:
+            event.fireEvent()
 
-
-    def _cbContinueSystemEvent(self, result, eventType):
-        self._continueSystemEvent(eventType)
-
-
-    def _continueSystemEvent(self, eventType):
-        sysEvtTriggers = self._eventTriggers.get(eventType)
-        for callList in sysEvtTriggers[1], sysEvtTriggers[2]:
-            for callable, args, kw in callList:
-                try:
-                    callable(*args, **kw)
-                except:
-                    log.deferr()
-        # now that we've called all callbacks, no need to store
-        # references to them anymore, in fact this can cause problems.
-        del self._eventTriggers[eventType]
 
     def addSystemEventTrigger(self, _phase, _eventType, _f, *args, **kw):
         """See twisted.internet.interfaces.IReactorCore.addSystemEventTrigger.
         """
         assert callable(_f), "%s is not callable" % _f
-        if self._eventTriggers.has_key(_eventType):
-            triglist = self._eventTriggers[_eventType]
-        else:
-            triglist = [[], [], []]
-            self._eventTriggers[_eventType] = triglist
-        evtList = triglist[{"before": 0, "during": 1, "after": 2}[_phase]]
-        evtList.append((_f, args, kw))
-        return (_phase, _eventType, (_f, args, kw))
+        if _eventType not in self._eventTriggers:
+            self._eventTriggers[_eventType] = _ThreePhaseEvent()
+        return (_eventType, self._eventTriggers[_eventType].addTrigger(
+            _phase, _f, *args, **kw))
+
 
     def removeSystemEventTrigger(self, triggerID):
         """See twisted.internet.interfaces.IReactorCore.removeSystemEventTrigger.
         """
-        phase, eventType, item = triggerID
-        self._eventTriggers[eventType][{"before": 0,
-                                        "during": 1,
-                                        "after":  2}[phase]
-                                       ].remove(item)
+        eventType, handle = triggerID
+        self._eventTriggers[eventType].removeTrigger(handle)
+
 
     def callWhenRunning(self, _callable, *args, **kw):
         """See twisted.internet.interfaces.IReactorCore.callWhenRunning.
@@ -451,7 +558,26 @@ class ReactorBase(object):
             return self.addSystemEventTrigger('after', 'startup',
                                               _callable, *args, **kw)
 
+    def startRunning(self):
+        """
+        Method called when reactor starts: do some initialization and fire
+        startup events.
+
+        Don't call this directly, call reactor.run() instead: it should take
+        care of calling this.
+        """
+        if self.running:
+            warnings.warn(
+                    "Reactor already running! This behavior is deprecated "
+                    "since Twisted 2.6, it will raise an exception starting "
+                    "Twisted 2.7", category=DeprecationWarning, stacklevel=3)
+        self.running = True
+        threadable.registerAsIOThread()
+        self.fireSystemEvent('startup')
+
     # IReactorTime
+
+    seconds = staticmethod(runtimeSeconds)
 
     def callLater(self, _seconds, _f, *args, **kw):
         """See twisted.internet.interfaces.IReactorTime.callLater.
@@ -459,9 +585,10 @@ class ReactorBase(object):
         assert callable(_f), "%s is not callable" % _f
         assert sys.maxint >= _seconds >= 0, \
                "%s is not greater than or equal to 0 seconds" % (_seconds,)
-        tple = DelayedCall(seconds() + _seconds, _f, args, kw,
+        tple = DelayedCall(self.seconds() + _seconds, _f, args, kw,
                            self._cancelCallLater,
-                           self._moveCallLaterSooner)
+                           self._moveCallLaterSooner,
+                           seconds=self.seconds)
         self._newTimedCalls.append(tple)
         return tple
 
@@ -519,7 +646,7 @@ class ReactorBase(object):
         if not self._pendingTimedCalls:
             return None
 
-        return max(0, self._pendingTimedCalls[0].time - seconds())
+        return max(0, self._pendingTimedCalls[0].time - self.seconds())
 
     def runUntilCurrent(self):
         """Run all pending timed calls.
@@ -542,11 +669,11 @@ class ReactorBase(object):
             if self.threadCallQueue:
                 if self.waker:
                     self.waker.wakeUp()
- 
+
         # insert new delayed calls now
         self._insertNewDelayedCalls()
 
-        now = seconds()
+        now = self.seconds()
         while self._pendingTimedCalls and (self._pendingTimedCalls[0].time <= now):
             call = heappop(self._pendingTimedCalls)
             if call.cancelled:
@@ -583,14 +710,17 @@ class ReactorBase(object):
     # IReactorThreads
     if platform.supportsThreads():
         threadpool = None
+        # ID of the trigger stopping the threadpool
+        threadpoolShutdownID = None
 
         def _initThreads(self):
-            self.usingThreads = 1
+            self.usingThreads = True
             self.resolver = ThreadedResolver(self)
             self.installWaker()
 
         def callFromThread(self, f, *args, **kw):
-            """See twisted.internet.interfaces.IReactorThreads.callFromThread.
+            """
+            See L{twisted.internet.interfaces.IReactorThreads.callFromThread}.
             """
             assert callable(f), "%s is not callable" % (f,)
             # lists are thread-safe in CPython, but not in Jython
@@ -600,24 +730,38 @@ class ReactorBase(object):
             self.wakeUp()
 
         def _initThreadPool(self):
+            """
+            Create the threadpool accessible with callFromThread.
+            """
             from twisted.python import threadpool
             self.threadpool = threadpool.ThreadPool(0, 10, 'twisted.internet.reactor')
             self.callWhenRunning(self.threadpool.start)
-            self.addSystemEventTrigger('during', 'shutdown', self.threadpool.stop)
+            self.threadpoolShutdownID = self.addSystemEventTrigger(
+                'during', 'shutdown', self._stopThreadPool)
+
+        def _stopThreadPool(self):
+            """
+            Stop the reactor threadpool.
+            """
+            self.threadpoolShutdownID = None
+            self.threadpool.stop()
+            self.threadpool = None
 
         def callInThread(self, _callable, *args, **kwargs):
-            """See twisted.internet.interfaces.IReactorThreads.callInThread.
+            """
+            See L{twisted.internet.interfaces.IReactorThreads.callInThread}.
             """
             if self.threadpool is None:
                 self._initThreadPool()
             self.threadpool.callInThread(_callable, *args, **kwargs)
 
         def suggestThreadPoolSize(self, size):
-            """See twisted.internet.interfaces.IReactorThreads.suggestThreadPoolSize.
             """
-            if size == 0 and not self.threadpool:
+            See L{twisted.internet.interfaces.IReactorThreads.suggestThreadPoolSize}.
+            """
+            if size == 0 and self.threadpool is None:
                 return
-            if not self.threadpool:
+            if self.threadpool is None:
                 self._initThreadPool()
             self.threadpool.adjustPoolsize(maxthreads=size)
     else:

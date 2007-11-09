@@ -1,6 +1,6 @@
 # -*- test-case-name: twisted.test.test_defer -*-
 #
-# Copyright (c) 2001-2004 Twisted Matrix Laboratories.
+# Copyright (c) 2001-2007 Twisted Matrix Laboratories.
 # See LICENSE for details.
 
 
@@ -721,7 +721,7 @@ def _inlineCallbacks(result, g, deferred):
         try:
             # Send the last result back as the result of the yield expression.
             if isinstance(result, failure.Failure):
-                result = g.throw(result.type, result.value, result.tb)
+                result = result.throwExceptionIntoGenerator(g)
             else:
                 result = g.send(result)
         except StopIteration:
@@ -777,7 +777,7 @@ def inlineCallbacks(f):
     regular sequential function. This function uses features of Python 2.5
     generators.  If you need to be compatible with Python 2.4 or before, use
     the L{deferredGenerator} function instead, which accomplishes the same
-    thing, but with somewhat more boilerplate.
+    thing, but with somewhat more boilerplate.  For example::
 
         def thingummy():
             thing = yield makeSomeRequestResultingInDeferred()
@@ -797,7 +797,7 @@ def inlineCallbacks(f):
     will cause the Deferred to have a result of None.
 
     The Deferred returned from your deferred generator may errback if your
-    generator raised an exception.
+    generator raised an exception::
 
         def thingummy():
             thing = yield makeSomeRequestResultingInDeferred()
@@ -993,6 +993,7 @@ class DeferredQueue(object):
             return d
         else:
             raise QueueUnderflow()
+
 
 
 __all__ = ["Deferred", "DeferredList", "succeed", "fail", "FAILURE", "SUCCESS",

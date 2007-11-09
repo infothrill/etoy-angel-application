@@ -1,11 +1,10 @@
 # -*- test-case-name: twisted.test.test_application -*-
-#
-# Copyright (c) 2001-2004 Twisted Matrix Laboratories.
+# Copyright (c) 2001-2007 Twisted Matrix Laboratories.
 # See LICENSE for details.
 
 import sys, os, pdb, getpass, traceback, signal
 
-from twisted.python import runtime, log, usage, reflect, failure, util, logfile
+from twisted.python import runtime, log, usage, failure, util, logfile
 from twisted.persisted import sob
 from twisted.application import service, reactors
 from twisted.internet import defer
@@ -13,6 +12,7 @@ from twisted import copyright
 
 # Expose the new implementation of installReactor at the old location.
 from twisted.application.reactors import installReactor
+from twisted.application.reactors import NoSuchReactor
 
 
 def runWithProfiler(reactor, config):
@@ -85,7 +85,7 @@ def fixPdb():
 
     def help_stop(self):
         print """stop - Continue execution, then cleanly shutdown the twisted reactor."""
-    
+
     def set_quit(self):
         os._exit(0)
 
@@ -151,10 +151,19 @@ class ApplicationRunner(object):
     def __init__(self, config):
         self.config = config
 
+
     def run(self):
-        """Run the application."""
+        """
+        Run the application.
+        """
         self.preApplication()
         self.application = self.createOrGetApplication()
+
+        # Later, try adapting self.application to ILogObserverFactory or
+        # whatever and getting an observer from it, instead.  Fall back to
+        # self.getLogObserver if the adaption fails.
+        self.startLogging(self.getLogObserver())
+
         self.postApplication()
 
 
@@ -164,6 +173,25 @@ class ApplicationRunner(object):
 
         This should set up any state necessary before loading and
         running the Application.
+        """
+        raise NotImplementedError
+
+
+    def startLogging(self, observer):
+        """
+        Initialize the logging system.
+
+        @param observer: The observer to add to the logging system.
+        """
+        log.startLoggingWithObserver(observer)
+        sys.stdout.flush()
+        initialLog()
+
+
+    def getLogObserver(self):
+        """
+        Create a log observer to be added to the logging system before running
+        this application.
         """
         raise NotImplementedError
 
@@ -255,12 +283,16 @@ class ReactorSelectionMixin:
     Provides options for selecting a reactor to install.
     """
     zsh_actions = {"reactor" : _reactorZshAction}
+    messageOutput = sys.stdout
+
+
     def opt_help_reactors(self):
         """
         Display a list of possibly available reactor names.
         """
         for r in reactors.getReactorTypes():
-            print '    ', r.shortName, '\t', r.description
+            self.messageOutput.write('    %-4s\t%s\n' %
+                                     (r.shortName, r.description))
         raise SystemExit(0)
 
 
@@ -273,7 +305,18 @@ class ReactorSelectionMixin:
         # runs and accidentally imports and installs the default reactor.
         #
         # This could probably be improved somehow.
-        installReactor(shortName)
+        try:
+            installReactor(shortName)
+        except NoSuchReactor:
+            msg = ("The specified reactor does not exist: '%s'.\n"
+                   "See the list of available reactors with "
+                   "--help-reactors" % (shortName,))
+            raise usage.UsageError(msg)
+        except Exception, e:
+            msg = ("The specified reactor cannot be used, failed with error: "
+                   "%s.\nSee the list of available reactors with "
+                   "--help-reactors" % (e,))
+            raise usage.UsageError(msg)
     opt_r = opt_reactor
 
 
@@ -405,7 +448,14 @@ def startApplication(application, save):
                                   service.IService(application).stopService)
 
 def getLogFile(logfilename):
-    logPath = os.path.abspath(logfilename)
-    logFile = logfile.LogFile(os.path.basename(logPath),
-                              os.path.dirname(logPath))
-    return logFile
+    """
+    Build a log file from the full path.
+    """
+    import warnings
+    warnings.warn(
+        "app.getLogFile is deprecated. Use "
+        "twisted.python.logfile.LogFile.fromFullPath instead",
+        DeprecationWarning, stacklevel=2)
+
+    return logfile.LogFile.fromFullPath(logfilename)
+

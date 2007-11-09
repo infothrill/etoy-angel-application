@@ -1,6 +1,4 @@
-# -*- test-case-name: twisted.trial.test.test_runner -*-
-
-# Copyright (c) 2005 Twisted Matrix Laboratories.
+# Copyright (c) 2005-2007 Twisted Matrix Laboratories.
 # See LICENSE for details.
 #
 # Maintainer: Jonathan Lange <jml@twistedmatrix.com>
@@ -46,7 +44,7 @@ class CapturingReporter(object):
     separator = None
     testsRun = None
 
-    def __init__(self, tbformat=None, args=None, realtime=None):
+    def __init__(self, *a, **kw):
         """
         Create a capturing reporter.
         """
@@ -130,10 +128,13 @@ class TestTrialRunner(unittest.TestCase):
         return log.theLogPublisher.observers
 
     def test_addObservers(self):
+        """
+        Tests that the runner add logging observers during the run.
+        """
         originalCount = len(self._getObservers())
         self.runner.run(self.test)
         newCount = len(self._getObservers())
-        self.failUnlessEqual(originalCount + 2, newCount)
+        self.failUnlessEqual(originalCount + 1, newCount)
 
     def test_addObservers_repeat(self):
         self.runner.run(self.test)
@@ -143,18 +144,47 @@ class TestTrialRunner(unittest.TestCase):
         self.failUnlessEqual(count, newCount)
 
     def test_logFileAlwaysActive(self):
-        """test that a new file is opened on each run"""
+        """
+        Test that a new file is opened on each run.
+        """
+        oldSetUpLogging = self.runner._setUpLogging
+        l = []
+        def setUpLogging():
+            oldSetUpLogging()
+            l.append(self.runner._logFileObserver)
+        self.runner._setUpLogging = setUpLogging
         self.runner.run(self.test)
-        fd = self.runner._logFileObserver
         self.runner.run(self.test)
-        fd2 = self.runner._logFileObserver
-        self.failIf(fd is fd2, "Should have created a new file observer")
+        self.failUnlessEqual(len(l), 2)
+        self.failIf(l[0] is l[1], "Should have created a new file observer")
 
     def test_logFileGetsClosed(self):
+        """
+        Test that file created is closed during the run.
+        """
+        oldSetUpLogging = self.runner._setUpLogging
+        l = []
+        def setUpLogging():
+            oldSetUpLogging()
+            l.append(self.runner._logFileObject)
+        self.runner._setUpLogging = setUpLogging
         self.runner.run(self.test)
-        fd = self.runner._logFileObject
-        self.runner.run(self.test)
-        self.failUnless(fd.closed)
+        self.failUnlessEqual(len(l), 1)
+        self.failUnless(l[0].closed)
+
+
+
+class TrialRunnerWithUncleanWarningsReporter(TestTrialRunner):
+    """
+    Tests for the TrialRunner's interaction with an unclean-error suppressing
+    reporter.
+    """
+
+    def setUp(self):
+        self.stream = StringIO.StringIO()
+        self.runner = runner.TrialRunner(CapturingReporter, stream=self.stream,
+                                         uncleanWarnings=True)
+        self.test = TestTrialRunner('test_empty')
 
 
 
@@ -202,7 +232,6 @@ class DryRunMixin(object):
 
 
 
-
 class DryRunTest(DryRunMixin, unittest.TestCase):
     """
     Check that 'dry run' mode works well with Trial tests.
@@ -230,9 +259,7 @@ class PyUnitDryRunTest(DryRunMixin, unittest.TestCase):
 
 
 class TestRunner(unittest.TestCase):
-
     def setUp(self):
-        self.runners = []
         self.config = trial.Options()
         # whitebox hack a reporter in, because plugins are CACHED and will
         # only reload if the FILE gets changed.
@@ -268,19 +295,18 @@ class TestRunner(unittest.TestCase):
 
 
     def tearDown(self):
-        for x in self.runners:
-            x._tearDownLogFile()
-        self.runners = []
         plugin.getPlugins = self.original
 
 
     def parseOptions(self, args):
         self.config.parseOptions(args)
 
+
     def getRunner(self):
         r = trial._makeRunner(self.config)
-        self.runners.append(r)
+        self.addCleanup(r._tearDownLogFile)
         return r
+
 
     def test_runner_can_get_reporter(self):
         self.parseOptions([])
@@ -291,11 +317,37 @@ class TestRunner(unittest.TestCase):
         finally:
             my_runner._tearDownLogFile()
 
+
     def test_runner_get_result(self):
         self.parseOptions([])
         my_runner = self.getRunner()
         result = my_runner._makeResult()
         self.assertEqual(result.__class__, self.config['reporter'])
+
+
+    def test_uncleanWarningsOffByDefault(self):
+        """
+        By default Trial sets the 'uncleanWarnings' option on the runner to
+        False. This means that dirty reactor errors will be reported as
+        errors. See L{test_reporter.TestDirtyReactor}.
+        """
+        self.parseOptions([])
+        runner = self.getRunner()
+        self.assertNotIsInstance(runner._makeResult(),
+                                 reporter.UncleanWarningsReporterWrapper)
+
+
+    def test_getsUncleanWarnings(self):
+        """
+        Specifying '--unclean-warnings' on the trial command line will cause
+        reporters to be wrapped in a device which converts unclean errors to
+        warnings.  See L{test_reporter.TestDirtyReactor} for implications.
+        """
+        self.parseOptions(['--unclean-warnings'])
+        runner = self.getRunner()
+        self.assertIsInstance(runner._makeResult(),
+                              reporter.UncleanWarningsReporterWrapper)
+
 
     def test_runner_working_directory(self):
         self.parseOptions(['--temp-directory', 'some_path'])
@@ -304,6 +356,7 @@ class TestRunner(unittest.TestCase):
             self.assertEquals(runner.workingDirectory, 'some_path')
         finally:
             runner._tearDownLogFile()
+
 
     def test_runner_normal(self):
         self.parseOptions(['--temp-directory', self.mktemp(),
@@ -314,6 +367,7 @@ class TestRunner(unittest.TestCase):
         suite = loader.loadByName('twisted.trial.test.sample', True)
         result = my_runner.run(suite)
         self.assertEqual(self.standardReport, result._calls)
+
 
     def test_runner_debug(self):
         self.parseOptions(['--reporter', 'capturing',
@@ -343,6 +397,9 @@ class TestTrialSuite(unittest.TestCase):
 
 class TestUntilFailure(unittest.TestCase):
     class FailAfter(unittest.TestCase):
+        """
+        A test  case that fails when run 3 times in a row.
+        """
         count = []
         def test_foo(self):
             self.count.append(None)
@@ -352,14 +409,44 @@ class TestUntilFailure(unittest.TestCase):
     def setUp(self):
         TestUntilFailure.FailAfter.count = []
         self.test = TestUntilFailure.FailAfter('test_foo')
+        self.stream = StringIO.StringIO()
+        self.runner = runner.TrialRunner(reporter.Reporter, stream=self.stream)
 
     def test_runUntilFailure(self):
-        stream = StringIO.StringIO()
-        trialRunner = runner.TrialRunner(reporter.Reporter, stream=stream)
-        result = trialRunner.runUntilFailure(self.test)
+        """
+        Test that the runUntilFailure method of the runner actually fail after
+        a few runs.
+        """
+        result = self.runner.runUntilFailure(self.test)
         self.failUnlessEqual(result.testsRun, 1)
         self.failIf(result.wasSuccessful())
-        self.failUnlessEqual(len(result.failures), 1)
+        self.assertEquals(self._getFailures(result), 1)
+
+    def _getFailures(self, result):
+        """
+        Get the number of failures that were reported to a result.
+        """
+        return len(result.failures)
+
+
+
+class UncleanUntilFailureTests(TestUntilFailure):
+    """
+    Test that the run-until-failure feature works correctly with the unclean
+    error suppressor.
+    """
+
+    def setUp(self):
+        TestUntilFailure.setUp(self)
+        self.runner = runner.TrialRunner(reporter.Reporter, stream=self.stream,
+                                         uncleanWarnings=True)
+
+    def _getFailures(self, result):
+        """
+        Get the number of failures that were reported to a result that
+        is wrapped in an UncleanFailureWrapper.
+        """
+        return len(result.original.failures)
 
 
 
@@ -442,6 +529,8 @@ class TestErrorHolder(TestTestHolder):
             error = failure.Failure()
         self.holder = runner.ErrorHolder(self.description, error)
 
+
+
 class TestMalformedMethod(unittest.TestCase):
     """
     Test that trial manages when test methods don't have correct signatures.
@@ -457,6 +546,9 @@ class TestMalformedMethod(unittest.TestCase):
         test_spam = defer.deferredGenerator(test_bar)
 
     def _test(self, method):
+        """
+        Wrapper for one of the test method of L{ContainMalformed}.
+        """
         stream = StringIO.StringIO()
         trialRunner = runner.TrialRunner(reporter.Reporter, stream=stream)
         test = TestMalformedMethod.ContainMalformed(method)
@@ -482,4 +574,67 @@ class TestMalformedMethod(unittest.TestCase):
         Test a decorated method also fails.
         """
         self._test('test_spam')
+
+
+
+class DestructiveTestSuiteTestCase(unittest.TestCase):
+    """
+    Test for L{runner.DestructiveTestSuite}.
+    """
+
+    def test_basic(self):
+        """
+        Thes destructive test suite should run the tests normally.
+        """
+        called = []
+        class MockTest(unittest.TestCase):
+            def test_foo(test):
+                called.append(True)
+        test = MockTest('test_foo')
+        result = reporter.TestResult()
+        suite = runner.DestructiveTestSuite([test])
+        self.assertEquals(called, [])
+        suite.run(result)
+        self.assertEquals(called, [True])
+        self.assertEquals(suite.countTestCases(), 0)
+
+
+    def test_shouldStop(self):
+        """
+        Test the C{shouldStop} management: raising a C{KeyboardInterrupt} must
+        interrupt the suite.
+        """
+        called = []
+        class MockTest(unittest.TestCase):
+            def test_foo1(test):
+                called.append(1)
+            def test_foo2(test):
+                raise KeyboardInterrupt()
+            def test_foo3(test):
+                called.append(2)
+        result = reporter.TestResult()
+        loader = runner.TestLoader()
+        loader.suiteFactory = runner.DestructiveTestSuite
+        suite = loader.loadClass(MockTest)
+        self.assertEquals(called, [])
+        suite.run(result)
+        self.assertEquals(called, [1])
+        # The last test shouldn't have been run
+        self.assertEquals(suite.countTestCases(), 1)
+
+
+    def test_cleanup(self):
+        """
+        Checks that the test suite cleanups its tests during the run, so that
+        it ends empty.
+        """
+        class MockTest(unittest.TestCase):
+            def test_foo(test):
+                pass
+        test = MockTest('test_foo')
+        result = reporter.TestResult()
+        suite = runner.DestructiveTestSuite([test])
+        self.assertEquals(suite.countTestCases(), 1)
+        suite.run(result)
+        self.assertEquals(suite.countTestCases(), 0)
 

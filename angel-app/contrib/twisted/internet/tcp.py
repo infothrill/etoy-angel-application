@@ -663,9 +663,6 @@ class Server(Connection):
 
         This indicates the server's address.
         """
-        # more IPv6 hackery
-        #aa = self.socket.getsockname()
-        # return address.IPv4Address('TCP', *((aa[0], aa[1]) + ('INET',)))
         return address.IPv4Address('TCP', *(self.socket.getsockname() + ('INET',)))
 
     def getPeer(self):
@@ -673,8 +670,6 @@ class Server(Connection):
 
         This indicates the client's address.
         """
-        # this is most certainly not an IPv4 address, but hey...
-        #return address.IPv4Address('TCP', *((self.client[0], self.client[1]) + ('INET',)))
         return address.IPv4Address('TCP', *(self.client + ('INET',)))
 
 class Port(base.BasePort, _SocketCloser):
@@ -692,7 +687,6 @@ class Port(base.BasePort, _SocketCloser):
     implements(interfaces.IListeningPort)
 
     addressFamily = socket.AF_INET
-    #addressFamily = socket.AF_INET6
     socketType = socket.SOCK_STREAM
 
     transport = Server
@@ -808,9 +802,7 @@ class Port(base.BasePort, _SocketCloser):
                         break
                     raise
 
-                # IPv6 workaround
                 protocol = self.factory.buildProtocol(self._buildAddr(addr))
-                #protocol = self.factory.buildProtocol(self._buildAddr((addr[0], addr[1])))
                 if protocol is None:
                     skt.close()
                     continue

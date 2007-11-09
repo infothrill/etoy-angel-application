@@ -1,7 +1,7 @@
 # -*- test-case-name: twisted.trial.test.test_runner -*-
 
 #
-# Copyright (c) 2001-2004 Twisted Matrix Laboratories.
+# Copyright (c) 2001-2007 Twisted Matrix Laboratories.
 # See LICENSE for details.
 
 """
@@ -11,7 +11,6 @@ Maintainer: Jonathan Lange <jml@twistedmatrix.com>
 """
 
 
-from __future__ import generators
 import pdb, shutil, sets
 import os, types, warnings, sys, inspect, imp
 import random, doctest, time
@@ -22,6 +21,7 @@ from twisted.python.util import dsu
 from twisted.internet import defer, interfaces
 from twisted.trial import util, unittest
 from twisted.trial.itrial import ITestCase
+from twisted.trial.reporter import UncleanWarningsReporterWrapper
 
 pyunit = __import__('unittest')
 
@@ -126,6 +126,7 @@ def suiteVisit(suite, visitor):
             case.visit(visitor)
 
 
+
 class TestSuite(pyunit.TestSuite):
     """
     Extend the standard library's C{TestSuite} with support for the visitor
@@ -146,6 +147,25 @@ class TestSuite(pyunit.TestSuite):
         for test in self._tests:
             if result.shouldStop:
                 break
+            test(result)
+        return result
+
+
+
+class DestructiveTestSuite(TestSuite):
+    """
+    A test suite which remove the tests once run, to minimize memory usage.
+    """
+
+    def run(self, result):
+        """
+        Almost the same as L{TestSuite.run}, but with C{self._tests} being
+        empty at the end.
+        """
+        while self._tests:
+            if result.shouldStop:
+                break
+            test = self._tests.pop(0)
             test(result)
         return result
 
@@ -709,7 +729,11 @@ class TrialRunner(object):
         return currentDir
 
     def _makeResult(self):
-        return self.reporterFactory(self.stream, self.tbformat, self.rterrors)
+        reporter = self.reporterFactory(self.stream, self.tbformat,
+                                        self.rterrors)
+        if self.uncleanWarnings:
+            reporter = UncleanWarningsReporterWrapper(reporter)
+        return reporter
 
     def __init__(self, reporterFactory,
                  mode=None,
@@ -718,6 +742,7 @@ class TrialRunner(object):
                  profile=False,
                  tracebackFormat='default',
                  realTimeErrors=False,
+                 uncleanWarnings=False,
                  workingDirectory=None):
         self.reporterFactory = reporterFactory
         self.logfile = logfile
@@ -725,6 +750,7 @@ class TrialRunner(object):
         self.stream = stream
         self.tbformat = tracebackFormat
         self.rterrors = realTimeErrors
+        self.uncleanWarnings = uncleanWarnings
         self._result = None
         self.workingDirectory = workingDirectory or '_trial_temp'
         self._logFileObserver = None
@@ -786,6 +812,7 @@ class TrialRunner(object):
                 self._setUpLogging()
                 debugger.runcall(suite.run, result)
             finally:
+                self._tearDownLogFile()
                 os.chdir(oldDir)
         else:
             oldDir = self._setUpTestdir()
@@ -793,6 +820,7 @@ class TrialRunner(object):
                 self._setUpLogging()
                 suite.run(result)
             finally:
+                self._tearDownLogFile()
                 os.chdir(oldDir)
         endTime = time.time()
         result.printErrors()
@@ -817,3 +845,4 @@ class TrialRunner(object):
             if not result.wasSuccessful():
                 break
         return result
+

@@ -1,12 +1,14 @@
-# Copyright (c) 2001-2004 Twisted Matrix Laboratories.
+# Copyright (c) 2001-2007 Twisted Matrix Laboratories.
 # See LICENSE for details.
 
 import sys, copy, os, pickle, warnings
+from StringIO import StringIO
+
 
 from twisted.trial import unittest, util
 from twisted.application import service, internet, app
 from twisted.persisted import sob
-from twisted.python import log, usage
+from twisted.python import usage
 from twisted.python.util import sibpath
 from twisted.internet import interfaces, defer
 from twisted.protocols import wire, basic
@@ -93,7 +95,7 @@ class TestService(unittest.TestCase):
         s.stopService()
         self.assert_(not s.running)
 
-    def testRunningChildren(self):
+    def testRunningChildren1(self):
         s = service.Service()
         p = service.MultiService()
         s.setServiceParent(p)
@@ -106,7 +108,7 @@ class TestService(unittest.TestCase):
         self.assert_(not s.running)
         self.assert_(not p.running)
 
-    def testRunningChildren(self):
+    def testRunningChildren2(self):
         s = service.Service()
         def checkRunning():
             self.assert_(s.running)
@@ -252,6 +254,9 @@ class TestAppSupport(unittest.TestCase):
         self.assertEqual(app.getPassphrase(0), None)
 
     def testLoadApplication(self):
+        """
+        Test loading an application file in different dump format.
+        """
         a = service.Application("hello")
         baseconfig = {'file': None, 'xml': None, 'source': None, 'python':None}
         for style in 'source xml pickle'.split():
@@ -272,6 +277,10 @@ class TestAppSupport(unittest.TestCase):
         a1 = app.getApplication(config, None)
         self.assertEqual(service.IService(a1).name, "hello")
 
+    testLoadApplication.suppress = [
+        util.suppress(message="twisted.persisted.marmalade is deprecated",
+                      category=DeprecationWarning)]
+
     def test_convertStyle(self):
         appl = service.Application("lala")
         for instyle in 'xml source pickle'.split():
@@ -288,12 +297,20 @@ class TestAppSupport(unittest.TestCase):
                 self.assertEqual(service.IService(appl2).name, "lala")
 
     def test_getLogFile(self):
+        """
+        Test L{app.getLogFile}, veryfying the LogFile instance it returns.
+        """
         os.mkdir("logfiledir")
         l = app.getLogFile(os.path.join("logfiledir", "lala"))
         self.assertEqual(l.path,
                          os.path.abspath(os.path.join("logfiledir", "lala")))
         self.assertEqual(l.name, "lala")
         self.assertEqual(l.directory, os.path.abspath("logfiledir"))
+
+    test_getLogFile.suppress = [
+        util.suppress(message="app.getLogFile is deprecated. Use "
+                      "twisted.python.logfile.LogFile.fromFullPath instead",
+                      category=DeprecationWarning)]
 
     def test_startApplication(self):
         appl = service.Application("lala")
@@ -492,7 +509,7 @@ class TestInternet2(unittest.TestCase):
         d.addCallback(lambda x : t.stopService)
         d.addCallback(lambda x : self.assertEqual(
             [ZeroDivisionError],
-            [o.value.__class__ for o in log.flushErrors(ZeroDivisionError)]))
+            [o.value.__class__ for o in self.flushLoggedErrors(ZeroDivisionError)]))
         return d
 
     def testEverythingThere(self):
@@ -528,7 +545,7 @@ class TestTimerBasic(unittest.TestCase):
 
     def tearDown(self):
         return self.t.stopService()
-        
+
     def testTimerRestart(self):
         # restart the same TimerService
         d1 = defer.Deferred()
@@ -568,15 +585,34 @@ class TestTimerBasic(unittest.TestCase):
         return d
 
 
+class FakeReactor(reactors.Reactor):
+    """
+    A fake reactor with a hooked install method.
+    """
+
+    def __init__(self, install, *args, **kwargs):
+        """
+        @param install: any callable that will be used as install method.
+        @type install: C{callable}
+        """
+        reactors.Reactor.__init__(self, *args, **kwargs)
+        self.install = install
+
+
+
 class PluggableReactorTestCase(unittest.TestCase):
     """
     Tests for the reactor discovery/inspection APIs.
     """
+
     def setUp(self):
         """
         Override the L{reactors.getPlugins} function, normally bound to
         L{twisted.plugin.getPlugins}, in order to control which
         L{IReactorInstaller} plugins are seen as available.
+
+        C{self.pluginResults} can be customized and will be used as the
+        result of calls to C{reactors.getPlugins}.
         """
         self.pluginCalls = []
         self.pluginResults = []
@@ -628,10 +664,10 @@ class PluggableReactorTestCase(unittest.TestCase):
         calls its install attribute.
         """
         installed = []
-        global install
         def install():
             installed.append(True)
-        installer = reactors.Reactor('fakereactortest', __name__, 'described')
+        installer = FakeReactor(install,
+                                'fakereactortest', __name__, 'described')
         installer.install()
         self.assertEqual(installed, [True])
 
@@ -642,13 +678,12 @@ class PluggableReactorTestCase(unittest.TestCase):
         the specified reactor.
         """
         installed = []
-        global install
         def install():
             installed.append(True)
         name = 'fakereactortest'
         package = __name__
         description = 'description'
-        self.pluginResults = [reactors.Reactor(name, package, description)]
+        self.pluginResults = [FakeReactor(install, name, package, description)]
         reactors.installReactor(name)
         self.assertEqual(installed, [True])
 
@@ -663,6 +698,19 @@ class PluggableReactorTestCase(unittest.TestCase):
             reactors.NoSuchReactor,
             reactors.installReactor, 'somereactor')
 
+
+    def test_installNotAvailableReactor(self):
+        """
+        Test that L{reactors.installReactor} raises an exception when asked to
+        install a reactor which doesn't work in this environment.
+        """
+        def install():
+            raise ImportError("Missing foo bar")
+        name = 'fakereactortest'
+        package = __name__
+        description = 'description'
+        self.pluginResults = [FakeReactor(install, name, package, description)]
+        self.assertRaises(ImportError, reactors.installReactor, name)
 
 
     def test_reactorSelectionMixin(self):
@@ -680,15 +728,59 @@ class PluggableReactorTestCase(unittest.TestCase):
                 return [('subcommand', None, lambda: self, 'test subcommand')]
             subCommands = property(subCommands)
 
-        global install
         def install():
             executed.append(INSTALL_EVENT)
-        self.pluginResults = [reactors.Reactor('fakereactortest', __name__, 'described')]
+        self.pluginResults = [
+            FakeReactor(install, 'fakereactortest', __name__, 'described')
+        ]
 
         options = ReactorSelectionOptions()
         options.parseOptions(['--reactor', 'fakereactortest', 'subcommand'])
         self.assertEqual(executed[0], INSTALL_EVENT)
         self.assertEqual(executed.count(INSTALL_EVENT), 1)
+
+
+    def test_reactorSelectionMixinNonExistent(self):
+        """
+        Test that the usage mixin exits when trying to use a non existent
+        reactor (the name not matching to any reactor), giving an error
+        message.
+        """
+        class ReactorSelectionOptions(usage.Options, app.ReactorSelectionMixin):
+            pass
+        self.pluginResults = []
+
+        options = ReactorSelectionOptions()
+        options.messageOutput = StringIO()
+        e = self.assertRaises(usage.UsageError, options.parseOptions,
+                              ['--reactor', 'fakereactortest', 'subcommand'])
+        self.assertIn("fakereactortest", e.args[0])
+        self.assertIn("help-reactors", e.args[0])
+
+
+    def test_reactorSelectionMixinNotAvailable(self):
+        """
+        Test that the usage mixin exits when trying to use a reactor not
+        available (the reactor raises an error at installation), giving an
+        error message.
+        """
+        class ReactorSelectionOptions(usage.Options, app.ReactorSelectionMixin):
+            pass
+        message = "Missing foo bar"
+        def install():
+            raise ImportError(message)
+
+        name = 'fakereactortest'
+        package = __name__
+        description = 'description'
+        self.pluginResults = [FakeReactor(install, name, package, description)]
+
+        options = ReactorSelectionOptions()
+        options.messageOutput = StringIO()
+        e =  self.assertRaises(usage.UsageError, options.parseOptions,
+                               ['--reactor', 'fakereactortest', 'subcommand'])
+        self.assertIn(message, e.args[0])
+        self.assertIn("help-reactors", e.args[0])
 
 
     def test_qtStub(self):
@@ -704,3 +796,4 @@ class PluggableReactorTestCase(unittest.TestCase):
             env=None)
         result.addCallback(_checkOutput)
         return result
+

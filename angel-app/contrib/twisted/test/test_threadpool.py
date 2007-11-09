@@ -1,11 +1,11 @@
-# Copyright (c) 2001-2004 Twisted Matrix Laboratories.
+# Copyright (c) 2001-2007 Twisted Matrix Laboratories.
 # See LICENSE for details.
 
 
-import pickle, time
+import pickle, time, weakref, gc
 
-from twisted.trial import unittest
-from twisted.python import log, threadable
+from twisted.trial import unittest, util
+from twisted.python import threadable
 from twisted.internet import reactor, interfaces
 
 #
@@ -52,9 +52,58 @@ threadable.synchronize(Synchronization)
 
 
 class ThreadPoolTestCase(unittest.TestCase):
-    """Test threadpools."""
+    """
+    Test threadpools.
+    """
 
-    def testPersistence(self):
+    def test_threadCreationArguments(self):
+        """
+        Test that creating threads in the threadpool with application-level
+        objects as arguments doesn't results in those objects never being
+        freed, with the thread maintaining a reference to them as long as it
+        exists.
+        """
+        try:
+            tp = threadpool.ThreadPool(0, 1)
+            tp.start()
+
+            # Sanity check - no threads should have been started yet.
+            self.assertEqual(tp.threads, [])
+
+            # Here's our function
+            def worker(arg):
+                pass
+            # weakref need an object subclass
+            class Dumb(object):
+                pass
+            # And here's the unique object
+            unique = Dumb()
+
+            workerRef = weakref.ref(worker)
+            uniqueRef = weakref.ref(unique)
+
+            # Put some work in
+            tp.callInThread(worker, unique)
+
+            # Add an event to wait completion
+            event = threading.Event()
+            tp.callInThread(event.set)
+            event.wait(self.getTimeout())
+
+            del worker
+            del unique
+            gc.collect()
+            self.assertEquals(uniqueRef(), None)
+            self.assertEquals(workerRef(), None)
+        finally:
+            tp.stop()
+
+
+    def test_persistence(self):
+        """
+        Threadpools can be pickled and unpickled, which should preserve the
+        number of threads and other parameters.
+        """
         tp = threadpool.ThreadPool(7, 20)
         tp.start()
 
@@ -93,9 +142,13 @@ class ThreadPoolTestCase(unittest.TestCase):
 
 
     def _threadpoolTest(self, method):
+        """
+        Test synchronization of calls made with C{method}, which should be
+        one of the mecanisms of the threadpool to execute work in threads.
+        """
         # This is a schizophrenic test: it seems to be trying to test
-        # both the dispatch() behavior of the ThreadPool as well as
-        # the serialization behavior of threadable.synchronize().  It
+        # both the callInThread()/dispatch() behavior of the ThreadPool as well
+        # as the serialization behavior of threadable.synchronize().  It
         # would probably make more sense as two much simpler tests.
         N = 10
 
@@ -107,24 +160,43 @@ class ThreadPoolTestCase(unittest.TestCase):
             actor = Synchronization(N, waiting)
 
             for i in xrange(N):
-                tp.dispatch(actor, actor.run)
+                method(tp, actor)
 
             self._waitForLock(waiting)
 
-            self.failIf(actor.failures, "run() re-entered %d times" % (actor.failures,))
+            self.failIf(actor.failures, "run() re-entered %d times" %
+                                        (actor.failures,))
         finally:
             tp.stop()
 
 
-    def testDispatch(self):
-        return self._threadpoolTest(lambda tp, actor: tp.dispatch(actor, actor.run))
+    def test_dispatch(self):
+        """
+        Call C{_threadpoolTest} with C{dispatch}.
+        """
+        return self._threadpoolTest(
+            lambda tp, actor: tp.dispatch(actor, actor.run))
+
+    test_dispatch.suppress = [util.suppress(
+                message="dispatch\(\) is deprecated since Twisted 2.6, "
+                        "use callInThread\(\) instead",
+                category=DeprecationWarning)]
 
 
-    def testCallInThread(self):
-        return self._threadpoolTest(lambda tp, actor: tp.callInThread(actor.run))
+    def test_callInThread(self):
+        """
+        Call C{_threadpoolTest} with C{callInThread}.
+        """
+        return self._threadpoolTest(
+            lambda tp, actor: tp.callInThread(actor.run))
 
 
-    def testExistingWork(self):
+    def test_existingWork(self):
+        """
+        Work added to the threadpool before its start should be executed once
+        the threadpool is started: this is ensured by trying to release a lock
+        previously acquired.
+        """
         waiter = threading.Lock()
         waiter.acquire()
 
@@ -134,6 +206,44 @@ class ThreadPoolTestCase(unittest.TestCase):
 
         try:
             self._waitForLock(waiter)
+        finally:
+            tp.stop()
+
+
+    def test_dispatchDeprecation(self):
+        """
+        Test for the deprecation of the dispatch method.
+        """
+        tp = threadpool.ThreadPool()
+        tp.start()
+        def cb():
+            return tp.dispatch(None, lambda: None)
+        try:
+            self.assertWarns(DeprecationWarning,
+                "dispatch() is deprecated since Twisted 2.6, "
+                "use callInThread() instead",
+                __file__, cb)
+        finally:
+            tp.stop()
+
+
+    def test_dispatchWithCallbackDeprecation(self):
+        """
+        Test for the deprecation of the dispatchWithCallback method.
+        """
+        tp = threadpool.ThreadPool()
+        tp.start()
+        def cb():
+            return tp.dispatchWithCallback(
+                None,
+                lambda x: None,
+                lambda x: None,
+                lambda: None)
+        try:
+            self.assertWarns(DeprecationWarning,
+                "dispatchWithCallback() is deprecated since Twisted 2.6, "
+                "use twisted.internet.threads.deferToThread() instead.",
+                __file__, cb)
         finally:
             tp.stop()
 
@@ -152,26 +262,35 @@ class RaceConditionTestCase(unittest.TestCase):
         del self.threadpool
 
 
-    def testRace(self):
+    def test_synchronization(self):
+        """
+        Test a race condition: ensure that actions run in the pool synchronize
+        with actions run in the main thread.
+        """
+        timeout = self.getTimeout()
         self.threadpool.callInThread(self.event.set)
-        self.event.wait()
+        self.event.wait(timeout)
         self.event.clear()
         for i in range(3):
             self.threadpool.callInThread(self.event.wait)
         self.threadpool.callInThread(self.event.set)
-        self.event.wait(timeout=2)
+        self.event.wait(timeout)
         if not self.event.isSet():
             self.event.set()
-            raise RuntimeError, "test failed"
+            self.fail("Actions not synchronized")
 
 
-    def testSingleThread(self):
+    def test_singleThread(self):
+        """
+        Test that the creation of new threads in the pool occurs only when
+        more jobs are added and all existing threads are occupied.
+        """
         # Ensure no threads running
         self.assertEquals(self.threadpool.workers, 0)
-
+        timeout = self.getTimeout()
         for i in range(10):
             self.threadpool.callInThread(self.event.set)
-            self.event.wait()
+            self.event.wait(timeout)
             self.event.clear()
 
             # Ensure there are very few threads running
@@ -185,3 +304,4 @@ if interfaces.IReactorThreads(reactor, None) is None:
 else:
     import threading
     from twisted.python import threadpool
+

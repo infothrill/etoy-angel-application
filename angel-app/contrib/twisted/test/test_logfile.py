@@ -1,15 +1,13 @@
-
-# Copyright (c) 2001-2004 Twisted Matrix Laboratories.
+# Copyright (c) 2001-2007 Twisted Matrix Laboratories.
 # See LICENSE for details.
-
 
 from twisted.trial import unittest
 
 # system imports
-import os, shutil, time
+import os, shutil, time, stat
 
 # twisted imports
-from twisted.python import logfile
+from twisted.python import logfile, runtime
 
 
 class LogFileTestCase(unittest.TestCase):
@@ -24,8 +22,9 @@ class LogFileTestCase(unittest.TestCase):
         self.path = os.path.join(self.dir, self.name)
 
     def tearDown(self):
+        # Restore back write rights if necessary
+        os.chmod(self.path, 0666)
         shutil.rmtree(self.dir)
-        pass
 
     def testWriting(self):
         log = logfile.LogFile(self.name, self.dir)
@@ -121,14 +120,13 @@ class LogFileTestCase(unittest.TestCase):
         """
         Check rotated files have same permissions as original.
         """
-        if not hasattr(os, "chmod"): return
         f = open(self.path, "w").close()
         os.chmod(self.path, 0707)
-        mode = os.stat(self.path)[0]
+        mode = os.stat(self.path)[stat.ST_MODE]
         log = logfile.LogFile(self.name, self.dir)
         log.write("abc")
         log.rotate()
-        self.assertEquals(mode, os.stat(self.path)[0])
+        self.assertEquals(mode, os.stat(self.path)[stat.ST_MODE])
 
     def testNoPermission(self):
         """
@@ -189,6 +187,42 @@ class LogFileTestCase(unittest.TestCase):
         self.assertEquals(file("%s.3" % self.path).read(), "2" * 11)
         self.failUnless(not os.path.exists("%s.4" % self.path))
 
+    def test_fromFullPath(self):
+        """
+        Test the fromFullPath method.
+        """
+        log1 = logfile.LogFile(self.name, self.dir, 10, defaultMode=0777)
+        log2 = logfile.LogFile.fromFullPath(self.path, 10, defaultMode=0777)
+        self.assertEquals(log1.name, log2.name)
+        self.assertEquals(os.path.abspath(log1.path), log2.path)
+        self.assertEquals(log1.rotateLength, log2.rotateLength)
+        self.assertEquals(log1.defaultMode, log2.defaultMode)
+
+    def test_defaultPermissions(self):
+        """
+        Test the default permission of the log file: if the file exist, it
+        should keep the permission.
+        """
+        f = file(self.path, "w")
+        os.chmod(self.path, 0707)
+        currentMode = stat.S_IMODE(os.stat(self.path)[stat.ST_MODE])
+        f.close()
+        log1 = logfile.LogFile(self.name, self.dir)
+        self.assertEquals(stat.S_IMODE(os.stat(self.path)[stat.ST_MODE]),
+                          currentMode)
+
+    def test_specifiedPermissions(self):
+        """
+        Test specifying the permissions used on the log file.
+        """
+        log1 = logfile.LogFile(self.name, self.dir, defaultMode=0066)
+        mode = stat.S_IMODE(os.stat(self.path)[stat.ST_MODE])
+        if runtime.platform.isWindows():
+            # The only thing we can get here is global read-only
+            self.assertEquals(mode, 0444)
+        else:
+            self.assertEquals(mode, 0066)
+
 
 class RiggedDailyLogFile(logfile.DailyLogFile):
     _clock = 0.0
@@ -204,7 +238,9 @@ class RiggedDailyLogFile(logfile.DailyLogFile):
         return time.gmtime(self._clock)[:3]
 
 class DailyLogFileTestCase(unittest.TestCase):
-    """Test the rotating log file."""
+    """
+    Test rotating log file.
+    """
 
     def setUp(self):
         self.dir = self.mktemp()
@@ -250,3 +286,4 @@ class DailyLogFileTestCase(unittest.TestCase):
         log._clock = 259199 # 1970/01/03 23:59.59
         log.write("3")
         self.assert_(not os.path.exists(days[2]))
+

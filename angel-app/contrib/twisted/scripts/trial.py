@@ -1,6 +1,6 @@
 # -*- test-case-name: twisted.trial.test.test_script -*-
 
-# Copyright (c) 2001-2004 Twisted Matrix Laboratories.
+# Copyright (c) 2001-2007 Twisted Matrix Laboratories.
 # See LICENSE for details.
 
 
@@ -104,6 +104,8 @@ class Options(usage.Options, app.ReactorSelectionMixin):
                 ["force-gc", None, "Have Trial run gc.collect() before and "
                  "after each test case."],
                 ["profile", None, "Run tests under the Python profiler"],
+                ["unclean-warnings", None,
+                 "Turn dirty reactor errors into warnings"],
                 ["until-failure", "u", "Repeat test until it fails"],
                 ["no-recurse", "N", "Don't recurse into packages"],
                 ['help-reporters', None,
@@ -310,6 +312,8 @@ def _getLoader(config):
         print 'Running tests shuffled with seed %d\n' % config['random']
     if config['force-gc']:
         loader.forceGarbageCollection = True
+    if not config['until-failure']:
+        loader.suiteFactory = runner.DestructiveTestSuite
     return loader
 
 
@@ -325,6 +329,7 @@ def _makeRunner(config):
                               logfile=config['logfile'],
                               tracebackFormat=config['tbformat'],
                               realTimeErrors=config['rterrors'],
+                              uncleanWarnings=config['unclean-warnings'],
                               workingDirectory=config['temp-directory'])
 
 

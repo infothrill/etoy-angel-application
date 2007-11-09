@@ -335,10 +335,9 @@ class Owner (WebDAVElement):
     """
     name = "owner"
     hidden = True
-    protected = True # may be protected, per RFC 3744, section 5.2
+    #protected = True # may be protected, per RFC 3744, section 5.2
 
     allowed_children = { WebDAVElement: (0, None) }
-    #allowed_children = { PCDATAElement: (1, 1) }
 
 class PropertyContainer (WebDAVElement):
     """

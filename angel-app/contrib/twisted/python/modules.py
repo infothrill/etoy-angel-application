@@ -1,4 +1,6 @@
 # -*- test-case-name: twisted.test.test_modules -*-
+# Copyright (c) 2006-2007 Twisted Matrix Laboratories.
+# See LICENSE for details.
 
 """
 This module aims to provide a unified, object-oriented view of Python's
@@ -17,7 +19,7 @@ includes methods to locate top-level modules, with or without loading them.
 The top-level exposed functions in this module for accessing the system path
 are "walkModules", "iterModules", and "getModule".
 
-From most to least specific, here are the objects provided:
+From most to least specific, here are the objects provided::
 
                   PythonPath  # sys.path
                       |
@@ -37,7 +39,7 @@ From most to least specific, here are the objects provided:
                      ...
 
 Here's an example of idiomatic usage: this is what you would do to list all of
-the modules outside the standard library's python-files directory.
+the modules outside the standard library's python-files directory::
 
     import os
     stdlibdir = os.path.dirname(os.__file__)
@@ -415,15 +417,17 @@ class PythonModule(_ModuleIteratorHelper):
         if not self.isPackage():
             return
         if self.isLoaded():
-            for fn in self.load().__path__:
-                if fn == self.parentPath.path:
-                    # this should _really_ exist.
-                    assert self.parentPath.exists()
-                    yield self.parentPath
-                else:
-                    smp = self.pathEntry.pythonPath._smartPath(fn)
-                    if smp.exists():
-                        yield smp
+            load = self.load()
+            if hasattr(load, '__path__'):
+                for fn in load.__path__:
+                    if fn == self.parentPath.path:
+                        # this should _really_ exist.
+                        assert self.parentPath.exists()
+                        yield self.parentPath
+                    else:
+                        smp = self.pathEntry.pythonPath._smartPath(fn)
+                        if smp.exists():
+                            yield smp
         else:
             yield self.parentPath
 

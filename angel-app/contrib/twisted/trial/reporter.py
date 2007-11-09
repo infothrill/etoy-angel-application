@@ -1,11 +1,12 @@
 # -*- test-case-name: twisted.trial.test.test_reporter -*-
 #
-# Copyright (c) 2001-2004 Twisted Matrix Laboratories.
+# Copyright (c) 2001-2007 Twisted Matrix Laboratories.
 # See LICENSE for details.
 #
 # Maintainer: Jonathan Lange <jml@twistedmatrix.com>
 
-"""Defines classes that handle the results of tests.
+"""
+Defines classes that handle the results of tests.
 
 API Stability: Unstable
 """
@@ -14,10 +15,12 @@ import sys, os
 import time
 import warnings
 
-from twisted.python import reflect, failure, log
-from twisted.python.util import untilConcludes
-from twisted.trial import itrial
-import zope.interface as zi
+from twisted.python import reflect, log
+from twisted.python.failure import Failure
+from twisted.python.util import untilConcludes, proxyForInterface
+from twisted.trial import itrial, util
+
+from zope.interface import implements
 
 pyunit = __import__('unittest')
 
@@ -44,15 +47,20 @@ class SafeStream(object):
 
 
 class TestResult(pyunit.TestResult, object):
-    """Accumulates the results of several L{twisted.trial.unittest.TestCase}s.
     """
+    Accumulates the results of several L{twisted.trial.unittest.TestCase}s.
+
+    @ivar successes: count the number of successes achieved by the test run.
+    @type successes: C{int}
+    """
+    implements(itrial.IReporter)
 
     def __init__(self):
         super(TestResult, self).__init__()
         self.skips = []
         self.expectedFailures = []
         self.unexpectedSuccesses = []
-        self.successes = []
+        self.successes = 0
         self._timings = []
 
     def __repr__(self):
@@ -64,6 +72,14 @@ class TestResult(pyunit.TestResult, object):
 
     def _getTime(self):
         return time.time()
+
+    def _getFailure(self, error):
+        """
+        Convert a C{sys.exc_info()}-style tuple to a L{Failure}, if necessary.
+        """
+        if isinstance(error, tuple):
+            return Failure(error[1], error[0], error[2])
+        return error
 
     def startTest(self, test):
         """This must be called before the given test is commenced.
@@ -85,21 +101,17 @@ class TestResult(pyunit.TestResult, object):
         """Report a failed assertion for the given test.
 
         @type test: L{pyunit.TestCase}
-        @type fail: L{failure.Failure} or L{tuple}
+        @type fail: L{Failure} or L{tuple}
         """
-        if isinstance(fail, tuple):
-            fail = failure.Failure(fail[1], fail[0], fail[2])
-        self.failures.append((test, fail))
+        self.failures.append((test, self._getFailure(fail)))
 
     def addError(self, test, error):
         """Report an error that occurred while running the given test.
 
         @type test: L{pyunit.TestCase}
-        @type fail: L{failure.Failure} or L{tuple}
+        @type fail: L{Failure} or L{tuple}
         """
-        if isinstance(error, tuple):
-            error = failure.Failure(error[1], error[0], error[2])
-        self.errors.append((test, error))
+        self.errors.append((test, self._getFailure(error)))
 
     def addSkip(self, test, reason):
         """
@@ -128,12 +140,12 @@ class TestResult(pyunit.TestResult, object):
         self.unexpectedSuccesses.append((test, todo))
 
     def addExpectedFailure(self, test, error, todo):
-        """Report that the given test succeeded against expectations.
+        """Report that the given test failed, and was expected to do so.
 
         In Trial, tests can be marked 'todo'. That is, they are expected to fail.
 
         @type test: L{pyunit.TestCase}
-        @type error: L{failure.Failure}
+        @type error: L{Failure}
         @type todo: L{unittest.Todo}
         """
         # XXX - 'todo' should just be a string
@@ -144,7 +156,7 @@ class TestResult(pyunit.TestResult, object):
 
         @type test: L{pyunit.TestCase}
         """
-        self.successes.append((test,))
+        self.successes += 1
 
     def upDownError(self, method, error, warn, printStatus):
         pass
@@ -152,19 +164,45 @@ class TestResult(pyunit.TestResult, object):
     def cleanupErrors(self, errs):
         """Report an error that occurred during the cleanup between tests.
         """
-        # XXX - deprecate this method, we don't need it any more
+        warnings.warn("Cleanup errors are actual errors. Use addError. "
+                      "Deprecated in Twisted 2.6",
+                      category=DeprecationWarning, stacklevel=2)
 
     def startSuite(self, name):
-        # XXX - these should be removed, but not in this branch
-        pass
+        warnings.warn("startSuite deprecated in Twisted 2.6",
+                      category=DeprecationWarning, stacklevel=2)
 
     def endSuite(self, name):
-        # XXX - these should be removed, but not in this branch
-        pass
+        warnings.warn("endSuite deprecated in Twisted 2.6",
+                      category=DeprecationWarning, stacklevel=2)
+
+
+
+class UncleanWarningsReporterWrapper(proxyForInterface(itrial.IReporter)):
+    """
+    A wrapper for a reporter that converts L{util.DirtyReactorError}s
+    to warnings.
+
+    @ivar original: The original reporter.
+    """
+    implements(itrial.IReporter)
+
+    def addError(self, test, error):
+        """
+        If the error is a L{util.DirtyReactorError}, instead of
+        reporting it as a normal error, throw a warning.
+        """
+
+        if (isinstance(error, Failure)
+            and error.check(util.DirtyReactorAggregateError)):
+            warnings.warn(error.getErrorMessage())
+        else:
+            self.original.addError(test, error)
+
 
 
 class Reporter(TestResult):
-    zi.implements(itrial.IReporter)
+    implements(itrial.IReporter)
 
     separator = '-' * 79
     doubleSeparator = '=' * 79
@@ -185,6 +223,7 @@ class Reporter(TestResult):
             self.write(self._formatFailureTraceback(fail))
 
     def addError(self, test, error):
+        error = self._getFailure(error)
         super(Reporter, self).addError(test, error)
         if self.realtime:
             error = self.errors[-1][1] # guarantee it's a Failure
@@ -305,20 +344,30 @@ class Reporter(TestResult):
         self._printResults('[SUCCESS!?!]', self.unexpectedSuccesses,
                            self._printUnexpectedSuccess)
 
-    def printSummary(self):
-        """Print a line summarising the test results to the stream.
+    def _getSummary(self):
+        """
+        Return a formatted count of tests status results.
         """
         summaries = []
         for stat in ("skips", "expectedFailures", "failures", "errors",
-                     "unexpectedSuccesses", "successes"):
+                     "unexpectedSuccesses"):
             num = len(getattr(self, stat))
             if num:
                 summaries.append('%s=%d' % (stat, num))
+        if self.successes:
+           summaries.append('successes=%d' % (self.successes,))
         summary = (summaries and ' ('+', '.join(summaries)+')') or ''
-        if not self.wasSuccessful():
-            status = "FAILED"
-        else:
+        return summary
+
+    def printSummary(self):
+        """
+        Print a line summarising the test results to the stream.
+        """
+        summary = self._getSummary()
+        if self.wasSuccessful():
             status = "PASSED"
+        else:
+            status = "FAILED"
         self.write("%s%s\n", status, summary)
 
 
@@ -620,7 +669,7 @@ class TreeReporter(Reporter):
         super(TreeReporter, self).cleanupErrors(errs)
 
     def upDownError(self, method, error, warn, printStatus):
-        self.write(self.color("  %s" % method, self.ERROR))
+        self._colorizer.write("  %s" % method, self.ERROR)
         if printStatus:
             self.endLine('[ERROR]', self.ERROR)
         super(TreeReporter, self).upDownError(method, error, warn, printStatus)
@@ -636,3 +685,19 @@ class TreeReporter(Reporter):
         super(TreeReporter, self).write(spaces)
         self._colorizer.write(message, color)
         super(TreeReporter, self).write("\n")
+
+    def printSummary(self):
+        """
+        Print a line summarising the test results to the stream, and color the
+        status result.
+        """
+        summary = self._getSummary()
+        if self.wasSuccessful():
+            status = "PASSED"
+            color = self.SUCCESS
+        else:
+            status = "FAILED"
+            color = self.FAILURE
+        self._colorizer.write(status, color)
+        self.write("%s\n", summary)
+

@@ -1,51 +1,77 @@
 # -*- test-case-name: twisted.test.test_logfile -*-
 
-# Copyright (c) 2001-2004 Twisted Matrix Laboratories.
+# Copyright (c) 2001-2007 Twisted Matrix Laboratories.
 # See LICENSE for details.
-
 
 """
 A rotating, browsable log file.
 """
 
 # System Imports
-import os, glob, string, time
+import os, glob, time, stat
 
-# sibling imports
-
-import threadable
+from twisted.python import threadable
 
 class BaseLogFile:
-    """The base class for a log file that can be rotated.
+    """
+    The base class for a log file that can be rotated.
     """
 
     synchronized = ["write", "rotate"]
 
     def __init__(self, name, directory, defaultMode=None):
+        """
+        Create a log file.
+
+        @param name: name of the file
+        @param directory: directory holding the file
+        @param defaultMode: permissions used to create the file. Default to
+        current permissions of the file if the file exists.
+        """
         self.directory = directory
         assert os.path.isdir(self.directory)
         self.name = name
         self.path = os.path.join(directory, name)
-        if defaultMode is None and os.path.exists(self.path) and hasattr(os, "chmod"):
-            self.defaultMode = os.stat(self.path)[0]
+        if defaultMode is None and os.path.exists(self.path):
+            self.defaultMode = stat.S_IMODE(os.stat(self.path)[stat.ST_MODE])
         else:
             self.defaultMode = defaultMode
         self._openFile()
 
+    def fromFullPath(cls, filename, *args, **kwargs):
+        """
+        Construct a log file from a full file path.
+        """
+        logPath = os.path.abspath(filename)
+        return cls(os.path.basename(logPath),
+                   os.path.dirname(logPath), *args, **kwargs)
+    fromFullPath = classmethod(fromFullPath)
+
     def shouldRotate(self):
-        """Override with a method to that returns true if the log
-        should be rotated"""
+        """
+        Override with a method to that returns true if the log
+        should be rotated.
+        """
         raise NotImplementedError
 
     def _openFile(self):
-        """Open the log file."""
-        self.closed = 0
+        """
+        Open the log file.
+        """
+        self.closed = False
         if os.path.exists(self.path):
-            self._file = open(self.path, "r+", 1)
+            self._file = file(self.path, "r+", 1)
             self._file.seek(0, 2)
         else:
-            self._file = open(self.path, "w+", 1)
-        # set umask to be same as original log file
+            if self.defaultMode is not None:
+                # Set the lowest permissions
+                oldUmask = os.umask(0777)
+                try:
+                    self._file = file(self.path, "w+", 1)
+                finally:
+                    os.umask(oldUmask)
+            else:
+                self._file = file(self.path, "w+", 1)
         if self.defaultMode is not None:
             try:
                 os.chmod(self.path, self.defaultMode)
@@ -63,28 +89,36 @@ class BaseLogFile:
         self._openFile()
 
     def write(self, data):
-        """Write some data to the file."""
+        """
+        Write some data to the file.
+        """
         if self.shouldRotate():
             self.flush()
             self.rotate()
         self._file.write(data)
 
     def flush(self):
-        """Flush the file."""
+        """
+        Flush the file.
+        """
         self._file.flush()
 
     def close(self):
-        """Close the file.
+        """
+        Close the file.
 
         The file cannot be used once it has been closed.
         """
-        self.closed = 1
+        self.closed = True
         self._file.close()
         self._file = None
 
     def getCurrentLog(self):
-        """Return a LogReader for the current log file."""
+        """
+        Return a LogReader for the current log file.
+        """
         return LogReader(self.path)
+
 
 class LogFile(BaseLogFile):
     """
@@ -167,7 +201,7 @@ class LogFile(BaseLogFile):
         result = []
         for name in glob.glob("%s.*" % self.path):
             try:
-                counter = int(string.split(name, '.')[-1])
+                counter = int(name.split('.')[-1])
                 if counter:
                     result.append(counter)
             except ValueError:
@@ -256,7 +290,7 @@ class LogReader:
     """Read from a log file."""
 
     def __init__(self, name):
-        self._file = open(name, "r")
+        self._file = file(name, "r")
 
     def readLines(self, lines=10):
         """Read a list of lines from the log file.

@@ -1,5 +1,5 @@
 # -*- test-case-name: twisted.test.test_ftp -*-
-# Copyright (c) 2001-2004 Twisted Matrix Laboratories.
+# Copyright (c) 2001-2007 Twisted Matrix Laboratories.
 # See LICENSE for details.
 
 """
@@ -257,20 +257,26 @@ class PermissionDeniedError(FTPCmdError):
 
 
 class IsNotADirectoryError(FTPCmdError):
-    """raised when RMD is called on a path that isn't a directory
+    """
+    Raised when RMD is called on a path that isn't a directory.
     """
     errorCode = IS_NOT_A_DIR
+
 
 class CmdSyntaxError(FTPCmdError):
     errorCode = SYNTAX_ERR
 
+
 class CmdArgSyntaxError(FTPCmdError):
     errorCode = SYNTAX_ERR_IN_ARGS
 
+
 class CmdNotImplementedError(FTPCmdError):
-    """raised when an unimplemented command is given to the server
+    """
+    Raised when an unimplemented command is given to the server.
     """
     errorCode = CMD_NOT_IMPLMNTD
+
 
 class CmdNotImplementedForArgError(FTPCmdError):
     errorCode = CMD_NOT_IMPLMNTD_FOR_PARAM
@@ -443,7 +449,7 @@ class DTP(object, protocol.Protocol):
 class DTPFactory(protocol.ClientFactory):
     """
     DTP protocol factory.
-    
+
     @ivar peerCheck: perform checks to make sure the ftp-pi's peer is the same
         as the dtp's
     @ivar pi: a reference to this factory's protocol interpreter
@@ -546,15 +552,22 @@ class FTPOverflowProtocol(basic.LineReceiver):
 
 
 class FTP(object, basic.LineReceiver, policies.TimeoutMixin):
-    """Protocol Interpreter for the File Transfer Protocol
+    """
+    Protocol Interpreter for the File Transfer Protocol
 
     @ivar state: The current server state.  One of L{UNAUTH},
-    L{INAUTH}, L{AUTHED}, L{RENAMING}.
+        L{INAUTH}, L{AUTHED}, L{RENAMING}.
 
     @ivar shell: The connected avatar
     @ivar binary: The transfer mode.  If false, ASCII.
     @ivar dtpFactory: Generates a single DTP for this session
     @ivar dtpPort: Port returned from listenTCP
+    @ivar listenFactory: A callable with the signature of
+        L{twisted.internet.interfaces.IReactorTCP.listenTCP} which will be used
+        to create Ports for passive connections (mainly for testing).
+
+    @ivar passivePortRange: iterator used as source of passive port numbers.
+    @type passivePortRange: C{iterator}
     """
 
     disconnected = False
@@ -565,13 +578,16 @@ class FTP(object, basic.LineReceiver, policies.TimeoutMixin):
     # how long the DTP waits for a connection
     dtpTimeout = 10
 
-    portal      = None
-    shell       = None     # the avatar
-    dtpFactory  = None     # generates a single DTP for this session
-    dtpPort     = None     # object returned from listenTCP
+    portal = None
+    shell = None
+    dtpFactory = None
+    dtpPort = None
     dtpInstance = None
-    binary      = True     # binary transfers? False implies ASCII. defaults to True
+    binary = True
 
+    passivePortRange = xrange(0, 1)
+
+    listenFactory = reactor.listenTCP
 
     def reply(self, key, *args):
         msg = RESPONSE[key] % args
@@ -605,7 +621,7 @@ class FTP(object, basic.LineReceiver, policies.TimeoutMixin):
         def processFailed(err):
             if err.check(FTPCmdError):
                 self.sendLine(err.value.response())
-            elif (err.check(TypeError) and 
+            elif (err.check(TypeError) and
                   err.value.args[0].find('takes exactly') != -1):
                 self.reply(SYNTAX_ERR, "%s requires an argument." % (cmd,))
             else:
@@ -669,6 +685,23 @@ class FTP(object, basic.LineReceiver, policies.TimeoutMixin):
                 return self.ftp_RNTO(*params)
             else:
                 return BAD_CMD_SEQ, "RNTO required after RNFR"
+
+
+    def getDTPPort(self, factory):
+        """
+        Return a port for passive access, using C{self.passivePortRange}
+        attribute.
+        """
+        for portn in self.passivePortRange:
+            try:
+                dtpPort = self.listenFactory(portn, factory)
+            except error.CannotListenError:
+                continue
+            else:
+                return dtpPort
+        raise error.CannotListenError('', portn,
+            "No port available in range %s" %
+            (self.passivePortRange,))
 
 
     def ftp_USER(self, username):
@@ -740,7 +773,7 @@ class FTP(object, basic.LineReceiver, policies.TimeoutMixin):
             self.cleanupDTP()
         self.dtpFactory = DTPFactory(pi=self)
         self.dtpFactory.setTimeout(self.dtpTimeout)
-        self.dtpPort = reactor.listenTCP(0, self.dtpFactory)
+        self.dtpPort = self.getDTPPort(self.dtpFactory)
 
         host = self.transport.getHost().host
         port = self.dtpPort.getHost().port
@@ -923,6 +956,8 @@ class FTP(object, basic.LineReceiver, policies.TimeoutMixin):
             if not err.check(PermissionDeniedError, FileNotFoundError, IsNotADirectoryError):
                 log.msg("Unexpected error attempting to open file for transmission:")
                 log.err(err)
+            if err.check(FTPCmdError):
+                return (err.value.errorCode, '/'.join(newsegs))
             return (FILE_NOT_FOUND, '/'.join(newsegs))
 
         d = self.shell.openForReading(newsegs)
@@ -984,6 +1019,8 @@ class FTP(object, basic.LineReceiver, policies.TimeoutMixin):
             if not err.check(PermissionDeniedError, FileNotFoundError, IsNotADirectoryError):
                 log.msg("Unexpected error attempting to open file for upload:")
                 log.err(err)
+            if isinstance(err.value, FTPCmdError):
+                return (err.value.errorCode, '/'.join(newsegs))
             return (FILE_NOT_FOUND, '/'.join(newsegs))
 
         d = self.shell.openForWriting(newsegs)
@@ -1139,10 +1176,14 @@ class FTP(object, basic.LineReceiver, policies.TimeoutMixin):
 
 
 class FTPFactory(policies.LimitTotalConnectionsFactory):
-    """A factory for producing ftp protocol instances
+    """
+    A factory for producing ftp protocol instances
 
     @ivar timeOut: the protocol interpreter's idle timeout time in seconds,
         default is 600 seconds.
+
+    @ivar passivePortRange: value forwarded to C{protocol.passivePortRange}.
+    @type passivePortRange: C{iterator}
     """
     protocol = FTP
     overflowProtocol = FTPOverflowProtocol
@@ -1151,6 +1192,8 @@ class FTPFactory(policies.LimitTotalConnectionsFactory):
     timeOut = 600
 
     welcomeMessage = "Twisted %s FTP Server" % (copyright.version,)
+
+    passivePortRange = xrange(0, 1)
 
     def __init__(self, portal=None, userAnonymous='anonymous'):
         self.portal = portal
@@ -1162,6 +1205,7 @@ class FTPFactory(policies.LimitTotalConnectionsFactory):
         if p is not None:
             p.wrappedProtocol.portal = self.portal
             p.wrappedProtocol.timeOut = self.timeOut
+            p.passivePortRange = self.passivePortRange
         return p
 
     def stopFactory(self):
@@ -1407,7 +1451,8 @@ def _testPermissions(uid, gid, spath, mode='r'):
 
 
 class FTPAnonymousShell(object):
-    """An anonymous implementation of IFTPShell
+    """
+    An anonymous implementation of IFTPShell
 
     @type filesystemRoot: L{twisted.python.filepath.FilePath}
     @ivar filesystemRoot: The path which is considered the root of
@@ -1447,6 +1492,15 @@ class FTPAnonymousShell(object):
             return defer.fail()
         else:
             return defer.succeed(_FileReader(f))
+
+
+    def openForWriting(self, path):
+        """
+        Reject write attempts by anonymous users with
+        L{PermissionDeniedError}.
+        """
+        return defer.fail(PermissionDeniedError("STOR not allowed"))
+
 
     def access(self, path):
         p = self._path(path)
@@ -1771,8 +1825,11 @@ class FTPDataPortFactory(protocol.ServerFactory):
 
 
 class FTPClientBasic(basic.LineReceiver):
-    """Foundations of an FTP client."""
-    debug = 0
+    """
+    Foundations of an FTP client.
+    """
+    debug = False
+
     def __init__(self):
         self.actionQueue = []
         self.greeting = None
@@ -1782,15 +1839,24 @@ class FTPClientBasic(basic.LineReceiver):
         self._failed = 0
 
     def fail(self, error):
-        """Give an error to any queued deferreds."""
+        """
+        Give an error to any queued deferreds.
+        """
         self._fail(error)
 
     def _fail(self, error):
-        """Errback all queued deferreds."""
+        """
+        Errback all queued deferreds.
+        """
         if self._failed:
             # We're recursing; bail out here for simplicity
             return error
         self._failed = 1
+        if self.nextDeferred:
+            try:
+                self.nextDeferred.errback(failure.Failure(ConnectionLost('FTP connection lost', error)))
+            except defer.AlreadyCalledError:
+                pass
         for ftpCommand in self.actionQueue:
             ftpCommand.fail(failure.Failure(ConnectionLost('FTP connection lost', error)))
         return error
@@ -1799,13 +1865,17 @@ class FTPClientBasic(basic.LineReceiver):
         self.greeting = greeting
 
     def sendLine(self, line):
-        """(Private) Sends a line, unless line is None."""
+        """
+        (Private) Sends a line, unless line is None.
+        """
         if line is None:
             return
         basic.LineReceiver.sendLine(self, line)
 
     def sendNextCommand(self):
-        """(Private) Processes the next command in the queue."""
+        """
+        (Private) Processes the next command in the queue.
+        """
         ftpCommand = self.popCommandQueue()
         if ftpCommand is None:
             self.nextDeferred = None
@@ -1827,7 +1897,8 @@ class FTPClientBasic(basic.LineReceiver):
         self.sendLine(ftpCommand.text)
 
     def queueCommand(self, ftpCommand):
-        """Add an FTPCommand object to the queue.
+        """
+        Add an FTPCommand object to the queue.
 
         If it's the only thing in the queue, and we are connected and we aren't
         waiting for a response of an earlier command, the command will be sent
@@ -1841,7 +1912,8 @@ class FTPClientBasic(basic.LineReceiver):
             self.sendNextCommand()
 
     def queueStringCommand(self, command, public=1):
-        """Queues a string to be issued as an FTP command
+        """
+        Queues a string to be issued as an FTP command
 
         @param command: string of an FTP command to queue
         @param public: a flag intended for internal use by FTPClient.  Don't
@@ -1855,15 +1927,18 @@ class FTPClientBasic(basic.LineReceiver):
         return ftpCommand.deferred
 
     def popCommandQueue(self):
-        """Return the front element of the command queue, or None if empty."""
+        """
+        Return the front element of the command queue, or None if empty.
+        """
         if self.actionQueue:
             return self.actionQueue.pop(0)
         else:
             return None
 
     def queueLogin(self, username, password):
-        """Login: send the username, send the password.
-        
+        """
+        Login: send the username, send the password.
+
         If the password is C{None}, the PASS command won't be sent.  Also, if
         the response to the USER command has a response code of 230 (User logged
         in), then PASS won't be sent either.
@@ -1872,7 +1947,7 @@ class FTPClientBasic(basic.LineReceiver):
         deferreds = []
         userDeferred = self.queueStringCommand('USER ' + username, public=0)
         deferreds.append(userDeferred)
-        
+
         # Prepare the PASS command (if a password is given)
         if password is not None:
             passwordCmd = FTPCommand('PASS ' + password, public=0)
@@ -1896,7 +1971,9 @@ class FTPClientBasic(basic.LineReceiver):
             deferred.addErrback(lambda x: None)
 
     def lineReceived(self, line):
-        """(Private) Parses the response messages from the FTP server."""
+        """
+        (Private) Parses the response messages from the FTP server.
+        """
         # Add this line to the current response
         if self.debug:
             log.msg('--> %s' % line)
@@ -1907,7 +1984,7 @@ class FTPClientBasic(basic.LineReceiver):
         codeIsValid = re.match(r'\d{3} ', line)
         if not codeIsValid:
             return
-        
+
         code = line[0:3]
 
         # Ignore marks
@@ -2065,7 +2142,7 @@ class FTPClient(FTPClientBasic):
             pasvCmd.deferred.addCallback(doPassive).addErrback(self.fail)
 
             results = [cmdsDeferred, pasvCmd.deferred, protocol.deferred]
-            d = defer.DeferredList(results, fireOnOneErrback=1, consumeErrors=1)
+            d = defer.DeferredList(results, fireOnOneErrback=True, consumeErrors=True)
             d.addErrback(_unwrapFirstError)
 
             # Ensure the connection is always closed
@@ -2101,8 +2178,8 @@ class FTPClient(FTPClientBasic):
             cmdsDeferred.addErrback(lambda e, pc=portCmd: pc.fail(e) or e)
 
             results = [cmdsDeferred, portCmd.deferred, portCmd.transferDeferred]
-            d = defer.DeferredList(results, fireOnOneErrback=1, consumeErrors=1)
-            # XXX: d.addErrback(_unwrapFirstError), but add a test.
+            d = defer.DeferredList(results, fireOnOneErrback=True, consumeErrors=True)
+            d.addErrback(_unwrapFirstError)
 
         for cmd in cmds:
             self.queueCommand(cmd)

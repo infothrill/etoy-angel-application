@@ -1,8 +1,9 @@
-# Copyright (c) 2001-2004 Twisted Matrix Laboratories.
+# Copyright (c) 2001-2007 Twisted Matrix Laboratories.
 # See LICENSE for details.
 
+import warnings
 
-from twisted.python import log
+from twisted.python import log, logfile
 from twisted.application import app, service, internet
 from twisted import copyright
 import sys, os
@@ -12,7 +13,7 @@ class ServerOptions(app.ServerOptions):
 
     optFlags = [['nodaemon','n',  "(for backwards compatability)."],
                 ]
-    
+
     def opt_version(self):
         """Print version information and exit.
         """
@@ -21,14 +22,36 @@ class ServerOptions(app.ServerOptions):
         sys.exit()
 
 
-def startLogging(logfilename):
+def _getLogObserver(logfilename):
+    """
+    Create and return a suitable log observer for the given configuration.
+
+    The observer will go to stdout if C{logfilename} is empty or equal to
+    C{"-"}.  Otherwise, it will go to a file with that name.
+
+    @type logfilename: C{str}
+    @param logfilename: The name of the file to which to log, if other than the
+    default.
+
+    @return: An object suitable to be passed to C{log.addObserver}.
+    """
     if logfilename == '-' or not logfilename:
         logFile = sys.stdout
     else:
-        logFile = app.getLogFile(logfilename)
-    log.startLogging(logFile)
-    sys.stdout.flush()
+        logFile = logfile.LogFile.fromFullPath(logfilename)
+    return log.FileLogObserver(logFile).emit
 
+
+def startLogging(*args, **kw):
+    warnings.warn(
+        """
+        Use ApplicationRunner instead of startLogging."
+        """,
+        category=PendingDeprecationWarning,
+        stacklevel=2)
+    observer = _getLogObserver(*args, **kw)
+    log.startLoggingWithObserver(observer)
+    sys.stdout.flush()
 
 
 class WindowsApplicationRunner(app.ApplicationRunner):
@@ -42,9 +65,15 @@ class WindowsApplicationRunner(app.ApplicationRunner):
         """
         self.oldstdout = sys.stdout
         self.oldstderr = sys.stderr
-        startLogging(self.config['logfile'])
-        app.initialLog()
         os.chdir(self.config['rundir'])
+
+
+    def getLogObserver(self):
+        """
+        Override to supply a log observer suitable for Windows based on the
+        given arguments.
+        """
+        return _getLogObserver(self.config['logfile'])
 
 
     def postApplication(self):

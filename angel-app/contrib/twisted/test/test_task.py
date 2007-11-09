@@ -1,4 +1,4 @@
-# Copyright (c) 2001-2004 Twisted Matrix Laboratories.
+# Copyright (c) 2001-2007 Twisted Matrix Laboratories.
 # See LICENSE for details.
 
 from twisted.trial import unittest
@@ -10,11 +10,11 @@ Clock = task.Clock
 
 from twisted.python import failure
 
+
 class TestableLoopingCall(task.LoopingCall):
     def __init__(self, clock, *a, **kw):
         super(TestableLoopingCall, self).__init__(*a, **kw)
-        self._callLater = lambda delay: clock.callLater(delay, self)
-        self._seconds = clock.seconds
+        self.clock = clock
 
 
 
@@ -56,6 +56,16 @@ class ClockTestCase(unittest.TestCase):
         call.cancel()
         self.failIf(call.active())
 
+
+    def test_callLaterOrdering(self):
+        """
+        Test that the DelayedCall returned is not one previously
+        created.
+        """
+        c = task.Clock()
+        call1 = c.callLater(10, lambda a, b: None, 1, b=2)
+        call2 = c.callLater(1, lambda a, b: None, 3, b=4)
+        self.failIf(call1 is call2)
 
     def testAdvance(self):
         """
@@ -132,6 +142,14 @@ class ClockTestCase(unittest.TestCase):
 
 
 class LoopTestCase(unittest.TestCase):
+
+    def test_defaultClock(self):
+        """
+        L{LoopingCall}'s default clock should be the reactor.
+        """
+        call = task.LoopingCall(lambda: None)
+        self.assertEqual(call.clock, reactor)
+
     def testBasicFunction(self):
         # Arrange to have time advanced enough so that our function is
         # called a few times.

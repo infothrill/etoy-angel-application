@@ -1,5 +1,5 @@
 # -*- test-case-name: twisted.mail.test.test_imap -*-
-# Copyright (c) 2001-2004 Twisted Matrix Laboratories.
+# Copyright (c) 2001-2007 Twisted Matrix Laboratories.
 # See LICENSE for details.
 
 
@@ -7,22 +7,18 @@
 Test case for twisted.mail.imap4
 """
 
-from __future__ import nested_scopes
-
 try:
     from cStringIO import StringIO
 except ImportError:
     from StringIO import StringIO
 
 import os
-import sys
 import types
-import time
+
 from zope.interface import implements
 
 from twisted.mail.imap4 import MessageSet
 from twisted.mail import imap4
-from twisted.mail import smtp
 from twisted.protocols import loopback
 from twisted.internet import defer
 from twisted.internet import error
@@ -30,7 +26,6 @@ from twisted.internet import reactor
 from twisted.internet import interfaces
 from twisted.trial import unittest
 from twisted.python import util
-from twisted.python.util import sibpath
 from twisted.python import failure
 
 from twisted import cred
@@ -65,7 +60,7 @@ class IMAP4UTF7TestCase(unittest.TestCase):
         [u'Hello & world', 'Hello &- world'],
         [u'Hello\xffworld', 'Hello&AP8-world'],
         [u'\xff\xfe\xfd\xfc', '&AP8A,gD9APw-'],
-        [u'~peter/mail/\u65e5\u672c\u8a9e/\u53f0\u5317', 
+        [u'~peter/mail/\u65e5\u672c\u8a9e/\u53f0\u5317',
          '~peter/mail/&ZeVnLIqe-/&U,BTFw-'], # example from RFC 2060
     ]
 
@@ -1140,7 +1135,7 @@ class IMAP4ServerTestCase(IMAP4HelperMixin, unittest.TestCase):
         d.addCallback(lambda _: self.assertEquals(str(self.failure.value),
                                                   'No such mailbox'))
         return d
-    
+
 
     def testIllegalDelete(self):
         m = SimpleMailbox()
@@ -1748,6 +1743,82 @@ class UnsolicitedResponseTestCase(IMAP4HelperMixin, unittest.TestCase):
         E = self.client.events
         self.assertEquals(E, [['newMessages', 20, None], ['newMessages', None, 10]])
 
+
+class ClientCapabilityTests(unittest.TestCase):
+    """
+    Tests for issuance of the CAPABILITY command and handling of its response.
+    """
+    def setUp(self):
+        """
+        Create an L{imap4.IMAP4Client} connected to a L{StringTransport}.
+        """
+        self.transport = StringTransport()
+        self.protocol = imap4.IMAP4Client()
+        self.protocol.makeConnection(self.transport)
+        self.protocol.dataReceived('* OK [IMAP4rev1]\r\n')
+
+
+    def test_simpleAtoms(self):
+        """
+        A capability response consisting only of atoms without C{'='} in them
+        should result in a dict mapping those atoms to C{None}.
+        """
+        capabilitiesResult = self.protocol.getCapabilities(useCache=False)
+        self.protocol.dataReceived('* CAPABILITY IMAP4rev1 LOGINDISABLED\r\n')
+        self.protocol.dataReceived('0001 OK Capability completed.\r\n')
+        def gotCapabilities(capabilities):
+            self.assertEqual(
+                capabilities, {'IMAP4rev1': None, 'LOGINDISABLED': None})
+        capabilitiesResult.addCallback(gotCapabilities)
+        return capabilitiesResult
+
+
+    def test_categoryAtoms(self):
+        """
+        A capability response consisting of atoms including C{'='} should have
+        those atoms split on that byte and have capabilities in the same
+        category aggregated into lists in the resulting dictionary.
+
+        (n.b. - I made up the word "category atom"; the protocol has no notion
+        of structure here, but rather allows each capability to define the
+        semantics of its entry in the capability response in a freeform manner.
+        If I had realized this earlier, the API for capabilities would look
+        different.  As it is, we can hope that no one defines any crazy
+        semantics which are incompatible with this API, or try to figure out a
+        better API when someone does. -exarkun)
+        """
+        capabilitiesResult = self.protocol.getCapabilities(useCache=False)
+        self.protocol.dataReceived('* CAPABILITY IMAP4rev1 AUTH=LOGIN AUTH=PLAIN\r\n')
+        self.protocol.dataReceived('0001 OK Capability completed.\r\n')
+        def gotCapabilities(capabilities):
+            self.assertEqual(
+                capabilities, {'IMAP4rev1': None, 'AUTH': ['LOGIN', 'PLAIN']})
+        capabilitiesResult.addCallback(gotCapabilities)
+        return capabilitiesResult
+
+
+    def test_mixedAtoms(self):
+        """
+        A capability response consisting of both simple and category atoms of
+        the same type should result in a list containing C{None} as well as the
+        values for the category.
+        """
+        capabilitiesResult = self.protocol.getCapabilities(useCache=False)
+        # Exercise codepath for both orderings of =-having and =-missing
+        # capabilities.
+        self.protocol.dataReceived(
+            '* CAPABILITY IMAP4rev1 FOO FOO=BAR BAR=FOO BAR\r\n')
+        self.protocol.dataReceived('0001 OK Capability completed.\r\n')
+        def gotCapabilities(capabilities):
+            self.assertEqual(capabilities, {'IMAP4rev1': None,
+                                            'FOO': [None, 'BAR'],
+                                            'BAR': ['FOO', None]})
+        capabilitiesResult.addCallback(gotCapabilities)
+        return capabilitiesResult
+
+
+
+
 class HandCraftedTestCase(IMAP4HelperMixin, unittest.TestCase):
     def testTrailingLiteral(self):
         transport = StringTransport()
@@ -1841,6 +1912,80 @@ class HandCraftedTestCase(IMAP4HelperMixin, unittest.TestCase):
             ).addCallback(strip(select)
             ).addCallback(strip(fetch)
             ).addCallback(test)
+
+
+    def test_literalWithoutPrecedingWhitespace(self):
+        """
+        Literals should be recognized even when they are not preceded by
+        whitespace.
+        """
+        transport = StringTransport()
+        protocol = imap4.IMAP4Client()
+
+        protocol.makeConnection(transport)
+        protocol.lineReceived('* OK [IMAP4rev1]')
+
+        def login():
+            d = protocol.login('blah', 'blah')
+            protocol.dataReceived('0001 OK LOGIN\r\n')
+            return d
+        def select():
+            d = protocol.select('inbox')
+            protocol.lineReceived('0002 OK SELECT')
+            return d
+        def fetch():
+            d = protocol.fetchSpecific('1:*',
+                headerType='HEADER.FIELDS',
+                headerArgs=['SUBJECT'])
+            protocol.dataReceived(
+                '* 1 FETCH (BODY[HEADER.FIELDS ({7}\r\nSUBJECT)] "Hello")\r\n')
+            protocol.dataReceived('0003 OK FETCH completed\r\n')
+            return d
+        def test(result):
+            self.assertEqual(
+                result,  {1: [['BODY', ['HEADER.FIELDS', ['SUBJECT']], 'Hello']]})
+
+        d = login()
+        d.addCallback(strip(select))
+        d.addCallback(strip(fetch))
+        d.addCallback(test)
+        return d
+
+
+    def test_nonIntegerLiteralLength(self):
+        """
+        If the server sends a literal length which cannot be parsed as an
+        integer, L{IMAP4Client.lineReceived} should cause the protocol to be
+        disconnected by raising L{imap4.IllegalServerResponse}.
+        """
+        transport = StringTransport()
+        protocol = imap4.IMAP4Client()
+
+        protocol.makeConnection(transport)
+        protocol.lineReceived('* OK [IMAP4rev1]')
+
+        def login():
+            d = protocol.login('blah', 'blah')
+            protocol.dataReceived('0001 OK LOGIN\r\n')
+            return d
+        def select():
+            d = protocol.select('inbox')
+            protocol.lineReceived('0002 OK SELECT')
+            return d
+        def fetch():
+            d = protocol.fetchSpecific('1:*',
+                headerType='HEADER.FIELDS',
+                headerArgs=['SUBJECT'])
+            self.assertRaises(
+                imap4.IllegalServerResponse,
+                protocol.dataReceived,
+                '* 1 FETCH {xyz}\r\n...')
+        d = login()
+        d.addCallback(strip(select))
+        d.addCallback(strip(fetch))
+        return d
+
+
 
 class FakeyServer(imap4.IMAP4Server):
     state = 'select'
@@ -2083,7 +2228,7 @@ class NewFetchTestCase(unittest.TestCase, IMAP4HelperMixin):
 
     def testFetchBodyStructureUID(self):
         return self.testFetchBodyStructure(1)
-    
+
     def testFetchSimplifiedBody(self, uid=0):
         self.function = self.client.fetchSimplifiedBody
         self.messages = '21'
@@ -2598,7 +2743,7 @@ class TLSTestCase(IMAP4HelperMixin, unittest.TestCase):
         def check(ignored):
             self.assertEquals(self.server.startedTLS, True)
             self.assertEquals(self.client.startedTLS, True)
-            self.assertEquals(len(called), len(methods))        
+            self.assertEquals(len(called), len(methods))
         d = self.loopback()
         d.addCallback(check)
         return d
@@ -2646,7 +2791,9 @@ class TLSTestCase(IMAP4HelperMixin, unittest.TestCase):
             self.failUnless(failure)
             self.assertIdentical(failure[0], imap4.IMAP4Exception)
         return self.loopback().addCallback(check)
-        
+
+
+
 class SlowMailbox(SimpleMailbox):
     howSlow = 2
 

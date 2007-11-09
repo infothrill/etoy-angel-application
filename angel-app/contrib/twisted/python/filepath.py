@@ -486,8 +486,6 @@ class FilePath(_PathHelper):
         try:
             self.open('a').close()
         except IOError:
-            self.open('w').close()
-        else:
             pass
         utime(self.path, None)
 

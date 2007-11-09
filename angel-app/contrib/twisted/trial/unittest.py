@@ -1,6 +1,6 @@
 # -*- test-case-name: twisted.trial.test.test_tests -*-
 #
-# Copyright (c) 2001-2004 Twisted Matrix Laboratories.
+# Copyright (c) 2001-2007 Twisted Matrix Laboratories.
 # See LICENSE for details.
 
 """
@@ -11,6 +11,7 @@ Maintainer: Jonathan Lange <jml@twistedmatrix.com>
 
 
 import os, warnings, sys, tempfile, sets, gc
+from pprint import pformat
 
 from twisted.internet import defer, utils
 from twisted.python import failure, log
@@ -310,6 +311,87 @@ class _Assertions(pyunit.TestCase, object):
         return self.failIfIn(substring, astring, msg)
     assertNotSubstring = failIfSubstring
 
+    def failUnlessWarns(self, category, message, filename, f,
+                       *args, **kwargs):
+        """
+        Fail if the given function doesn't generate the specified warning when
+        called. It calls the function, checks the warning, and forwards the
+        result of the function if everything is fine.
+
+        @param category: the category of the warning to check.
+        @param message: the output message of the warning to check.
+        @param filename: the filename where the warning should come from.
+        @param f: the function which is supposed to generate the warning.
+        @type f: any callable.
+        @param args: the arguments to C{f}.
+        @param kwargs: the keywords arguments to C{f}.
+
+        @return: the result of the original function C{f}.
+        """
+        warningsShown = []
+        def warnExplicit(*args):
+            warningsShown.append(args)
+
+        origExplicit = warnings.warn_explicit
+        try:
+            warnings.warn_explicit = warnExplicit
+            result = f(*args, **kwargs)
+        finally:
+            warnings.warn_explicit = origExplicit
+
+        self.assertEqual(len(warningsShown), 1, pformat(warningsShown))
+        gotMessage, gotCategory, gotFilename, lineno = warningsShown[0][:4]
+        self.assertEqual(gotMessage, message)
+        self.assertIdentical(gotCategory, category)
+
+        # Use starts with because of .pyc/.pyo issues.
+        self.failUnless(
+            filename.startswith(gotFilename),
+            'Warning in %r, expected %r' % (gotFilename, filename))
+
+        # It would be nice to be able to check the line number as well, but
+        # different configurations actually end up reporting different line
+        # numbers (generally the variation is only 1 line, but that's enough
+        # to fail the test erroneously...).
+        # self.assertEqual(lineno, xxx)
+
+        return result
+    assertWarns = failUnlessWarns
+
+    def failUnlessIsInstance(self, instance, classOrTuple):
+        """
+        Assert that the given instance is of the given class or of one of the
+        given classes.
+
+        @param instance: the object to test the type (first argument of the
+            C{isinstance} call).
+        @type instance: any.
+        @param classOrTuple: the class or classes to test against (second
+            argument of the C{isinstance} call).
+        @type classOrTuple: class, type, or tuple.
+        """
+        if not isinstance(instance, classOrTuple):
+            self.fail("%r is not an instance of %s" % (instance, classOrTuple))
+
+    assertIsInstance = failUnlessIsInstance
+
+    def failIfIsInstance(self, instance, classOrTuple):
+        """
+        Assert that the given instance is not of the given class or of one of
+        the given classes.
+
+        @param instance: the object to test the type (first argument of the
+            C{isinstance} call).
+        @type instance: any.
+        @param classOrTuple: the class or classes to test against (second
+            argument of the C{isinstance} call).
+        @type classOrTuple: class, type, or tuple.
+        """
+        if isinstance(instance, classOrTuple):
+            self.fail("%r is not an instance of %s" % (instance, classOrTuple))
+
+    assertNotIsInstance = failIfIsInstance
+
 
 class _LogObserver(object):
     """
@@ -468,6 +550,7 @@ class TestCase(_Assertions):
             self.__class__._instances.add(self)
         self._passed = False
         self.forceGarbageCollection = False
+        self._cleanups = []
 
     def _initInstances(cls):
         cls._instances = sets.Set()
@@ -580,6 +663,7 @@ class TestCase(_Assertions):
         d.addCallbacks(self._cbDeferTestMethod, self._ebDeferTestMethod,
                        callbackArgs=(result,),
                        errbackArgs=(result,))
+        d.addBoth(self.deferRunCleanups, result)
         d.addBoth(self.deferTearDown, result)
         if self._shared and hasattr(self, 'tearDownClass') and self._isLast():
             d.addBoth(self.deferTearDownClass, result)
@@ -618,6 +702,23 @@ class TestCase(_Assertions):
         result.upDownError('tearDown', failure, warn=False, printStatus=True)
         self._passed = False
 
+    def deferRunCleanups(self, ignored, result):
+        """
+        Run any scheduled cleanups and report errors (if any to the result
+        object.
+        """
+        d = self._runCleanups()
+        d.addCallback(self._cbDeferRunCleanups, result)
+        return d
+
+    def _cbDeferRunCleanups(self, cleanupResults, result):
+        for flag, failure in cleanupResults:
+            if flag == defer.FAILURE:
+                result.addError(self, failure)
+                if failure.check(KeyboardInterrupt):
+                    result.stop()
+                self._passed = False
+
     def deferTearDownClass(self, ignored, result):
         d = self._run('tearDownClass', result)
         d.addErrback(self._ebTearDownClass, result)
@@ -632,12 +733,11 @@ class TestCase(_Assertions):
         try:
             if self.forceGarbageCollection:
                 gc.collect()
-            util._Janitor().postCaseCleanup()
-        except util.FailureError, e:
-            result.addError(self, e.original)
-            self._passed = False
+            clean = util._Janitor(self, result).postCaseCleanup()
+            if not clean:
+                self._passed = False
         except:
-            result.cleanupErrors(failure.Failure())
+            result.addError(self, failure.Failure())
             self._passed = False
         for error in self._observer.getErrors():
             result.addError(self, error)
@@ -649,11 +749,9 @@ class TestCase(_Assertions):
 
     def _classCleanUp(self, result):
         try:
-            util._Janitor().postClassCleanup()
-        except util.FailureError, e:
-            result.cleanupErrors(e.original)
+            util._Janitor(self, result).postClassCleanup()
         except:
-            result.cleanupErrors(failure.Failure())
+            result.addError(self, failure.Failure())
 
     def _makeReactorMethod(self, name):
         """
@@ -715,6 +813,35 @@ class TestCase(_Assertions):
         return self._observer.flushErrors(*errorTypes)
 
 
+    def addCleanup(self, f, *args, **kwargs):
+        """
+        Add the given function to a list of functions to be called after
+        C{tearDown}.
+
+        Functions will be run in reverse order of being added. This helps
+        ensure that tear down complements set up.
+
+        The function may return a Deferred. If so, C{TestCase} will wait until
+        the Deferred has fired before proceeding to the next function.
+        """
+        self._cleanups.append((f, args, kwargs))
+
+
+    def _runCleanups(self):
+        """
+        Run the cleanups added with L{addCleanup} in order.
+
+        @return: A C{Deferred} that fires when all cleanups are run.
+        """
+        def _makeFunction(f, args, kwargs):
+            return lambda: f(*args, **kwargs)
+        callables = []
+        while len(self._cleanups) > 0:
+            f, args, kwargs = self._cleanups.pop()
+            callables.append(_makeFunction(f, args, kwargs))
+        return util._runSequentially(callables)
+
+
     def runTest(self):
         """
         If no C{methodName} argument is passed to the constructor, L{run} will
@@ -734,9 +861,11 @@ class TestCase(_Assertions):
         """
         log.msg("--> %s <--" % (self.id()))
         from twisted.internet import reactor
-        from twisted.trial import reporter
-        if not isinstance(result, reporter.TestResult):
+        new_result = itrial.IReporter(result, None)
+        if new_result is None:
             result = PyUnitResultAdapter(result)
+        else:
+            result = new_result
         self._timedOut = False
         if self._shared and self not in self.__class__._instances:
             self.__class__._instances.add(self)
@@ -949,9 +1078,7 @@ class PyUnitResultAdapter(object):
     def _exc_info(self, err):
         if isinstance(err, failure.Failure):
             # Unwrap the Failure into a exc_info tuple.
-            # XXX: if err.tb is a real traceback and not stringified, we should
-            #      use that.
-            err = (err.type, err.value, None)
+            err = (err.type, err.value, err.getTracebackObject())
         return err
 
     def startTest(self, method):
@@ -997,11 +1124,6 @@ class PyUnitResultAdapter(object):
     def upDownError(self, method, error, warn, printStatus):
         pass
 
-    def cleanupErrors(self, errs):
-        pass
-
-    def startSuite(self, name):
-        pass
 
 
 

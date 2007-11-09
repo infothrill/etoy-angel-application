@@ -1,29 +1,30 @@
-# Copyright (c) 2001-2004 Twisted Matrix Laboratories.
+# Copyright (c) 2001-2007 Twisted Matrix Laboratories.
 # See LICENSE for details.
 
-#
+"""
+Test code for policies.
+"""
 
-"""Test code for policies."""
-from __future__ import nested_scopes
 from StringIO import StringIO
 
 from twisted.trial import unittest
 from twisted.test.proto_helpers import StringTransportWithDisconnection
-from twisted.test.time_helpers import Clock
 
-import time
-
-from twisted.internet import protocol, reactor, address, defer
+from twisted.internet import protocol, reactor, address, defer, task
 from twisted.protocols import policies
+
+
 
 class StringIOWithoutClosing(StringIO):
     def close(self): pass
+
+
 
 class SimpleProtocol(protocol.Protocol):
 
     connected = disconnected = 0
     buffer = ""
-    
+
     def __init__(self):
         self.dConnected = defer.Deferred()
         self.dDisconnected = defer.Deferred()
@@ -40,6 +41,7 @@ class SimpleProtocol(protocol.Protocol):
         self.buffer += data
 
 
+
 class SillyFactory(protocol.ClientFactory):
 
     def __init__(self, p):
@@ -50,12 +52,13 @@ class SillyFactory(protocol.ClientFactory):
 
 
 class EchoProtocol(protocol.Protocol):
+    paused = False
 
     def pauseProducing(self):
-        self.paused = time.time()
+        self.paused = True
 
     def resumeProducing(self):
-        self.resume = time.time()
+        self.paused = False
 
     def stopProducing(self):
         pass
@@ -64,75 +67,132 @@ class EchoProtocol(protocol.Protocol):
         self.transport.write(data)
 
 
-class Server(protocol.ServerFactory):
 
+class Server(protocol.ServerFactory):
+    """
+    A simple server factory using L{EchoProtocol}.
+    """
     protocol = EchoProtocol
 
 
-class SimpleSenderProtocol(SimpleProtocol):
-    finished = 0
-    data = ''
-    def __init__(self, testcase):
-        self.testcase = testcase
-    def connectionMade(self):
-        SimpleProtocol.connectionMade(self)
-        self.writeSomething()
-    def writeSomething(self):
-        if self.disconnected:
-            if not self.finished:
-                self.fail()
-            else:
-                reactor.crash()
-        if not self.disconnected:
-            self.transport.write('foo')
-            reactor.callLater(1, self.writeSomething)
-    def finish(self):
-        self.finished = 1
-        self.transport.loseConnection()
-    def fail(self):
-        self.testcase.failed = 1
-    def dataReceived(self, data):
-        self.data += data
+
+class TestableThrottlingFactory(policies.ThrottlingFactory):
+    """
+    L{policies.ThrottlingFactory} using a L{task.Clock} for tests.
+    """
+
+    def __init__(self, clock, *args, **kwargs):
+        """
+        @param clock: object providing a callLater method that can be used
+            for tests.
+        @type clock: C{task.Clock} or alike.
+        """
+        policies.ThrottlingFactory.__init__(self, *args, **kwargs)
+        self.clock = clock
+
+
+    def callLater(self, period, func):
+        """
+        Forward to the testable clock.
+        """
+        return self.clock.callLater(period, func)
+
+
+
+class TestableTimeoutFactory(policies.TimeoutFactory):
+    """
+    L{policies.TimeoutFactory} using a L{task.Clock} for tests.
+    """
+
+    def __init__(self, clock, *args, **kwargs):
+        """
+        @param clock: object providing a callLater method that can be used
+            for tests.
+        @type clock: C{task.Clock} or alike.
+        """
+        policies.TimeoutFactory.__init__(self, *args, **kwargs)
+        self.clock = clock
+
+
+    def callLater(self, period, func):
+        """
+        Forward to the testable clock.
+        """
+        return self.clock.callLater(period, func)
+
+
+
+class PausableStringTransport(StringTransportWithDisconnection):
+    """
+    A string transport saving the current production state.
+
+    @ivar paused: whether the production is paused or not.
+    @type paused: C{bool}
+    """
+    paused = False
+
+    def pauseProducing(self):
+        """
+        Notification of production pause: set C{self.paused}.
+        """
+        self.paused = True
+
+
+    def resumeProducing(self):
+        """
+        Notification of production restart: unset C{self.paused}.
+        """
+        self.paused = False
+
 
 
 class WrapperTestCase(unittest.TestCase):
     def testProtocolFactoryAttribute(self):
-        # Make sure protocol.factory is the wrapped factory, not the wrapping factory
+        """
+        Make sure protocol.factory is the wrapped factory, not the wrapping
+        factory.
+        """
         f = Server()
         wf = policies.WrappingFactory(f)
         p = wf.buildProtocol(address.IPv4Address('TCP', '127.0.0.1', 35))
         self.assertIdentical(p.wrappedProtocol.factory, f)
 
 
+
 class WrappingFactory(policies.WrappingFactory):
     protocol = lambda s, f, p: p
-    
+
     def startFactory(self):
         policies.WrappingFactory.startFactory(self)
         self.deferred.callback(None)
 
 
+
 class ThrottlingTestCase(unittest.TestCase):
+    """
+    Tests for L{policies.ThrottlingFactory}.
+    """
 
-    def doIterations(self, count=5):
-        for i in range(count):
-            reactor.iterate()
-
-    def testLimit(self):
+    def test_limit(self):
+        """
+        Full test using a custom server limiting number of connections.
+        """
         server = Server()
         c1, c2, c3, c4 = [SimpleProtocol() for i in range(4)]
         tServer = policies.ThrottlingFactory(server, 2)
         wrapTServer = WrappingFactory(tServer)
         wrapTServer.deferred = defer.Deferred()
-        
+
         # Start listening
         p = reactor.listenTCP(0, wrapTServer, interface="127.0.0.1")
         n = p.getHost().port
-        
+
         def _connect123(results):
             reactor.connectTCP("127.0.0.1", n, SillyFactory(c1))
-            c1.dConnected.addCallback(lambda r: reactor.connectTCP("127.0.0.1", n, SillyFactory(c2)))
-            c2.dConnected.addCallback(lambda r: reactor.connectTCP("127.0.0.1", n, SillyFactory(c3)))
+            c1.dConnected.addCallback(
+                lambda r: reactor.connectTCP("127.0.0.1", n, SillyFactory(c2)))
+            c2.dConnected.addCallback(
+                lambda r: reactor.connectTCP("127.0.0.1", n, SillyFactory(c3)))
             return c3.dDisconnected
 
         def _check123(results):
@@ -162,7 +222,7 @@ class ThrottlingTestCase(unittest.TestCase):
                 defer.maybeDeferred(p.stopListening),
                 c2.dDisconnected,
                 c4.dDisconnected])
-        
+
         wrapTServer.deferred.addCallback(_connect123)
         wrapTServer.deferred.addCallback(_check123)
         wrapTServer.deferred.addCallback(_lose1)
@@ -171,310 +231,320 @@ class ThrottlingTestCase(unittest.TestCase):
         wrapTServer.deferred.addCallback(_cleanup)
         return wrapTServer.deferred
 
-    def testWriteLimit(self):
+
+    def test_writeLimit(self):
+        """
+        Check the writeLimit parameter: write data, and check for the pause
+        status.
+        """
         server = Server()
-        c1, c2 = SimpleProtocol(), SimpleProtocol()
+        tServer = TestableThrottlingFactory(task.Clock(), server, writeLimit=10)
+        port = tServer.buildProtocol(address.IPv4Address('TCP', '127.0.0.1', 0))
+        tr = PausableStringTransport()
+        tr.protocol = port
+        port.makeConnection(tr)
+        port.producer = port.wrappedProtocol
 
-        # The throttling factory starts checking bandwidth immediately
-        now = time.time()
-
-        tServer = policies.ThrottlingFactory(server, writeLimit=10)
-        port = reactor.listenTCP(0, tServer, interface="127.0.0.1")
-        n = port.getHost()[2]
-        reactor.iterate(); reactor.iterate()
-        for c in c1, c2:
-            reactor.connectTCP("127.0.0.1", n, SillyFactory(c))
-            self.doIterations()
-
-        for p in tServer.protocols.keys():
-            p = p.wrappedProtocol
-            self.assert_(isinstance(p, EchoProtocol))
-            p.transport.registerProducer(p, 1)
-
-        c1.transport.write("0123456789")
-        c2.transport.write("abcdefghij")
-        self.doIterations()
-
-        self.assertEquals(c1.buffer, "0123456789")
-        self.assertEquals(c2.buffer, "abcdefghij")
+        port.dataReceived("0123456789")
+        port.dataReceived("abcdefghij")
+        self.assertEquals(tr.value(), "0123456789abcdefghij")
         self.assertEquals(tServer.writtenThisSecond, 20)
+        self.assertFalse(port.wrappedProtocol.paused)
 
         # at this point server should've written 20 bytes, 10 bytes
         # above the limit so writing should be paused around 1 second
         # from 'now', and resumed a second after that
-
-        for p in tServer.protocols.keys():
-            self.assert_(not hasattr(p.wrappedProtocol, "paused"))
-            self.assert_(not hasattr(p.wrappedProtocol, "resume"))
-
-        while not hasattr(p.wrappedProtocol, "paused"):
-            reactor.iterate()
-
+        tServer.clock.advance(1.05)
         self.assertEquals(tServer.writtenThisSecond, 0)
+        self.assertTrue(port.wrappedProtocol.paused)
 
-        for p in tServer.protocols.keys():
-            self.assert_(hasattr(p.wrappedProtocol, "paused"))
-            self.assert_(not hasattr(p.wrappedProtocol, "resume"))
-            self.assert_(abs(p.wrappedProtocol.paused - now - 1.0) < 0.1)
+        tServer.clock.advance(1.05)
+        self.assertEquals(tServer.writtenThisSecond, 0)
+        self.assertFalse(port.wrappedProtocol.paused)
 
-        while not hasattr(p.wrappedProtocol, "resume"):
-            reactor.iterate()
 
-        for p in tServer.protocols.keys():
-            self.assert_(hasattr(p.wrappedProtocol, "resume"))
-            self.assert_(abs(p.wrappedProtocol.resume -
-                             p.wrappedProtocol.paused - 1.0) < 0.1)
-
-        c1.transport.loseConnection()
-        c2.transport.loseConnection()
-        port.stopListening()
-        for p in tServer.protocols.keys():
-            p.loseConnection()
-        self.doIterations()
-
-    def testReadLimit(self):
+    def test_readLimit(self):
+        """
+        Check the readLimit parameter: read data and check for the pause
+        status.
+        """
         server = Server()
-        c1, c2 = SimpleProtocol(), SimpleProtocol()
-        now = time.time()
-        tServer = policies.ThrottlingFactory(server, readLimit=10)
-        port = reactor.listenTCP(0, tServer, interface="127.0.0.1")
-        n = port.getHost()[2]
-        self.doIterations()
-        for c in c1, c2:
-            reactor.connectTCP("127.0.0.1", n, SillyFactory(c))
-            self.doIterations()
+        tServer = TestableThrottlingFactory(task.Clock(), server, readLimit=10)
+        port = tServer.buildProtocol(address.IPv4Address('TCP', '127.0.0.1', 0))
+        tr = PausableStringTransport()
+        tr.protocol = port
+        port.makeConnection(tr)
 
-        c1.transport.write("0123456789")
-        c2.transport.write("abcdefghij")
-        self.doIterations()
-        self.assertEquals(c1.buffer, "0123456789")
-        self.assertEquals(c2.buffer, "abcdefghij")
+        port.dataReceived("0123456789")
+        port.dataReceived("abcdefghij")
+        self.assertEquals(tr.value(), "0123456789abcdefghij")
         self.assertEquals(tServer.readThisSecond, 20)
 
-        # we wrote 20 bytes, so after one second it should stop reading
-        # and then a second later start reading again
-        while time.time() - now < 1.05:
-            reactor.iterate()
+        tServer.clock.advance(1.05)
         self.assertEquals(tServer.readThisSecond, 0)
+        self.assertTrue(tr.paused)
 
-        # write some more - data should *not* get written for another second
-        c1.transport.write("0123456789")
-        c2.transport.write("abcdefghij")
-        self.doIterations()
-        self.assertEquals(c1.buffer, "0123456789")
-        self.assertEquals(c2.buffer, "abcdefghij")
+        tServer.clock.advance(1.05)
         self.assertEquals(tServer.readThisSecond, 0)
+        self.assertFalse(tr.paused)
 
-        while time.time() - now < 2.05:
-            reactor.iterate()
-        self.assertEquals(c1.buffer, "01234567890123456789")
-        self.assertEquals(c2.buffer, "abcdefghijabcdefghij")
-        c1.transport.loseConnection()
-        c2.transport.loseConnection()
-        port.stopListening()
-        for p in tServer.protocols.keys():
-            p.loseConnection()
-        self.doIterations()
+        tr.clear()
+        port.dataReceived("0123456789")
+        port.dataReceived("abcdefghij")
+        self.assertEquals(tr.value(), "0123456789abcdefghij")
+        self.assertEquals(tServer.readThisSecond, 20)
 
-    # These fail intermittently.
-    testReadLimit.skip = "Inaccurate tests are worse than no tests."
-    testWriteLimit.skip = "Inaccurate tests are worse than no tests."
+        tServer.clock.advance(1.05)
+        self.assertEquals(tServer.readThisSecond, 0)
+        self.assertTrue(tr.paused)
+
+        tServer.clock.advance(1.05)
+        self.assertEquals(tServer.readThisSecond, 0)
+        self.assertFalse(tr.paused)
+
 
 
 class TimeoutTestCase(unittest.TestCase):
-    def setUpClass(self):
-        self.clock = Clock()
-        self.clock.install()
+    """
+    Tests for L{policies.TimeoutFactory}.
+    """
 
-
-    def tearDownClass(self):
-        self.clock.uninstall()
-
-
-    def _serverSetup(self):
-        # Create a server factory, get a protocol from it, connect it to a
-        # transport, and return all three.
+    def setUp(self):
+        """
+        Create a testable, deterministic clock, and a set of
+        server factory/protocol/transport.
+        """
+        self.clock = task.Clock()
         wrappedFactory = protocol.ServerFactory()
         wrappedFactory.protocol = SimpleProtocol
-        factory = policies.TimeoutFactory(wrappedFactory, 3)
-        proto = factory.buildProtocol(address.IPv4Address('TCP', '127.0.0.1', 12345))
-        transport = StringTransportWithDisconnection()
-        transport.protocol = proto
-        proto.makeConnection(transport)
-        return factory, proto, transport
+        self.factory = TestableTimeoutFactory(self.clock, wrappedFactory, 3)
+        self.proto = self.factory.buildProtocol(
+            address.IPv4Address('TCP', '127.0.0.1', 12345))
+        self.transport = StringTransportWithDisconnection()
+        self.transport.protocol = self.proto
+        self.proto.makeConnection(self.transport)
 
 
-    def testTimeout(self):
-        # Make sure that when a TimeoutFactory accepts a connection, it will
-        # time out that connection if no data is read or written within the
-        # timeout period.
-
-        # Make the server-side connection
-        factory, proto, transport = self._serverSetup()
-
+    def test_timeout(self):
+        """
+        Make sure that when a TimeoutFactory accepts a connection, it will
+        time out that connection if no data is read or written within the
+        timeout period.
+        """
         # Let almost 3 time units pass
-        self.clock.pump(reactor, [0.0, 0.5, 1.0, 1.0, 0.4])
-        self.failIf(proto.wrappedProtocol.disconnected)
+        self.clock.pump([0.0, 0.5, 1.0, 1.0, 0.4])
+        self.failIf(self.proto.wrappedProtocol.disconnected)
 
         # Now let the timer elapse
-        self.clock.pump(reactor, [0.0, 0.2])
-        self.failUnless(proto.wrappedProtocol.disconnected)
+        self.clock.pump([0.0, 0.2])
+        self.failUnless(self.proto.wrappedProtocol.disconnected)
 
 
-    def testSendAvoidsTimeout(self):
-        # Make sure that writing data to a transport from a protocol
-        # constructed by a TimeoutFactory resets the timeout countdown.
-
-        # Make the server-side connection
-        factory, proto, transport = self._serverSetup()
-
+    def test_sendAvoidsTimeout(self):
+        """
+        Make sure that writing data to a transport from a protocol
+        constructed by a TimeoutFactory resets the timeout countdown.
+        """
         # Let half the countdown period elapse
-        self.clock.pump(reactor, [0.0, 0.5, 1.0])
-        self.failIf(proto.wrappedProtocol.disconnected)
+        self.clock.pump([0.0, 0.5, 1.0])
+        self.failIf(self.proto.wrappedProtocol.disconnected)
 
-        # Send some data (proto is the /real/ proto's transport, so this is
-        # the write that gets called)
-        proto.write('bytes bytes bytes')
+        # Send some data (self.proto is the /real/ proto's transport, so this
+        # is the write that gets called)
+        self.proto.write('bytes bytes bytes')
 
         # More time passes, putting us past the original timeout
-        self.clock.pump(reactor, [0.0, 1.0, 1.0])
-        self.failIf(proto.wrappedProtocol.disconnected)
+        self.clock.pump([0.0, 1.0, 1.0])
+        self.failIf(self.proto.wrappedProtocol.disconnected)
 
         # Make sure writeSequence delays timeout as well
-        proto.writeSequence(['bytes'] * 3)
+        self.proto.writeSequence(['bytes'] * 3)
 
         # Tick tock
-        self.clock.pump(reactor, [0.0, 1.0, 1.0])
-        self.failIf(proto.wrappedProtocol.disconnected)
+        self.clock.pump([0.0, 1.0, 1.0])
+        self.failIf(self.proto.wrappedProtocol.disconnected)
 
         # Don't write anything more, just let the timeout expire
-        self.clock.pump(reactor, [0.0, 2.0])
-        self.failUnless(proto.wrappedProtocol.disconnected)
+        self.clock.pump([0.0, 2.0])
+        self.failUnless(self.proto.wrappedProtocol.disconnected)
 
 
-    def testReceiveAvoidsTimeout(self):
-        # Make sure that receiving data also resets the timeout countdown.
-
-        # Make the server-side connection
-        factory, proto, transport = self._serverSetup()
-
+    def test_receiveAvoidsTimeout(self):
+        """
+        Make sure that receiving data also resets the timeout countdown.
+        """
         # Let half the countdown period elapse
-        self.clock.pump(reactor, [0.0, 1.0, 0.5])
-        self.failIf(proto.wrappedProtocol.disconnected)
+        self.clock.pump([0.0, 1.0, 0.5])
+        self.failIf(self.proto.wrappedProtocol.disconnected)
 
         # Some bytes arrive, they should reset the counter
-        proto.dataReceived('bytes bytes bytes')
+        self.proto.dataReceived('bytes bytes bytes')
 
         # We pass the original timeout
-        self.clock.pump(reactor, [0.0, 1.0, 1.0])
-        self.failIf(proto.wrappedProtocol.disconnected)
+        self.clock.pump([0.0, 1.0, 1.0])
+        self.failIf(self.proto.wrappedProtocol.disconnected)
 
         # Nothing more arrives though, the new timeout deadline is passed,
         # the connection should be dropped.
-        self.clock.pump(reactor, [0.0, 1.0, 1.0])
-        self.failUnless(proto.wrappedProtocol.disconnected)
+        self.clock.pump([0.0, 1.0, 1.0])
+        self.failUnless(self.proto.wrappedProtocol.disconnected)
+
 
 
 class TimeoutTester(protocol.Protocol, policies.TimeoutMixin):
+    """
+    A testable protocol with timeout facility.
+
+    @ivar timedOut: set to C{True} if a timeout has been detected.
+    @type timedOut: C{bool}
+    """
     timeOut  = 3
-    timedOut = 0
+    timedOut = False
+
+    def __init__(self, clock):
+        """
+        Initialize the protocol with a C{task.Clock} object.
+        """
+        self.clock = clock
+
 
     def connectionMade(self):
+        """
+        Upon connection, set the timeout.
+        """
         self.setTimeout(self.timeOut)
 
+
     def dataReceived(self, data):
+        """
+        Reset the timeout on data.
+        """
         self.resetTimeout()
         protocol.Protocol.dataReceived(self, data)
 
+
     def connectionLost(self, reason=None):
+        """
+        On connection lost, cancel all timeout operations.
+        """
         self.setTimeout(None)
 
+
     def timeoutConnection(self):
-        self.timedOut = 1
+        """
+        Flags the timedOut variable to indicate the timeout of the connection.
+        """
+        self.timedOut = True
+
+
+    def callLater(self, timeout, func, *args, **kwargs):
+        """
+        Override callLater to use the deterministic clock.
+        """
+        return self.clock.callLater(timeout, func, *args, **kwargs)
+
 
 
 class TestTimeout(unittest.TestCase):
+    """
+    Tests for L{policies.TimeoutMixin}.
+    """
 
-    def setUpClass(self):
-        self.clock = Clock()
-        self.clock.install()
-
-    def tearDownClass(self):
-        self.clock.uninstall()
-
-
-    def testOverriddenCallLater(self):
+    def setUp(self):
         """
-        Test that setting callLater on a subclass of TimeoutMixin causes the
-        protocol to use that callable instead of C{reactor.callLater}.
+        Create a testable, deterministic clock and a C{TimeoutTester} instance.
         """
-        calls = []
-        p = TimeoutTester()
-        p.callLater = lambda *a, **kw: calls.append((a, kw))
-        p.setTimeout(10)
-        self.assertEquals(len(calls), 1)
+        self.clock = task.Clock()
+        self.proto = TimeoutTester(self.clock)
 
 
-    def testTimeout(self):
-        p = TimeoutTester()
+    def test_overriddenCallLater(self):
+        """
+        Test that the callLater of the clock is used instead of
+        C{reactor.callLater}.
+        """
+        self.proto.setTimeout(10)
+        self.assertEquals(len(self.clock.calls), 1)
+
+
+    def test_timeout(self):
+        """
+        Check that the protocol does timeout at the time specified by its
+        C{timeOut} attribute.
+        """
         s = StringIOWithoutClosing()
-        p.makeConnection(protocol.FileWrapper(s))
+        self.proto.makeConnection(protocol.FileWrapper(s))
 
-        self.clock.pump(reactor, [0, 0.5, 1.0, 1.0])
-        self.failIf(p.timedOut)
-        self.clock.pump(reactor, [0, 1.0])
-        self.failUnless(p.timedOut)
+        # timeOut value is 3
+        self.clock.pump([0, 0.5, 1.0, 1.0])
+        self.failIf(self.proto.timedOut)
+        self.clock.pump([0, 1.0])
+        self.failUnless(self.proto.timedOut)
 
-    def testNoTimeout(self):
-        p = TimeoutTester()
+
+    def test_noTimeout(self):
+        """
+        Check that receiving data is delaying the timeout of the connection.
+        """
         s = StringIOWithoutClosing()
-        p.makeConnection(protocol.FileWrapper(s))
+        self.proto.makeConnection(protocol.FileWrapper(s))
 
-        self.clock.pump(reactor, [0, 0.5, 1.0, 1.0])
-        self.failIf(p.timedOut)
-        p.dataReceived('hello there')
-        self.clock.pump(reactor, [0, 1.0, 1.0, 0.5])
-        self.failIf(p.timedOut)
-        self.clock.pump(reactor, [0, 1.0])
-        self.failUnless(p.timedOut)
+        self.clock.pump([0, 0.5, 1.0, 1.0])
+        self.failIf(self.proto.timedOut)
+        self.proto.dataReceived('hello there')
+        self.clock.pump([0, 1.0, 1.0, 0.5])
+        self.failIf(self.proto.timedOut)
+        self.clock.pump([0, 1.0])
+        self.failUnless(self.proto.timedOut)
 
-    def testResetTimeout(self):
-        p = TimeoutTester()
-        p.timeOut = None
+
+    def test_resetTimeout(self):
+        """
+        Check that setting a new value for timeout cancel the previous value
+        and install a new timeout.
+        """
+        self.proto.timeOut = None
         s = StringIOWithoutClosing()
-        p.makeConnection(protocol.FileWrapper(s))
+        self.proto.makeConnection(protocol.FileWrapper(s))
 
-        p.setTimeout(1)
-        self.assertEquals(p.timeOut, 1)
+        self.proto.setTimeout(1)
+        self.assertEquals(self.proto.timeOut, 1)
 
-        self.clock.pump(reactor, [0, 0.9])
-        self.failIf(p.timedOut)
-        self.clock.pump(reactor, [0, 0.2])
-        self.failUnless(p.timedOut)
+        self.clock.pump([0, 0.9])
+        self.failIf(self.proto.timedOut)
+        self.clock.pump([0, 0.2])
+        self.failUnless(self.proto.timedOut)
 
-    def testCancelTimeout(self):
-        p = TimeoutTester()
-        p.timeOut = 5
+
+    def test_cancelTimeout(self):
+        """
+        Setting the timeout to C{None} cancel any timeout operations.
+        """
+        self.proto.timeOut = 5
         s = StringIOWithoutClosing()
-        p.makeConnection(protocol.FileWrapper(s))
+        self.proto.makeConnection(protocol.FileWrapper(s))
 
-        p.setTimeout(None)
-        self.assertEquals(p.timeOut, None)
+        self.proto.setTimeout(None)
+        self.assertEquals(self.proto.timeOut, None)
 
-        self.clock.pump(reactor, [0, 5, 5, 5])
-        self.failIf(p.timedOut)
+        self.clock.pump([0, 5, 5, 5])
+        self.failIf(self.proto.timedOut)
 
-    def testReturn(self):
-        p = TimeoutTester()
-        p.timeOut = 5
 
-        self.assertEquals(p.setTimeout(10), 5)
-        self.assertEquals(p.setTimeout(None), 10)
-        self.assertEquals(p.setTimeout(1), None)
-        self.assertEquals(p.timeOut, 1)
+    def test_return(self):
+        """
+        setTimeout should return the value of the previous timeout.
+        """
+        self.proto.timeOut = 5
+
+        self.assertEquals(self.proto.setTimeout(10), 5)
+        self.assertEquals(self.proto.setTimeout(None), 10)
+        self.assertEquals(self.proto.setTimeout(1), None)
+        self.assertEquals(self.proto.timeOut, 1)
 
         # Clean up the DelayedCall
-        p.setTimeout(None)
+        self.proto.setTimeout(None)
+
 
 
 class LimitTotalConnectionsFactoryTestCase(unittest.TestCase):
@@ -551,8 +621,17 @@ class TestLoggingFactory(policies.TrafficLoggingFactory):
         self.openFile = StringIO()
         return self.openFile
 
+
+
 class LoggingFactoryTestCase(unittest.TestCase):
-    def testThingsGetLogged(self):
+    """
+    Tests for L{policies.TrafficLoggingFactory}.
+    """
+
+    def test_thingsGetLogged(self):
+        """
+        Check the output produced by L{policies.TrafficLoggingFactory}.
+        """
         wrappedFactory = Server()
         wrappedFactory.protocol = WriteSequenceEchoProtocol
         t = StringTransportWithDisconnection()
@@ -568,17 +647,36 @@ class LoggingFactoryTestCase(unittest.TestCase):
         p.dataReceived('here are some bytes')
 
         v = f.openFile.getvalue()
-        self.assertNotEqual(-1, v.find("C 1: 'here are some bytes'"), "Expected client string not found in %r" % (v,))
-        self.assertNotEqual(-1, v.find("S 1: 'here are some bytes'"), "Expected server string not found in %r" % (v,))
+        self.assertIn("C 1: 'here are some bytes'", v)
+        self.assertIn("S 1: 'here are some bytes'", v)
         self.assertEquals(t.value(), 'here are some bytes')
 
         t.clear()
         p.dataReceived('prepare for vector! to the extreme')
         v = f.openFile.getvalue()
-        self.assertNotEqual(-1, v.find("SV 1: ['prepare for vector! to the extreme']"), "Expected server string not found in %r" % (v,))
+        self.assertIn("SV 1: ['prepare for vector! to the extreme']", v)
         self.assertEquals(t.value(), 'prepare for vector! to the extreme')
 
         p.loseConnection()
 
         v = f.openFile.getvalue()
-        self.assertNotEqual(-1, v.find('ConnectionDone'), "Connection done notification not found in %r" % (v,))
+        self.assertIn('ConnectionDone', v)
+
+
+    def test_counter(self):
+        """
+        Test counter management with the resetCounter method.
+        """
+        wrappedFactory = Server()
+        f = TestLoggingFactory(wrappedFactory, 'test')
+        self.assertEqual(f._counter, 0)
+        f.buildProtocol(('1.2.3.4', 5678))
+        self.assertEqual(f._counter, 1)
+        # Reset log file
+        f.openFile = None
+        f.buildProtocol(('1.2.3.4', 5679))
+        self.assertEqual(f._counter, 2)
+
+        f.resetCounter()
+        self.assertEqual(f._counter, 0)
+

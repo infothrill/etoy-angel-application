@@ -10,7 +10,6 @@ I hold the lowest-level L{Resource} class and related mix-in classes.
 from zope.interface import implements
 
 from twisted.web2 import iweb, http, server, responsecode
-from twisted.python import log
 
 class RenderMixin(object):
     """

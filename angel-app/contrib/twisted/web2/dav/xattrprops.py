@@ -47,7 +47,7 @@ from twisted.web2.dav import davxml
 class xattrPropertyStore (object):
     """
 
-    This implementation uses Bob Ippolito's xattr package, available from:
+    This implementation uses Bob Ippolito's xattr package, available from::
 
         http://undefined.org/python/#xattr
 
@@ -100,7 +100,6 @@ class xattrPropertyStore (object):
         try:
             value = self.attrs[self._encode(qname)]
         except KeyError:
-            log.err("No such property: {%s}%s" % qname)
             raise HTTPError(StatusResponse(
                 responsecode.NOT_FOUND,
                 "No such property: {%s}%s" % qname

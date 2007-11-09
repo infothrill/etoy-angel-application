@@ -1,13 +1,12 @@
-# Copyright (c) 2001-2004 Twisted Matrix Laboratories.
+# Copyright (c) 2001-2007 Twisted Matrix Laboratories.
 # See LICENSE for details.
 
 
-"""FTP tests.
+"""
+FTP tests.
 
 Maintainer: U{Andrew Bennetts<mailto:spiv@twistedmatrix.com>}
 """
-
-from __future__ import nested_scopes
 
 import os.path
 from StringIO import StringIO
@@ -57,7 +56,12 @@ class _BufferingProtocol(protocol.Protocol):
 
 
 class FTPServerTestCase(unittest.TestCase):
-    """Simple tests for an FTP server with the default settings."""
+    """
+    Simple tests for an FTP server with the default settings.
+
+    @ivar clientFactory: class used as ftp client.
+    """
+    clientFactory = ftp.FTPClientBasic
 
     def setUp(self):
         # Create a directory
@@ -84,7 +88,7 @@ class FTPServerTestCase(unittest.TestCase):
 
         # Connect a client to it
         portNum = self.port.getHost().port
-        clientCreator = protocol.ClientCreator(reactor, ftp.FTPClientBasic)
+        clientCreator = protocol.ClientCreator(reactor, self.clientFactory)
         d2 = clientCreator.connectTCP("127.0.0.1", portNum)
         def gotClient(client):
             self.client = client
@@ -293,6 +297,67 @@ class BasicFTPServerTestCase(FTPServerTestCase):
         self.assertCommandResponse('SYST', ["215 UNIX Type: L8"],
                                    chainDeferred=d)
         return d
+
+
+    def test_portRangeForwardError(self):
+        """
+        Exceptions other than L{error.CannotListenError} which are raised by
+        C{listenFactory} should be raised to the caller of L{FTP.getDTPPort}.
+        """
+        def listenFactory(portNumber, factory):
+            raise RuntimeError()
+        self.serverProtocol.listenFactory = listenFactory
+
+        self.assertRaises(RuntimeError, self.serverProtocol.getDTPPort,
+                          protocol.Factory())
+
+
+    def test_portRange(self):
+        """
+        L{FTP.passivePortRange} should determine the ports which
+        L{FTP.getDTPPort} attempts to bind. If no port from that iterator can
+        be bound, L{error.CannotListenError} should be raised, otherwise the
+        first successful result from L{FTP.listenFactory} should be returned.
+        """
+        def listenFactory(portNumber, factory):
+            if portNumber in (22032, 22033, 22034):
+                raise error.CannotListenError('localhost', portNumber, 'error')
+            return portNumber
+        self.serverProtocol.listenFactory = listenFactory
+
+        port = self.serverProtocol.getDTPPort(protocol.Factory())
+        self.assertEquals(port, 0)
+
+        self.serverProtocol.passivePortRange = xrange(22032, 65536)
+        port = self.serverProtocol.getDTPPort(protocol.Factory())
+        self.assertEquals(port, 22035)
+
+        self.serverProtocol.passivePortRange = xrange(22032, 22035)
+        self.assertRaises(error.CannotListenError,
+                          self.serverProtocol.getDTPPort,
+                          protocol.Factory())
+
+
+
+class FTPServerTestCaseAdvancedClient(FTPServerTestCase):
+    """
+    Test FTP server with the L{ftp.FTPClient} class.
+    """
+    clientFactory = ftp.FTPClient
+
+    def test_anonymousSTOR(self):
+        """
+        Try to make an STOR as anonymous, and check that we got a permission
+        denied error.
+        """
+        def eb(res):
+            res.trap(ftp.CommandFailed)
+            self.assertEquals(res.value.args[0][0],
+                '550 foo: Permission denied.')
+        d1, d2 = self.client.storeFile('foo')
+        d2.addErrback(eb)
+        return defer.gatherResults([d1, d2])
+
 
 class FTPServerPasvDataConnectionTestCase(FTPServerTestCase):
     def _makeDataConnection(self, ignored=None):
@@ -579,8 +644,15 @@ class FTPClientTests(unittest.TestCase):
         d.addCallback(gotClient)
         return self.assertFailure(d, ftp.CommandFailed)
 
-    def testErrbacksUponDisconnect(self):
+    def test_errbacksUponDisconnect(self):
+        """
+        Test the ftp command errbacks when a connection lost happens during
+        the operation.
+        """
         ftpClient = ftp.FTPClient()
+        tr = proto_helpers.StringTransportWithDisconnection()
+        ftpClient.makeConnection(tr)
+        tr.protocol = ftpClient
         d = ftpClient.list('some path', Dummy())
         m = []
         def _eb(failure):
@@ -590,6 +662,7 @@ class FTPClientTests(unittest.TestCase):
         from twisted.internet.main import CONNECTION_LOST
         ftpClient.connectionLost(failure.Failure(CONNECTION_LOST))
         self.failUnless(m, m)
+        return d
 
 
 
@@ -602,8 +675,9 @@ class FTPClientTestCase(unittest.TestCase):
         Create a FTP client and connect it to fake transport.
         """
         self.client = ftp.FTPClient()
-        self.transport = proto_helpers.StringTransport()
+        self.transport = proto_helpers.StringTransportWithDisconnection()
         self.client.makeConnection(self.transport)
+        self.transport.protocol = self.client
 
 
     def tearDown(self):
@@ -840,6 +914,40 @@ class FTPClientTestCase(unittest.TestCase):
         self.assertEquals(self.transport.value(), 'RETR spam\r\n')
         self.transport.clear()
         self.client.lineReceived('550 spam: No such file or directory')
+        return d
+
+
+    def test_lostRETR(self):
+        """
+        Try a RETR, but disconnect during the transfer.
+        L{ftp.FTPClient.retrieveFile} should return a Deferred which
+        errbacks with L{ftp.ConnectionLost)
+        """
+        self.client.passive = False
+
+        l = []
+        def generatePort(portCmd):
+            portCmd.text = 'PORT %s' % (ftp.encodeHostPort('127.0.0.1', 9876),)
+            tr = proto_helpers.StringTransportWithDisconnection()
+            portCmd.protocol.makeConnection(tr)
+            tr.protocol = portCmd.protocol
+            portCmd.protocol.dataReceived("x" * 500)
+            l.append(tr)
+
+        self.client.generatePortCommand = generatePort
+        self._testLogin()
+        proto = _BufferingProtocol()
+        d = self.client.retrieveFile("spam", proto)
+        self.assertEquals(self.transport.value(), 'PORT %s\r\n' %
+            (ftp.encodeHostPort('127.0.0.1', 9876),))
+        self.transport.clear()
+        self.client.lineReceived('200 PORT OK')
+        self.assertEquals(self.transport.value(), 'RETR spam\r\n')
+
+        self.assert_(l)
+        l[0].loseConnection()
+        self.transport.loseConnection()
+        self.assertFailure(d, ftp.ConnectionLost)
         return d
 
 
@@ -1467,3 +1575,19 @@ class PathHandling(unittest.TestCase):
 
         for inp in ['../..', '../../', '../a/../..']:
             self.assertRaises(ftp.InvalidPath, ftp.toSegments, ['x'], inp)
+
+
+class FTPShellTestCase(unittest.TestCase):
+    """
+    Test functionnalities for FTP shells classes.
+    """
+    def test_anonymousWrite(self):
+        """
+        Check that L{ftp.FTPAnonymousShell} returns an error when trying to
+        open it in write mode.
+        """
+        shell = ftp.FTPAnonymousShell('')
+        d = shell.openForWriting('foo')
+        self.assertFailure(d, ftp.PermissionDeniedError)
+        return d
+

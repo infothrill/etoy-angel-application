@@ -1,10 +1,10 @@
-# Copyright (c) 2001-2004 Twisted Matrix Laboratories.
+# Copyright (c) 2001-2007 Twisted Matrix Laboratories.
 # See LICENSE for details.
 
 
 from twisted.trial import unittest
 from twisted.internet import reactor, protocol, error, abstract, defer
-from twisted.internet import interfaces, base
+from twisted.internet import interfaces, base, task
 
 from twisted.test.time_helpers import Clock
 
@@ -16,192 +16,690 @@ if ssl and not ssl.supported:
     ssl = None
 
 from twisted.internet.defer import Deferred, maybeDeferred
-from twisted.python import util
+from twisted.python import util, runtime
 
 import os
 import sys
 import time
-import types
+
+
+class ThreePhaseEventTests(unittest.TestCase):
+    """
+    Tests for the private implementation helpers for system event triggers.
+    """
+    def setUp(self):
+        """
+        Create a trigger, an argument, and an event to be used by tests.
+        """
+        self.trigger = lambda x: None
+        self.arg = object()
+        self.event = base._ThreePhaseEvent()
+
+
+    def test_addInvalidPhase(self):
+        """
+        L{_ThreePhaseEvent.addTrigger} should raise L{KeyError} when called
+        with an invalid phase.
+        """
+        self.assertRaises(
+            KeyError,
+            self.event.addTrigger, 'xxx', self.trigger, self.arg)
+
+
+    def test_addBeforeTrigger(self):
+        """
+        L{_ThreePhaseEvent.addTrigger} should accept C{'before'} as a phase, a
+        callable, and some arguments and add the callable with the arguments to
+        the before list.
+        """
+        self.event.addTrigger('before', self.trigger, self.arg)
+        self.assertEqual(
+            self.event.before,
+            [(self.trigger, (self.arg,), {})])
+
+
+    def test_addDuringTrigger(self):
+        """
+        L{_ThreePhaseEvent.addTrigger} should accept C{'during'} as a phase, a
+        callable, and some arguments and add the callable with the arguments to
+        the during list.
+        """
+        self.event.addTrigger('during', self.trigger, self.arg)
+        self.assertEqual(
+            self.event.during,
+            [(self.trigger, (self.arg,), {})])
+
+
+    def test_addAfterTrigger(self):
+        """
+        L{_ThreePhaseEvent.addTrigger} should accept C{'after'} as a phase, a
+        callable, and some arguments and add the callable with the arguments to
+        the after list.
+        """
+        self.event.addTrigger('after', self.trigger, self.arg)
+        self.assertEqual(
+            self.event.after,
+            [(self.trigger, (self.arg,), {})])
+
+
+    def test_removeTrigger(self):
+        """
+        L{_ThreePhaseEvent.removeTrigger} should accept an opaque object
+        previously returned by L{_ThreePhaseEvent.addTrigger} and remove the
+        associated trigger.
+        """
+        handle = self.event.addTrigger('before', self.trigger, self.arg)
+        self.event.removeTrigger(handle)
+        self.assertEqual(self.event.before, [])
+
+
+    def test_removeNonexistentTrigger(self):
+        """
+        L{_ThreePhaseEvent.removeTrigger} should raise L{ValueError} when given
+        an object not previously returned by L{_ThreePhaseEvent.addTrigger}.
+        """
+        self.assertRaises(ValueError, self.event.removeTrigger, object())
+
+
+    def test_removeRemovedTrigger(self):
+        """
+        L{_ThreePhaseEvent.removeTrigger} should raise L{ValueError} the second
+        time it is called with an object returned by
+        L{_ThreePhaseEvent.addTrigger}.
+        """
+        handle = self.event.addTrigger('before', self.trigger, self.arg)
+        self.event.removeTrigger(handle)
+        self.assertRaises(ValueError, self.event.removeTrigger, handle)
+
+
+    def test_removeAlmostValidTrigger(self):
+        """
+        L{_ThreePhaseEvent.removeTrigger} should raise L{ValueError} if it is
+        given a trigger handle which resembles a valid trigger handle aside
+        from its phase being incorrect.
+        """
+        self.assertRaises(
+            KeyError,
+            self.event.removeTrigger, ('xxx', self.trigger, (self.arg,), {}))
+
+
+    def test_fireEvent(self):
+        """
+        L{_ThreePhaseEvent.fireEvent} should call I{before}, I{during}, and
+        I{after} phase triggers in that order.
+        """
+        events = []
+        self.event.addTrigger('after', events.append, ('first', 'after'))
+        self.event.addTrigger('during', events.append, ('first', 'during'))
+        self.event.addTrigger('before', events.append, ('first', 'before'))
+        self.event.addTrigger('before', events.append, ('second', 'before'))
+        self.event.addTrigger('during', events.append, ('second', 'during'))
+        self.event.addTrigger('after', events.append, ('second', 'after'))
+
+        self.assertEqual(events, [])
+        self.event.fireEvent()
+        self.assertEqual(events,
+                         [('first', 'before'), ('second', 'before'),
+                          ('first', 'during'), ('second', 'during'),
+                          ('first', 'after'), ('second', 'after')])
+
+
+    def test_asynchronousBefore(self):
+        """
+        L{_ThreePhaseEvent.fireEvent} should wait for any L{Deferred} returned
+        by a I{before} phase trigger before proceeding to I{during} events.
+        """
+        events = []
+        beforeResult = Deferred()
+        self.event.addTrigger('before', lambda: beforeResult)
+        self.event.addTrigger('during', events.append, 'during')
+        self.event.addTrigger('after', events.append, 'after')
+
+        self.assertEqual(events, [])
+        self.event.fireEvent()
+        self.assertEqual(events, [])
+        beforeResult.callback(None)
+        self.assertEqual(events, ['during', 'after'])
+
+
+    def test_beforeTriggerException(self):
+        """
+        If a before-phase trigger raises a synchronous exception, it should be
+        logged and the remaining triggers should be run.
+        """
+        events = []
+
+        class DummyException(Exception):
+            pass
+
+        def raisingTrigger():
+            raise DummyException()
+
+        self.event.addTrigger('before', raisingTrigger)
+        self.event.addTrigger('before', events.append, 'before')
+        self.event.addTrigger('during', events.append, 'during')
+        self.event.fireEvent()
+        self.assertEqual(events, ['before', 'during'])
+        errors = self.flushLoggedErrors(DummyException)
+        self.assertEqual(len(errors), 1)
+
+
+    def test_duringTriggerException(self):
+        """
+        If a during-phase trigger raises a synchronous exception, it should be
+        logged and the remaining triggers should be run.
+        """
+        events = []
+
+        class DummyException(Exception):
+            pass
+
+        def raisingTrigger():
+            raise DummyException()
+
+        self.event.addTrigger('during', raisingTrigger)
+        self.event.addTrigger('during', events.append, 'during')
+        self.event.addTrigger('after', events.append, 'after')
+        self.event.fireEvent()
+        self.assertEqual(events, ['during', 'after'])
+        errors = self.flushLoggedErrors(DummyException)
+        self.assertEqual(len(errors), 1)
+
+
+    def test_synchronousRemoveAlreadyExecutedBefore(self):
+        """
+        If a before-phase trigger tries to remove another before-phase trigger
+        which has already run, a warning should be emitted.
+        """
+        events = []
+
+        def removeTrigger():
+            self.event.removeTrigger(beforeHandle)
+
+        beforeHandle = self.event.addTrigger('before', events.append, ('first', 'before'))
+        self.event.addTrigger('before', removeTrigger)
+        self.event.addTrigger('before', events.append, ('second', 'before'))
+        self.assertWarns(
+            DeprecationWarning,
+            "Removing already-fired system event triggers will raise an "
+            "exception in a future version of Twisted.",
+            __file__,
+            self.event.fireEvent)
+        self.assertEqual(events, [('first', 'before'), ('second', 'before')])
+
+
+    def test_synchronousRemovePendingBefore(self):
+        """
+        If a before-phase trigger removes another before-phase trigger which
+        has not yet run, the removed trigger should not be run.
+        """
+        events = []
+        self.event.addTrigger(
+            'before', lambda: self.event.removeTrigger(beforeHandle))
+        beforeHandle = self.event.addTrigger(
+            'before', events.append, ('first', 'before'))
+        self.event.addTrigger('before', events.append, ('second', 'before'))
+        self.event.fireEvent()
+        self.assertEqual(events, [('second', 'before')])
+
+
+    def test_synchronousBeforeRemovesDuring(self):
+        """
+        If a before-phase trigger removes a during-phase trigger, the
+        during-phase trigger should not be run.
+        """
+        events = []
+        self.event.addTrigger(
+            'before', lambda: self.event.removeTrigger(duringHandle))
+        duringHandle = self.event.addTrigger('during', events.append, 'during')
+        self.event.addTrigger('after', events.append, 'after')
+        self.event.fireEvent()
+        self.assertEqual(events, ['after'])
+
+
+    def test_asynchronousBeforeRemovesDuring(self):
+        """
+        If a before-phase trigger returns a L{Deferred} and later removes a
+        during-phase trigger before the L{Deferred} fires, the during-phase
+        trigger should not be run.
+        """
+        events = []
+        beforeResult = Deferred()
+        self.event.addTrigger('before', lambda: beforeResult)
+        duringHandle = self.event.addTrigger('during', events.append, 'during')
+        self.event.addTrigger('after', events.append, 'after')
+        self.event.fireEvent()
+        self.event.removeTrigger(duringHandle)
+        beforeResult.callback(None)
+        self.assertEqual(events, ['after'])
+
+
+    def test_synchronousBeforeRemovesConspicuouslySimilarDuring(self):
+        """
+        If a before-phase trigger removes a during-phase trigger which is
+        identical to an already-executed before-phase trigger aside from their
+        phases, no warning should be emitted and the during-phase trigger
+        should not be run.
+        """
+        events = []
+        def trigger():
+            events.append('trigger')
+        self.event.addTrigger('before', trigger)
+        self.event.addTrigger(
+            'before', lambda: self.event.removeTrigger(duringTrigger))
+        duringTrigger = self.event.addTrigger('during', trigger)
+        self.event.fireEvent()
+        self.assertEqual(events, ['trigger'])
+
+
+    def test_synchronousRemovePendingDuring(self):
+        """
+        If a during-phase trigger removes another during-phase trigger which
+        has not yet run, the removed trigger should not be run.
+        """
+        events = []
+        self.event.addTrigger(
+            'during', lambda: self.event.removeTrigger(duringHandle))
+        duringHandle = self.event.addTrigger(
+            'during', events.append, ('first', 'during'))
+        self.event.addTrigger(
+            'during', events.append, ('second', 'during'))
+        self.event.fireEvent()
+        self.assertEqual(events, [('second', 'during')])
+
+
+    def test_triggersRunOnce(self):
+        """
+        A trigger should only be called on the first call to
+        L{_ThreePhaseEvent.fireEvent}.
+        """
+        events = []
+        self.event.addTrigger('before', events.append, 'before')
+        self.event.addTrigger('during', events.append, 'during')
+        self.event.addTrigger('after', events.append, 'after')
+        self.event.fireEvent()
+        self.event.fireEvent()
+        self.assertEqual(events, ['before', 'during', 'after'])
+
+
+    def test_finishedBeforeTriggersCleared(self):
+        """
+        The temporary list L{_ThreePhaseEvent.finishedBefore} should be emptied
+        and the state reset to C{'BASE'} before the first during-phase trigger
+        executes.
+        """
+        events = []
+        def duringTrigger():
+            events.append('during')
+            self.assertEqual(self.event.finishedBefore, [])
+            self.assertEqual(self.event.state, 'BASE')
+        self.event.addTrigger('before', events.append, 'before')
+        self.event.addTrigger('during', duringTrigger)
+        self.event.fireEvent()
+        self.assertEqual(events, ['before', 'during'])
+
+
 
 class SystemEventTestCase(unittest.TestCase):
+    """
+    Tests for the reactor's implementation of the C{fireSystemEvent},
+    C{addSystemEventTrigger}, and C{removeSystemEventTrigger} methods of the
+    L{IReactorCore} interface.
+
+    @ivar triggers: A list of the handles to triggers which have been added to
+        the reactor.
+    """
     def setUp(self):
+        """
+        Create an empty list in which to store trigger handles.
+        """
         self.triggers = []
+
+
+    def tearDown(self):
+        """
+        Remove all remaining triggers from the reactor.
+        """
+        while self.triggers:
+            trigger = self.triggers.pop()
+            try:
+                reactor.removeSystemEventTrigger(trigger)
+            except (ValueError, KeyError):
+                pass
+
+
     def addTrigger(self, event, phase, func):
+        """
+        Add a trigger to the reactor and remember it in C{self.triggers}.
+        """
         t = reactor.addSystemEventTrigger(event, phase, func)
         self.triggers.append(t)
         return t
+
+
     def removeTrigger(self, trigger):
+        """
+        Remove a trigger by its handle from the reactor and from
+        C{self.triggers}.
+        """
         reactor.removeSystemEventTrigger(trigger)
         self.triggers.remove(trigger)
-    def tearDown(self):
-        for t in self.triggers:
-            try:
-                reactor.removeSystemEventTrigger(t)
-            except:
-                pass
 
-    def testTriggerSystemEvent1(self):
-        l = []
-        l2 = []
-        d = Deferred()
-        d2 = Deferred()
-        def _returnDeferred(d=d):
-            return d
-        def _returnDeferred2(d2=d2):
-            return d2
-        def _appendToList(l=l):
-            l.append(1)
-        def _appendToList2(l2=l2):
-            l2.append(1)
-        ##         d.addCallback(lambda x: sys.stdout.write("firing d\n"))
-        ##         d2.addCallback(lambda x: sys.stdout.write("firing d2\n"))
-        r = reactor
 
-        self.addTrigger("before", "test", _appendToList)
-        self.addTrigger("during", "test", _appendToList)
-        self.addTrigger("after", "test", _appendToList)
-        self.assertEquals(len(l), 0, "Nothing happened yet.")
-        r.fireSystemEvent("test")
-        r.iterate()
-        self.assertEquals(len(l), 3, "Should have filled the list.")
+    def _addSystemEventTriggerTest(self, phase):
+        eventType = 'test'
+        events = []
+        def trigger():
+            events.append(None)
+        self.addTrigger(phase, eventType, trigger)
+        self.assertEqual(events, [])
+        reactor.fireSystemEvent(eventType)
+        self.assertEqual(events, [None])
 
-        l[:]=[]
-        self.addTrigger("before", "defer", _returnDeferred)
-        self.addTrigger("before", "defer", _returnDeferred2)
-        self.addTrigger("during", "defer", _appendToList)
-        self.addTrigger("after", "defer", _appendToList)
-        r.fireSystemEvent("defer")
-        self.assertEquals(len(l), 0, "Event should not have fired yet.")
-        d.callback(None)
-        self.assertEquals(len(l), 0, "Event still should not have fired yet.")
-        d2.callback(None)
-        self.assertEquals(len(l), 2)
 
-        l[:]=[]
-        a = self.addTrigger("before", "remove", _appendToList)
-        b = self.addTrigger("before", "remove", _appendToList2)
+    def test_beforePhase(self):
+        """
+        L{IReactorCore.addSystemEventTrigger} should accept the C{'before'}
+        phase and not call the given object until the right event is fired.
+        """
+        self._addSystemEventTriggerTest('before')
+
+
+    def test_duringPhase(self):
+        """
+        L{IReactorCore.addSystemEventTrigger} should accept the C{'during'}
+        phase and not call the given object until the right event is fired.
+        """
+        self._addSystemEventTriggerTest('during')
+
+
+    def test_afterPhase(self):
+        """
+        L{IReactorCore.addSystemEventTrigger} should accept the C{'after'}
+        phase and not call the given object until the right event is fired.
+        """
+        self._addSystemEventTriggerTest('after')
+
+
+    def test_unknownPhase(self):
+        """
+        L{IReactorCore.addSystemEventTrigger} should reject phases other than
+        C{'before'}, C{'during'}, or C{'after'}.
+        """
+        eventType = 'test'
+        self.assertRaises(
+            KeyError, self.addTrigger, 'xxx', eventType, lambda: None)
+
+
+    def test_beforePreceedsDuring(self):
+        """
+        L{IReactorCore.addSystemEventTrigger} should call triggers added to the
+        C{'before'} phase before it calls triggers added to the C{'during'}
+        phase.
+        """
+        eventType = 'test'
+        events = []
+        def beforeTrigger():
+            events.append('before')
+        def duringTrigger():
+            events.append('during')
+        self.addTrigger('before', eventType, beforeTrigger)
+        self.addTrigger('during', eventType, duringTrigger)
+        self.assertEqual(events, [])
+        reactor.fireSystemEvent(eventType)
+        self.assertEqual(events, ['before', 'during'])
+
+
+    def test_duringPreceedsAfter(self):
+        """
+        L{IReactorCore.addSystemEventTrigger} should call triggers added to the
+        C{'during'} phase before it calls triggers added to the C{'after'}
+        phase.
+        """
+        eventType = 'test'
+        events = []
+        def duringTrigger():
+            events.append('during')
+        def afterTrigger():
+            events.append('after')
+        self.addTrigger('during', eventType, duringTrigger)
+        self.addTrigger('after', eventType, afterTrigger)
+        self.assertEqual(events, [])
+        reactor.fireSystemEvent(eventType)
+        self.assertEqual(events, ['during', 'after'])
+
+
+    def test_beforeReturnsDeferred(self):
+        """
+        If a trigger added to the C{'before'} phase of an event returns a
+        L{Deferred}, the C{'during'} phase should be delayed until it is called
+        back.
+        """
+        triggerDeferred = Deferred()
+        eventType = 'test'
+        events = []
+        def beforeTrigger():
+            return triggerDeferred
+        def duringTrigger():
+            events.append('during')
+        self.addTrigger('before', eventType, beforeTrigger)
+        self.addTrigger('during', eventType, duringTrigger)
+        self.assertEqual(events, [])
+        reactor.fireSystemEvent(eventType)
+        self.assertEqual(events, [])
+        triggerDeferred.callback(None)
+        self.assertEqual(events, ['during'])
+
+
+    def test_multipleBeforeReturnDeferred(self):
+        """
+        If more than one trigger added to the C{'before'} phase of an event
+        return L{Deferred}s, the C{'during'} phase should be delayed until they
+        are all called back.
+        """
+        firstDeferred = Deferred()
+        secondDeferred = Deferred()
+        eventType = 'test'
+        events = []
+        def firstBeforeTrigger():
+            return firstDeferred
+        def secondBeforeTrigger():
+            return secondDeferred
+        def duringTrigger():
+            events.append('during')
+        self.addTrigger('before', eventType, firstBeforeTrigger)
+        self.addTrigger('before', eventType, secondBeforeTrigger)
+        self.addTrigger('during', eventType, duringTrigger)
+        self.assertEqual(events, [])
+        reactor.fireSystemEvent(eventType)
+        self.assertEqual(events, [])
+        firstDeferred.callback(None)
+        self.assertEqual(events, [])
+        secondDeferred.callback(None)
+        self.assertEqual(events, ['during'])
+
+
+    def test_subsequentBeforeTriggerFiresPriorBeforeDeferred(self):
+        """
+        If a trigger added to the C{'before'} phase of an event calls back a
+        L{Deferred} returned by an earlier trigger in the C{'before'} phase of
+        the same event, the remaining C{'before'} triggers for that event
+        should be run and any further L{Deferred}s waited on before proceeding
+        to the C{'during'} events.
+        """
+        eventType = 'test'
+        events = []
+        firstDeferred = Deferred()
+        secondDeferred = Deferred()
+        def firstBeforeTrigger():
+            return firstDeferred
+        def secondBeforeTrigger():
+            firstDeferred.callback(None)
+        def thirdBeforeTrigger():
+            events.append('before')
+            return secondDeferred
+        def duringTrigger():
+            events.append('during')
+        self.addTrigger('before', eventType, firstBeforeTrigger)
+        self.addTrigger('before', eventType, secondBeforeTrigger)
+        self.addTrigger('before', eventType, thirdBeforeTrigger)
+        self.addTrigger('during', eventType, duringTrigger)
+        self.assertEqual(events, [])
+        reactor.fireSystemEvent(eventType)
+        self.assertEqual(events, ['before'])
+        secondDeferred.callback(None)
+        self.assertEqual(events, ['before', 'during'])
+
+
+    def test_removeSystemEventTrigger(self):
+        """
+        A trigger removed with L{IReactorCore.removeSystemEventTrigger} should
+        not be called when the event fires.
+        """
+        eventType = 'test'
+        events = []
+        def firstBeforeTrigger():
+            events.append('first')
+        def secondBeforeTrigger():
+            events.append('second')
+        self.addTrigger('before', eventType, firstBeforeTrigger)
+        self.removeTrigger(
+            self.addTrigger('before', eventType, secondBeforeTrigger))
+        self.assertEqual(events, [])
+        reactor.fireSystemEvent(eventType)
+        self.assertEqual(events, ['first'])
+
+
+    def test_removeNonExistentSystemEventTrigger(self):
+        """
+        Passing an object to L{IReactorCore.removeSystemEventTrigger} which was
+        not returned by a previous call to
+        L{IReactorCore.addSystemEventTrigger} or which has already been passed
+        to C{removeSystemEventTrigger} should result in L{TypeError},
+        L{KeyError}, or L{ValueError} being raised.
+        """
+        b = self.addTrigger('during', 'test', lambda: None)
         self.removeTrigger(b)
-        r.fireSystemEvent("remove")
-        self.assertEquals(len(l), 1)
-        self.assertEquals(len(l2), 0)
+        self.assertRaises(
+            TypeError, reactor.removeSystemEventTrigger, None)
+        self.assertRaises(
+            ValueError, reactor.removeSystemEventTrigger, b)
+        self.assertRaises(
+            KeyError,
+            reactor.removeSystemEventTrigger,
+            (b[0], ('xxx',) + b[1][1:]))
 
-    def testTriggerSystemEvent2(self):
-        # one of the "before" trigger functions returns a deferred. A later
-        # "before" trigger fires the deferred. A third before runs. Then a
-        # "during" should be run. One of the failure modes for the old
-        # cReactor code is to start the "during" as soon as the deferred
-        # fires, rather than waiting for the "before" phase to be finished
-        l = []
-        d = Deferred()
-        d2 = Deferred()
-        def _returnDeferred(d=d):
-            return d
-        def _fireDeferred(d=d):
-            d.callback(None)
-        def _returnDeferred2(d2=d2):
-            return d2
-        def _appendToList(l=l):
-            l.append(1)
-        r = reactor
-        # to test this properly, the triggers must fire in this sequence:
-        # _returnDeferred, _fireDeferred, _returnDeferred2 . cReactor happens
-        # to run triggers in the order in which they were added.
-        self.addTrigger("before", "defer2", _returnDeferred)
-        self.addTrigger("before", "defer2", _fireDeferred)
-        self.addTrigger("before", "defer2", _returnDeferred2)
-        self.addTrigger("during", "defer2", _appendToList)
-        self.addTrigger("after", "defer2", _appendToList)
-        r.fireSystemEvent("defer2")
-        self.assertEquals(len(l), 0, "Event should not have fired yet.")
-        d2.callback(None)
-        self.assertEquals(len(l), 2)
 
-    def testTriggerSystemEvent3(self):
-        # make sure reactor can survive the loss of an event type while
-        # waiting for a before-trigger's Deferred to fire
-        l = []
-        d = Deferred()
-        d2 = Deferred()
-        def _returnDeferred(d=d):
-            return d
-        def _appendToList(l=l):
-            l.append(1)
-        def _ignore(failure):
-            return None
-        r = reactor
-        b1 = self.addTrigger("before", "defer3", _returnDeferred)
-        b2 = self.addTrigger("after", "defer3", _appendToList)
-        r.fireSystemEvent("defer3")
-        self.assertEquals(len(l), 0, "Event should not have fired yet.")
-        self.removeTrigger(b1)
-        self.removeTrigger(b2)
+    def test_interactionBetweenDifferentEvents(self):
+        """
+        L{IReactorCore.fireSystemEvent} should behave the same way for a
+        particular system event regardless of whether Deferreds are being
+        waited on for a different system event.
+        """
+        events = []
+
+        firstEvent = 'first-event'
+        firstDeferred = Deferred()
+        def beforeFirstEvent():
+            events.append(('before', 'first'))
+            return firstDeferred
+        def afterFirstEvent():
+            events.append(('after', 'first'))
+
+        secondEvent = 'second-event'
+        secondDeferred = Deferred()
+        def beforeSecondEvent():
+            events.append(('before', 'second'))
+            return secondDeferred
+        def afterSecondEvent():
+            events.append(('after', 'second'))
+
+        self.addTrigger('before', firstEvent, beforeFirstEvent)
+        self.addTrigger('after', firstEvent, afterFirstEvent)
+        self.addTrigger('before', secondEvent, beforeSecondEvent)
+        self.addTrigger('after', secondEvent, afterSecondEvent)
+
+        self.assertEqual(events, [])
+
+        # After this, firstEvent should be stuck before 'during' waiting for
+        # firstDeferred.
+        reactor.fireSystemEvent(firstEvent)
+        self.assertEqual(events, [('before', 'first')])
+
+        # After this, secondEvent should be stuck before 'during' waiting for
+        # secondDeferred.
+        reactor.fireSystemEvent(secondEvent)
+        self.assertEqual(events, [('before', 'first'), ('before', 'second')])
+
+        # After this, firstEvent should have finished completely, but
+        # secondEvent should be at the same place.
+        firstDeferred.callback(None)
+        self.assertEqual(events, [('before', 'first'), ('before', 'second'),
+                                  ('after', 'first')])
+
+        # After this, secondEvent should have finished completely.
+        secondDeferred.callback(None)
+        self.assertEqual(events, [('before', 'first'), ('before', 'second'),
+                                  ('after', 'first'), ('after', 'second')])
+
+
+
+class TimeTestCase(unittest.TestCase):
+    """
+    Tests for the IReactorTime part of the reactor.
+    """
+
+
+    def test_seconds(self):
+        """
+        L{twisted.internet.reactor.seconds} should return something
+        like a number.
+
+        1. This test specifically does not assert any relation to the
+           "system time" as returned by L{time.time} or
+           L{twisted.python.runtime.seconds}, because at some point we
+           may find a better option for scheduling calls than
+           wallclock-time.
+        2. This test *also* does not assert anything about the type of
+           the result, because operations may not return ints or
+           floats: For example, datetime-datetime == timedelta(0).
+        """
+        now = reactor.seconds()
+        self.assertEquals(now-now+now, now)
+
+
+    def test_callLaterUsesReactorSecondsInDelayedCall(self):
+        """
+        L{reactor.callLater} should use the reactor's seconds factory
+        to produce the time at which the DelayedCall will be called.
+        """
+        oseconds = reactor.seconds
+        reactor.seconds = lambda: 100
         try:
-            d.callback(None) # cReactor gives errback to deferred
-        except ValueError:
-            pass
-        self.assertEquals(len(l), 0)
-        d.addErrback(_ignore)
-
-    def testTriggerSystemEvent4(self):
-        # make sure interleaved event types do not interfere with each other.
-        # Old cReactor code had a single defer_list for all event types.
-        l = []
-        l2 = []
-        d = Deferred()
-        d2 = Deferred()
-        def _returnDeferred(d=d):
-            return d
-        def _returnDeferred2(d2=d2):
-            return d2
-        def _appendToList(l=l):
-            l.append(1)
-        def _appendToList2(l2=l2):
-            l2.append(1)
-        r = reactor
-        self.addTrigger("before", "event1", _returnDeferred)
-        self.addTrigger("after", "event1", _appendToList)
-        self.addTrigger("before", "event2", _returnDeferred2)
-        self.addTrigger("after", "event2", _appendToList2)
-        r.fireSystemEvent("event1")
-        # event1 should be waiting on deferred 'd'
-        r.fireSystemEvent("event2")
-        # event2 should be waiting on deferred 'd2'
-        self.assertEquals(len(l), 0, "Event should not have fired yet.")
-        self.assertEquals(len(l2), 0, "Event should not have fired yet.")
-        d.callback(None)
-        # event1 should run "during" and "after" stages
-        # event2 should still be waiting on d2
-        self.assertEquals(len(l), 1)
-        self.assertEquals(len(l2), 0)
-        d2.callback(None)
-        # event2 should run "during" and "after" stages
-        self.assertEquals(len(l), 1)
-        self.assertEquals(len(l2), 1)
-
-    def testTriggerSystemEvent5(self):
-        # make sure the reactor can handle attempts to remove bogus triggers
-        l = []
-        def _appendToList(l=l):
-            l.append(1)
-        r = reactor
-        b = self.addTrigger("after", "event1", _appendToList)
-        self.removeTrigger(b)
-        if type(b) == types.IntType:
-            bogus = b + 40
-            self.failUnlessRaises(ValueError,
-                                  r.removeSystemEventTrigger, bogus)
-        self.failUnlessRaises(TypeError,
-                              r.removeSystemEventTrigger, None)
+            call = reactor.callLater(5, lambda: None)
+            self.assertEquals(call.getTime(), 105)
+        finally:
+            reactor.seconds = oseconds
 
 
-class InterfaceTestCase(unittest.TestCase):
-    """
-    Tests for a random pile of crap in twisted.internet, I suppose.
-    """
+    def test_callLaterUsesReactorSecondsAsDelayedCallSecondsFactory(self):
+        """
+        L{reactor.callLater} should propagate its own seconds factory
+        to the DelayedCall to use as its own seconds factory.
+        """
+        oseconds = reactor.seconds
+        reactor.seconds = lambda: 100
+        try:
+            call = reactor.callLater(5, lambda: None)
+            self.assertEquals(call.seconds(), 100)
+        finally:
+            reactor.seconds = oseconds
+
 
     def test_callLater(self):
         """
-        Test that a DelayedCall really calls the function it is supposed to call.
+        Test that a DelayedCall really calls the function it is
+        supposed to call.
         """
         d = Deferred()
         reactor.callLater(0, d.callback, None)
@@ -281,6 +779,10 @@ class InterfaceTestCase(unittest.TestCase):
 
 
     def testCallLaterDelayAndReset(self):
+        """
+        Test that the reactor handles DelayedCalls which have been
+        reset or delayed.
+        """
         clock = Clock()
         clock.install()
         try:
@@ -297,13 +799,16 @@ class InterfaceTestCase(unittest.TestCase):
 
             clock.pump(reactor, [0, 1])
 
+            self.assertIdentical(callbackTimes[0], None)
+            self.assertIdentical(callbackTimes[1], None)
+
             ireset.reset(2) # (now)1 + 2 = 3
             idelay.delay(3) # (orig)3 + 3 = 6
 
             clock.pump(reactor, [0, 1])
 
             self.assertIdentical(callbackTimes[0], None)
-            self.assertIdentical(callbackTimes[0], None)
+            self.assertIdentical(callbackTimes[1], None)
 
             clock.pump(reactor, [0, 1])
 
@@ -376,8 +881,6 @@ class InterfaceTestCase(unittest.TestCase):
         def seconds():
             return int(time.time())
 
-        from twisted.internet import base
-        from twisted.python import runtime
         base_original = base.seconds
         runtime_original = runtime.seconds
         base.seconds = seconds
@@ -422,7 +925,8 @@ class InterfaceTestCase(unittest.TestCase):
         """
         def seconds():
             return 10
-        dc = base.DelayedCall(5, lambda: None, (), {}, lambda dc: None, lambda dc: None, seconds)
+        dc = base.DelayedCall(5, lambda: None, (), {}, lambda dc: None,
+                              lambda dc: None, seconds)
         self.assertEquals(dc.getTime(), 5)
         dc.reset(3)
         self.assertEquals(dc.getTime(), 13)
@@ -470,46 +974,127 @@ class CallFromThreadTests(unittest.TestCase):
         return d
 
 
-class ReactorCoreTestCase(unittest.TestCase):
+
+class DummyReactor(base.ReactorBase):
+    """
+    A reactor faking the methods needed to make it starts.
+    """
+
+    def __init__(self, clock):
+        """
+        @param clock: the clock used to fake time.
+        @type clock: C{task.Clock}.
+        """
+        base.ReactorBase.__init__(self)
+        self.clock = clock
+
+
+    def installWaker(self):
+        """
+        Called by C{self._initThreads}: no waker is needed for the tests.
+        """
+
+
+    def callLater(self, _seconds, _f, *args, **kw):
+        """
+        Override callLater using the internal clock.
+        """
+        return self.clock.callLater( _seconds, _f, *args, **kw)
+
+
+    def removeAll(self):
+        """
+        Needed during stop.
+        """
+        return []
+
+
+
+class ReactorBaseTestCase(unittest.TestCase):
+    """
+    Tests for L{base.ReactorBase} object.
+    """
+
     def setUp(self):
-        self.triggers = []
-        self.timers = []
+        """
+        Create a clock and a L{DummyReactor}.
+        """
+        self.clock = task.Clock()
+        self.reactor = DummyReactor(self.clock)
 
 
-    def addTrigger(self, event, phase, func):
-        t = reactor.addSystemEventTrigger(event, phase, func)
-        self.triggers.append(t)
-        return t
+    def test_stopWhenNotStarted(self):
+        """
+        Test that the reactor stop raises an error when the reactor is not
+        started.
+        """
+        self.assertRaises(RuntimeError, self.reactor.stop)
 
 
-    def removeTrigger(self, trigger):
-        reactor.removeSystemEventTrigger(trigger)
-        self.triggers.remove(trigger)
+    def test_stopWhenAlreadyStopped(self):
+        """
+        Test that the reactor stop raises an error when the reactor is already
+        stopped.
+        """
+        self.reactor.startRunning()
+        self.reactor.stop()
+        self.assertRaises(RuntimeError, self.reactor.stop)
 
 
-    def addTimer(self, when, func):
-        t = reactor.callLater(when, func)
-        self.timers.append(t)
-        return t
+    def test_stopShutDownEvents(self):
+        """
+        Verify that reactor.stop fires shutdown events.
+        """
+        events = []
+        self.reactor.addSystemEventTrigger(
+            "before", "shutdown",
+            lambda: events.append(("before", "shutdown")))
+        self.reactor.addSystemEventTrigger(
+            "during", "shutdown",
+            lambda: events.append(("during", "shutdown")))
+        self.reactor.startRunning()
+        self.reactor.stop()
+        self.assertEquals(events, [("before", "shutdown"),
+                                   ("during", "shutdown")])
 
 
-    def removeTimer(self, timer):
-        try:
-            timer.cancel()
-        except error.AlreadyCalled:
-            pass
-        self.timers.remove(timer)
+    def test_multipleRun(self):
+        """
+        Verify that the reactor.startRunning raises an error when called
+        multiple times.
+        """
+        self.reactor.startRunning()
+        self.assertWarns(DeprecationWarning,
+            "Reactor already running! This behavior is deprecated since "
+            "Twisted 2.6, it will raise an exception starting Twisted 2.7",
+            __file__,
+            self.reactor.startRunning)
 
 
-    def tearDown(self):
-        for t in self.triggers:
-            try:
-                reactor.removeSystemEventTrigger(t)
-            except:
-                pass
+    def test_crash(self):
+        """
+        reactor.crash should NOT fire shutdown triggers.
+        """
+        events = []
+        self.reactor.addSystemEventTrigger(
+            "before", "shutdown",
+            lambda: events.append(("before", "shutdown")))
+
+        self.reactor.callWhenRunning(
+            self.reactor.callLater, 0, self.reactor.crash)
+        self.reactor.startRunning()
+        self.clock.advance(0.1)
+        self.failIf(events, "reactor.crash invoked shutdown triggers, but it "
+                            "isn't supposed to.")
 
 
-    def testRun(self):
+
+class ReactorCoreTestCase(unittest.TestCase):
+    """
+    Test core functionalities of the reactor.
+    """
+
+    def test_run(self):
         """
         Test that reactor.crash terminates reactor.run
         """
@@ -518,7 +1103,7 @@ class ReactorCoreTestCase(unittest.TestCase):
             reactor.run()
 
 
-    def testIterate(self):
+    def test_iterate(self):
         """
         Test that reactor.iterate(0) doesn't block
         """
@@ -530,31 +1115,8 @@ class ReactorCoreTestCase(unittest.TestCase):
         reactor.iterate(0) # shouldn't block
         stop = time.time()
         elapsed = stop - start
-        #print "elapsed", elapsed
         self.failUnless(elapsed < 8)
         t.cancel()
-
-
-    def test_crash(self):
-        """
-        reactor.crash should NOT fire shutdown triggers
-        """
-        events = []
-        self.addTrigger(
-            "before", "shutdown",
-            lambda: events.append(("before", "shutdown")))
-
-        # reactor.crash called from an "after-startup" trigger is too early
-        # for the gtkreactor: gtk_mainloop is not yet running. Same is true
-        # when called with reactor.callLater(0). Must be >0 seconds in the
-        # future to let gtk_mainloop start first.
-        reactor.callWhenRunning(
-            reactor.callLater, 0, reactor.crash)
-        reactor.run()
-        self.failIf(events, "reactor.crash invoked shutdown triggers, but it "
-                            "isn't supposed to.")
-
-    # XXX Test that reactor.stop() invokes shutdown triggers
 
 
 
@@ -746,7 +1308,7 @@ class Order:
         self.stage = 3
 
 
-class callFromThreadTestCase(unittest.TestCase):
+class CallFromThreadTestCase(unittest.TestCase):
     """Task scheduling from threads tests."""
 
     if interfaces.IReactorThreads(reactor, None) is None:

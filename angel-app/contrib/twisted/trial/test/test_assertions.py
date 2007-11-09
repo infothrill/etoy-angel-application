@@ -1,4 +1,7 @@
-import StringIO
+# Copyright (c) 2001-2007 Twisted Matrix Laboratories.
+# See LICENSE for details
+
+import StringIO, warnings
 
 from twisted.python import reflect, failure
 from twisted.python.util import dsu
@@ -26,7 +29,7 @@ class TestAssertions(unittest.TestCase):
     This is pretty paranoid.  Still, a certain paranoia is healthy if you
     are testing a unit testing framework.
     """
-    
+
     class FailingTest(unittest.TestCase):
         def test_fails(self):
             raise self.failureException()
@@ -93,7 +96,7 @@ class TestAssertions(unittest.TestCase):
         self._testUnequalPair('cat', 'dog')
         self._testEqualPair([1], [1])
         self._testUnequalPair([1], 'orange')
-    
+
     def test_failUnlessEqual_custom(self):
         x = MockEquality('first')
         y = MockEquality('second')
@@ -217,7 +220,7 @@ class TestAssertions(unittest.TestCase):
                              "first parameter (%r, %r)" % (ret, x))
         self.failUnlessRaises(self.failureException,
                               self.failUnlessAlmostEqual, x, y, precision)
-        
+
     def test_failIfAlmostEqual(self):
         precision = 5
         x = 8.000001
@@ -297,7 +300,7 @@ class TestAssertions(unittest.TestCase):
         """
         class ExampleFailure(Exception):
             pass
- 
+
         class TC(unittest.TestCase):
             failureException = ExampleFailure
             def test_assertFailure(self):
@@ -310,6 +313,195 @@ class TestAssertions(unittest.TestCase):
         result = reporter.TestResult()
         test.run(result)
         self.assertEqual(1, len(result.failures))
+
+    def test_assertWarns(self):
+        """
+        Test basic assertWarns report.
+        """
+        def deprecated(a):
+            warnings.warn("Woo deprecated", category=DeprecationWarning)
+            return a
+        r = self.assertWarns(DeprecationWarning, "Woo deprecated", __file__,
+            deprecated, 123)
+        self.assertEquals(r, 123)
+
+    def test_assertWarnsRegistryClean(self):
+        """
+        Test that assertWarns cleans the warning registry, so the warning is
+        not swallowed the second time.
+        """
+        def deprecated(a):
+            warnings.warn("Woo deprecated", category=DeprecationWarning)
+            return a
+        r1 = self.assertWarns(DeprecationWarning, "Woo deprecated", __file__,
+            deprecated, 123)
+        self.assertEquals(r1, 123)
+        # The warning should be raised again
+        r2 = self.assertWarns(DeprecationWarning, "Woo deprecated", __file__,
+            deprecated, 321)
+        self.assertEquals(r2, 321)
+
+    def test_assertWarnsError(self):
+        """
+        Test assertWarns failure when no warning is generated.
+        """
+        def normal(a):
+            return a
+        self.assertRaises(self.failureException,
+            self.assertWarns, DeprecationWarning, "Woo deprecated", __file__,
+            normal, 123)
+
+    def test_assertWarnsWrongCategory(self):
+        """
+        Test assertWarns failure when the category is wrong.
+        """
+        def deprecated(a):
+            warnings.warn("Foo deprecated", category=DeprecationWarning)
+            return a
+        self.assertRaises(self.failureException,
+            self.assertWarns, UserWarning, "Foo deprecated", __file__,
+            deprecated, 123)
+
+    def test_assertWarnsWrongMessage(self):
+        """
+        Test assertWarns failure when the message is wrong.
+        """
+        def deprecated(a):
+            warnings.warn("Foo deprecated", category=DeprecationWarning)
+            return a
+        self.assertRaises(self.failureException,
+            self.assertWarns, DeprecationWarning, "Bar deprecated", __file__,
+            deprecated, 123)
+
+    def test_assertWarnsOnClass(self):
+        """
+        Test asserWarns works when creating a class instance.
+        """
+        class Warn:
+            def __init__(self):
+                warnings.warn("Do not call me", category=RuntimeWarning)
+        r = self.assertWarns(RuntimeWarning, "Do not call me", __file__,
+            Warn)
+        self.assertTrue(isinstance(r, Warn))
+        r = self.assertWarns(RuntimeWarning, "Do not call me", __file__,
+            Warn)
+        self.assertTrue(isinstance(r, Warn))
+
+    def test_assertWarnsOnMethod(self):
+        """
+        Test assertWarns works when used on an instance method.
+        """
+        class Warn:
+            def deprecated(self, a):
+                warnings.warn("Bar deprecated", category=DeprecationWarning)
+                return a
+        w = Warn()
+        r = self.assertWarns(DeprecationWarning, "Bar deprecated", __file__,
+            w.deprecated, 321)
+        self.assertEquals(r, 321)
+        r = self.assertWarns(DeprecationWarning, "Bar deprecated", __file__,
+            w.deprecated, 321)
+        self.assertEquals(r, 321)
+
+    def test_assertWarnsOnCall(self):
+        """
+        Test assertWarns works on instance with C{__call__} method.
+        """
+        class Warn:
+            def __call__(self, a):
+                warnings.warn("Egg deprecated", category=DeprecationWarning)
+                return a
+        w = Warn()
+        r = self.assertWarns(DeprecationWarning, "Egg deprecated", __file__,
+            w, 321)
+        self.assertEquals(r, 321)
+        r = self.assertWarns(DeprecationWarning, "Egg deprecated", __file__,
+            w, 321)
+        self.assertEquals(r, 321)
+
+    def test_assertWarnsFilter(self):
+        """
+        Test assertWarns on a warning filterd by default.
+        """
+        def deprecated(a):
+            warnings.warn("Woo deprecated", category=PendingDeprecationWarning)
+            return a
+        r = self.assertWarns(PendingDeprecationWarning, "Woo deprecated",
+            __file__, deprecated, 123)
+        self.assertEquals(r, 123)
+
+    def test_assertIsInstance(self):
+        """
+        Test a true condition of assertIsInstance.
+        """
+        A = type('A', (object,), {})
+        a = A()
+        self.assertIsInstance(a, A)
+
+    def test_assertIsInstanceMultipleClasses(self):
+        """
+        Test a true condition of assertIsInstance with multiple classes.
+        """
+        A = type('A', (object,), {})
+        B = type('B', (object,), {})
+        a = A()
+        self.assertIsInstance(a, (A, B))
+
+    def test_assertIsInstanceError(self):
+        """
+        Test an error with assertIsInstance.
+        """
+        A = type('A', (object,), {})
+        B = type('B', (object,), {})
+        a = A()
+        self.assertRaises(self.failureException, self.assertIsInstance, a, B)
+
+    def test_assertIsInstanceErrorMultipleClasses(self):
+        """
+        Test an error with assertIsInstance and multiple classes.
+        """
+        A = type('A', (object,), {})
+        B = type('B', (object,), {})
+        C = type('C', (object,), {})
+        a = A()
+        self.assertRaises(self.failureException, self.assertIsInstance, a, (B, C))
+
+    def test_assertNotIsInstance(self):
+        """
+        Test a true condition of assertNotIsInstance.
+        """
+        A = type('A', (object,), {})
+        B = type('B', (object,), {})
+        a = A()
+        self.assertNotIsInstance(a, B)
+
+    def test_assertNotIsInstanceMultipleClasses(self):
+        """
+        Test a true condition of assertNotIsInstance and multiple classes.
+        """
+        A = type('A', (object,), {})
+        B = type('B', (object,), {})
+        C = type('C', (object,), {})
+        a = A()
+        self.assertNotIsInstance(a, (B, C))
+
+    def test_assertNotIsInstanceError(self):
+        """
+        Test an error with assertNotIsInstance.
+        """
+        A = type('A', (object,), {})
+        a = A()
+        self.assertRaises(self.failureException, self.assertNotIsInstance, a, A)
+
+    def test_assertNotIsInstanceErrorMultipleClasses(self):
+        """
+        Test an error with assertNotIsInstance and multiple classes.
+        """
+        A = type('A', (object,), {})
+        B = type('B', (object,), {})
+        a = A()
+        self.assertRaises(self.failureException, self.assertNotIsInstance, a, (A, B))
+
 
 
 class TestAssertionNames(unittest.TestCase):

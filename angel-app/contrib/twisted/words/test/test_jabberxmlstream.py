@@ -1,10 +1,17 @@
+# Copyright (c) 2001-2007 Twisted Matrix Laboratories.
+# See LICENSE for details.
+
+"""
+Tests for L{twisted.words.protocols.jabber.xmlstream}.
+"""
+
 from twisted.trial import unittest
 
 from twisted.internet import defer, task
 from twisted.internet.error import ConnectionLost
 from twisted.test import proto_helpers
 from twisted.words.xish import domish
-from twisted.words.protocols.jabber import error, xmlstream
+from twisted.words.protocols.jabber import error, jid, xmlstream
 
 NS_XMPP_TLS = 'urn:ietf:params:xml:ns:xmpp-tls'
 
@@ -23,11 +30,11 @@ class IQTest(unittest.TestCase):
         self.xmlstream.dataReceived(
            "<stream:stream xmlns:stream='http://etherx.jabber.org/streams' "
                           "xmlns='testns' from='otherhost' version='1.0'>")
-        self.iq = xmlstream.IQ(self.xmlstream, type='get')
+        self.iq = xmlstream.IQ(self.xmlstream, 'get')
 
     def testBasic(self):
         self.assertEquals(self.iq['type'], 'get')
-        self.assert_(self.iq['id'])
+        self.assertTrue(self.iq['id'])
 
     def testSend(self):
         self.xmlstream.transport.clear()
@@ -152,26 +159,24 @@ class IQTest(unittest.TestCase):
 
         self.iq.timeout = 60
         d = self.iq.send()
-        
+
         xs = self.xmlstream
         xs.connectionLost("Closed by peer")
         self.assertFailure(d, ConnectionLost)
         self.failIf(self.clock.calls)
         return d
 
+
 class XmlStreamTest(unittest.TestCase):
 
     def onStreamStart(self, obj):
         self.gotStreamStart = True
 
-
     def onStreamEnd(self, obj):
         self.gotStreamEnd = True
 
-
     def onStreamError(self, obj):
         self.gotStreamError = True
-
 
     def setUp(self):
         """
@@ -190,8 +195,7 @@ class XmlStreamTest(unittest.TestCase):
         xs.version = (1, 0)
         self.xmlstream = xs
 
-
-    def testSendHeaderBasic(self):
+    def test_sendHeaderBasic(self):
         """
         Basic test on the header sent by sendHeader.
         """
@@ -203,40 +207,54 @@ class XmlStreamTest(unittest.TestCase):
                       splitHeader)
         self.assertIn("xmlns='testns'", splitHeader)
         self.assertIn("version='1.0'", splitHeader)
-        self.assertEquals(True, xs._headerSent)
+        self.assertTrue(xs._headerSent)
+
+    def test_sendHeaderAdditionalNamespaces(self):
+        """
+        Test for additional namespace declarations.
+        """
+        xs = self.xmlstream
+        xs.prefixes['jabber:server:dialback'] = 'db'
+        xs.sendHeader()
+        splitHeader = self.xmlstream.transport.value()[0:-1].split(' ')
+        self.assertIn("<stream:stream", splitHeader)
+        self.assertIn("xmlns:stream='http://etherx.jabber.org/streams'",
+                      splitHeader)
+        self.assertIn("xmlns:db='jabber:server:dialback'", splitHeader)
+        self.assertIn("xmlns='testns'", splitHeader)
+        self.assertIn("version='1.0'", splitHeader)
+        self.assertTrue(xs._headerSent)
 
 
-    def testSendHeaderInitiating(self):
+    def test_sendHeaderInitiating(self):
         """
         Test addressing when initiating a stream.
         """
         xs = self.xmlstream
-        xs.thisHost = 'thisHost'
-        xs.otherHost = 'otherHost'
+        xs.thisEntity = jid.JID('thisHost')
+        xs.otherEntity = jid.JID('otherHost')
         xs.initiating = True
         xs.sendHeader()
         splitHeader = xs.transport.value()[0:-1].split(' ')
-        self.assertIn("to='otherHost'", splitHeader)
-        self.assertNotIn("from='thisHost'", splitHeader)
+        self.assertIn("to='otherhost'", splitHeader)
+        self.assertIn("from='thishost'", splitHeader)
 
-
-    def testSendHeaderReceiving(self):
+    def test_sendHeaderReceiving(self):
         """
         Test addressing when receiving a stream.
         """
         xs = self.xmlstream
-        xs.thisHost = 'thisHost'
-        xs.otherHost = 'otherHost'
+        xs.thisEntity = jid.JID('thisHost')
+        xs.otherEntity = jid.JID('otherHost')
         xs.initiating = False
         xs.sid = 'session01'
         xs.sendHeader()
         splitHeader = xs.transport.value()[0:-1].split(' ')
-        self.assertNotIn("to='otherHost'", splitHeader)
-        self.assertIn("from='thisHost'", splitHeader)
+        self.assertIn("to='otherhost'", splitHeader)
+        self.assertIn("from='thishost'", splitHeader)
         self.assertIn("id='session01'", splitHeader)
 
-
-    def testReceiveStreamError(self):
+    def test_receiveStreamError(self):
         """
         Test events when a stream error is received.
         """
@@ -245,11 +263,10 @@ class XmlStreamTest(unittest.TestCase):
                         "xmlns:stream='http://etherx.jabber.org/streams' "
                         "from='example.com' id='12345' version='1.0'>")
         xs.dataReceived("<stream:error/>")
-        self.assert_(self.gotStreamError)
-        self.assert_(self.gotStreamEnd)
+        self.assertTrue(self.gotStreamError)
+        self.assertTrue(self.gotStreamEnd)
 
-
-    def testSendStreamErrorInitiating(self):
+    def test_sendStreamErrorInitiating(self):
         """
         Test sendStreamError on an initiating xmlstream with a header sent.
 
@@ -261,10 +278,9 @@ class XmlStreamTest(unittest.TestCase):
         xs.transport.clear()
         xs.sendStreamError(error.StreamError('version-unsupported'))
         self.assertNotEqual('', xs.transport.value())
-        self.assert_(self.gotStreamEnd)
+        self.assertTrue(self.gotStreamEnd)
 
-
-    def testSendStreamErrorInitiatingNoHeader(self):
+    def test_sendStreamErrorInitiatingNoHeader(self):
         """
         Test sendStreamError on an initiating xmlstream without having sent a
         header.
@@ -278,10 +294,9 @@ class XmlStreamTest(unittest.TestCase):
         xs.sendStreamError(error.StreamError('version-unsupported'))
         self.assertNot(xs._headerSent)
         self.assertEqual('', xs.transport.value())
-        self.assert_(self.gotStreamEnd)
+        self.assertTrue(self.gotStreamEnd)
 
-
-    def testSendStreamErrorReceiving(self):
+    def test_sendStreamErrorReceiving(self):
         """
         Test sendStreamError on a receiving xmlstream with a header sent.
 
@@ -293,10 +308,9 @@ class XmlStreamTest(unittest.TestCase):
         xs.transport.clear()
         xs.sendStreamError(error.StreamError('version-unsupported'))
         self.assertNotEqual('', xs.transport.value())
-        self.assert_(self.gotStreamEnd)
+        self.assertTrue(self.gotStreamEnd)
 
-
-    def testSendStreamErrorReceivingNoHeader(self):
+    def test_sendStreamErrorReceivingNoHeader(self):
         """
         Test sendStreamError on a receiving xmlstream without having sent a
         header.
@@ -308,44 +322,11 @@ class XmlStreamTest(unittest.TestCase):
         xs.initiating = False
         xs.transport.clear()
         xs.sendStreamError(error.StreamError('version-unsupported'))
-        self.assert_(xs._headerSent)
+        self.assertTrue(xs._headerSent)
         self.assertNotEqual('', xs.transport.value())
-        self.assert_(self.gotStreamEnd)
+        self.assertTrue(self.gotStreamEnd)
 
-
-    def testOnDocumentStart(self):
-        """
-        Test onDocumentStart to fill the appropriate attributes from the
-        stream header and stream start event.
-        """
-        xs = self.xmlstream
-        xs.initiating = True
-        xs.dataReceived("<stream:stream xmlns='jabber:client' "
-                         "xmlns:stream='http://etherx.jabber.org/streams' "
-                         "from='example.com' id='12345' version='1.0'>")
-        self.assert_(self.gotStreamStart)
-        self.assertEqual((1, 0), xs.version)
-        self.assertEqual('12345', xs.sid)
-        xs.dataReceived("<stream:features>"
-                          "<test xmlns='testns'/>"
-                        "</stream:features>")
-        self.assertIn(('testns', 'test'), xs.features)
-
-
-    def testOnDocumentStartLegacy(self):
-        """
-        Test onDocumentStart to fill the appropriate attributes from the
-        stream header and stream start event for a pre-XMPP-1.0 header.
-        """
-        xs = self.xmlstream
-        xs.dataReceived("<stream:stream xmlns='jabber:client' "
-                        "xmlns:stream='http://etherx.jabber.org/streams' "
-                        "from='example.com' id='12345'>")
-        self.assert_(self.gotStreamStart)
-        self.assertEqual((0, 0), xs.version)
-
-
-    def testReset(self):
+    def test_reset(self):
         """
         Test resetting the XML stream to start a new layer.
         """
@@ -356,8 +337,7 @@ class XmlStreamTest(unittest.TestCase):
         self.assertNotEqual(stream, xs.stream)
         self.assertNot(xs._headerSent)
 
-
-    def testSend(self):
+    def test_send(self):
         """
         Test send with various types of objects.
         """
@@ -375,42 +355,98 @@ class XmlStreamTest(unittest.TestCase):
         xs.send(el)
         self.assertEqual(xs.transport.value(), '<stream:features/>')
 
-
-    def testAuthenticator(self):
+    def test_authenticator(self):
         """
         Test that the associated authenticator is correctly called.
         """
-        connectionMade = []
-        streamStarted = []
-        associateWithStream = []
+        connectionMadeCalls = []
+        streamStartedCalls = []
+        associateWithStreamCalls = []
 
         class TestAuthenticator:
             def connectionMade(self):
-                connectionMade.append(None)
+                connectionMadeCalls.append(None)
 
-            def streamStarted(self):
-                streamStarted.append(None)
+            def streamStarted(self, rootElement):
+                streamStartedCalls.append(rootElement)
 
             def associateWithStream(self, xs):
-                associateWithStream.append(xs)
+                associateWithStreamCalls.append(xs)
 
         a = TestAuthenticator()
         xs = xmlstream.XmlStream(a)
-        self.assertEqual([xs], associateWithStream)
+        self.assertEqual([xs], associateWithStreamCalls)
         xs.connectionMade()
-        self.assertEqual([None], connectionMade)
+        self.assertEqual([None], connectionMadeCalls)
         xs.dataReceived("<stream:stream xmlns='jabber:client' "
                         "xmlns:stream='http://etherx.jabber.org/streams' "
                         "from='example.com' id='12345'>")
-        self.assertEqual([None], streamStarted)
+        self.assertEqual(1, len(streamStartedCalls))
         xs.reset()
-        self.assertEqual([None], connectionMade)
-
+        self.assertEqual([None], connectionMadeCalls)
 
 
 class TestError(Exception):
     pass
 
+
+class AuthenticatorTest(unittest.TestCase):
+    def setUp(self):
+        self.authenticator = xmlstream.ListenAuthenticator()
+        self.xmlstream = xmlstream.XmlStream(self.authenticator)
+
+    def test_streamStart(self):
+        """
+        Test streamStart to fill the appropriate attributes from the
+        stream header.
+        """
+        xs = self.xmlstream
+        xs.makeConnection(proto_helpers.StringTransport())
+        xs.dataReceived("<stream:stream xmlns='jabber:client' "
+                         "xmlns:stream='http://etherx.jabber.org/streams' "
+                         "from='example.org' to='example.com' id='12345' "
+                         "version='1.0'>")
+        self.assertEqual((1, 0), xs.version)
+        self.assertIdentical(None, xs.sid)
+        self.assertEqual('jabber:client', xs.namespace)
+        self.assertIdentical(None, xs.otherEntity)
+        self.assertEqual('example.com', xs.thisEntity.host)
+
+    def test_streamStartLegacy(self):
+        """
+        Test streamStart to fill the appropriate attributes from the
+        stream header for a pre-XMPP-1.0 header.
+        """
+        xs = self.xmlstream
+        xs.makeConnection(proto_helpers.StringTransport())
+        xs.dataReceived("<stream:stream xmlns='jabber:client' "
+                        "xmlns:stream='http://etherx.jabber.org/streams' "
+                        "from='example.com' id='12345'>")
+        self.assertEqual((0, 0), xs.version)
+
+    def test_streamBadVersionOneDigit(self):
+        """
+        Test streamStart to fill the appropriate attributes from the
+        stream header for a version with only one digit.
+        """
+        xs = self.xmlstream
+        xs.makeConnection(proto_helpers.StringTransport())
+        xs.dataReceived("<stream:stream xmlns='jabber:client' "
+                        "xmlns:stream='http://etherx.jabber.org/streams' "
+                        "from='example.com' id='12345' version='1'>")
+        self.assertEqual((0, 0), xs.version)
+
+    def test_streamBadVersionNoNumber(self):
+        """
+        Test streamStart to fill the appropriate attributes from the
+        stream header for a malformed version.
+        """
+        xs = self.xmlstream
+        xs.makeConnection(proto_helpers.StringTransport())
+        xs.dataReceived("<stream:stream xmlns='jabber:client' "
+                        "xmlns:stream='http://etherx.jabber.org/streams' "
+                        "from='example.com' id='12345' version='blah'>")
+        self.assertEqual((0, 0), xs.version)
 
 
 class ConnectAuthenticatorTest(unittest.TestCase):
@@ -423,14 +459,11 @@ class ConnectAuthenticatorTest(unittest.TestCase):
         self.xmlstream.addObserver('//event/stream/authd', self.onAuthenticated)
         self.xmlstream.addObserver('//event/xmpp/initfailed', self.onInitFailed)
 
-
     def onAuthenticated(self, obj):
         self.gotAuthenticated = True
 
-
     def onInitFailed(self, failure):
         self.initFailure = failure
-
 
     def testSucces(self):
         """
@@ -445,8 +478,7 @@ class ConnectAuthenticatorTest(unittest.TestCase):
 
         self.authenticator.initializeStream()
         self.assertEqual([], self.xmlstream.initializers)
-        self.assert_(self.gotAuthenticated)
-
+        self.assertTrue(self.gotAuthenticated)
 
     def testFailure(self):
         """
@@ -463,8 +495,54 @@ class ConnectAuthenticatorTest(unittest.TestCase):
         self.assertEqual([init], self.xmlstream.initializers)
         self.assertFalse(self.gotAuthenticated)
         self.assertNotIdentical(None, self.initFailure)
-        self.assert_(self.initFailure.check(TestError))
+        self.assertTrue(self.initFailure.check(TestError))
 
+    def test_streamStart(self):
+        """
+        Test streamStart to fill the appropriate attributes from the
+        stream header.
+        """
+        self.authenticator.namespace = 'testns'
+        xs = self.xmlstream
+        xs.makeConnection(proto_helpers.StringTransport())
+        xs.dataReceived("<stream:stream xmlns='jabber:client' "
+                         "xmlns:stream='http://etherx.jabber.org/streams' "
+                         "from='example.com' to='example.org' id='12345' "
+                         "version='1.0'>")
+        self.assertEqual((1, 0), xs.version)
+        self.assertEqual('12345', xs.sid)
+        self.assertEqual('testns', xs.namespace)
+        self.assertEqual('example.com', xs.otherEntity.host)
+        self.assertIdentical(None, xs.thisEntity)
+        self.assertNot(self.gotAuthenticated)
+        xs.dataReceived("<stream:features>"
+                          "<test xmlns='testns'/>"
+                        "</stream:features>")
+        self.assertIn(('testns', 'test'), xs.features)
+        self.assertTrue(self.gotAuthenticated)
+
+
+class ListenAuthenticatorTest(unittest.TestCase):
+    def setUp(self):
+        self.authenticator = xmlstream.ListenAuthenticator()
+        self.xmlstream = xmlstream.XmlStream(self.authenticator)
+
+    def test_streamStart(self):
+        """
+        Test streamStart to fill the appropriate attributes from the
+        stream header.
+        """
+        xs = self.xmlstream
+        xs.makeConnection(proto_helpers.StringTransport())
+        xs.dataReceived("<stream:stream xmlns='jabber:client' "
+                         "xmlns:stream='http://etherx.jabber.org/streams' "
+                         "from='example.org' to='example.com' id='12345' "
+                         "version='1.0'>")
+        self.assertEqual((1, 0), xs.version)
+        self.assertIdentical(None, xs.sid)
+        self.assertEqual('jabber:client', xs.namespace)
+        self.assertIdentical(None, xs.otherEntity)
+        self.assertEqual('example.com', xs.thisEntity.host)
 
 
 class TLSInitiatingInitializerTest(unittest.TestCase):
@@ -582,13 +660,11 @@ class TLSInitiatingInitializerTest(unittest.TestCase):
         return d
 
 
-
 class TestFeatureInitializer(xmlstream.BaseFeatureInitiatingInitializer):
     feature = ('testns', 'test')
 
     def start(self):
         return defer.succeed(None)
-
 
 
 class BaseFeatureInitiatingInitializerTest(unittest.TestCase):
@@ -623,3 +699,62 @@ class BaseFeatureInitiatingInitializerTest(unittest.TestCase):
         """
         self.init.required = False
         self.assertIdentical(None, self.init.initialize())
+
+
+class ToResponseTest(unittest.TestCase):
+
+    def test_toResponse(self):
+        """
+        Test that a response stanza is generated with addressing swapped.
+        """
+        stanza = domish.Element(('jabber:client', 'iq'))
+        stanza['type'] = 'get'
+        stanza['to'] = 'user1@example.com'
+        stanza['from'] = 'user2@example.com/resource'
+        stanza['id'] = 'stanza1'
+        response = xmlstream.toResponse(stanza, 'result')
+        self.assertNotIdentical(stanza, response)
+        self.assertEqual(response['from'], 'user1@example.com')
+        self.assertEqual(response['to'], 'user2@example.com/resource')
+        self.assertEqual(response['type'], 'result')
+        self.assertEqual(response['id'], 'stanza1')
+
+    def test_toResponseNoFrom(self):
+        """
+        Test that a response is generated from a stanza without a from address.
+        """
+        stanza = domish.Element(('jabber:client', 'iq'))
+        stanza['type'] = 'get'
+        stanza['to'] = 'user1@example.com'
+        response = xmlstream.toResponse(stanza)
+        self.assertEqual(response['from'], 'user1@example.com')
+        self.failIf(response.hasAttribute('to'))
+
+    def test_toResponseNoTo(self):
+        """
+        Test that a response is generated from a stanza without a to address.
+        """
+        stanza = domish.Element(('jabber:client', 'iq'))
+        stanza['type'] = 'get'
+        stanza['from'] = 'user2@example.com/resource'
+        response = xmlstream.toResponse(stanza)
+        self.failIf(response.hasAttribute('from'))
+        self.assertEqual(response['to'], 'user2@example.com/resource')
+
+    def test_toResponseNoAddressing(self):
+        """
+        Test that a response is generated from a stanza without any addressing.
+        """
+        stanza = domish.Element(('jabber:client', 'message'))
+        stanza['type'] = 'chat'
+        response = xmlstream.toResponse(stanza)
+        self.failIf(response.hasAttribute('to'))
+        self.failIf(response.hasAttribute('from'))
+
+    def test_noID(self):
+        """
+        Test that a proper response is generated without id attribute.
+        """
+        stanza = domish.Element(('jabber:client', 'message'))
+        response = xmlstream.toResponse(stanza)
+        self.failIf(response.hasAttribute('id'))

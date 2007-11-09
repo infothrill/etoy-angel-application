@@ -1,6 +1,9 @@
 # Copyright (c) 2001-2007 Twisted Matrix Laboratories.
 # See LICENSE for details.
 
+"""
+Tests for large portions of L{twisted.mail}.
+"""
 
 import os
 import errno
@@ -97,6 +100,44 @@ class DomainWithDefaultsTestCase(unittest.TestCase):
 
         self.assertEquals(d.popitem(), ('key', 'value'))
         self.assertEquals(len(d), 0)
+
+        dcopy = d.copy()
+        self.assertEquals(d.domains, dcopy.domains)
+        self.assertEquals(d.default, dcopy.default)
+
+
+    def _stringificationTest(self, stringifier):
+        """
+        Assert that the class name of a L{mail.mail.DomainWithDefaultDict}
+        instance and the string-formatted underlying domain dictionary both
+        appear in the string produced by the given string-returning function.
+
+        @type stringifier: one-argument callable
+        @param stringifier: either C{str} or C{repr}, to be used to get a
+            string to make assertions against.
+        """
+        domain = mail.mail.DomainWithDefaultDict({}, 'Default')
+        self.assertIn(domain.__class__.__name__, stringifier(domain))
+        domain['key'] = 'value'
+        self.assertIn(str({'key': 'value'}), stringifier(domain))
+
+
+    def test_str(self):
+        """
+        L{DomainWithDefaultDict.__str__} should return a string including
+        the class name and the domain mapping held by the instance.
+        """
+        self._stringificationTest(str)
+
+
+    def test_repr(self):
+        """
+        L{DomainWithDefaultDict.__repr__} should return a string including
+        the class name and the domain mapping held by the instance.
+        """
+        self._stringificationTest(repr)
+
+
 
 class BounceTestCase(unittest.TestCase):
     def setUp(self):
@@ -855,6 +896,42 @@ class MXTestCase(unittest.TestCase):
         return self.assertFailure(self.mx.getMX('test.domain'), DNSLookupError)
 
 
+    def test_successWithoutResults(self):
+        """
+        If an MX lookup succeeds but the result set is empty,
+        L{MXCalculator.getMX} should try to look up an I{A} record for the
+        requested name and call back its returned Deferred with that
+        address.
+        """
+        ip = '1.2.3.4'
+        domain = 'example.org'
+
+        class DummyResolver(object):
+            """
+            Fake resolver which will respond to an MX lookup with an empty
+            result set.
+
+            @ivar mx: A dictionary mapping hostnames to three-tuples of
+                results to be returned from I{MX} lookups.
+
+            @ivar a: A dictionary mapping hostnames to addresses to be
+                returned from I{A} lookups.
+            """
+            mx = {domain: ([], [], [])}
+            a = {domain: ip}
+
+            def lookupMailExchange(self, domain):
+                return defer.succeed(self.mx[domain])
+
+            def getHostByName(self, domain):
+                return defer.succeed(self.a[domain])
+
+        self.mx.resolver = DummyResolver()
+        d = self.mx.getMX(domain)
+        d.addCallback(self.assertEqual, Record_MX(name=ip))
+        return d
+
+
     def test_failureWithSuccessfulFallback(self):
         """
         Test that if the MX record lookup fails, fallback is enabled, and an A
@@ -1171,12 +1248,20 @@ class ProcessAliasTestCase(unittest.TestCase):
         'Last line'
     ]
 
-    def setUpClass(self):
+    def setUp(self):
+        """
+        Replace L{smtp.DNSNAME} with a well-known value.
+        """
         self.DNSNAME = smtp.DNSNAME
         smtp.DNSNAME = ''
 
-    def tearDownClass(self):
+
+    def tearDown(self):
+        """
+        Restore the original value of L{smtp.DNSNAME}.
+        """
         smtp.DNSNAME = self.DNSNAME
+
 
     def testProcessAlias(self):
         path = util.sibpath(__file__, 'process.alias.sh')
