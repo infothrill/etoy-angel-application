@@ -34,35 +34,72 @@ class PrefsWindow(wx.Dialog):
         sbSizerNetwork.Fit(panelNetworkSettings)
         vboxMain.Add(panelNetworkSettings, 0, wx.ALL | wx.EXPAND, 5)
 
-        gridnet = wx.FlexGridSizer(2, 3, 1, 1) # 3 cols
+        vboxNetwork = wx.BoxSizer(wx.VERTICAL) # inside the panelNetworksettings
+        sbSizerNetwork.Add(vboxNetwork, 0, wx.ALL | wx.EXPAND, 3)
+
+        ## new grid with 2 cols
+        gridnode = wx.FlexGridSizer(2, 2, 1, 1) # 2 cols
+        gridnode.AddGrowableCol(1) # second column epands
+        gridnode.Add(wx.StaticText(panelNetworkSettings, -1, _("Node name: ")), 0, wx.ALIGN_CENTER_VERTICAL)
+
+        #### Node name ####
+        self.nodeName = wx.TextCtrl(panelNetworkSettings, -1, unicode(self.app.config.get('maintainer', 'nodename')))
+        gridnode.Add(self.nodeName, 1, wx.EXPAND| wx.ALIGN_CENTER_VERTICAL)
+        gridnode.Add(wx.StaticText(self, -1, ''), 0, wx.ALIGN_CENTER_VERTICAL) # nop filler
+        vboxNetwork.Add(gridnode, 0, wx.ALL | wx.EXPAND, 0)
+
+        ## new grid with 4 cols
+        gridnet = wx.FlexGridSizer(2, 4, 1, 1) # 3 cols
         gridnet.AddGrowableCol(1) # second column epands
 
-        #### Provider port #####
-        gridnet.Add(wx.StaticText(panelNetworkSettings, -1, _("Provider listen port: ")), 0, wx.ALIGN_CENTER_VERTICAL)
+        #### Provider #####
+
+        ID_onProviderCheckbox = wx.NewId()
+        self.providerCheckbox = wx.CheckBox(panelNetworkSettings, ID_onProviderCheckbox, _('Provide data'))
+        self.providerCheckbox.SetValue(self.app.config.get('provider','enable'))
+        gridnet.Add(self.providerCheckbox, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 20)
+
+        gridnet.Add(wx.StaticText(panelNetworkSettings, -1, _("Port: ")), 0, wx.ALIGN_RIGHT | wx.ALIGN_CENTER_VERTICAL)
 
         self.providerPort = wx.TextCtrl(panelNetworkSettings, -1, unicode(self.app.config.get('provider', 'listenPort')))
-        gridnet.Add(self.providerPort, 0, wx.ALIGN_CENTER_VERTICAL)
+        gridnet.Add(self.providerPort, 1, wx.EXPAND | wx.ALIGN_CENTER_VERTICAL)
       
         ID_onDefaultProviderPort = wx.NewId()
         self.defaultProviderPortButton = wx.Button(panelNetworkSettings, ID_onDefaultProviderPort, _("Default"))
         gridnet.Add(self.defaultProviderPortButton, 0, wx.ALIGN_CENTER_VERTICAL)
 
         #### Presenter port #####
-        gridnet.Add(wx.StaticText(panelNetworkSettings, -1, _("Presenter listen port: ")), 0, wx.ALIGN_CENTER_VERTICAL)
+        ID_onPresenterCheckbox = wx.NewId()
+        self.presenterCheckbox = wx.CheckBox(panelNetworkSettings, ID_onPresenterCheckbox, _('Enable file management'))
+        self.presenterCheckbox.SetValue(self.app.config.get('presenter','enable'))
+        gridnet.Add(self.presenterCheckbox, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 20)
+
+        gridnet.Add(wx.StaticText(panelNetworkSettings, -1, _("Port: ")), 0, wx.ALIGN_RIGHT | wx.ALIGN_CENTER_VERTICAL)
 
         self.presenterPort = wx.TextCtrl(panelNetworkSettings, -1, unicode(self.app.config.get('presenter', 'listenPort')))
-        gridnet.Add(self.presenterPort, 0, wx.ALIGN_CENTER_VERTICAL)
+        gridnet.Add(self.presenterPort, 1, wx.EXPAND | wx.ALIGN_CENTER_VERTICAL)
       
         ID_onDefaultPresenterPort = wx.NewId()
         self.defaultPresenterPortButton = wx.Button(panelNetworkSettings, ID_onDefaultPresenterPort, _("Default"))
         gridnet.Add(self.defaultPresenterPortButton, 0, wx.ALIGN_CENTER_VERTICAL)
       
+        # maintainer enable/disable?
+        ID_onMaintainerCheckbox = wx.NewId()
+        self.maintainerCheckbox = wx.CheckBox(panelNetworkSettings, ID_onMaintainerCheckbox, _('Maintain repository'))
+        self.maintainerCheckbox.SetValue(self.app.config.get('maintainer','enable'))
+        gridnet.Add(self.maintainerCheckbox, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 20)
+
+
+        gridnet.Add(wx.StaticText(self, -1, ''), 0, wx.ALIGN_CENTER_VERTICAL) # nop filler
+        gridnet.Add(wx.StaticText(self, -1, ''), 0, wx.ALIGN_CENTER_VERTICAL) # nop filler
+        gridnet.Add(wx.StaticText(self, -1, ''), 0, wx.ALIGN_CENTER_VERTICAL) # nop filler
+
         ID_onUseIpv6Checkbox = wx.NewId()
-        self.useIpv6Checkbox = wx.CheckBox(panelNetworkSettings, ID_onUseIpv6Checkbox, _('Use IPv6'))
+        self.useIpv6Checkbox = wx.CheckBox(panelNetworkSettings, ID_onUseIpv6Checkbox, _('enable IPv6'))
         self.useIpv6Checkbox.SetValue(self.app.config.get('provider','useIPv6'))
-        gridnet.Add(self.useIpv6Checkbox, 0, wx.ALIGN_CENTER_VERTICAL)
+        gridnet.Add(self.useIpv6Checkbox, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 20)
         
-        sbSizerNetwork.Add(gridnet, 0, wx.ALL | wx.EXPAND, 4)
+        vboxNetwork.Add(gridnet, 0, wx.ALL | wx.EXPAND, 0)
 
         ######################
         # Other
@@ -75,7 +112,7 @@ class PrefsWindow(wx.Dialog):
         vboxMain.Add(panelTest, 0, wx.ALL | wx.EXPAND, 5)
 
         gridtest = wx.FlexGridSizer(2, 2, 1, 1)
-        gridtest.AddGrowableCol(1) # second column epands
+        #gridtest.AddGrowableCol(1) # second column epands
 
         #### Log level ####
         gridtest.Add(wx.StaticText(panelTest, -1, _("Log level: ")), 0, wx.ALIGN_CENTER_VERTICAL)
@@ -143,9 +180,13 @@ class PrefsWindow(wx.Dialog):
         """
         self.app.config.container['common']['loglevel']= self.loglevelChooser.GetValue()
         self.app.config.container['provider']['listenPort'] = self.providerPort.GetValue()
+        self.app.config.container['provider']['enable'] = self.providerCheckbox.GetValue()
         self.app.config.container['presenter']['listenPort'] = self.presenterPort.GetValue()
+        self.app.config.container['presenter']['enable'] = self.presenterCheckbox.GetValue()
         self.app.config.container['common']['maxclones'] = self.maxClones.GetValue()
         self.app.config.container['provider']['useIPv6'] = self.useIpv6Checkbox.GetValue()
+        self.app.config.container['maintainer']['enable'] = self.maintainerCheckbox.GetValue()
+        self.app.config.container['maintainer']['nodename'] = self.nodeName.GetValue()
 
         self.app.config.commit()
       
