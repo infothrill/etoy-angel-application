@@ -9,4 +9,4 @@ def getResourcePath():
         p = os.path.join(based, subdir)
         if os.path.exists(p):
             return p
-    raise NameError, "Could not find the path to the resources! (using basedir %s)" % based
+    raise Exception, "Could not find the path to the resources! (using basedir %s)" % based

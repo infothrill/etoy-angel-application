@@ -147,7 +147,6 @@ class CreditsWindow(wx.Dialog):
         vboxWrite = wx.BoxSizer(wx.VERTICAL)
         programmers = ("Vincent Kraeutler <vincent@etoy.com>", "Paul Kremer <pol@etoy.com>")
         writtenString = "\n".join(programmers)
-        #written = enc.toWX(writtenString)
         labelWrite = wx.StaticText(writePanel, -1, writtenString)
         vboxWrite.Add(labelWrite, 0, wx.ALL, 10)
         writePanel.SetSizer(vboxWrite)
@@ -162,7 +161,6 @@ class CreditsWindow(wx.Dialog):
         wxversion = "wxPython " + ".".join( map( str, wx.VERSION ) )
         versions_list = [pythonversion, wxversion]
         versionsString = "\n".join(versions_list)
-        #sponsor = enc.toWX(versionsString)
         labelSP = wx.StaticText(versionsPanel, -1, versionsString)
         vboxSP.Add(labelSP, 0, wx.ALL, 10)
         versionsPanel.SetSizer(vboxSP)

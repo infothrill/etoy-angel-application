@@ -57,7 +57,7 @@ class AngelMainFrame(wx.Frame):
             ("I&mport crypto key...", "Import crypto key...", self.on_file_import_key),
             ("E&xport personal ANGEL KEY...", "Export personal ANGEL KEY...", self.on_file_export_key),  
             ("Purge repository", "Purge repository", self.on_file_purge_repository),
-            ("L&og console", "Log console", self.on_log_console)  
+            #("L&og console", "Log console", self.on_log_console)  
                          ]
         
         file_menu = self.__buildMenuWith(fileMenuItems)
@@ -77,21 +77,26 @@ class AngelMainFrame(wx.Frame):
         
     def __buildNetworkMenu(self):
         netMenuItems = [
-                        ("S&tart p2p service", "Start p2p service", self.on_net_start),
-                        ("S&top p2p service", "Stop p2p service", self.on_net_stop)
+                        ("Sta&rt p2p service", "Start p2p service", self.on_net_start),
+                        ("Sto&p p2p service", "Stop p2p service", self.on_net_stop),
+                        ("Re&start p2p service", "Restart p2p service", self.on_net_restart),
                         ]
         return self.__buildMenuWith(netMenuItems)
     
     def __buildHelpMenu(self):
         helpMenuItems = [
-                         ("A&bout", "About ANGEL APPLICATION", self.on_about_request),
                          ("ANGEL APPLICATION W&iki (Website)", "http://angelapp.missioneternity.org", self.on_help_wiki),
                          ("M&ISSION ETERNITY (Website)", "http://www.missioneternity.org", self.on_help_m221e),
                          ("Technical Report on ANGEL APPLICATION (Online PDF)", self.TECHNICALREPORT_URL, self.on_help_technicalreport),
                          ("Send a b&ug report (Website)", self.BUGREPORT_URL, self.on_help_bugreport),
                          ("S&oftware License", "Software License", self.on_help_license)
                          ]
-        return self.__buildMenuWith(helpMenuItems)
+        about_menu = self.__buildMenuWith(helpMenuItems)
+        
+        about_menu.Append(wx.ID_ABOUT, _("A&bout"), _("About ANGEL APPLICATION"))
+        self.Bind(wx.EVT_MENU, self.on_about_request, id=wx.ID_ABOUT)
+        
+        return about_menu
 
     def __init__(self, parent, ID, title):
         """
@@ -135,11 +140,11 @@ class AngelMainFrame(wx.Frame):
 
         self.Bind(wx.EVT_CLOSE, self.OnQuit)
         
-    def on_log_console(self, eventt):
-        from angel_app.gui.log import LogFrame
-        self.logwin = LogFrame()
-        self.logwin.Show(True)
-        self.frames.append(self.logwin)
+#    def on_log_console(self, eventt):
+#        from angel_app.gui.log import LogFrame
+#        self.logwin = LogFrame()
+#        self.logwin.Show(True)
+#        self.frames.append(self.logwin)
 
     def OnPaint(self, event):
         """
@@ -335,6 +340,13 @@ class AngelMainFrame(wx.Frame):
         dlg.ShowModal()
         dlg.Destroy()
 
+    def on_net_restart(self, event):
+        """
+        Restart the p2p process
+        """
+        self.on_net_stop(event)
+        self.on_net_start(event)
+        
     def on_net_start(self, event):
         """
         Starts the p2p process if not running
@@ -371,7 +383,7 @@ class AngelMainFrame(wx.Frame):
         
     def on_file_prefs(self, event):
         """
-        Shows the about window
+        Shows the preferences window
         """
         from angel_app.gui.prefs import PrefsWindow 
         self.prefsWindow = PrefsWindow(self, -1, _("Preferences"),
