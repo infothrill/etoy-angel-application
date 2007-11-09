@@ -18,14 +18,16 @@ class AboutWindow(wx.Dialog):
         wx.Dialog.__init__(self, parent, id, title, pos, size, style)
 
         hboxButtons = wx.BoxSizer(wx.HORIZONTAL)
-        vbox = wx.BoxSizer(wx.VERTICAL)
-
-        bmp = wx.Bitmap(os.path.join(platformwrap.getResourcePath(), "images", "m221elogosmall.jpg"), wx.BITMAP_TYPE_JPEG)
-        vbox.Add(wx.StaticBitmap(self, -1, bmp, wx.Point(-1, -1)), 0, wx.ALL | wx.CENTRE, 5)
+        vboxMain = wx.BoxSizer(wx.VERTICAL)
+        hboxTop = wx.BoxSizer(wx.HORIZONTAL)
+        vboxNameAndVersion = wx.BoxSizer(wx.VERTICAL)
+        vboxMain.Add(hboxTop, 0, wx.CENTRE, 5)
+        bmp = wx.Bitmap(os.path.join(platformwrap.getResourcePath(), "images", "m221e.png"), wx.BITMAP_TYPE_PNG)
+        hboxTop.Add(wx.StaticBitmap(self, -1, bmp, wx.Point(-1, -1)), 0, wx.ALL | wx.CENTRE, 15)
+        hboxTop.Add(vboxNameAndVersion, 0, wx.ALL | wx.ALIGN_CENTER | wx.ALIGN_CENTER_VERTICAL, 5)
 
         name = "ANGEL APPLICATION"
-        version = 'version %s build (%s)' % (getVersionString(), getBuildString())
-        title = "%s %s" % (name, version)
+        version = 'v %s (b%s)' % (getVersionString(), getBuildString())
         website = "http://angelapp.missioneternity.org/"
         description ="""The ANGEL APPLICATION (a subproject of MISSION ETERNITY) aims to minimize,
 and ideally eliminate, the administrative and material costs of backing up.
@@ -35,24 +37,26 @@ people collaborate to back up each other's data."""
         # unicode copyright symbol: \u00A9
         copyright = u'\u00A9 Copyright 2006-2007 etoy.VENTURE ASSOCIATION, all rights reserved.'
 
-        titleLabel = wx.StaticText(self, -1, title, 
-                                style=wx.ALIGN_CENTER)
-        titleLabel.SetFont(wx.Font(18, wx.SWISS, wx.NORMAL, wx.BOLD))
-        vbox.Add(titleLabel, 1, wx.ALL | wx.ALIGN_CENTER, 5)
+        nameLabel = wx.StaticText(self, -1, name, style=wx.ALIGN_LEFT)
+        nameLabel.SetFont(wx.Font(18, wx.SWISS, wx.NORMAL, wx.BOLD))
+        vboxNameAndVersion.Add(nameLabel, 1, wx.ALL | wx.ALIGN_CENTER, 5)
+        versionLabel = wx.StaticText(self, -1, version, style=wx.ALIGN_LEFT)
+        versionLabel.SetFont(wx.Font(16, wx.SWISS, wx.NORMAL, wx.BOLD))
+        vboxNameAndVersion.Add(versionLabel, 1, wx.ALL | wx.ALIGN_CENTER, 5)
 
         copyLabel = wx.StaticText(self, -1, copyright, style=wx.ALIGN_CENTER)
         copyLabel.SetFont(wx.Font(10, wx.SWISS, wx.NORMAL, wx.BOLD))
-        vbox.Add(copyLabel, 1, wx.ALL | wx.ALIGN_CENTER, 5)
+        vboxMain.Add(copyLabel, 1, wx.ALL | wx.ALIGN_CENTER, 5)
 
         descLabel = wx.StaticText(self, -1,  _(description), style=wx.ALIGN_CENTER)
         descLabel.SetFont(wx.Font(10, wx.SWISS, wx.NORMAL, wx.NORMAL))
-        vbox.Add(descLabel, 1, wx.ALL | wx.ALIGN_CENTER, 5)
+        vboxMain.Add(descLabel, 1, wx.ALL | wx.ALIGN_CENTER, 5)
 
         pageLabel = wx.HyperlinkCtrl(self, -1, website, website, wx.DefaultPosition)
         pageLabel.SetFont(wx.Font(10, wx.SWISS, wx.NORMAL, wx.NORMAL))
-        vbox.Add(pageLabel, 1, wx.ALL | wx.ALIGN_CENTER, 5)
+        vboxMain.Add(pageLabel, 1, wx.ALL | wx.ALIGN_CENTER, 5)
 
-        vbox.Add(wx.StaticLine(self, -1), 0, wx.ALL | wx.EXPAND, 5)
+        vboxMain.Add(wx.StaticLine(self, -1), 0, wx.ALL | wx.EXPAND, 5)
 
         self.buttonCredits = wx.Button(self, 2004, _("C&redits"))
         hboxButtons.Add(self.buttonCredits, 0, wx.ALL | wx.ALIGN_LEFT, 3)
@@ -63,10 +67,10 @@ people collaborate to back up each other's data."""
         self.buttonOK = wx.Button(self, 2003, _("&Close"))
         hboxButtons.Add(self.buttonOK, 0, wx.ALL | wx.ALIGN_RIGHT, 3)
       
-        vbox.Add(hboxButtons, 0, wx.ALL | wx.ALIGN_CENTER, 5)
+        vboxMain.Add(hboxButtons, 0, wx.ALL | wx.ALIGN_CENTER, 5)
 
-        self.SetSizer(vbox)
-        vbox.Fit(self)
+        self.SetSizer(vboxMain)
+        vboxMain.Fit(self)
 
         wx.EVT_BUTTON(self, 2003, self.onClose)
         wx.EVT_BUTTON(self, 2004, self.onCredits)
