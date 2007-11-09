@@ -116,7 +116,7 @@ fi
 if [ "${MODE}" = "local" ]
 then
 	RELEASE="LOCALDEV"
-	echo "Local copy..."
+	echo "Clean local copy..."
 	rm -rf ${THISTMPDIR}/${SHORTNAME}
 	cp -ax $LOCALDIR ${SHORTNAME}  > /dev/null
 fi
@@ -161,4 +161,5 @@ rm -rf "$TMPDIR/${SHORTNAME}-${RELEASE}" > /dev/null 2>&1
 mv "${SHORTNAME}-${RELEASE}" $TMPDIR
 # clean temp junk:
 rm -rf $THISTMPDIR > /dev/null 2>&1 # cleanup temp junk
-echo "You can now create a platform build from the directory: ${TMPDIR}${SHORTNAME}-${RELEASE}"
+echo "You can now create a platform build from the directory:"
+echo "${TMPDIR}${SHORTNAME}-${RELEASE}"
