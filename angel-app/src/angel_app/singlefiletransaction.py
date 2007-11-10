@@ -56,13 +56,13 @@ def setup():
     file  transactions (.angel_app/tmp/). It must be called once
     during bootstrap.
     Executing is not strictly necessary when using the SingleFileTransaction
-    class directly (it can have a temp dir as parameter in th constructor)
+    class directly (it can have a temp dir as parameter in the constructor)
     """
     path = getTmpPath()
     if not os.path.exists(path):
         os.mkdir(path)
     elif not os.path.isdir(path):
-        raise "Filesystem entry '%s' occupied, cannot create directory here." % path
+        raise Exception, "Filesystem entry '%s' occupied, cannot create directory here." % path
 
 def getTmpPath():
     """
@@ -79,7 +79,7 @@ def purgeTmpPathAndSetup():
     This function will empty the configured tmp path. It must only be called
     during bootstrap and while no other process is using the tmp path!
     """
-    shutil.rmtree(getTmpPath(), ignore_errors = True) # FIXME: do we want to catch errors here?
+    shutil.rmtree(getTmpPath(), ignore_errors = False) # FIXME: catch errors
     setup()
 
 class SingleFileTransaction(object):
@@ -94,7 +94,9 @@ class SingleFileTransaction(object):
 
     def __init__(self, tmpPath = None):
         """
-        Just set some attributes
+        The constructor
+        
+        @param tmpPath: string path to temporary directory (optional)
         """
         self._needcopyregex = re.compile(".*[a|\+].*")
         self._needemptyregex = re.compile(".*[w].*")
@@ -103,7 +105,7 @@ class SingleFileTransaction(object):
             self._basedir = getTmpPath()
         else:
             self._basedir = tmpPath
-        # TODO: make sure self._basedir exists!
+        assert os.path.isdir(self._basedir), "temp path '%s' does not exist" % self._basedir
     
     def open(self, name, mode = 'r', buffering = 0):
         """
@@ -132,8 +134,8 @@ class SingleFileTransaction(object):
         Commits the changes made to the file atomically and return
         the filename of the commit
         """
-        if not None == self.safe:
-            if DEBUG: "we have a safe, so we need to commit!"
+        if not None is self.safe:
+            if DEBUG: print "we have a safe, so we need to commit!"
             self.safe.close()
             os.rename(self.safename, self.name)
             return self.name
