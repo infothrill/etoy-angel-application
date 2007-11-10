@@ -60,9 +60,9 @@ class DirectoryLister(resource.Resource):
 
         files = []
 
-	directory.sort()
+        directory.sort()
 
-	directory = [item for item in directory if not item.startswith(".")]
+        directory = [item for item in directory if not item.startswith(".")]
 
         for path in directory:
             url = urllib.quote(path, '/')
