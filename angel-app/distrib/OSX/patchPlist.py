@@ -9,7 +9,7 @@ from os import path
 import plistlib
 import sys
 
-NAME = "Angel-App"
+NAME = "Angel"
 
 parser = OptionParser()
 parser.add_option("-v", "--version", dest="version", help="version string", default=None)
@@ -42,7 +42,7 @@ plist.update(
                 CFBundleShortVersionString = options.version,
                 CFBundleVersion = options.buildnumber,
                 CFBundleGetInfoString = ' '.join([NAME, options.version]),
-                CFBundleIdentifier = 'org.missioneternity.angelapp',
+                CFBundleIdentifier = 'org.missioneternity.angel',
              )
  )
 
