@@ -1,3 +1,5 @@
+import urlparse
+
 from angel_app import elements
 from angel_app.config import config
 from angel_app.log import getLogger
@@ -6,12 +8,9 @@ from angel_app.resource.remote.contentManager import ContentManager
 from angel_app.resource.remote.httpRemote import HTTPRemote
 from angel_app.resource.remote.propertyManager import PropertyManager
 from angel_app.resource.resource import Resource
-from httplib import HTTPConnection
 from twisted.web2 import responsecode
-from twisted.web2.dav import davxml
 from twisted.web2.dav.element import rfc2518
 from zope.interface import implements
-import urlparse
 
 log = getLogger(__name__)
 

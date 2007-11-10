@@ -1,8 +1,7 @@
+from httplib import HTTPConnection
+
 from angel_app.config import config
 from angel_app.log import getLogger
-from httplib import HTTPConnection
-from twisted.web2 import responsecode
-import urlparse
 
 log = getLogger(__name__)
 
@@ -79,13 +78,13 @@ class HTTPRemote(object):
         for the PROPFIND and PROPPATCH requests and stream type bodies. In either case, it seems possible and
         desirable to supply a "content-length" header.
 
-        pol: - httplib does NOT support stream bodies (as in python <=2.5)
-             - httplib does add the content-length header automatically (as of python >=2.4)
-             - urllib/urllib2 have similar problems (they rely on httlib), although
-               urllib2's design allows for extensions, so it could be
-               hooked in, but this would essentially mean writing our
-               own request() method (not relying on httplib) and going
-               down the rabbit hole on urlencoding/multipart mime content encoding etc.
+        pol:    - httplib does NOT support stream bodies (as in python <=2.5)
+                - httplib does add the content-length header automatically (as of python >=2.4)
+                - urllib/urllib2 have similar problems (they rely on httlib), although
+                    urllib2's design allows for extensions, so it could be
+                    hooked in, but this would essentially mean writing our
+                    own request() method (not relying on httplib) and going
+                    down the rabbit hole on urlencoding/multipart mime content encoding etc.
         """
         conn = HTTPConnection(self.host, self.port)
         headers["content-length"] = str(len(body))

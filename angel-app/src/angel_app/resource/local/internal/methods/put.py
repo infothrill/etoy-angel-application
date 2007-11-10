@@ -1,16 +1,14 @@
+import os
+
 from twisted.web2 import responsecode
 from twisted.web2.http import HTTPError, StatusResponse
-
-
 from twisted.python.failure import Failure
 from twisted.internet.defer import deferredGenerator, waitForDeferred
 from twisted.web2.stream import readIntoFile
 from twisted.web2.dav.http import statusForFailure
 
-from twisted.web2.dav.fileop import checkResponse
-from angel_app.log import getLogger
 import angel_app.singlefiletransaction
-import os
+from angel_app.log import getLogger
 
 log = getLogger(__name__)
 

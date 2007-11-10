@@ -1,13 +1,7 @@
-import os, urllib
-
-from twisted.python.failure import Failure
 from twisted.web2 import responsecode
-from twisted.web2.dav.http import ResponseQueue
 from twisted.web2.http import HTTPError, StatusResponse
-from urlparse import urlsplit
-#from angel_app.resource.local.internal import resource
-
 from angel_app.log import getLogger
+
 log = getLogger(__name__)
 
 class Deletable(object):
