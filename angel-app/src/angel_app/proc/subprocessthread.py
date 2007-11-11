@@ -71,6 +71,13 @@ class SubprocessThread(threading.Thread):
         else:
             log.info("=========== not alive, not signalling ===============")
 
+    def conditionalRestart(self):
+        """
+        Re-execute the subprocess, but only if it is currently running.
+        """
+        if self.isAlive():
+            self.stop()
+            self.run()
 
 """
 Class to run the "master"-process from the GUI.
