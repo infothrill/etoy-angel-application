@@ -33,14 +33,14 @@ class OurListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin):
 
 
 class MountListCtrlPanel(wx.Panel): #, listmix.ColumnSorterMixin
-    def __init__(self, parent, log):
+    def __init__(self, parent, statuslog):
         wx.Panel.__init__(self, parent, -1, style=wx.WANTS_CHARS)
 
         self.parent = parent # need to remember so we can call parent.OnEdit()
 
         self.currentItem = 0
 
-        self.log = log
+        self.statuslog = statuslog
         tID = wx.NewId()
         #self.il = wx.ImageList(16, 16)
 
@@ -165,7 +165,7 @@ class MountListCtrlPanel(wx.Panel): #, listmix.ColumnSorterMixin
     def OnRightDown(self, event):
         self.x = event.GetX()
         self.y = event.GetY()
-        self.log.WriteText("x, y = %s\n" % str((self.x, self.y)))
+        self.statuslog.WriteText("x, y = %s\n" % str((self.x, self.y)))
         item, flags = self.list.HitTest((self.x, self.y))
 
         if flags & wx.LIST_HITTEST_ONITEM:
@@ -183,14 +183,14 @@ class MountListCtrlPanel(wx.Panel): #, listmix.ColumnSorterMixin
     def OnItemSelected(self, event):
         ##print event.GetItem().GetTextColour()
         self.currentItem = event.m_itemIndex
-        self.log.WriteText("OnItemSelected: %s, %s, %s, %s\n" %
+        self.statuslog.WriteText("OnItemSelected: %s, %s, %s, %s\n" %
                            (self.currentItem,
                             self.list.GetItemText(self.currentItem),
                             self.getColumnText(self.currentItem, 0),
                             self.getColumnText(self.currentItem, 1)))
 
 #        if self.currentItem == 10:
-#            self.log.WriteText("OnItemSelected: Veto'd selection\n")
+#            self.statuslog.WriteText("OnItemSelected: Veto'd selection\n")
             #event.Veto()  # doesn't work
             # this does
 #            self.list.SetItemState(10, 0, wx.LIST_STATE_SELECTED)
@@ -200,7 +200,7 @@ class MountListCtrlPanel(wx.Panel): #, listmix.ColumnSorterMixin
 
     def OnItemDeselected(self, evt):
         item = evt.GetItem()
-        self.log.WriteText("OnItemDeselected: %d" % evt.m_itemIndex)
+        self.statuslog.WriteText("OnItemDeselected: %d" % evt.m_itemIndex)
 
         # Show how to reselect something we don't want deselected
 #        if evt.m_itemIndex == 11:
@@ -210,7 +210,7 @@ class MountListCtrlPanel(wx.Panel): #, listmix.ColumnSorterMixin
     def OnItemActivated(self, event):
         # double click
         self.currentItem = event.m_itemIndex
-        self.log.WriteText("OnItemActivated: %s\nTopItem: %s" %
+        self.statuslog.WriteText("OnItemActivated: %s\nTopItem: %s" %
                            (self.list.GetItemText(self.currentItem), self.list.GetTopItem()))
         self.parent.OnEdit(event)
 
@@ -222,37 +222,37 @@ class MountListCtrlPanel(wx.Panel): #, listmix.ColumnSorterMixin
 
     def OnItemDelete(self, event):
         #self.parent.OnDelete(event)
-        self.log.WriteText("Mount point removed")
+        self.statuslog.WriteText("Mount point removed")
 
     def OnColClick(self, event):
-        self.log.WriteText("OnColClick: %d\n" % event.GetColumn())
+        self.statuslog.WriteText("OnColClick: %d\n" % event.GetColumn())
         event.Skip()
 
     def OnColRightClick(self, event):
         item = self.list.GetColumn(event.GetColumn())
-        self.log.WriteText("OnColRightClick: %d %s\n" %
+        self.statuslog.WriteText("OnColRightClick: %d %s\n" %
                            (event.GetColumn(), (item.GetText(), item.GetAlign(),
                                                 item.GetWidth(), item.GetImage())))
 
     def OnColBeginDrag(self, event):
-        self.log.WriteText("OnColBeginDrag\n")
+        self.statuslog.WriteText("OnColBeginDrag\n")
         ## Show how to not allow a column to be resized
         #if event.GetColumn() == 0:
         #    event.Veto()
 
 
     def OnColDragging(self, event):
-        self.log.WriteText("OnColDragging\n")
+        self.statuslog.WriteText("OnColDragging\n")
 
     def OnColEndDrag(self, event):
-        self.log.WriteText("OnColEndDrag\n")
+        self.statuslog.WriteText("OnColEndDrag\n")
 
     def OnDoubleClick(self, event):
-        self.log.WriteText("OnDoubleClick item %s\n" % self.list.GetItemText(self.currentItem))
+        self.statuslog.WriteText("OnDoubleClick item %s\n" % self.list.GetItemText(self.currentItem))
         event.Skip()
 
     def OnRightClick(self, event):
-        self.log.WriteText("OnRightClick %s\n" % self.list.GetItemText(self.currentItem))
+        self.statuslog.WriteText("OnRightClick %s\n" % self.list.GetItemText(self.currentItem))
 
         # only do this part the first time so the events are only bound once
         if not hasattr(self, "popupID1"):
@@ -287,20 +287,20 @@ class MountListCtrlPanel(wx.Panel): #, listmix.ColumnSorterMixin
 
 
 #    def OnPopupOne(self, event):
-#        self.log.WriteText("Popup one\n")
+#        self.statuslog.WriteText("Popup one\n")
 #        print "FindItem:", self.list.FindItem(-1, "Roxette")
 #        print "FindItemData:", self.list.FindItemData(-1, 11)
 
     def OnPopupTwo(self, event):
-        self.log.WriteText("Selected items:\n")
+        self.statuslog.WriteText("Selected items:\n")
         index = self.list.GetFirstSelected()
 
         while index != -1:
-            self.log.WriteText("      %s: %s\n" % (self.list.GetItemText(index), self.getColumnText(index, 1)))
+            self.statuslog.WriteText("      %s: %s\n" % (self.list.GetItemText(index), self.getColumnText(index, 1)))
             index = self.list.GetNextSelected(index)
 
     def OnPopupThree(self, event):
-        self.log.WriteText("Popup three\n")
+        self.statuslog.WriteText("Popup three\n")
         self.list.ClearAll()
         wx.CallAfter(self.PopulateList)
 
@@ -320,7 +320,7 @@ class MountListCtrlPanel(wx.Panel): #, listmix.ColumnSorterMixin
         self.list.SetDimensions(0, 0, w, h)
 
 class MountsPanel(wx.Panel):
-    def __init__(self, parent, log):
+    def __init__(self, parent, statuslog):
         wx.Panel.__init__(self, parent)
 
         vboxList = wx.BoxSizer(wx.VERTICAL)
@@ -333,7 +333,7 @@ class MountsPanel(wx.Panel):
         txtTitle = wx.StaticText(self, -1, _("Configured mounts:"), style=wx.ALIGN_LEFT)
         vboxList.Add(txtTitle, proportion = 0, flag = wx.ALL, border = 5)
 
-        self.listCtrl = MountListCtrlPanel(self, log)
+        self.listCtrl = MountListCtrlPanel(self, statuslog)
         self.listCtrl.SetSizer(tableBox)
         vboxList.Add(self.listCtrl, proportion = 2, flag = wx.EXPAND|wx.ALL, border = 12)
 
