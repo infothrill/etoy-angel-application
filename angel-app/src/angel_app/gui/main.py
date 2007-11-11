@@ -387,7 +387,7 @@ class AngelMainFrame(wx.Frame):
                                         size=(-1, -1),
                                         style=wx.DEFAULT_FRAME_STYLE)
         self.prefsWindow.CenterOnParent()
-        self.prefsWindow.Show(True)
+        self.prefsWindow.ShowModal()
         
     def on_help_license(self, event):
         """
