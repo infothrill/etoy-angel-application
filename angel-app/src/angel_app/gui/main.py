@@ -328,8 +328,8 @@ class AngelMainFrameBase(wx.Frame):
         Opens the local private repository from presenter in the
         file manager
         """
-        interface = self.app.config.get("presenter", "listenInterface")
-        port = self.app.config.get("presenter", "listenPort")
+        interface = wx.GetApp().config.get("presenter", "listenInterface")
+        port = wx.GetApp().config.get("presenter", "listenPort")
         platformwrap.showRepositoryInFilemanager(interface, port)
         
     def on_about_request(self, event):
@@ -365,8 +365,8 @@ class AngelMainFrameBase(wx.Frame):
         """
         Opens the local presenter website in a web browser
         """
-        interface = self.app.config.get("presenter", "listenInterface")
-        port = self.app.config.get("presenter", "listenPort")
+        interface = wx.GetApp().config.get("presenter", "listenInterface")
+        port = wx.GetApp().config.get("presenter", "listenPort")
         platformwrap.showURLInBrowser("http://%s:%s"% (interface, port))
 
     def on_help_wiki(self, event):
