@@ -3,5 +3,7 @@ all = [
        "log",
        "main",
        "prefs",
-       "compat"
+       "compat",
+       "statusbar",
+       "welcome"
        ]

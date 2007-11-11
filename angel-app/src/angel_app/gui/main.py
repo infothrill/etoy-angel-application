@@ -7,7 +7,11 @@ import wx
 
 import angel_app.proc.subprocessthread as masterthread
 import angel_app.gui.compat.wrap as platformwrap
+import angel_app.gui.welcome as welcome
+import angel_app.gui.prefs as prefs
+import angel_app.gui.mounttab as mounttab
 from angel_app.config import config
+from angel_app.gui import statusbar
 
 
 from angel_app.log import getLogger
@@ -15,13 +19,12 @@ log = getLogger(__name__)
 
 _ = wx.GetTranslation
 
-class AngelMainFrame(wx.Frame):
 
+class AngelMainFrameBase(wx.Frame):
     BUGREPORT_URL = "https://gna.org/support/?func=additem&group=angel-app" # use "support", because "bugs" requires a gna account
     TECHNICALREPORT_URL = "http://svn.gna.org/viewcvs/*checkout*/angel-app/trunk/angel-app/doc/report/m221e-angel-app-0.2.pdf" # TODO: this URL needs to have NO version in it!!!
 
 
-        
     def __withMenu(self, menu):
         """
         Return a function that will bind an item to this menu
@@ -98,14 +101,7 @@ class AngelMainFrame(wx.Frame):
         
         return about_menu
 
-    def __init__(self, parent, ID, title):
-        """
-        The constructor, initializes the menus, the mainframe with the logo and the statusbar.
-        By default, also starts the p2p process automatically on start-up
-        """
-        wx.Frame.__init__(self, parent, ID, title, wx.DefaultPosition, wx.Size(823, 548))
-        self.app = wx.GetApp()
-        self.frames = []
+    def _buildMenus(self):
         # define the menus
         self.menu_bar  = wx.MenuBar()
   
@@ -124,34 +120,6 @@ class AngelMainFrame(wx.Frame):
         self.SetMenuBar(self.menu_bar)
         # end define the menus
 
-        self.SetBackgroundColour(wx.WHITE)
-        M221E_WELCOME_SCREEN = os.path.join(platformwrap.getResourcePath(), "images", "angel_app_welcomescreen.jpg")
-        self.bitmap = wx.Bitmap(M221E_WELCOME_SCREEN)
-        wx.EVT_PAINT(self, self.OnPaint)
-
-        self.Centre()
-
-        wx.GetApp().p2p.start()
-
-        self.sb = AngelStatusBar(self)
-        self.SetStatusBar(self.sb)
-
-        self.Bind(wx.EVT_CLOSE, self.OnQuit)
-        
-#    def on_log_console(self, eventt):
-#        from angel_app.gui.log import LogFrame
-#        self.logwin = LogFrame()
-#        self.logwin.Show(True)
-#        self.frames.append(self.logwin)
-
-    def OnPaint(self, event):
-        """
-        Handler for wx.EVT_PAINT event.
-        Also draws the m221e logo.
-        """
-        dc = wx.PaintDC(self)
-        dc.DrawBitmap(self.bitmap, 0, 0)
-    
     def OnQuit(self, event):
         """
         Handler for wx.EVT_CLOSE event
@@ -164,13 +132,8 @@ class AngelMainFrame(wx.Frame):
         Exits the application explicitly
         """
         log.info("Exiting on user request")
-        # TODO: how to clean up old frames that are possibly still open?
-        try: # the frames might be gone already.... 
-            for frame in self.frames:
-                frame.Destroy()
-        except:
-            pass
         self.Close(True)
+
 
     def askIFPurgeRepository(self):
         questiontext = _('By purging your repository, you delete all locally stored data. Are you sure you want to purge the repository?') 
@@ -429,54 +392,62 @@ class AngelMainFrame(wx.Frame):
         Opens TECHINCALREPORT_URL in a web browser
         """
         platformwrap.showURLInBrowser(self.TECHNICALREPORT_URL)
+
     
+class AngelMainNoteBook(wx.Notebook):
+    def __init__(self, parent, id, statuslog):
+        wx.Notebook.__init__(self, parent, id, size=(-1,-1),
+                             #style=
+                             #wx.NB_TOP # | wx.NB_MULTILINE
+                             #wx.NB_BOTTOM
+                             #wx.NB_LEFT
+                             #wx.NB_RIGHT
+                             )
+        self.parent = parent
+        self.statuslog = statuslog
 
-class AngelStatusBar(wx.StatusBar):
-    """
-    Status bar for the main frame. Shows 2 things:
-    - currently selected menu
-    - p2p status (running/stopped)
-    """
-    def __init__(self, parent):
+        
+        win = welcome.WelcomePanel(self, statuslog = self.statuslog)
+        self.AddPage(win, 'Welcome')
+
+        
+        win = mounttab.MountsPanel(self, statuslog = self.statuslog)
+        self.AddPage(win, 'Mounts')
+        
+        
+        win = prefs.PrefsPanel(self, statuslog = self.statuslog)
+        self.AddPage(win, 'Preferences')
+
+class AngelMainWindow(AngelMainFrameBase):
+    def __init__(self, parent, id, title):
         """
-        Initializes a timer to see if the p2p process is running.
+        The constructor, initializes the menus, the mainframe with the logo and the statusbar.
+        By default, also starts the p2p process automatically on start-up
         """
-        self.p2p = wx.GetApp().p2p
-        wx.StatusBar.__init__(self, parent, -1)
+        #wx.Frame.__init__(self, parent, id, title, size=(870, 615))
+        wx.Frame.__init__(self, parent, id, title, wx.DefaultPosition, wx.Size(870, 615))
 
-        # This status bar has one field
-        self.SetFieldsCount(2)
-        # Sets the three fields to be relative widths to each other.
-        self.SetStatusWidths([-2,-1])
+        self._buildMenus()
 
-        # We're going to use a timer to drive a status of the p2p-process
-        # in the last field.
-        self.timer = wx.PyTimer(self.Notify)
-        self.timer.Start(1001)
-        self.Notify()
+        self.SetStatusBar(statusbar.AngelStatusBar(self))
 
-    def Notify(self):
-        """
-        Timer callback to check if the p2p process is running and
-        set the status bar text accordingly.
-        """
-        if self.p2p.isAlive():
-            status = _("p2p running")
-        else:
-            status = _("p2p stopped")
-        self.SetStatusText(status, 1)
+        self.doNoteBookLayout()
 
-class StatusLog(object):
-    """
-    The log output is redirected to the status bar of the containing frame.
-    """
+        # start the p2p process:
+        wx.GetApp().p2p.start()
 
-    def WriteText(self,text_string):
-        self.write(text_string)
+        # make sure to have a handler when quitting (shutdown p2p) 
+        self.Bind(wx.EVT_CLOSE, self.OnQuit)
 
-    def write(self,text_string):
-        wx.GetApp().GetTopWindow().SetStatusText(text_string)
+        self.Centre()
+        self.Show(True)
 
+    def doNoteBookLayout(self):
+        Sizer = wx.BoxSizer(wx.VERTICAL)
+        self.nb = AngelMainNoteBook(self, -1, statuslog = statusbar.StatusLog())
+        Sizer.Add(self.nb, proportion = 2, flag=wx.ALL|wx.EXPAND, border = 20)
+        self.SetSizer(Sizer)
+        self.Centre()
 
 
 class AngelApp(wx.App):
@@ -490,10 +461,9 @@ class AngelApp(wx.App):
         self.config = config.getConfig()
         self.p2p = masterthread.MasterThread()
         self.p2p.setDaemon(True)
-        mainframe = AngelMainFrame(None, -1, "ANGEL APPLICATION: THE CODE THAT CROSSES THE DEAD-LINE")
+        mainframe = AngelMainWindow(None, -1, "ANGEL APPLICATION: THE CODE THAT CROSSES THE DEAD-LINE")
         mainframe.Show(True)
         self.SetTopWindow(mainframe)
-        self.test = "testing"
         return True
 
 if __name__ == '__main__':
