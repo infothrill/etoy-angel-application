@@ -1,19 +1,18 @@
 import wx
 
 from angel_app.log import getLogger
+from angel_app.gui.statusbar import StatusLog
+
 log = getLogger(__name__)
 
 _ = wx.GetTranslation
 
-class PrefsWindow(wx.Dialog):
-    """Preferences dialog class"""
+class PrefsPanel(wx.Panel):
+    def __init__(self, parent, statuslog):
+        wx.Panel.__init__(self, parent)
 
-
-    def __init__(self, parent, id, title, pos=wx.DefaultPosition, 
-                size=wx.DefaultSize, style=wx.DEFAULT_FRAME_STYLE):
-        """Initialize preferences dialog window"""
-      
-        wx.Dialog.__init__(self, parent, id, title, pos, size, style)
+        self.parent = parent
+        self.statuslog = statuslog
 
         self.app = wx.GetApp()
  
@@ -136,30 +135,38 @@ class PrefsWindow(wx.Dialog):
         
         # OK, add OK/Cancel buttons
 
-        hboxButtons = wx.BoxSizer(wx.HORIZONTAL)
+#        hboxButtons = wx.BoxSizer(wx.HORIZONTAL)
+#
+#        ID_ON_OK = wx.NewId()
+#        self.buttonOK = wx.Button(self, ID_ON_OK, _("OK"))
+#        hboxButtons.Add(self.buttonOK, 0, wx.ALL | wx.EXPAND, 1)
+#
+#        ID_ON_CANCEL = wx.NewId()
+#        self.buttonCancel = wx.Button(self, ID_ON_CANCEL, _("Cancel"))
+#        hboxButtons.Add(self.buttonCancel, 0, wx.ALL | wx.EXPAND, 1)
 
+        hboxButtons = self.buttons()
 
-        ID_ON_OK = wx.NewId()
-        self.buttonOK = wx.Button(self, ID_ON_OK, _("OK"))
-        hboxButtons.Add(self.buttonOK, 0, wx.ALL | wx.EXPAND, 1)
-
-        ID_ON_CANCEL = wx.NewId()
-        self.buttonCancel = wx.Button(self, ID_ON_CANCEL, _("Cancel"))
-        hboxButtons.Add(self.buttonCancel, 0, wx.ALL | wx.EXPAND, 1)
-
-        vboxMain.Add(hboxButtons, 0, wx.ALL | wx.ALIGN_RIGHT, 4)
+        vboxMain.Add(hboxButtons, 0, wx.ALL | wx.ALIGN_CENTER, 4)
 
         self.SetSizer(vboxMain)
         self.Fit()
 
         # add the button event hooks:
-        wx.EVT_CHECKBOX(self, ID_onUseIpv6Checkbox, self.onUseIpv6Checkbox)
-
         wx.EVT_BUTTON(self, ID_onDefaultProviderPort, self.onDefaultProviderPort)
         wx.EVT_BUTTON(self, ID_onDefaultPresenterPort, self.onDefaultPresenterPort)
-        wx.EVT_BUTTON(self, ID_ON_OK, self.onOK)
-        wx.EVT_BUTTON(self, ID_ON_CANCEL, self.onCancel)
+        wx.EVT_BUTTON(self, wx.ID_OK, self.onOK)
+        wx.EVT_BUTTON(self, wx.ID_CANCEL, self.onCancel)
 
+    def buttons(self):
+        hboxButtons = wx.BoxSizer(wx.HORIZONTAL)
+
+        self.buttonOK = wx.Button(self, wx.ID_OK, _("Apply"))
+        hboxButtons.Add(self.buttonOK, 0, wx.ALL | wx.EXPAND, 1)
+
+        #self.buttonCancel = wx.Button(self, wx.ID_CANCEL, _("Cancel"))
+        #hboxButtons.Add(self.buttonCancel, 0, wx.ALL | wx.EXPAND, 1)
+        return hboxButtons
 
     def onDefaultProviderPort(self, event):
         """Reset to default value"""
@@ -169,15 +176,7 @@ class PrefsWindow(wx.Dialog):
         """Reset to default value"""
         self.presenterPort.SetValue(u'6222')
 
-    def onUseIpv6Checkbox(self, event):
-        """use or don't use ipv6?"""
-        #print self.useIpv6Checkbox.GetValue()
-        pass
-
-    def onOK(self, event):
-        """
-        Save the configuration
-        """
+    def savePrefs(self):
         self.app.config.container['common']['loglevel']= self.loglevelChooser.GetValue()
         self.app.config.container['provider']['listenPort'] = self.providerPort.GetValue()
         self.app.config.container['provider']['enable'] = self.providerCheckbox.GetValue()
@@ -190,13 +189,52 @@ class PrefsWindow(wx.Dialog):
 
         self.app.config.commit()
         
+    def onOK(self, event):
+        self.savePrefs()
         wx.GetApp().p2p.conditionalRestart()
-        self.Destroy()
-
+        self.statuslog.WriteText("Preferences saved")
 
     def onCancel(self, event):
-        """
-        Close dialog window discarding changes
-        """
-        self.Destroy()
-        
+        pass
+
+class PrefsPanelForWindow(PrefsPanel):
+    """
+    A special class inherited from PrefsPanel where buttons are different
+    and behave "window-style"
+    """
+    def buttons(self):
+        hboxButtons = wx.BoxSizer(wx.HORIZONTAL)
+
+        self.buttonOK = wx.Button(self, wx.ID_OK, _("OK"))
+        hboxButtons.Add(self.buttonOK, 0, wx.ALL | wx.EXPAND, 1)
+
+        self.buttonCancel = wx.Button(self, wx.ID_CANCEL, _("Cancel"))
+        hboxButtons.Add(self.buttonCancel, 0, wx.ALL | wx.EXPAND, 1)
+        return hboxButtons
+
+    def onOK(self, event):
+        self.savePrefs()
+        wx.GetApp().p2p.conditionalRestart()
+        self.statuslog.WriteText("Preferences saved")
+        self.closeMe()
+
+    def onCancel(self, event):
+        self.closeMe()
+
+    def closeMe(self):
+        self.parent.Close()
+
+
+class PrefsWindow(wx.Dialog):
+    """Preferences dialog class"""
+    def __init__(self, parent, id, title, pos=wx.DefaultPosition, 
+                size=wx.DefaultSize, style=wx.DEFAULT_FRAME_STYLE):
+        """Initialize preferences dialog window"""
+      
+        wx.Dialog.__init__(self, parent, id, title, pos, size, style)
+
+        Sizer  = wx.BoxSizer(wx.VERTICAL)
+        p = PrefsPanelForWindow(self, statuslog = StatusLog())
+        Sizer.Add(p)
+        self.SetSizer(Sizer)
+        self.Fit()
