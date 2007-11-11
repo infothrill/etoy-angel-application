@@ -189,7 +189,8 @@ class PrefsWindow(wx.Dialog):
         self.app.config.container['maintainer']['nodename'] = self.nodeName.GetValue()
 
         self.app.config.commit()
-      
+        
+        wx.GetApp().p2p.conditionalRestart()
         self.Destroy()
 
 
