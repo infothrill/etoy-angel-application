@@ -466,6 +466,18 @@ class AngelStatusBar(wx.StatusBar):
             status = _("p2p stopped")
         self.SetStatusText(status, 1)
 
+class StatusLog(object):
+    """
+    The log output is redirected to the status bar of the containing frame.
+    """
+
+    def WriteText(self,text_string):
+        self.write(text_string)
+
+    def write(self,text_string):
+        wx.GetApp().GetTopWindow().SetStatusText(text_string)
+
+
 
 class AngelApp(wx.App):
     """
