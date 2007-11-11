@@ -131,11 +131,9 @@ class AngelMainFrame(wx.Frame):
 
         self.Centre()
 
-        self.daemon = masterthread.MasterThread()
-        self.daemon.setDaemon(True)
-        self.daemon.start()
+        wx.GetApp().p2p.start()
 
-        self.sb = AngelStatusBar(self, self.daemon)
+        self.sb = AngelStatusBar(self)
         self.SetStatusBar(self.sb)
 
         self.Bind(wx.EVT_CLOSE, self.OnQuit)
@@ -158,7 +156,7 @@ class AngelMainFrame(wx.Frame):
         """
         Handler for wx.EVT_CLOSE event
         """
-        self.daemon.stop()
+        wx.GetApp().p2p.stop()
         self.Destroy()
 
     def doExit(self, event):
@@ -191,24 +189,24 @@ class AngelMainFrame(wx.Frame):
             return
 
         # remember the current state of the p2p proc:
-        was_alive = self.daemon.isAlive()
+        was_alive = wx.GetApp().p2p.isAlive()
         max = 3
         dlg = wx.ProgressDialog(_("Purging"),
                                _("Please wait while the repository is purged"),
                                maximum = max,
                                parent=self,
                                style = wx.PD_APP_MODAL)
-        if self.daemon.isAlive():
-            self.daemon.stop()
+        if wx.GetApp().p2p.isAlive():
+            wx.GetApp().p2p.stop()
         dlg.Update(1)
         
         success = False
-        if not self.daemon.isAlive():
+        if not wx.GetApp().p2p.isAlive():
             from angel_app.admin.directories import removeDirectory 
             removeDirectory('repository')
             dlg.Update(2)
             if was_alive:
-                self.daemon.run()
+                wx.GetApp().p2p.run()
             dlg.Update(3)
             dlg.Destroy()
             success = True
@@ -319,9 +317,7 @@ class AngelMainFrame(wx.Frame):
             if result == True:
                 self.sb.SetStatusText(_("Crypto key successfully imported"), 0)
                 # restart the p2p process (makes sure the key is now known)
-                if self.daemon.isAlive():
-                    self.daemon.stop()
-                    self.daemon.run()
+                wx.GetApp().p2p.conditionalRestart()
         elif keyselectionresult == wx.ID_CANCEL:
                 self.sb.SetStatusText(_("Crypto key import canceled"), 0)
 
@@ -344,24 +340,25 @@ class AngelMainFrame(wx.Frame):
         """
         Restart the p2p process
         """
-        self.on_net_stop(event)
-        self.on_net_start(event)
+        wx.GetApp().p2p.conditionalRestart()
+        #self.on_net_stop(event)
+        #self.on_net_start(event)
         
     def on_net_start(self, event):
         """
         Starts the p2p process if not running
         """
-        if not self.daemon.isAlive():
+        if not wx.GetApp().p2p.isAlive():
             log.info("Starting the p2p process")
-            self.daemon.run()
+            wx.GetApp().p2p.run()
 
     def on_net_stop(self, event):
         """
         Stops the p2p process if running
         """
-        if self.daemon.isAlive():
+        if wx.GetApp().p2p.isAlive():
             log.info("Stopping the p2p process")
-            self.daemon.stop()
+            wx.GetApp().p2p.stop()
     
     def on_repo_in_filemanager(self, event):
         """
@@ -440,13 +437,11 @@ class AngelStatusBar(wx.StatusBar):
     - currently selected menu
     - p2p status (running/stopped)
     """
-    def __init__(self, parent, p2pProc):
+    def __init__(self, parent):
         """
-        Constructor, takes an additional parameter pointing to the
-        thread object runing the p2p process. Initializes a timer to
-        see if the p2p process is running.
+        Initializes a timer to see if the p2p process is running.
         """
-        self.masterproc = p2pProc
+        self.p2p = wx.GetApp().p2p
         wx.StatusBar.__init__(self, parent, -1)
 
         # This status bar has one field
@@ -465,7 +460,7 @@ class AngelStatusBar(wx.StatusBar):
         Timer callback to check if the p2p process is running and
         set the status bar text accordingly.
         """
-        if self.masterproc.isAlive():
+        if self.p2p.isAlive():
             status = _("p2p running")
         else:
             status = _("p2p stopped")
@@ -481,6 +476,8 @@ class AngelApp(wx.App):
         Instantiates the main frame and shows it
         """
         self.config = config.getConfig()
+        self.p2p = masterthread.MasterThread()
+        self.p2p.setDaemon(True)
         mainframe = AngelMainFrame(None, -1, "ANGEL APPLICATION: THE CODE THAT CROSSES THE DEAD-LINE")
         mainframe.Show(True)
         self.SetTopWindow(mainframe)
