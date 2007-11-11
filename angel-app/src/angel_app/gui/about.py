@@ -81,12 +81,12 @@ people collaborate to back up each other's data."""
 
     def onCredits(self, event):
         creditsWindow = CreditsWindow(self, -1, _("Credits"), size=(500, 240))
-        creditsWindow.CentreOnScreen()
+        creditsWindow.CenterOnParent()
         creditsWindow.Show()
       
     def onLicence(self, event):
         licenseWindow = LicenseWindow(self, -1, _("Licence"), size=(500, 400), style=wx.DEFAULT_FRAME_STYLE)
-        licenseWindow.CenterOnScreen()
+        licenseWindow.CenterOnParent()
         licenseWindow.Show(True)
 
 

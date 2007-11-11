@@ -375,7 +375,7 @@ class AngelMainFrame(wx.Frame):
         """
         from angel_app.gui.about import AboutWindow 
         aboutWindow = AboutWindow(self, -1, _("About"), style=wx.DEFAULT_DIALOG_STYLE)
-        aboutWindow.CentreOnScreen()
+        aboutWindow.CenterOnParent()
         aboutWindow.Show(True)
         
     def on_file_prefs(self, event):
@@ -386,7 +386,7 @@ class AngelMainFrame(wx.Frame):
         self.prefsWindow = PrefsWindow(self, -1, _("Preferences"),
                                         size=(-1, -1),
                                         style=wx.DEFAULT_FRAME_STYLE)
-        self.prefsWindow.CentreOnScreen()
+        self.prefsWindow.CenterOnParent()
         self.prefsWindow.Show(True)
         
     def on_help_license(self, event):
@@ -395,7 +395,7 @@ class AngelMainFrame(wx.Frame):
         """
         from angel_app.gui.about import LicenseWindow 
         licenseWindow = LicenseWindow(self, -1, _("Licence"), size=(500, 400), style=wx.DEFAULT_FRAME_STYLE)
-        licenseWindow.CenterOnScreen()
+        licenseWindow.CenterOnParent()
         licenseWindow.Show(True)
 
     def on_help_presenter(self, event):
