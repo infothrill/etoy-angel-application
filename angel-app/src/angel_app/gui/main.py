@@ -408,15 +408,15 @@ class AngelMainNoteBook(wx.Notebook):
 
         
         win = welcome.WelcomePanel(self, statuslog = self.statuslog)
-        self.AddPage(win, 'Welcome')
+        self.AddPage(win, _('Welcome'))
 
         
         win = mounttab.MountsPanel(self, statuslog = self.statuslog)
-        self.AddPage(win, 'Mounts')
+        self.AddPage(win, _('Mounts'))
         
         
         win = prefs.PrefsPanel(self, statuslog = self.statuslog)
-        self.AddPage(win, 'Preferences')
+        self.AddPage(win, _('Preferences'))
 
 class AngelMainWindow(AngelMainFrameBase):
     def __init__(self, parent, id, title):
@@ -424,7 +424,6 @@ class AngelMainWindow(AngelMainFrameBase):
         The constructor, initializes the menus, the mainframe with the logo and the statusbar.
         By default, also starts the p2p process automatically on start-up
         """
-        #wx.Frame.__init__(self, parent, id, title, size=(870, 615))
         wx.Frame.__init__(self, parent, id, title, wx.DefaultPosition, wx.Size(870, 615))
 
         self._buildMenus()
@@ -445,7 +444,7 @@ class AngelMainWindow(AngelMainFrameBase):
     def doNoteBookLayout(self):
         Sizer = wx.BoxSizer(wx.VERTICAL)
         self.nb = AngelMainNoteBook(self, -1, statuslog = statusbar.StatusLog())
-        Sizer.Add(self.nb, proportion = 2, flag=wx.ALL|wx.EXPAND, border = 20)
+        Sizer.Add(self.nb, proportion = 2, flag=wx.RIGHT|wx.LEFT|wx.EXPAND, border = 20)
         self.SetSizer(Sizer)
         self.Centre()
 
@@ -461,7 +460,7 @@ class AngelApp(wx.App):
         self.config = config.getConfig()
         self.p2p = masterthread.MasterThread()
         self.p2p.setDaemon(True)
-        mainframe = AngelMainWindow(None, -1, "ANGEL APPLICATION: THE CODE THAT CROSSES THE DEAD-LINE")
+        mainframe = AngelMainWindow(None, -1, _("ANGEL APPLICATION: THE CODE THAT CROSSES THE DEAD-LINE"))
         mainframe.Show(True)
         self.SetTopWindow(mainframe)
         return True
