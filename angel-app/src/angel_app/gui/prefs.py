@@ -118,7 +118,6 @@ class PrefsPanel(wx.Panel):
 
         from angel_app.log import getAllowedLogLevels
         levelNames = map(unicode, getAllowedLogLevels())
-        levelNames.sort()
         self.loglevelChooser = wx.ComboBox(panelTest, wx.NewId(), 
                                     self.app.config.get('common', 'loglevel'), 
                                     wx.Point(-1, -1), 

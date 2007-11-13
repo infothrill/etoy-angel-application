@@ -207,11 +207,11 @@ def __configLoggerBasic():
 
 def getAllowedLogLevels():
     """
-    Utility to get a list of allowed loglevels that we know of. The list contains only strings.
+    Utility to get a list of allowed loglevels (sorted by ascending log level) that we know of. The list contains only strings.
 
     @return: list
     """
-    levelnames = ['DEBUG', 'ERROR', 'WARNING', 'CRITICAL', 'INFO']
+    levelnames = ['DEBUG', 'INFO', 'WARNING', 'ERROR',  'CRITICAL']
     return levelnames
     
 
