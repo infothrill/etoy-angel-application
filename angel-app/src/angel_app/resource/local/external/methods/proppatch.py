@@ -28,6 +28,9 @@ WebDAV PROPPATCH method.
 
 __all__ = ["http_PROPPATCH"]
 
+import os
+import socket
+
 from twisted.python.failure import Failure
 from twisted.web2 import responsecode
 from twisted.web2.http import HTTPError, StatusResponse
@@ -35,12 +38,11 @@ from twisted.web2.dav.util import davXMLFromStream
 from twisted.web2.dav import davxml
 from twisted.web2.dav.http import MultiStatusResponse, PropertyStatusResponseQueue
 from twisted.internet.defer import deferredGenerator, waitForDeferred
+
 from angel_app import elements
 from angel_app.log import getLogger
-import os
 
 log = getLogger(__name__)
-
 
 # get config:
 from angel_app.config import config
@@ -175,6 +177,16 @@ def defaultHandler(property, store):
                                 StatusResponse(
                                    responsecode.BAD_REQUEST, str(err))))
                 
+
+def isIPv6(ip_string):
+    """checks if the given string is an IPv6 address"""
+    try:
+        socket.inet_pton(socket.AF_INET6, ip_string)
+    except:
+        return False
+    return True
+
+
 def pingBack(clone, request):  
     """
     Determine if the clone as advertised in the PROPPATCH request is reachable.
@@ -187,11 +199,16 @@ def pingBack(clone, request):
         # the "nodename" defaults to something marginally useful, so this might be expected,
         # default to the request's originating ip address and try again.
         address = str(request.remoteAddr.host)
-        
-        if AngelConfig.getboolean("provider", "useIPv6"):
-            # if it's an IPv6 address, we need to add '[address]' around the IP address to generate
-            # a valid url
-            address = "[" + address + "]"
+
+        if isIPv6(address):
+            # If it's an IPv6 address, we need to add '[address]' around the IP address to generate
+            # a valid url.
+            # Also, we need to check if ipv6 is enabled before trying to connect 
+            if AngelConfig.getboolean("provider", "useIPv6"):
+                address = "[" + address + "]"
+            else:
+                # we can't handle this (according to config), so don't bother trying
+                return False
             
         clone.host = address
         # here, we should still expect to be fooled by NATs etc.
