@@ -13,7 +13,7 @@ class WxLog(logging.Handler):
         logging.Handler.__init__(self)
         self.ctrl = ctrl
     def emit(self, record):
-        '''here we jut take the string formated with the declared Formater and add a new line
+        '''here we jut take the string formatted with the declared Formatter and add a new line
         alternatively you could take the record object and extract the information you need from it
         '''
         self.ctrl.AppendText(self.format(record)+"\n")
