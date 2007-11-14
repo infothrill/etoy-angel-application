@@ -414,9 +414,14 @@ class AngelMainNoteBook(wx.Notebook):
         win = mounttab.MountsPanel(self, statuslog = self.statuslog)
         self.AddPage(win, _('Mounts'))
         
-        
         win = prefs.PrefsPanel(self, statuslog = self.statuslog)
         self.AddPage(win, _('Preferences'))
+        
+        # sort of a joke for now ;-)
+        import wx.py as py
+        intro = 'ANGEL SHELL %s - EVERYTHING YOU NEED FOR BACKUP' % py.version.VERSION
+        win = py.shell.Shell(self, -1, introText=intro)
+        self.AddPage(win, _('Angelshell'))
 
 class AngelMainWindow(AngelMainFrameBase):
     def __init__(self, parent, id, title):
@@ -438,7 +443,7 @@ class AngelMainWindow(AngelMainFrameBase):
         # make sure to have a handler when quitting (shutdown p2p) 
         self.Bind(wx.EVT_CLOSE, self.OnQuit)
 
-        self.Centre()
+        self.CenterOnScreen()
         self.Show(True)
 
     def doNoteBookLayout(self):
