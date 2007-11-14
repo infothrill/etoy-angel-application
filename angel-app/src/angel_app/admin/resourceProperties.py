@@ -66,9 +66,11 @@ def setMountPoint(mountPoint, URLToMount):
     host, path = url[1], url[2]
     if path == "":
         path = "/"
-    
-    host, port = host.split(":")
-    if port == "": 
+
+    port  = 1 # scope declaration only
+    try:
+        host, port = host.split(":")
+    except ValueError: #might have no port and no colon
         from angel_app.config.defaults import providerPublicListenPort # default port of other peers
         port = providerPublicListenPort
         
