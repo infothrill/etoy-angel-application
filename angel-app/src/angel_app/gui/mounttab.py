@@ -96,7 +96,7 @@ class MountListCtrlPanel(wx.Panel): #, listmix.ColumnSorterMixin
     def PopulateList(self):
         if True:
             # for normal, simple columns, you can add them like this:
-            self.list.InsertColumn(0, _("Source"))
+            self.list.InsertColumn(0, _("Source URL"))
             self.list.InsertColumn(1, _("Mount point"), wx.LIST_FORMAT_RIGHT)
             #self.list.InsertColumn(2, "Status")
         else:
@@ -105,7 +105,7 @@ class MountListCtrlPanel(wx.Panel): #, listmix.ColumnSorterMixin
             info.m_mask = wx.LIST_MASK_TEXT | wx.LIST_MASK_IMAGE | wx.LIST_MASK_FORMAT
             info.m_image = -1
             info.m_format = 0
-            info.m_text = _("Source")
+            info.m_text = _("Source URL")
             self.list.InsertColumnInfo(0, info)
 
             info.m_format = wx.LIST_FORMAT_RIGHT
@@ -330,8 +330,8 @@ class MountsPanel(wx.Panel):
         buttonpanel = wx.Panel(self, -1)
         buttonpanel.SetSizer(boxButtons)
 
-        txtTitle = wx.StaticText(self, -1, _("Configured mounts:"), style=wx.ALIGN_LEFT)
-        vboxList.Add(txtTitle, proportion = 0, flag = wx.ALL, border = 5)
+        txtTitle = wx.StaticText(self, -1, _("Currently configured mount points"), style=wx.ALIGN_CENTER)
+        vboxList.Add(txtTitle, proportion = 0, flag = wx.TOP|wx.ALIGN_CENTER, border = 5)
 
         self.listCtrl = MountListCtrlPanel(self, statuslog)
         self.listCtrl.SetSizer(tableBox)
@@ -357,7 +357,7 @@ class MountsPanel(wx.Panel):
     def OnEdit(self, event):
         list = self.listCtrl.GetListCtrl()
         item = list.GetFocusedItem()
-        i =  list.GetItemData(item)
+        #i =  list.GetItemData(item)
         log.debug("Want to edit %d" % item)
         oldsource = self.listCtrl.getColumnText(item, 0)
         oldmountpoint = self.listCtrl.getColumnText(item, 1)
@@ -384,7 +384,7 @@ class MountsPanel(wx.Panel):
 
     def OnAdd(self, event):
         list = self.listCtrl.GetListCtrl()
-        dlg = MountEditDialog(self, title = _("Add mount"))
+        dlg = MountEditDialog(self, title = _("Add new mount point"))
         dlg.CenterOnParent()
         res = dlg.ShowModal()
         log.debug("result of dialogue: %s" % res)
@@ -420,24 +420,24 @@ class MountsPanel(wx.Panel):
 
 
 class MountEditDialog(wx.Dialog):
-    def __init__(self, parent, title = _("Edit mount"), source = '', mountpoint = ''):
+    def __init__(self, parent, title = _("Edit mount point"), source = '', mountpoint = ''):
         wx.Dialog.__init__(self, parent, -1, title)
 
         self.SetAutoLayout(True)
     
         textBox = wx.BoxSizer(wx.HORIZONTAL)
-        textBox.Add(wx.StaticText(self, -1, "What data shall be backed up to which folder?"), proportion = 1)
+        textBox.Add(wx.StaticText(self, -1, "Please specify the source URL you want to backup and the place\n(mount point) where shall be backed up to:"), proportion = 1, flag = wx.ALIGN_LEFT)
 
         fgs = wx.FlexGridSizer(2, 2)
 
-        labelSource = wx.StaticText(self, -1, _("Source: "))
-        fgs.Add(labelSource, proportion = 0, flag = wx.ALIGN_RIGHT)
+        labelSource = wx.StaticText(self, -1, _("Source URL: "))
+        fgs.Add(labelSource, proportion = 0, flag = wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL)
 
-        self.sourceCtrl = wx.TextCtrl(self, -1, source) 
+        self.sourceCtrl = wx.TextCtrl(self, -1, source, size = (400,-1)) 
         fgs.Add(self.sourceCtrl, proportion = 2, flag = wx.EXPAND|wx.ALL, border = 2)
 
         labelMountpoint = wx.StaticText(self, -1, _("Mount point: "))
-        fgs.Add(labelMountpoint, proportion = 0, flag = wx.ALIGN_RIGHT)
+        fgs.Add(labelMountpoint, proportion = 0, flag = wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL)
         self.mountpointCtrl = wx.TextCtrl(self, -1, mountpoint) 
         fgs.Add(self.mountpointCtrl, proportion = 2, flag = wx.EXPAND|wx.ALL, border = 2)
 
@@ -450,7 +450,8 @@ class MountEditDialog(wx.Dialog):
         border = wx.BoxSizer(wx.VERTICAL)
         border.Add(textBox, proportion = 0, flag = wx.ALL, border = 15)
         border.Add(fgs, proportion = 2, flag = wx.EXPAND|wx.ALL, border = 15)
-        border.Add(buttons, proportion = 1)
+
+        border.Add(buttons, proportion = 1, flag=wx.ALL|wx.ALIGN_CENTER)
         self.SetSizer(border)
         border.Fit(self)
         self.Layout()
