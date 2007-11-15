@@ -35,8 +35,7 @@ from angel_app.log import getLogger
 from angel_app.resource.local.basic import Basic as EResource
 from angel_app.resource.local.internal.resource import Crypto
 from angel_app.resource.local.internal.resource import Crypto as IResource
-from angel_app.resource.local.test import localResourceTest
-from angel_app.resource.remote.clone import Clone
+from angel_app.resource.local.test.basicResourceTest import BasicResourceTest
 from twisted.web2 import responsecode
 import angel_app.resource.local.basic as bb
 import os 
@@ -48,27 +47,23 @@ repositoryPath = AngelConfig.get("common","repository")
 log = getLogger(__name__)
 
 
-class ResourceTest(localResourceTest.BasicResourceTest):
+class ResourceTest(BasicResourceTest):
     """
     Requires a running local instance of the presenter.
     """
     
-    testDirPath = os.path.sep.join([repositoryPath, "TEST"])
-    testClone = Clone(
-                      host = "localhost", 
-                      port = AngelConfig.getint("presenter","listenPort"),
-                      path = "/TEST/")
-
     def setUp(self):
+        """
+        No idea why this is necessary. It should invoke the parent class' setUp() anyhow, no?
+        """
         super(ResourceTest, self).setUp()
-        self.testResource = Crypto(self.testDirPath) 
     
     def testSigning(self):
         """
         this test assumes that the following resources that i set up by hand still exist in the
         local repository.
         """
-        assert self.testResource.contentSignature() == self.testResource.sign()
+        assert self.testDirectory.contentSignature() == self.testDirectory._signContent()
         
     def testDenyRemoteResourceModification(self):
         """

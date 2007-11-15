@@ -113,7 +113,7 @@ class Crypto(
         t.commit() # TODO: only commit if encryption worked!
 
 
-    def sign(self):
+    def _signContent(self):
         """
         Create a cryptographic checksum of the file contents and store
         the public key and checksum in the metadata.
@@ -306,7 +306,7 @@ class Crypto(
         if self.isEncrypted():
             self.encrypt()
 
-        self.sign()
+        self._signContent()
 
         self.bumpRevisionNumber()
 

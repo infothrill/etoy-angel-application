@@ -37,6 +37,7 @@ from angel_app.resource.IResource import IAngelResource
 from angel_app.resource.abstractContentManager import REPR_DIRECTORY
 from angel_app.resource.local.basic import Basic
 from angel_app.resource.local.internal.resource import Crypto
+from angel_app.resource.remote.clone import Clone
 from angel_app.resource.test import resourceTest 
 from twisted.web2.dav.element import rfc2518
 import os
@@ -47,7 +48,11 @@ import zope.interface.verify
 AngelConfig = config.getConfig()
 repositoryPath = AngelConfig.get("common","repository")
 
-class BasicResourceTest(resourceTest.ResourceTest):
+class LocalResourceTest(resourceTest.ResourceTest):
+    """
+    Super-class of local resource tests. Doesn't provide any test cases itself.
+    """
+    
     
     testDirPath = os.path.sep.join([repositoryPath, "TEST"])
     testFilePath = os.path.sep.join([testDirPath, "file.txt"])
@@ -74,131 +79,9 @@ class BasicResourceTest(resourceTest.ResourceTest):
     def setUp(self):
         self.makeTestDirectory()
         self.makeTestFile()
+        self.makeTestClone()
         
     def tearDown(self):
         Crypto(self.testDirPath).remove() 
-        
-    def testExists(self):
-        """
-        @return: a C{True} if this resource is accessible, C{False} otherwise.
-        """
-        assert self.testDirectory.exists()
-
-    def testIsWritable(self):
-        assert self.testDirectory.isWritableFile()
-        assert Basic(repositoryPath).isWritableFile()
-
-    def testReadFile(self):
-        assert self.testText == Basic(self.testFilePath).open().read()  
-        
-    def testSetProperty(self):
-        dp = self.testDirectory.getPropertyManager()
-        
-        testText = "foo"
-        ee = elements.ResourceID.fromString(testText)
-        dp.set(ee)
-        assert self.testDirectory.resourceID() == testText
     
-    def testLocation(self):
-        """
-        @return the resource's path relative to the site root.
-        """
-        assert self.testDirectory.relativePath() == "/TEST/"
-        
-    def testOpen(self):
-        from angel_app.resource.abstractContentManager import REPR_DIRECTORY
-        assert REPR_DIRECTORY == self.testDirectory.open().read()
-    
-    def testIsCollection(self):
-        """
-        Checks whether this resource is a collection resource / directory.
-        @return: a C{True} if this resource is a collection resource, C{False}
-            otherwise.
-        """
-        assert self.testDirectory.isCollection()
-
-    def testResourceID(self):
-        """
-        @return: the id of the resource as C{String}.
-        """
-        assert type(self.testDirectory.resourceID().toxml()) == type("")
-        
-    def testRevision(self):
-        """
-        @return: a C{int} corresponding to the revision number of this resource
-        """
-        revisionNumber = self.testDirectory.revision()
-        assert type(revisionNumber) == type(0)
-        assert revisionNumber >= 0
-
-    def testPublicKey(self):
-        """
-        Make sure the stored public key is a valid ezPyCrypto key.
-        """
-        from angel_app.contrib.ezPyCrypto import key
-        publicKeyString = self.testDirectory.publicKeyString()
-        k = key()
-        k.importKey(publicKeyString)
-        
-    def testPath(self):
-        "The test resource is a directory, hence the relative URL"
-        import urllib
-        url = self.testDirectory.relativeURL()
-        path = self.testDirectory.relativePath()
-        if self.testDirectory.isCollection():
-            assert url[-1] == "/"
-            assert path[-1] == os.sep
-        assert urllib.url2pathname(url) == path
-
-    def testIsRoot(self):
-        assert False == self.testDirectory.isRepositoryRoot()
-
-    def testFindChildren(self):
-        """
-        @return: an iterable over C{uri}.
-        """
-        assert self.testDirectory.childLinks().qname() == Children.qname()
-    
-    def testStream(self):
-        """
-        @return: an object that minimally supports the read() method, which in turn returns the stream contents as a string.
-        """
-        assert self.testDirectory.open().read() == REPR_DIRECTORY
-        
-        
-    def testClones(self):
-        """
-        Since the dirResource was freshly created, its clones must all be inherited from the parent.
-        """
-        clones = self.testDirectory.clones()
-        parentClones = self.testDirectory.parent().clones()
-        assert len(clones) == len(parentClones)
-        
-    def testDefaultProperties(self):
-        """
-        All default property initializers must return WebDAVElement instances which
-        are of the same type as the element requested.
-        """
-        from angel_app.resource.local.propertyManager import defaultMetaData
-        dp = self.testDirectory.deadProperties()
-        for element in defaultMetaData.keys():
-            dme = defaultMetaData[element]
-            assert element == dme(dp).qname()
-        
-        
-    def testPropertyIO(self):
-        """
-        Set a property, read it back out and compare it with the original.
-        """
-        testProperty = rfc2518.Collection()
-        self.testDirectory.deadProperties().set(testProperty)
-        assert testProperty.qname() in self.testDirectory.deadProperties().list()
-        outProperty = self.testDirectory.deadProperties().get(testProperty.qname())
-        assert testProperty.toxml() == outProperty.toxml()
-        
-    def testInterfaceCompliance(self):
-        """
-        Verify interface compliance.
-        """
-        assert IAngelResource.implementedBy(self.testDirectory.__class__)
-        assert zope.interface.verify.verifyClass(IAngelResource, self.testDirectory.__class__) 
+    def testInterfaceCompliance(self): pass
