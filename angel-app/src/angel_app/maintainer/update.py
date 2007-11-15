@@ -96,15 +96,14 @@ def updateResource(af):
     """
     Inspect the resource, updating it if necessary.
     """
-    goodClones, dummybadClones, unreachableClones = \
-        collect.iterateClones(
+    cloneLists = collect.iterateClones(
                       discoverSeedClones(af), 
                       discoverPublicKey(af), 
                       discoverResourceID(af))
     
-    if goodClones == []:
+    if cloneLists.good == []:
         log.info("no valid clones found for " + af.fp.path)
         return
     
-    updateResourceFromClones(af, goodClones)
-    storeClones(af, goodClones, unreachableClones)
+    updateResourceFromClones(af, cloneLists.good)
+    storeClones(af, cloneLists.good, cloneLists.old + cloneLists.unreachable)

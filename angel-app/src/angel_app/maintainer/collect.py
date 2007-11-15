@@ -12,6 +12,13 @@ log = getLogger(__name__)
 AngelConfig = config.getConfig()
 maxclones = AngelConfig.getint("common","maxclones")
 
+class CloneLists(object):
+    def __init__(self):
+        self.good = []
+        self.old = []
+        self.unreachable = []
+        self.bad = []
+
 def iterateClones(cloneSeedList, publicKeyString, resourceID):
     """
     get all the clones of the (valid) clones we have already looked at
@@ -23,9 +30,7 @@ def iterateClones(cloneSeedList, publicKeyString, resourceID):
     """  
     toVisit = copy.copy(cloneSeedList)
     visited = []
-    good = []
-    bad = []
-    unreachable = []
+    cl = CloneLists()
     revision = 0
     
     while len(toVisit) != 0:
@@ -46,14 +51,14 @@ def iterateClones(cloneSeedList, publicKeyString, resourceID):
         
         if not cc.ping():
             log.debug("iterateClones: clone " + `cc` + " not reachable, ignoring")
-            unreachable.append(cc)
+            cl.unreachable.append(cc)
             continue
         
         cc.checkForRedirect()
         
         if not cc.exists():
             log.debug("iterateClones: resource " + `cc.path` + " not found on host " + `cc`)
-            bad.append(cc)
+            cl.bad.append(cc)
             continue
         
         if cc.resourceID() != resourceID:
@@ -61,7 +66,7 @@ def iterateClones(cloneSeedList, publicKeyString, resourceID):
             log.debug("iterateClones: " + `cc` + " wrong resource ID")
             log.debug("expected: " + `resourceID`)
             log.debug("found: " + `cc.resourceID()`)
-            bad.append(cc)
+            cl.bad.append(cc)
             continue
         
         if cc.publicKeyString() != publicKeyString:
@@ -69,13 +74,13 @@ def iterateClones(cloneSeedList, publicKeyString, resourceID):
             log.debug("iterateClones: " + `cc` + " wrong public key")
             log.debug("expected: " + publicKeyString)
             log.debug("found: " + cc.publicKeyString())
-            bad.append(cc)
+            cl.bad.append(cc)
             continue
         
         if not cc.validate():
             # an invalid clone
             log.debug("iterateClones: " + `cc` + " invalid signature")
-            bad.append(cc)
+            cl.bad.append(cc)
             continue
         
         rr = cc.revision()
@@ -83,8 +88,8 @@ def iterateClones(cloneSeedList, publicKeyString, resourceID):
         if rr < revision:
             # too old
             log.debug("iterateClones: " + `cc` + " too old: " + `rr` + " < " + `revision`)
-            if cc not in bad:
-                bad.append(cc)
+            if cc not in cl.old:
+                cl.old.append(cc)
             continue
         
         if rr > revision:
@@ -92,22 +97,22 @@ def iterateClones(cloneSeedList, publicKeyString, resourceID):
             # we've seen so far. all the clones we thought
             # were good are in fact bad.
             log.debug("iterateClones: " + `cc` + " very new: " + `rr` + " > " + `revision`)
-            bad.extend(good)
-            good = []
+            cl.old.extend(cl.good)
+            cl.good = []
             revision = rr
         
         # we only arrive here if the clone is valid and sufficiently new
-        good.append(cc)
+        cl.good.append(cc)
         log.debug("iterateClones: adding good clone: " + `cc`)
         log.debug(`cc.cloneList()`)
         toVisit += cc.cloneList()
         
         
 
-    log.info("iterateClones: good clones: " + `good`)
-    log.info("iterateClones: bad clones: " + `bad`)
+    log.info("iterateClones: good clones: " + `cl.good`)
+    log.info("iterateClones: bad clones: " + `cl.bad`)
     
-    return good, bad, unreachable
+    return cl
     
 def eliminateSelfReferences(clones):
     selfReferences = ["localhost", "127.0.0.1", AngelConfig.get("maintainer","nodename")]
