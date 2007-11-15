@@ -1,10 +1,8 @@
-import os
-import urllib
-
 from angel_app import elements
 from angel_app.config import config
 from angel_app.config.internal import loadKeysFromFile
 from angel_app.log import getLogger
+from angel_app.resource import childLink
 from angel_app.resource.local.contentManager import ContentManager
 from angel_app.resource.local.propertyManager import PropertyManager
 from angel_app.resource.local.renderManager import RenderManager
@@ -12,7 +10,8 @@ from angel_app.resource.resource import Resource
 from twisted.python.filepath import FilePath
 from twisted.web2.dav.element import rfc2518
 from twisted.web2.dav.static import DAVFile
-
+import os
+import urllib
 
 log = getLogger(__name__)
 
@@ -170,6 +169,20 @@ class Basic(DAVFile, Resource):
                          elements.UUID(str(self.keyUUID())),
                          self.resourceID()
                          ])
+        
+    def children(self):
+        """
+        @return: the child resources of this resource.
+        
+        This is distinct from findChildren in that findChildren() returns resources as found 
+        on the file system, whereas children() returns resources as referenced in the meta data
+        of the parent resource.
+        """
+        childLinks = childLink.parseChildren(self.childLinks())
+        names = [cc.name for cc in childLinks]
+        childPaths = [os.sep.join([self.fp.path, nn]) for nn in names]
+        childResources = [Basic(path) for path in childPaths]
+        return childResources
 
     def render(self, req):
         """You know what you doing. override render method (for GET) in twisted.web2.static.py"""

@@ -4,7 +4,6 @@ from angel_app.graph import graphWalker
 from angel_app.log import getLogger
 from angel_app.maintainer import sync
 from angel_app.maintainer import update
-from angel_app.resource import childLink
 from angel_app.resource.local.basic import Basic
 from angel_app.resource.remote.clone import clonesToElement
 from twisted.web2.dav import davxml
@@ -59,15 +58,10 @@ def isMountOfMount(resource):
        
 def getChildren(resource):
     """
-    TODO: this definitely needs more cowbell. Ideally, resources should provide
-    something like a children() method, that returns a list of children.
+    @return the children of the resource which are not indirectly mounted.
     """
-    childLinks = childLink.parseChildren(resource.childLinks())
-    names = [cc.name for cc in childLinks]
-    childPaths = [os.sep.join([resource.fp.path, nn]) for nn in names]
-    childResources = [Basic(path) for path in childPaths]
-    cleanChildren = [rr for rr in childResources if not isMountOfMount(rr)]
-    return childResources
+    cleanChildren = [rr for rr in resource.children() if not isMountOfMount(rr)]
+    return cleanChildren
 
 def traverseResourceTree(sleepTime):
     """
