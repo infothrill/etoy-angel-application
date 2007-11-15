@@ -63,7 +63,13 @@ class BasicResourceTest(resourceTest.ResourceTest):
         open(self.testFilePath, 'w').write(self.testText)
         self.testFile = Crypto(self.testFilePath)
         self.testFile._registerWithParent()
-        self.testFile._updateMetadata()    
+        self.testFile._updateMetadata() 
+        
+    def makeTestClone(self):
+        self.testClone = Clone(
+                      host = "localhost", 
+                      port = AngelConfig.getint("presenter","listenPort"),
+                      path = "/TEST/")   
 
     def setUp(self):
         self.makeTestDirectory()
