@@ -167,17 +167,17 @@ class Resource(object):
  
     def keyUUID(self):
         """
-        @return a SHA checksum of the public key string. We only take the first 16 bytes to be convertible
-        to a UUID>
+        @return aa UUID of the  first 32 bytes of the SHA checksum of the resource's public key string.
         """
         return util.uuidFromPublicKeyString(self.publicKeyString())
 
     def sigUUID(self):
         """
-        @return a SHA checksum of the resource's signature. We only take the first 16 bytes to be convertible
-        to a UUID>
+        @return a UUID of the  first 32 bytes of the SHA checksum of the resource's signature.
+        
+        TODO: UNUSED. Consider removal.
         """
-        return util.uuidFromPublicKeyString(self.getProperty(elements.MetaDataSignature))
+        return util.uuidFromPublicKeyString(self.metaDataSignature())
 
     def signableMetadata(self):
         """
