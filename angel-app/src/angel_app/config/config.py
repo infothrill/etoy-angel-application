@@ -85,6 +85,9 @@ def getDefaultConfigObj():
     maxsleeptime = 100
     nodename = localhost
     
+    [gui]
+    autostartp2p = True
+
     [mounttab]
     "http://missioneternity.org:6221/" = "MISSION ETERNITY"
 
@@ -127,6 +130,9 @@ def _configspec_lines():
     treetraversaltime = integer(min=600)
     maxsleeptime = integer(min=2)    
     nodename = string
+
+    [gui]
+    autostartp2p = boolean(default=True)
     """
     return config_spec.splitlines()
 

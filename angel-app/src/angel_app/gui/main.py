@@ -438,7 +438,8 @@ class AngelMainWindow(AngelMainFrameBase):
         self.doNoteBookLayout()
 
         # start the p2p process:
-        wx.GetApp().p2p.start()
+        if wx.GetApp().config.getboolean('gui', 'autostartp2p'):
+            wx.GetApp().p2p.start()
 
         # make sure to have a handler when quitting (shutdown p2p) 
         self.Bind(wx.EVT_CLOSE, self.OnQuit)
