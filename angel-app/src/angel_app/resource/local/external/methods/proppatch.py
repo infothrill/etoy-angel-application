@@ -41,6 +41,7 @@ from twisted.internet.defer import deferredGenerator, waitForDeferred
 
 from angel_app import elements
 from angel_app.log import getLogger
+from angel_app.resource.remote.clone import Clone
 
 log = getLogger(__name__)
 
@@ -192,6 +193,8 @@ def pingBack(clone, request):
     Determine if the clone as advertised in the PROPPATCH request is reachable.
     
     TODO: validate & clean up
+    
+    @return the (potentially modified) clone, if it's reachable, None otherwise
     """
     
     if not clone.ping() or not clone.exists():
@@ -212,14 +215,16 @@ def pingBack(clone, request):
                 # we can't handle this (according to config), so don't bother trying
             #    return False
             
-        clone.host = address
+        clone = Clone(address, clone.port, clone.path)
+            
+        #clone.host = address
         # here, we should still expect to be fooled by NATs etc.
         if not clone.ping() or not clone.exists():
             error = "Invalid PROPPATCH request. Can't connect to clone at: " + `clone`
             log.info(error)
-            return False
+            return None
         
-    return True
+    return clone 
             
 def cloneHandler(property, store, request):
     """
@@ -249,7 +254,8 @@ def cloneHandler(property, store, request):
         # nothing needs to be done, pretend everything is fine
         return responsecode.OK
     
-    if not pingBack(newClone, request):
+    newClone = pingBack(newClone, request)
+    if not newClone:
         error = "Can't connect to you. I will ignore you."
         response = StatusResponse(responsecode.BAD_REQUEST, error)
         return Failure(exc_value=HTTPError(response))
