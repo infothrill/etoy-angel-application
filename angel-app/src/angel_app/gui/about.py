@@ -7,6 +7,7 @@ import angel_app.gui.compat.wrap as platformwrap
 from angel_app.version import getVersionString
 from angel_app.version import getBuildString
 from angel_app.version import getPythonVersionString
+from angel_app.version import getTwistedVersionString
 
 _ = wx.GetTranslation
 
@@ -82,7 +83,7 @@ people collaborate to back up each other's data."""
     def onCredits(self, event):
         creditsWindow = CreditsWindow(self, -1, _("Credits"), size=(500, 240))
         creditsWindow.CenterOnParent()
-        creditsWindow.Show()
+        creditsWindow.Show(True)
       
     def onLicence(self, event):
         licenseWindow = LicenseWindow(self, -1, _("Licence"), size=(500, 400), style=wx.DEFAULT_FRAME_STYLE)
@@ -162,8 +163,9 @@ class CreditsWindow(wx.Dialog):
         versionsPanel = wx.Panel(nb, -1)
         vboxSP = wx.BoxSizer(wx.VERTICAL)
         pythonversion = "Python %s" % getPythonVersionString()
+        twistedVersion = "%s" % getTwistedVersionString()
         wxversion = "wxPython " + ".".join( map( str, wx.VERSION ) )
-        versions_list = [pythonversion, wxversion]
+        versions_list = [pythonversion, wxversion, twistedVersion]
         versionsString = "\n".join(versions_list)
         labelSP = wx.StaticText(versionsPanel, -1, versionsString)
         vboxSP.Add(labelSP, 0, wx.ALL, 10)

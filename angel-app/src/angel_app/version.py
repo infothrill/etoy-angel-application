@@ -18,3 +18,7 @@ def getBuildString():
 def getPythonVersionString():
     import platform
     return platform.python_version()
+
+def getTwistedVersionString():
+    from twisted._version import version
+    return version
