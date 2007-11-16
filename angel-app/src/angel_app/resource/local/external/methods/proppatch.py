@@ -190,6 +190,8 @@ def isIPv6(ip_string):
 def pingBack(clone, request):  
     """
     Determine if the clone as advertised in the PROPPATCH request is reachable.
+    
+    TODO: validate & clean up
     """
     
     if not clone.ping() or not clone.exists():
@@ -200,15 +202,15 @@ def pingBack(clone, request):
         # default to the request's originating ip address and try again.
         address = str(request.remoteAddr.host)
 
-        if isIPv6(address):
+        #if isIPv6(address):
             # If it's an IPv6 address, we need to add '[address]' around the IP address to generate
             # a valid url.
             # Also, we need to check if ipv6 is enabled before trying to connect 
-            if AngelConfig.getboolean("provider", "useIPv6"):
-                address = "[" + address + "]"
-            else:
+            #if AngelConfig.getboolean("provider", "useIPv6"):
+            #    address = "[" + address + "]"
+            #else:
                 # we can't handle this (according to config), so don't bother trying
-                return False
+            #    return False
             
         clone.host = address
         # here, we should still expect to be fooled by NATs etc.
@@ -253,10 +255,3 @@ def cloneHandler(property, store, request):
         return Failure(exc_value=HTTPError(response))
             
     return defaultHandler(clonesToElement(residentClones + [newClone]), store)     
-
-            
-            # up until revision 572, there was some validation code in here, that would check
-            # back on the source clone to verify its existence and reachability. this leads
-            # to spurious hangs, since the source of the proppatch may (and will) be the provider
-            # process on the local host -- in which case we have reached a deadlock. the code
-            # has therefore been removed.
