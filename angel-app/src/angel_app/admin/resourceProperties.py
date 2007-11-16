@@ -25,7 +25,7 @@ def reSign(path = ""):
     """
     rr = Crypto(absPath(path))
     if not rr.verify():
-        rr.sign()
+        rr._signContent()
         rr.seal()
 
 def setKey(path = "", key = secretKeys.values()[0]):

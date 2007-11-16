@@ -1,5 +1,3 @@
-import urlparse
-
 from angel_app import elements
 from angel_app.config import config
 from angel_app.log import getLogger
@@ -11,6 +9,11 @@ from angel_app.resource.resource import Resource
 from twisted.web2 import responsecode
 from twisted.web2.dav.element import rfc2518
 from zope.interface import implements
+
+# unfortunately, urlparse as of python 2.4 is ridiculously shitty. though i've heard it improves
+# with 2.5. which is why we use it here (and due to the absence of better alternatives).
+import urlparse
+
 
 log = getLogger(__name__)
 
@@ -33,11 +36,12 @@ class Clone(Resource):
     """
     implements(IResource.IAngelResource)
     
-    def __init__(self, host = "localhost", port = providerport, path = "/"):
+    def __init__(self, host = "localhost", port = providerport, path = "/", scheme = "http"):
         """
         @rtype Clone
         @return a new clone
         """
+        self.scheme = scheme
         
         # the host name or ip
         self.host = host
@@ -84,7 +88,7 @@ class Clone(Resource):
         
     def validateHostPort(self):
         # if the clone is valid, we must be able to reconstruct the host, port, path from the string representation
-        url = urlparse.urlsplit("http://" + `self`)
+        url = urlparse.urlsplit(`self`)
         if not url[1] == self.host + ":" + `self.port`:
             raise CloneError("Invalid host for clone: " + `self`)
         # as of python 2.5, we will also be able to do this:
@@ -117,7 +121,7 @@ class Clone(Resource):
         return self.host == clone.host and self.port == clone.port
     
     def __repr__(self):
-        return self.host + ":" + `self.port` + self.path
+        return self.scheme + "://" + self.host + ":" + `self.port` + self.path
     
     def __hash__(self):
         return `self`.__hash__()
@@ -181,38 +185,18 @@ def makeCloneBody(localResource):
     setElement = rfc2518.Set(rfc2518.PropertyContainer(clonesElement))
     propertyUpdateElement = rfc2518.PropertyUpdate(setElement)
     return propertyUpdateElement.toxml()
-
-def splitParse(cloneUri):
-    """
-    DEPRECATED. This method is EVIL. Look for better alternative.
-    
-    @return the triple (host, port, path), where host is hostname or IP, 
-    port is a port number, and path is a URL-encoded path name. Path may be the empty string.
-    """
-    host, rest = cloneUri.split(":")
-    fragments = rest.split("/")
-    port = int(fragments[0])
-    
-    if 1 == len(fragments):
-        return (host, port, "")
-    
-    pathSegments = fragments[1:]
-    return (host, port, "/" + "/".join(pathSegments))
-
-def cloneFromGunk(gunk):
-    assert len(gunk) > 1
-    assert len(gunk) < 4
-    if len(gunk) == 2: 
-        return Clone(gunk[0], gunk[1])
-    else:
-        return Clone(gunk[0], gunk[1], gunk[2])
     
     
 def cloneFromElement(cc):
     """
     Takes a child element of the Clones element and returns a Clone instance.
     """
-    return cloneFromGunk(splitParse(str(cc.children[0].children[0])))
+    
+    href = str(cc.childOfType(rfc2518.HRef).children[0])
+    (scheme, host, port, path) = urlparse.urlparse(href)
+    log.critical(`url`)
+    return Clone(host, port, path)
+    #return cloneFromGunk(splitParse(str(cc.children[0].children[0])))
 
 
 def clonesFromElement(cloneElement):
@@ -222,11 +206,19 @@ def clonesFromElement(cloneElement):
     """
     return [cloneFromElement(cc) for cc in cloneElement.children]
 
+def cloneToElement(cc):
+    """
+    This is still quite evil, but less so than splitParse etc.
+    """
+    url = `cc`
+    urlElem = rfc2518.HRef(url)
+    return elements.Clone(urlElem)
+
 def clonesToElement(cloneList):
     """
     Takes a list of clones and generates a Clones element from it.
     """
     return elements.Clones(*[
-                    elements.Clone(rfc2518.HRef(`cc`)) for cc in cloneList
+                    cloneToElement(cc) for cc in cloneList
                     ])
     
