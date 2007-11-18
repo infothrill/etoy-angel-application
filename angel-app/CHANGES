@@ -1,10 +1,17 @@
-0.2.0 November 2007
+0.2.1 November 17 2007
+ * switched GUI to have one window with tabs
+ * mounts can now be configured through the GUI
+ * added an embedded python shell in the GUI
+ * changed preferences now lead to a restart of the p2p subsystem
+ * updated wxPython to 2.8.6.1
+  
+0.2.0 November 11 2007
  * adaptations for supporting IPv6
  * moving to a (nearly) purely pull-based policy
  * updated configuration file handling
  * mounts are now configurable (in config file only for now)
  * added preferences dialogue
- * revamped about dialogue and license window]
+ * revamped about dialogue and license window
  * extensive code cleanups
  * test units
 
