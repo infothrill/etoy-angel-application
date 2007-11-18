@@ -4,7 +4,6 @@ import sys
 from angel_app.admin.initializeRepository import getMountTab
 from angel_app.config.config import getConfig
 from angel_app.log import getLogger
-from angel_app.log import initializeLogging
 import  wx.lib.mixins.listctrl  as  listmix
 #import images
 
@@ -75,12 +74,9 @@ class MountListCtrlPanel(wx.Panel): #, listmix.ColumnSorterMixin
         self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.OnItemSelected, self.list)
         self.Bind(wx.EVT_LIST_ITEM_DESELECTED, self.OnItemDeselected, self.list)
         self.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.OnItemActivated, self.list)
-        self.Bind(wx.EVT_LIST_DELETE_ITEM, self.OnItemDelete, self.list)
+        #self.Bind(wx.EVT_LIST_DELETE_ITEM, self.OnItemDelete, self.list)
         self.Bind(wx.EVT_LIST_COL_CLICK, self.OnColClick, self.list)
         self.Bind(wx.EVT_LIST_COL_RIGHT_CLICK, self.OnColRightClick, self.list)
-        self.Bind(wx.EVT_LIST_COL_BEGIN_DRAG, self.OnColBeginDrag, self.list)
-        self.Bind(wx.EVT_LIST_COL_DRAGGING, self.OnColDragging, self.list)
-        self.Bind(wx.EVT_LIST_COL_END_DRAG, self.OnColEndDrag, self.list)
         self.Bind(wx.EVT_LIST_BEGIN_LABEL_EDIT, self.OnBeginEdit, self.list)
 
         self.list.Bind(wx.EVT_LEFT_DCLICK, self.OnDoubleClick)
@@ -165,7 +161,7 @@ class MountListCtrlPanel(wx.Panel): #, listmix.ColumnSorterMixin
     def OnRightDown(self, event):
         self.x = event.GetX()
         self.y = event.GetY()
-        self.statuslog.WriteText("x, y = %s\n" % str((self.x, self.y)))
+        #self.statuslog.WriteText("x, y = %s\n" % str((self.x, self.y)))
         item, flags = self.list.HitTest((self.x, self.y))
 
         if flags & wx.LIST_HITTEST_ONITEM:
@@ -181,143 +177,149 @@ class MountListCtrlPanel(wx.Panel): #, listmix.ColumnSorterMixin
 
 
     def OnItemSelected(self, event):
-        ##print event.GetItem().GetTextColour()
-        self.currentItem = event.m_itemIndex
-        self.statuslog.WriteText("OnItemSelected: %s, %s, %s, %s\n" %
-                           (self.currentItem,
-                            self.list.GetItemText(self.currentItem),
-                            self.getColumnText(self.currentItem, 0),
-                            self.getColumnText(self.currentItem, 1)))
-
-#        if self.currentItem == 10:
-#            self.statuslog.WriteText("OnItemSelected: Veto'd selection\n")
-            #event.Veto()  # doesn't work
-            # this does
-#            self.list.SetItemState(10, 0, wx.LIST_STATE_SELECTED)
+        #self.currentItem = event.m_itemIndex
+        #self.statuslog.WriteText("OnItemSelected: %s, %s, %s, %s\n" %
+        #                   (self.currentItem,
+        #                    self.list.GetItemText(self.currentItem),
+        #                    self.getColumnText(self.currentItem, 0),
+        #                    self.getColumnText(self.currentItem, 1)))
 
         event.Skip()
 
 
-    def OnItemDeselected(self, evt):
-        item = evt.GetItem()
-        self.statuslog.WriteText("OnItemDeselected: %d" % evt.m_itemIndex)
+    def OnItemDeselected(self, event):
+        #dummyitem = evt.GetItem()
+        #self.statuslog.WriteText("OnItemDeselected: %d" % evt.m_itemIndex)
 
         # Show how to reselect something we don't want deselected
-#        if evt.m_itemIndex == 11:
-#            wx.CallAfter(self.list.SetItemState, 11, wx.LIST_STATE_SELECTED, wx.LIST_STATE_SELECTED)
+        #if evt.m_itemIndex == 11:
+        #    wx.CallAfter(self.list.SetItemState, 11, wx.LIST_STATE_SELECTED, wx.LIST_STATE_SELECTED)
+        event.Skip()
 
+
+    def edit(self, item):
+        #self.currentItem = event.m_itemIndex
+        #self.GetListCtrl().EditLabel(self.currentItem)
+
+        #list = self.GetListCtrl()
+        #item = list.GetFocusedItem()
+
+        #i =  list.GetItemData(item)
+        log.debug("Want to edit %d" % item)
+        oldsource = self.getColumnText(item, 0)
+        oldmountpoint = self.getColumnText(item, 1)
+
+        dlg = MountEditDialog(self, source = oldsource , mountpoint = oldmountpoint)
+        dlg.CenterOnParent()
+        res = dlg.ShowModal()
+        log.debug("result of dialogue: %s" % res)
+        if res == wx.ID_OK:
+            source = dlg.getSource()
+            mountpoint = dlg.getMountPoint()
+            log.debug("source: '%s' mount: %s" % (source, mountpoint))
+            #self.itemDataMap[i][0] = str(source)
+            #self.itemDataMap[i][1] = str(mountpoint)
+            config = wx.GetApp().config
+            del config.container['mounttab'][oldsource]
+            config.container['mounttab'][source] = mountpoint
+            config.commit()
+            self.list.DeleteAllItems()
+            #self.PopulateList()
+            self.refreshContent()
+
+        dlg.Destroy()
+        
+    def delete(self, item):
+        if item == -1:
+            log.debug("no mount point deleted because item is -1")
+            return None
+        log.debug("user wants to delete mount point item %s" % `item`)
+        dlg = wx.MessageDialog(self, _("Are you sure you want to delete the mount point?"), _('Warning'),
+                               wx.ICON_QUESTION | wx.YES_NO | wx.NO_DEFAULT
+                               )
+        res = dlg.ShowModal()
+        log.debug("result of dialogue: %s" % res)
+        if res == wx.ID_YES:
+            oldsource = self.list.GetItem(item, 0).GetText()
+            self.list.DeleteItem(item)
+            #del self.itemDataMap[i] // no need, refreshContent() does that for us
+            config = wx.GetApp().config
+            del config.container['mounttab'][oldsource]
+            config.commit()
+            #log.debug("mount points after deletion: %s" % self.itemDataMap)
+            self.list.DeleteAllItems()
+            self.refreshContent()
+            self.statuslog.WriteText(_("Mount point deleted"))
+            try:
+                wx.GetApp().p2p.conditionalRestart()
+            except Exception, e:
+                log.warn("Caught an exception while trying to restart the p2p process: %s" % `e`)
+                self.statuslog.WriteText(_("Could not restart the p2p process"))
+
+        dlg.Destroy()
 
     def OnItemActivated(self, event):
-        # double click
-        self.currentItem = event.m_itemIndex
-        self.statuslog.WriteText("OnItemActivated: %s\nTopItem: %s" %
-                           (self.list.GetItemText(self.currentItem), self.list.GetTopItem()))
-        self.parent.OnEdit(event)
+        # activation happens on double click
+        #self.statuslog.WriteText("OnItemActivated: %s\nTopItem: %s" %
+        #                   (self.list.GetItemText(self.currentItem), self.list.GetTopItem()))
+        self.edit(event.m_itemIndex)
 
     def OnBeginEdit(self, event):
-        log.debug("OnBeginEdit")
+        #self.statuslog.WriteText("OnBeginEdit")
         event.Veto() # don't make the cell editable
         #event.Allow()
-        self.parent.OnEdit(event)
+        #self.parent.OnEdit(event)
 
     def OnItemDelete(self, event):
-        #self.parent.OnDelete(event)
-        self.statuslog.WriteText("Mount point removed")
+        log.debug("OnItemDelete")
+        selectedItem = self.GetListCtrl().GetFocusedItem()
+        self.delete(selectedItem)
 
     def OnColClick(self, event):
-        self.statuslog.WriteText("OnColClick: %d\n" % event.GetColumn())
+        #self.statuslog.WriteText("OnColClick: %d\n" % event.GetColumn())
         event.Skip()
 
     def OnColRightClick(self, event):
-        item = self.list.GetColumn(event.GetColumn())
-        self.statuslog.WriteText("OnColRightClick: %d %s\n" %
-                           (event.GetColumn(), (item.GetText(), item.GetAlign(),
-                                                item.GetWidth(), item.GetImage())))
-
-    def OnColBeginDrag(self, event):
-        self.statuslog.WriteText("OnColBeginDrag\n")
-        ## Show how to not allow a column to be resized
-        #if event.GetColumn() == 0:
-        #    event.Veto()
-
-
-    def OnColDragging(self, event):
-        self.statuslog.WriteText("OnColDragging\n")
-
-    def OnColEndDrag(self, event):
-        self.statuslog.WriteText("OnColEndDrag\n")
+        #item = self.list.GetColumn(event.GetColumn())
+        #self.statuslog.WriteText("OnColRightClick: %d %s\n" %
+        #                   (event.GetColumn(), (item.GetText(), item.GetAlign(),
+        #                                        item.GetWidth(), item.GetImage())))
+        event.Skip()
 
     def OnDoubleClick(self, event):
-        self.statuslog.WriteText("OnDoubleClick item %s\n" % self.list.GetItemText(self.currentItem))
+        #self.statuslog.WriteText("OnDoubleClick item %s\n" % self.list.GetItemText(self.currentItem))
         event.Skip()
 
     def OnRightClick(self, event):
-        self.statuslog.WriteText("OnRightClick %s\n" % self.list.GetItemText(self.currentItem))
+        #self.statuslog.WriteText("OnRightClick %s\n" % self.list.GetItemText(self.currentItem))
 
         # only do this part the first time so the events are only bound once
         if not hasattr(self, "popupID1"):
             self.popupID1 = wx.NewId()
             self.popupID2 = wx.NewId()
-            self.popupID3 = wx.NewId()
-            self.popupID4 = wx.NewId()
-            self.popupID5 = wx.NewId()
-            self.popupID6 = wx.NewId()
 
             self.Bind(wx.EVT_MENU, self.OnItemDelete, id=self.popupID1)
-            self.Bind(wx.EVT_MENU, self.OnPopupTwo, id=self.popupID2)
-            self.Bind(wx.EVT_MENU, self.OnPopupThree, id=self.popupID3)
-            self.Bind(wx.EVT_MENU, self.OnPopupFour, id=self.popupID4)
-            self.Bind(wx.EVT_MENU, self.OnPopupFive, id=self.popupID5)
-            self.Bind(wx.EVT_MENU, self.OnPopupSix, id=self.popupID6)
+            self.Bind(wx.EVT_MENU, self.OnRightClickEdit, id=self.popupID2)
 
         # make a menu
         menu = wx.Menu()
         # add some items
-        menu.Append(self.popupID1, "Delete")
-        menu.Append(self.popupID2, "Iterate Selected")
-        menu.Append(self.popupID3, "ClearAll and repopulate")
-        menu.Append(self.popupID4, "DeleteAllItems")
-        menu.Append(self.popupID5, "GetItem")
-        menu.Append(self.popupID6, "Edit")
+        menu.Append(self.popupID1, _("Delete"))
+        menu.Append(self.popupID2, _("Edit"))
 
         # Popup the menu.  If an item is selected then its handler
         # will be called before PopupMenu returns.
         self.PopupMenu(menu, (self.x, self.y))
         menu.Destroy()
 
-
-#    def OnPopupOne(self, event):
-#        self.statuslog.WriteText("Popup one\n")
-#        print "FindItem:", self.list.FindItem(-1, "Roxette")
-#        print "FindItemData:", self.list.FindItemData(-1, 11)
-
-    def OnPopupTwo(self, event):
-        self.statuslog.WriteText("Selected items:\n")
-        index = self.list.GetFirstSelected()
-
-        while index != -1:
-            self.statuslog.WriteText("      %s: %s\n" % (self.list.GetItemText(index), self.getColumnText(index, 1)))
-            index = self.list.GetNextSelected(index)
-
-    def OnPopupThree(self, event):
-        self.statuslog.WriteText("Popup three\n")
-        self.list.ClearAll()
-        wx.CallAfter(self.PopulateList)
-
-    def OnPopupFour(self, event):
-        self.list.DeleteAllItems()
-
-    def OnPopupFive(self, event):
-        item = self.list.GetItem(self.currentItem)
-        print item.m_text, item.m_itemId, self.list.GetItemData(self.currentItem)
-
-    def OnPopupSix(self, event):
-        self.list.EditLabel(self.currentItem)
-
+    def OnRightClickEdit(self, event):
+        selectedItem = self.GetListCtrl().GetFocusedItem()
+        self.edit(selectedItem)
 
     def OnSize(self, event):
         w,h = self.GetClientSizeTuple()
-        self.list.SetDimensions(0, 0, w, h)
+        #self.list.SetDimensions(0, 0, w, h)
+        self.GetListCtrl().SetDimensions(0, 0, w, h)
 
 class MountsPanel(wx.Panel):
     def __init__(self, parent, statuslog):
@@ -333,9 +335,9 @@ class MountsPanel(wx.Panel):
         txtTitle = wx.StaticText(self, -1, _("Currently configured mount points"), style=wx.ALIGN_CENTER)
         vboxList.Add(txtTitle, proportion = 0, flag = wx.TOP|wx.ALIGN_CENTER, border = 5)
 
-        self.listCtrl = MountListCtrlPanel(self, statuslog)
-        self.listCtrl.SetSizer(tableBox)
-        vboxList.Add(self.listCtrl, proportion = 2, flag = wx.EXPAND|wx.ALL, border = 12)
+        self.listPanel = MountListCtrlPanel(self, statuslog)
+        self.listPanel.SetSizer(tableBox)
+        vboxList.Add(self.listPanel, proportion = 2, flag = wx.EXPAND|wx.ALL, border = 12)
 
         _buttonsParent = buttonpanel
         button_Add = wx.Button(_buttonsParent, wx.ID_ADD)
@@ -355,68 +357,35 @@ class MountsPanel(wx.Panel):
         wx.EVT_BUTTON(self, wx.ID_ADD, self.OnAdd)
 
     def OnEdit(self, event):
-        list = self.listCtrl.GetListCtrl()
-        item = list.GetFocusedItem()
-        #i =  list.GetItemData(item)
-        log.debug("Want to edit %d" % item)
-        oldsource = self.listCtrl.getColumnText(item, 0)
-        oldmountpoint = self.listCtrl.getColumnText(item, 1)
-
-        dlg = MountEditDialog(self, source = oldsource , mountpoint = oldmountpoint)
-        dlg.CenterOnParent()
-        res = dlg.ShowModal()
-        log.debug("result of dialogue: %s" % res)
-        if res == wx.ID_OK:
-            source = dlg.getSource()
-            mountpoint = dlg.getMountPoint()
-            log.debug("source: '%s' mount: %s" % (source, mountpoint))
-            #self.listCtrl.itemDataMap[i][0] = str(source)
-            #self.listCtrl.itemDataMap[i][1] = str(mountpoint)
-            config = wx.GetApp().config
-            del config.container['mounttab'][oldsource]
-            config.container['mounttab'][source] = mountpoint
-            config.commit()
-            list.DeleteAllItems()
-            #self.listCtrl.PopulateList()
-            self.listCtrl.refreshContent()
-
-        dlg.Destroy()
+        selectedItem = self.listPanel.GetListCtrl().GetFocusedItem()
+        self.listPanel.edit(selectedItem)
 
     def OnAdd(self, event):
-        list = self.listCtrl.GetListCtrl()
+        list = self.listPanel.GetListCtrl()
         dlg = MountEditDialog(self, title = _("Add new mount point"))
         dlg.CenterOnParent()
         res = dlg.ShowModal()
-        log.debug("result of dialogue: %s" % res)
+        log.debug("result of add mount dialogue: %s" % res)
         if res == wx.ID_OK:
             source = dlg.getSource()
             mountpoint = dlg.getMountPoint()
             log.debug("source: '%s' mount: %s" % (source, mountpoint))
-            #self.listCtrl.itemDataMap[i][0] = str(source)
-            #self.listCtrl.itemDataMap[i][1] = str(mountpoint)
+            #self.listPanel.itemDataMap[i][0] = str(source)
+            #self.listPanel.itemDataMap[i][1] = str(mountpoint)
             config = wx.GetApp().config
             #del config.container['mounttab'][oldsource]
             config.container['mounttab'][source] = mountpoint
             config.commit()
             list.DeleteAllItems()
-            #self.listCtrl.PopulateList()
-            self.listCtrl.refreshContent()
+            #self.listPanel.PopulateList()
+            self.listPanel.refreshContent()
 
         dlg.Destroy()
-        print self.listCtrl.itemDataMap
+        print self.listPanel.itemDataMap
 
     def OnDelete(self, event):
-        #self.listCtrl.OnItemDelete(event)
-        list = self.listCtrl.GetListCtrl()
-        item = list.GetFocusedItem()
-        i =  list.GetItemData(item)
-        oldsource = self.listCtrl.getColumnText(item, 0)
-        list.DeleteItem(item)
-        del self.listCtrl.itemDataMap[i]
-        config = wx.GetApp().config
-        del config.container['mounttab'][oldsource]
-        config.commit()
-        log.debug("After deletion: %s" % self.listCtrl.itemDataMap)
+        selectedItem = self.listPanel.GetListCtrl().GetFocusedItem()
+        self.listPanel.delete(selectedItem)
 
 
 class MountEditDialog(wx.Dialog):
@@ -426,7 +395,7 @@ class MountEditDialog(wx.Dialog):
         self.SetAutoLayout(True)
     
         textBox = wx.BoxSizer(wx.HORIZONTAL)
-        textBox.Add(wx.StaticText(self, -1, "Please specify the source URL you want to backup and the place\n(mount point) where shall be backed up to:"), proportion = 1, flag = wx.ALIGN_LEFT)
+        textBox.Add(wx.StaticText(self, -1, _("Please specify the source URL you want to backup and the place\n(mount point) where the source shall be backed up to:")), proportion = 1, flag = wx.ALIGN_LEFT)
 
         fgs = wx.FlexGridSizer(2, 2)
 
@@ -490,8 +459,12 @@ class Log(object):
         wx.GetApp().GetTopWindow().SetStatusText(text_string)
 
 if __name__ == '__main__':
+    """
+    This allows us to run it separately from the rest of the GUI
+    """
+    from angel_app.log import initializeLogging
     initializeLogging()
     app = wx.App(0)
     app.config = getConfig()
-    MountsWindow(None, -1, _('mounts'))
+    MountsWindow(None, -1, _('Mounts'))
     app.MainLoop()
