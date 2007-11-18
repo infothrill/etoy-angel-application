@@ -29,16 +29,43 @@ then
 fi
 
 repo=${1}
+shift
 cd $repo || error "Specified dir '$repo' does no exist"
-name=`basename ${repo}`
+
+VERSION="NO_VERSION"
+BUILD_ID="NO_BUILD"
+
+if [ -z "$1" ]
+then
+	echo "WARNING: no version supplied, using $VERSION"
+	echo "Press [RETURN] to continue... (interrupt with Ctrl-C)"
+	read
+else
+	VERSION=$1
+	shift
+fi
+
+if [ -z "$1" ]
+then
+	echo "WARNING: no build number supplied, using $BUILD_ID"
+	echo "Press [RETURN] to continue... (interrupt with Ctrl-C)"
+	read
+else
+	BUILD_ID=$1
+	shift
+fi
+
+
+currentname=`basename ${repo}`
 cd ..
-if [ ! -d $name ]
+if [ ! -d $currentname ]
 then
 	echo "Something's wrong"
 	exit -1
 fi
 
-tar cjf ${name}.tar.bz2 ${name}
+rm -rf angel-$VERSION-src
+mv $currentname angel-$VERSION-src
+tar cjf angel-$VERSION-src.tar.bz2 angel-$VERSION-src
 
-
-echo "The source tarball is now in `dirname ${repo}`/$name.tar.bz2"
+echo "The source tarball is now in `dirname ${repo}`/angel-$VERSION-src.tar.bz2"

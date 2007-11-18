@@ -127,7 +127,6 @@ if [ -z ${BUILD_ID} ]
 then
 	BUILD_ID="unknown" # should not happen, but set a string!
 fi
-echo "BUILD_ID is: ${BUILD_ID}"
 
 # remove spurious development files/repository files
 echo "Removing files not used for production/release..."
@@ -161,5 +160,6 @@ rm -rf "$TMPDIR/${SHORTNAME}-${RELEASE}" > /dev/null 2>&1
 mv "${SHORTNAME}-${RELEASE}" $TMPDIR
 # clean temp junk:
 rm -rf $THISTMPDIR > /dev/null 2>&1 # cleanup temp junk
+echo "BUILD_ID: ${BUILD_ID}"
 echo "You can now create a platform build from the directory:"
 echo "${TMPDIR}${SHORTNAME}-${RELEASE}"
