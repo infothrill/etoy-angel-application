@@ -1,7 +1,7 @@
 import os
 
 import wx
-import wx.html
+import wx.html as wxhtml
 
 import angel_app.gui.compat.wrap as platformwrap
 from angel_app.version import getVersionString
@@ -115,7 +115,7 @@ class LicenseWindow(wx.Frame):
         scWinAbout = wx.ScrolledWindow(self, -1, wx.DefaultPosition,
                                     wx.Size(-1, -1))
 
-        htmlWin = wx.html.HtmlWindow(scWinAbout, -1, style=wx.SUNKEN_BORDER)
+        htmlWin = wxhtml.HtmlWindow(scWinAbout, -1, style=wx.SUNKEN_BORDER)
         htmlWin.SetFonts('Helvetica', 'Fixed', [12]*5)
         htmlWin.SetPage(data)
       
