@@ -27,7 +27,7 @@ def formatClones(path):
     
     try:
         return ", ".join([              
-                   '<a href="http://' + `clone`+ '">' + clone.host + '</a>'
+                   '<a href="' + `clone`+ '">' + clone.host + '</a>'
                    for clone in basic.Basic(path).clones()])
     except:
         return ""
