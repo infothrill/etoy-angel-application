@@ -191,7 +191,7 @@ def parseURI(uri):
 
 def cloneFromURI(uri):
     (host, port, path) = parseURI(uri)
-    return Clone(host, port, path)
+    return Clone(host, int(port), path)
 
     
 def cloneFromElement(cc):
