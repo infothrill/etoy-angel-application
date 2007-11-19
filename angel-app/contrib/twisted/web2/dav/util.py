@@ -184,17 +184,6 @@ def bindMethods(module, clazz, prefixes=("preconditions_", "http_", "report_")):
     @param clazz: the class to bind found functions to as methods.
     @param prefixes: a sequence of prefixes to match found functions against.
     """
-    # fix to make py2applet happy:
-    import twisted.web2.dav.method.copymove
-    import twisted.web2.dav.method.delete
-    import twisted.web2.dav.method.lock
-    import twisted.web2.dav.method.mkcol
-    import twisted.web2.dav.method.propfind
-    import twisted.web2.dav.method.proppatch
-    import twisted.web2.dav.method.put
-    import twisted.web2.dav.method.report_expand
-    import twisted.web2.dav.method.report
-    # end fix to make py2applet happy
     for submodule_name in module.__all__:
         try:
             __import__(module.__name__ + "." + submodule_name)
