@@ -31,9 +31,9 @@ legalMatters = """
 author = """Vincent Kraeutler 2007"""
 
 
-from angel_app.resource.local.test import localResourceTest
+from angel_app.resource.local.test import basicResourceTest
 
 
-class CryptoResourceTest(localResourceTest.BasicResourceTest):
+class CryptoResourceTest(basicResourceTest.BasicResourceTest):
     
     pass
