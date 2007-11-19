@@ -9,10 +9,7 @@ from angel_app.resource.resource import Resource
 from twisted.web2 import responsecode
 from twisted.web2.dav.element import rfc2518
 from zope.interface import implements
-
-# unfortunately, urlparse as of python 2.4 is ridiculously shitty. though i've heard it improves
-# with 2.5. which is why we use it here (and due to the absence of better alternatives).
-import urlparse
+import uriparse
 
 
 log = getLogger(__name__)
@@ -88,7 +85,7 @@ class Clone(Resource):
         
     def validateHostPort(self):
         # if the clone is valid, we must be able to reconstruct the host, port, path from the string representation
-        url = urlparse.urlsplit(`self`)
+        url = uriparse.urisplit(`self`)
         if not url[1] == self.host + ":" + `self.port`:
             raise CloneError("Invalid host for clone: " + `self`)
         # as of python 2.5, we will also be able to do this:
@@ -101,7 +98,7 @@ class Clone(Resource):
         if response.status == responsecode.MOVED_PERMANENTLY:
             log.info("clone received redirect: " + `self`)
             try:
-                redirectURL = urlparse.urlparse(response.getheader("location"))
+                redirectURL = uripararse.uriparse(response.getheader("location"))
                 path = redirectURL[2]
                 assert path != ""
                 self.path = path
@@ -186,18 +183,23 @@ def makeCloneBody(localResource):
     propertyUpdateElement = rfc2518.PropertyUpdate(setElement)
     return propertyUpdateElement.toxml()
     
+
+def parseURI(uri):
+    (scheme, authority, path, query, fragment) = uriparse.urisplit(uri)
+    (user, passwd, host, port) = uriparse.split_authority(authority)
+    return (host, port, path)
+
+def cloneFromURI(uri):
+    (host, port, path) = parseURI(uri)
+    return Clone(host, port, path)
+
     
 def cloneFromElement(cc):
     """
     Takes a child element of the Clones element and returns a Clone instance.
     """
-    
     href = str(cc.childOfType(rfc2518.HRef).children[0])
-    (scheme, host, port, path) = urlparse.urlparse(href)
-    log.critical(`url`)
-    return Clone(host, port, path)
-    #return cloneFromGunk(splitParse(str(cc.children[0].children[0])))
-
+    return cloneFromURI(href)
 
 def clonesFromElement(cloneElement):
     """
