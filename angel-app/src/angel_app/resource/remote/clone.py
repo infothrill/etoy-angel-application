@@ -9,7 +9,7 @@ from angel_app.resource.resource import Resource
 from twisted.web2 import responsecode
 from twisted.web2.dav.element import rfc2518
 from zope.interface import implements
-import uriparse
+from angel_app.contrib import uriparse
 
 
 log = getLogger(__name__)
