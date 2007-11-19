@@ -29,10 +29,8 @@ WebDAV COPY method.
 
 __all__ = ["http_COPY"]
 
-from twisted.web2.dav.method.copymove import http_COPY as twisted_COPY
-
-class copyMixin:
+class copyMixin(object):
     def http_COPY(self, request): 
         # TODO: i don't think _changeRegister is correct here, since we don't want
         # to deregister the original resource -- check.
-        return twisted_COPY(self, request).addCallback(self._changeRegister(request))
+        return super(copyMixin, self).http_COPY(request).addCallback(self._changeRegister(request))
