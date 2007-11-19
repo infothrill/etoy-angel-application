@@ -98,7 +98,7 @@ class Clone(Resource):
         if response.status == responsecode.MOVED_PERMANENTLY:
             log.info("clone received redirect: " + `self`)
             try:
-                redirectURL = uripararse.uriparse(response.getheader("location"))
+                redirectURL = uriparse.uriparse(response.getheader("location"))
                 path = redirectURL[2]
                 assert path != ""
                 self.path = path
