@@ -246,7 +246,7 @@ def cloneHandler(property, store, request):
     try:
         newClone = clonesFromElement(property)[0]
     except Exception, e:
-        log.warn("received malformed clone:" + `property` + "from host:" + `newClone.host` + ". Error: \n" + `e`)
+        log.warn("received malformed clone:" + `property` + ". Error: \n" + `e`)
         response = StatusResponse(responsecode.BAD_REQUEST, error)
         return Failure(exc_value=HTTPError(response))
     
