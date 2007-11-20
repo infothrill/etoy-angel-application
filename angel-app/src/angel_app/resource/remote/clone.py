@@ -213,12 +213,25 @@ def cloneFromElement(cc):
     href = str(cc.childOfType(rfc2518.HRef).children[0])
     return cloneFromURI(href)
 
+def maybeCloneFromElement(cc):
+    """
+    @see cloneFromElement
+    
+    The difference is that if any exceptions are raised, None is returned.
+    """
+    try:
+        return cloneFromElement(cc)
+    except:
+        log.info("ignoring invalid clone uri: " + `cc`)
+        return None
+
 def clonesFromElement(cloneElement):
     """
     @param cloneElement a Clones element 
-    @return a list of corresponding Clone instances
+    @return a list of corresponding Clone instances (ignoring those for which a parse failed)
     """
-    return [cloneFromElement(cc) for cc in cloneElement.children]
+    mc = (maybeCloneFromElement(cc) for cc in cloneElement.children)
+    return [cc for cc in mc if cc != None]
 
 def cloneToElement(cc):
     """
