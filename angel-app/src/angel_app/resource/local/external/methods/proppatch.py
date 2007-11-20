@@ -225,6 +225,11 @@ def pingBack(clone, request):
             return None
         
     return clone 
+
+def failWith(errorMessage = ""):
+    log.info(errorMessage)
+    response = StatusResponse(responsecode.BAD_REQUEST, errorMessage)
+    raise HTTPError(response)
             
 def cloneHandler(property, store, request):
     """
@@ -238,18 +243,13 @@ def cloneHandler(property, store, request):
         residentClones = []
         
     if len(residentClones) >= maxclones: 
-        error = "Too many clones. Not adding."
-        log.info(error)
-        response = StatusResponse(responsecode.BAD_REQUEST, error)
-        return Failure(exc_value=HTTPError(response))
-            
-    try:
-        newClone = clonesFromElement(property)[0]
-    except Exception, e:
-        error = "Received malformed clone:" + `property` + ". Error: \n" + `e`
-        log.warn(error)
-        response = StatusResponse(responsecode.BAD_REQUEST, error)
-        return Failure(exc_value=HTTPError(response))
+        failWith("Too many clones. Not adding.")
+    
+    newClones = clonesFromElement(property)
+    if len(newClones) == 0:      
+        failWith("Received malformed clone property:" + `property` + ".")
+        
+    newClone = newClones[0]
     
     if newClone in residentClones:
         # nothing needs to be done, pretend everything is fine
