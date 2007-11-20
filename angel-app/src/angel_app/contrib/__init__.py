@@ -1,5 +1,6 @@
 all = [
        "uuid",
        "ezPyCrypto",
-       "cfgobj"
+       "cfgobj",
+       "uriparse"
        ]
