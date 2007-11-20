@@ -134,3 +134,5 @@ class CloneTest(resourceTest.ResourceTest):
         k.importKey(self.localTestResource.publicKeyString())
         assert k.verifyString(self.localTestResource.signableMetadata(), signature), "metadata signature validation failed"  
     
+    def testIPv6(self):
+        assert clone.isNumericIPv6Address("::1")

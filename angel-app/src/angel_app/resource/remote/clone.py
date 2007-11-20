@@ -1,5 +1,6 @@
 from angel_app import elements
 from angel_app.config import config
+from angel_app.contrib import uriparse
 from angel_app.log import getLogger
 from angel_app.resource import IResource
 from angel_app.resource.remote.contentManager import ContentManager
@@ -9,8 +10,8 @@ from angel_app.resource.resource import Resource
 from twisted.web2 import responsecode
 from twisted.web2.dav.element import rfc2518
 from zope.interface import implements
-from angel_app.contrib import uriparse
-
+import re
+import socket
 
 log = getLogger(__name__)
 
@@ -105,7 +106,7 @@ class Clone(Resource):
             log.info("Received redirect for clone: " + `self`)
             uri = response.getheader("location")
             log.info("Redirecting to: " + `uri`)
-            return cloneFromURI(uri)
+            return cloneFromURI(uri, self.host)
         else:
             return self
     
@@ -117,11 +118,14 @@ class Clone(Resource):
         return self.host == clone.host and self.port == clone.port
     
     def __repr__(self):
-        return self.scheme + "://" + self.host + ":" + `self.port` + self.path
+        return self.toURI()
     
     def __hash__(self):
         return `self`.__hash__()
-    
+
+    def toURI(self):
+        return self.scheme + "://" + formatHost(self.host) + ":" + `self.port` + self.path
+            
 
     def exists(self): 
         """
@@ -169,6 +173,11 @@ class Clone(Resource):
         self.remote.performRequest(method = "PROPPATCH", body = requestBody)
         return True
 
+def formatHost(hostname = "localhost"):
+    if not isNumericIPv6Address(hostname):
+        return hostname
+    else:
+        return "[" + hostname + "]"
 
 def makeCloneBody(localResource):
     """
@@ -187,22 +196,35 @@ def parseURI(uri):
     (scheme, authority, path, query, fragment) = uriparse.urisplit(uri)
     
     if authority is None: 
-        # urisplit may return Nones on failure
-        raise ValueError, "Supplied URI is invalid: " + uri
+        return (None, None, path)
     
     (user, passwd, host, port) = uriparse.split_authority(authority)
-    
     return (host, port, path)
 
-def cloneFromURI(uri):
+def cloneFromURI(uri, defaultHost = "", defaultPort = `providerport`, defaultPath = "/"):
     (host, port, path) = parseURI(uri)
     
+    if host is None:
+        host = defaultHost
     if port is None:  # allow sluggish input leaving off the port number
-        port = providerport
+        port = defaultPort
     if path == "": # allow sluggish config leaving off the path
-        path = "/"
+        path = defaultPath
     
     return Clone(host, int(port), path)
+
+def tryNumericAddress(family = socket.AF_INET, address = "127.0.0.1"):
+    """
+    @return whether (numerice) address is a valid member of family
+    """
+    try:
+        socket.inet_pton(family, address)
+        return True
+    except socket.error:
+        return False
+    
+def isNumericIPv6Address(address):
+    return tryNumericAddress(socket.AF_INET6, address)
 
     
 def cloneFromElement(cc):
