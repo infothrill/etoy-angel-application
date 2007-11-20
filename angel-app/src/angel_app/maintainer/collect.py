@@ -54,7 +54,7 @@ def iterateClones(cloneSeedList, publicKeyString, resourceID):
             cl.unreachable.append(cc)
             continue
         
-        cc.checkForRedirect()
+        cc = cc.checkForRedirect()
         
         if not cc.exists():
             log.debug("iterateClones: resource " + `cc.path` + " not found on host " + `cc`)

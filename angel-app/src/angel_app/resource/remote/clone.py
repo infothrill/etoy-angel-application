@@ -93,22 +93,21 @@ class Clone(Resource):
         
     
     def checkForRedirect(self):
+        """
+        Check for redirect on this clone.
+        
+        @return this clone, if no redirect happened, otherwise return a new clone c
+        orresponding to the redirect target
+        """
 
         response = self.remote.performRequest(method = "HEAD", body = "")
         if response.status == responsecode.MOVED_PERMANENTLY:
-            log.info("clone received redirect: " + `self`)
-            try:
-                redirectURL = uriparse.uriparse(response.getheader("location"))
-                path = redirectURL[2]
-                assert path != ""
-                self.path = path
-                self.updateRemote(HTTPRemote(self.host, self.port, self.path))
-                log.info("redirecting to: " + `path`)
-            except:
-                error = "redirection url invalid: " + `redirectURL`
-                log.warn(error)
-                raise CloneNotFoundError(error)
-            
+            log.info("Received redirect for clone: " + `self`)
+            uri = response.getheader("location")
+            log.info("Redirecting to: " + `uri`)
+            return cloneFromURI(uri)
+        else:
+            return self
     
     def __eq__(self, clone):
         """
