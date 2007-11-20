@@ -64,7 +64,7 @@ def urisplit(uri):
     
     mm = re.match(regex, uri)
     sp = mm.span()
-    if (-1 in sp) or (sp[2] - sp[1] != len(uri)):
+    if (-1 in sp) or (sp[1] - sp[0] != len(uri)):
         raise ValueError, "uri regex did not match complete input"
     
     p = mm.groups()
