@@ -59,18 +59,7 @@ def setMountPoint(mountPoint, URLToMount):
     
     from angel_app.resource.remote import clone
     
-    (dummyscheme, authority, path, dummyquery, dummyfragment) = uriparse.urisplit(URLToMount)
-    (dummyuser, dummypasswd, host, port) = uriparse.split_authority(authority)
-
-    # fixup parsed URLToMount:
-    if port is None:  # allow sluggish config leaving off the port number
-        from angel_app.config.defaults import providerPublicListenPort # default port of other peers
-        port = providerPublicListenPort
-    if path == "": # allow sluggish config leaving off the path
-        path = "/"
-    log.debug("parsed URLToMount: %s - %s - %s" % (host, port, path))
-
-    cc = clone.Clone(host, int(port), path)
+    cc = clone.cloneFromURI(URLToMount)
     
     if not (cc.ping() and cc.exists()):
         # don't fail, just mount at next startup

@@ -186,11 +186,23 @@ def makeCloneBody(localResource):
 
 def parseURI(uri):
     (scheme, authority, path, query, fragment) = uriparse.urisplit(uri)
+    
+    if authority is None: 
+        # urisplit may return Nones on failure
+        raise ValueError, "Supplied URI is invalid: " + uri
+    
     (user, passwd, host, port) = uriparse.split_authority(authority)
+    
     return (host, port, path)
 
 def cloneFromURI(uri):
     (host, port, path) = parseURI(uri)
+    
+    if port is None:  # allow sluggish input leaving off the port number
+        port = providerport
+    if path == "": # allow sluggish config leaving off the path
+        path = "/"
+    
     return Clone(host, int(port), path)
 
     

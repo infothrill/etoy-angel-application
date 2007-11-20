@@ -61,7 +61,14 @@ def urisplit(uri):
     import re
     # regex straight from STD 66 section B
     regex = '^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?'
-    p = re.match(regex, uri).groups()
+    
+    mm = re.match(regex, uri)
+    sp = mm.span()
+    if (-1 in sp) or (sp[2] - sp[1] != len(uri)):
+        raise ValueError, "uri regex did not match complete input"
+    
+    p = mm.groups()
+    
     scheme, authority, path, query, fragment = p[1], p[3], p[4], p[6], p[8]
     #if not path: path = None
     return (scheme, authority, path, query, fragment) 
