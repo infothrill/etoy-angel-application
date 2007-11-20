@@ -9,6 +9,7 @@ log = getLogger(__name__)
 from angel_app.resource.local.basic import Basic
 from angel_app.resource.local.internal.resource import Crypto
 from angel_app.config import config
+from angel_app.contrib import uriparse
 AngelConfig = config.getConfig()
 repository = AngelConfig.get("common", "repository")
 
@@ -51,7 +52,6 @@ def setMountPoint(mountPoint, URLToMount):
     @param pointsTo is the URL of the resource that we want to mount
     """       
     log.info("attempting to mount: " + URLToMount + " at " + mountPoint)
-    import urlparse
     
     pp = absPath(mountPoint)
     
@@ -59,21 +59,17 @@ def setMountPoint(mountPoint, URLToMount):
     
     from angel_app.resource.remote import clone
     
+    (dummyscheme, authority, path, dummyquery, dummyfragment) = uriparse.urisplit(URLToMount)
+    (dummyuser, dummypasswd, host, port) = uriparse.split_authority(authority)
 
-    # TODO:urlparse is unfortunately still kind of broken in 2.4 (2.5 is fine),
-    # so we have to
-    url = urlparse.urlparse(URLToMount)
-    host, path = url[1], url[2]
-    if path == "":
-        path = "/"
-
-    port  = 1 # scope declaration only
-    try:
-        host, port = host.split(":")
-    except ValueError: #might have no port and no colon
+    # fixup parsed URLToMount:
+    if port is None:  # allow sluggish config leaving off the port number
         from angel_app.config.defaults import providerPublicListenPort # default port of other peers
         port = providerPublicListenPort
-        
+    if path == "": # allow sluggish config leaving off the path
+        path = "/"
+    log.debug("parsed URLToMount: %s - %s - %s" % (host, port, path))
+
     cc = clone.Clone(host, int(port), path)
     
     if not (cc.ping() and cc.exists()):
