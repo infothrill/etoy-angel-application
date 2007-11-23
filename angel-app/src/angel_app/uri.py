@@ -30,18 +30,14 @@ legalMatters = """
 
 author = """Vincent Kraeutler, 2007"""
 
-from angel_app.config import config
 from netaddress.rfc3986 import port, host, path_abempty
 from pyparsing import Literal, Optional, Or
-
-AngelConfig = config.getConfig()
-providerport = AngelConfig.getint("provider", "listenPort")
     
 scheme = Or([Literal("http"), Literal("https")]).setResultsName("scheme")
 prefix = scheme + Literal("://")
 path = path_abempty.setResultsName("path")
 
-angelPort = Optional(Literal(":") + port, default = providerport)
+angelPort = Optional(Literal(":") + port)
 angelPath = Optional(path, default = "/")
 angelHost = Optional(host, default = "localhost").setResultsName("host")
 # URI grammar as used in angel-app
