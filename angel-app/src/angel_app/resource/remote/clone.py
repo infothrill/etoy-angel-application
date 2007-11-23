@@ -202,7 +202,7 @@ def makeCloneBody(localResource):
     return propertyUpdateElement.toxml()
 
 
-def cloneFromURI(_uri, defaultHost = ""):
+def cloneFromURI(_uri, defaultHost = None):
     """
     Return a new instance of a clone given the URI
     """
@@ -213,7 +213,7 @@ def cloneFromURI(_uri, defaultHost = ""):
         port = providerPublicListenPort
     else:
         port = pp.port
-    if defaultHost != "":
+    if defaultHost is None:
         _host = str(pp.host)
     else:
         _host = defaultHost
