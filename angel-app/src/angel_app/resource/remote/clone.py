@@ -202,9 +202,14 @@ def makeCloneBody(localResource):
     return propertyUpdateElement.toxml()
 
 
-def cloneFromURI(_uri):
+def cloneFromURI(_uri, defaultHost = ""):
     pp = uri.parse(_uri)
-    return Clone(str(pp.host), int(pp.port), "".join(pp.path))
+    log.info(`pp`)
+    if defaultHost != "":
+        _host = str(pp.host)
+    else:
+        _host = defaultHost
+    return Clone(_host, int(pp.port), "".join(pp.path))
 
 def tryNumericAddress(family = socket.AF_INET, address = "127.0.0.1"):
     """
