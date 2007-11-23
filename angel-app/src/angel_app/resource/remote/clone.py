@@ -28,6 +28,10 @@ class CloneError(Exception):
 class CloneNotFoundError(CloneError):
     pass
 
+def typed(expr, ref):
+    if not type(expr) == type(ref):
+        raise TypeError, "Expected type " + `type(ref)` + " but found: " + `type(expr)` 
+
 class Clone(Resource):
     """
     Provides methods for transparent access to frequently used clone meta data.
@@ -39,15 +43,19 @@ class Clone(Resource):
         @rtype Clone
         @return a new clone
         """
+        typed(scheme, '')
         self.scheme = scheme
         
         # the host name or ip
+        typed(host, '')
         self.host = host
         
         # a port number
+        typed(port, 0)
         self.port = port
         
         # a path string. must be valid as part of an absolute URL (i.e. quoted, using "/")
+        typed(path, '')
         self.path = path
         
         self.updateRemote(HTTPRemote(self.host, self.port, self.path))
@@ -194,9 +202,9 @@ def makeCloneBody(localResource):
     return propertyUpdateElement.toxml()
 
 
-def cloneFromURI(uri):
-    pp = uri.parse(uri)
-    return Clone(pp.host, int(pp.port), pp.path)
+def cloneFromURI(_uri):
+    pp = uri.parse(_uri)
+    return Clone(str(pp.host), int(pp.port), "".join(pp.path))
 
 def tryNumericAddress(family = socket.AF_INET, address = "127.0.0.1"):
     """
