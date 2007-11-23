@@ -203,13 +203,21 @@ def makeCloneBody(localResource):
 
 
 def cloneFromURI(_uri, defaultHost = ""):
+    """
+    Return a new instance of a clone given the URI
+    """
     pp = uri.parse(_uri)
-    log.info(`pp`)
+    log.info("parsed URI: %s" % `pp`)
+    if pp.port == "":
+        from angel_app.config.defaults import providerPublicListenPort
+        port = providerPublicListenPort
+    else:
+        port = pp.port
     if defaultHost != "":
         _host = str(pp.host)
     else:
         _host = defaultHost
-    return Clone(_host, int(pp.port), "".join(pp.path))
+    return Clone(_host, int(port), "".join(pp.path))
 
 def tryNumericAddress(family = socket.AF_INET, address = "127.0.0.1"):
     """
