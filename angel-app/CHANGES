@@ -1,3 +1,8 @@
+0.3
+ * kicked out the twisted library from source tree
+ * use netaddress for URI parsing
+ * fix handling of numeric IPv6 addresses
+
 0.2.1 November 17 2007
  * switched GUI to have one window with tabs
  * mounts can now be configured through the GUI
