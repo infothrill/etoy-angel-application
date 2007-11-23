@@ -52,7 +52,7 @@ def inheritClones(resource):
         """
         newPath = parentClone.path
         if len(newPath) == 0:
-            raise ValueError, "Invalid path: " + newPath
+            raise ValueError, "Invalid path: %s for clone %s" % (newPath, `parentClone`)
         
         if newPath[-1] != "/":
             newPath += "/"

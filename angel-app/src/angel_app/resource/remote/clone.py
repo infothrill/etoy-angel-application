@@ -91,12 +91,14 @@ class Clone(Resource):
         
     def validateHostPort(self):
         """
-        if the clone is valid, we must be able to reconstruct the host, port, path from the string representation
+        if the clone is valid, we must be able to reconstruct the host, port, path from the string representation.
+        TODO: this is currently broken.
         """
         rc = cloneFromURI(self.toURI())
         
         if not rc == self:
-            raise CloneError("Invalid host for clone: " + `self`)                                             
+            log.info("Clone doesn't self-match: %s vs. %s" % (`self`, `rc`))
+            raise CloneError("Invalid host for clone: %s %s" % (`self`, `rc`))                                             
         
     
     def checkForRedirect(self):
