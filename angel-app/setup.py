@@ -49,29 +49,10 @@ setup(
     package_dir={
                  'angel_app' : 'src/angel_app'
                  },
-    install_requires = ["xattr>=0.3", "zope.interface>=3.3.0", "pycrypto>=2.0.1"], #, "ezPyCrypto"],
+    install_requires = ["xattr>=0.3", "zope.interface>=3.3.0", "pycrypto>=2.0.1", "netaddress>=0.2"], #, "ezPyCrypto"],
     # wxPython does not conform to cheeseshop.python.org standards, so currently we cannot include it here
     #dependency_links = [
     #    "http://angelapp.missioneternity.org/index.py/Documentation/Install?action=AttachFile&do=get&target=ezPyCrypto.py#egg=ezPyCrypto-0.1"
     #],
-    zip_safe=False,
-)
-
-setup(
-    name="twisted",
-    version=2.5,
-    description="twisted matrix",
-    long_description="components of twisted used by angel-app, with minor modifications",
-    classifiers=CLASSIFIERS,
-    author="twisted crew",
-    author_email="vincent@etoy.com",
-    url="http://angelapp.missioneternity.org/",
-    license="MIT License",
-    packages=find_packages('contrib'),
-    platforms=['MacOS X', 'Linux', 'FreeBSD'],
-    package_dir={
-                 'twisted' : 'contrib/twisted'
-                 },
-    install_requires = ["xattr>=0.3", "zope.interface>=3.3.0", "pycrypto>=2.0.1"],
     zip_safe=False,
 )
