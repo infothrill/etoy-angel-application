@@ -1,6 +1,6 @@
 from angel_app import elements
+from angel_app import uri
 from angel_app.config import config
-from angel_app.contrib import uriparse
 from angel_app.log import getLogger
 from angel_app.resource import IResource
 from angel_app.resource.remote.contentManager import ContentManager
@@ -192,28 +192,11 @@ def makeCloneBody(localResource):
     setElement = rfc2518.Set(rfc2518.PropertyContainer(clonesElement))
     propertyUpdateElement = rfc2518.PropertyUpdate(setElement)
     return propertyUpdateElement.toxml()
-    
 
-def parseURI(uri):
-    (scheme, authority, path, query, fragment) = uriparse.urisplit(uri)
-    
-    if authority is None: 
-        return (None, None, path)
-    
-    (user, passwd, host, port) = uriparse.split_authority(authority)
-    return (host, port, path)
 
-def cloneFromURI(uri, defaultHost = "", defaultPort = `providerport`, defaultPath = "/"):
-    (host, port, path) = parseURI(uri)
-    
-    if host is None:
-        host = defaultHost
-    if port is None:  # allow sluggish input leaving off the port number
-        port = defaultPort
-    if path == "": # allow sluggish config leaving off the path
-        path = defaultPath
-    
-    return Clone(host, int(port), path)
+def cloneFromURI(uri):
+    pp = uri.parse(uri)
+    return Clone(pp.host, int(pp.port), pp.path)
 
 def tryNumericAddress(family = socket.AF_INET, address = "127.0.0.1"):
     """

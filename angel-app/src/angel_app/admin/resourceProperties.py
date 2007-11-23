@@ -9,7 +9,6 @@ log = getLogger(__name__)
 from angel_app.resource.local.basic import Basic
 from angel_app.resource.local.internal.resource import Crypto
 from angel_app.config import config
-from angel_app.contrib import uriparse
 AngelConfig = config.getConfig()
 repository = AngelConfig.get("common", "repository")
 
