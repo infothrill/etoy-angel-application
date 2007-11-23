@@ -38,17 +38,17 @@ AngelConfig = config.getConfig()
 providerport = AngelConfig.getint("provider", "listenPort")
     
 scheme = Or([Literal("http"), Literal("https")]).setResultsName("scheme")
-prefix = Optional(scheme + Literal("//:"))
+prefix = scheme + Literal("://")
 path = path_abempty.setResultsName("path")
 
 angelPort = Optional(Literal(":") + port, default = providerport)
 angelPath = Optional(path, default = "/")
-angelHost = Optional(host, default = "localhost")
+angelHost = Optional(host, default = "localhost").setResultsName("host")
 # URI grammar as used in angel-app
 angelURI = prefix + angelHost + angelPort + angelPath
 
 def parse(uri = ""):
-    try:
+    #try:
         return angelURI.parseString(uri)
-    except:
-        raise ValueError, "Failed to parse URI: " + `uri`
+    #except:
+    #    raise ValueError, "Failed to parse URI: " + `uri`
