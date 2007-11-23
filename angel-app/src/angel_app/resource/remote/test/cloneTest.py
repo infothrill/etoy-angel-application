@@ -136,3 +136,9 @@ class CloneTest(resourceTest.ResourceTest):
     
     def testIPv6(self):
         assert clone.isNumericIPv6Address("::1")
+        
+    def testIPv6Parse(self):
+        url = "http://[::1]:6621/"
+        cc = clone.cloneFromURI(url)
+        cc.validatePath()
+        cc.validateHostPort()

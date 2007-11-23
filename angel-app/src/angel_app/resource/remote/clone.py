@@ -50,9 +50,6 @@ class Clone(Resource):
         # a path string. must be valid as part of an absolute URL (i.e. quoted, using "/")
         self.path = path
         
-        self.validatePath()
-        self.validateHostPort()
-        
         self.updateRemote(HTTPRemote(self.host, self.port, self.path))
        
     def getPropertyManager(self):
@@ -85,12 +82,13 @@ class Clone(Resource):
             raise CloneError("Need absolute path for clone. Got: " + self.path)
         
     def validateHostPort(self):
-        # if the clone is valid, we must be able to reconstruct the host, port, path from the string representation
-        url = uriparse.urisplit(`self`)
-        if not url[1] == self.host + ":" + `self.port`:
-            raise CloneError("Invalid host for clone: " + `self`)
-        # as of python 2.5, we will also be able to do this:
-        # assert url.port == self.port                                                  
+        """
+        if the clone is valid, we must be able to reconstruct the host, port, path from the string representation
+        """
+        rc = cloneFromURI(self.toURI())
+        
+        if not rc == self:
+            raise CloneError("Invalid host for clone: " + `self`)                                             
         
     
     def checkForRedirect(self):
@@ -131,6 +129,10 @@ class Clone(Resource):
         """
         Keep in mind that existence does not imply validity.
         """
+                
+        self.validatePath()
+        self.validateHostPort()
+        
         try:
             response = self.remote.performRequest(method = "HEAD", body = "")
             return response.status == responsecode.OK
