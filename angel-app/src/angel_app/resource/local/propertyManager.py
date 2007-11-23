@@ -51,6 +51,9 @@ def inheritClones(resource):
         @return : a tentative clone instance of this resource.
         """
         newPath = parentClone.path
+        if len(newPath) == 0:
+            raise ValueError, "Invalid path: " + newPath
+        
         if newPath[-1] != "/":
             newPath += "/"
         newPath += urllib.quote(resource.resourceName())
