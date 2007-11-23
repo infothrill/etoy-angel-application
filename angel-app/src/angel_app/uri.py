@@ -42,3 +42,6 @@ path = path_abempty.setResultsName("path")
 
 # URI grammar as used in angel-app
 angelURI = scheme + Literal("://") + host + Optional(Literal(":") + port, default = providerport) + path
+
+def parse(uri = ""):
+    return angelURI.parseString(uri)
