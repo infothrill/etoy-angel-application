@@ -1,3 +1,9 @@
+import socket
+
+from twisted.web2 import responsecode
+from twisted.web2.dav.element import rfc2518
+from zope.interface import implements
+
 from angel_app import elements
 from angel_app import uri
 from angel_app.config import config
@@ -7,11 +13,7 @@ from angel_app.resource.remote.contentManager import ContentManager
 from angel_app.resource.remote.httpRemote import HTTPRemote
 from angel_app.resource.remote.propertyManager import PropertyManager
 from angel_app.resource.resource import Resource
-from twisted.web2 import responsecode
-from twisted.web2.dav.element import rfc2518
-from zope.interface import implements
-import re
-import socket
+#import re
 
 log = getLogger(__name__)
 
@@ -112,9 +114,12 @@ class Clone(Resource):
         response = self.remote.performRequest(method = "HEAD", body = "")
         if response.status == responsecode.MOVED_PERMANENTLY:
             log.info("Received redirect for clone: " + `self`)
-            uri = response.getheader("location")
-            log.info("Redirecting to: " + `uri`)
-            return cloneFromURI(uri, self.host)
+            redirectlocation = response.getheader("location")
+            # TODO: how to verify/validate redirectlocation ?
+            # RFCs state it should be URI, but we gat a path only
+            redirectClone = Clone(self.host, self.port, redirectlocation)
+            log.info("Redirecting to: %s" % `redirectClone`)
+            return redirectClone
         else:
             return self
     
@@ -209,17 +214,23 @@ def cloneFromURI(_uri, defaultHost = None):
     Return a new instance of a clone given the URI
     """
     pp = uri.parse(_uri)
-    log.info("parsed URI: %s" % `pp`)
+    log.debug("parsed URI: %s" % `pp`)
+    # check optional argument defaultHost
+    if defaultHost is None:
+        _host = str(pp.host)
+    else:
+        _host = defaultHost
+    # if port is empty, fallback to default 
     if pp.port == "":
         from angel_app.config.defaults import providerPublicListenPort
         port = providerPublicListenPort
     else:
         port = pp.port
-    if defaultHost is None:
-        _host = str(pp.host)
-    else:
-        _host = defaultHost
-    return Clone(_host, int(port), "".join(pp.path))
+    # if path is empty, fallback to root "/"
+    _path = "".join(pp.path)
+    if _path == '':
+        _path = '/'
+    return Clone(_host, int(port), _path)
 
 def tryNumericAddress(family = socket.AF_INET, address = "127.0.0.1"):
     """
