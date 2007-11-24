@@ -1,9 +1,12 @@
-from angel_app import elements
-from angel_app.resource.IReadonlyPropertyManager import IReadonlyPropertyManager
 from twisted.web2 import responsecode
 from twisted.web2.dav import davxml
 from twisted.web2.dav.element import rfc2518
 from zope.interface import implements
+
+from angel_app import elements
+from angel_app.resource.IReadonlyPropertyManager import IReadonlyPropertyManager
+from angel_app.resource.remote.clone import CloneNotFoundError
+from angel_app.resource.remote.clone import CloneError
 
 class PropertyManager(object):
     """
