@@ -98,8 +98,8 @@ class Resource(object):
         sm = self.signableMetadata()
         ms = self.metaDataSignature()
         
-        log.debug(ms)
-        log.debug(sm)
+        #log.debug(ms)
+        #log.debug(sm)
         try:
             return publicKey.verifyString(sm, ms)
         except:
