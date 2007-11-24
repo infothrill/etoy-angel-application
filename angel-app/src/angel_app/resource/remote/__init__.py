@@ -7,5 +7,6 @@ all = [
         "clone", 
         "contentManager",
         "httpRemote", 
-        "propertyManager"
+        "propertyManager",
+        "exceptions"
         ]
