@@ -13,22 +13,15 @@ from angel_app.resource.remote.contentManager import ContentManager
 from angel_app.resource.remote.httpRemote import HTTPRemote
 from angel_app.resource.remote.propertyManager import PropertyManager
 from angel_app.resource.resource import Resource
-#import re
+
+from angel_app.resource.remote.exceptions import CloneError
+from angel_app.resource.remote.exceptions import CloneNotFoundError
 
 log = getLogger(__name__)
 
 
 AngelConfig = config.getConfig()
 providerport = AngelConfig.getint("provider","listenPort")
-
-class CloneError(Exception):
-    def __init__(self,value):
-        self.parameter=value
-    def __str__(self):
-        return repr(self.parameter)
-
-class CloneNotFoundError(CloneError):
-    pass
 
 def typed(expr, ref):
     if not type(expr) == type(ref):

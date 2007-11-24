@@ -5,8 +5,8 @@ from zope.interface import implements
 
 from angel_app import elements
 from angel_app.resource.IReadonlyPropertyManager import IReadonlyPropertyManager
-from angel_app.resource.remote.clone import CloneNotFoundError
-from angel_app.resource.remote.clone import CloneError
+from angel_app.resource.remote.exceptions import CloneNotFoundError
+from angel_app.resource.remote.exceptions import CloneError
 
 class PropertyManager(object):
     """
