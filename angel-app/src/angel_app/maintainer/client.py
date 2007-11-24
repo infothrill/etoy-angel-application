@@ -1,16 +1,11 @@
-from angel_app import elements
+import time
+
 from angel_app.config import config
 from angel_app.graph import graphWalker
 from angel_app.log import getLogger
 from angel_app.maintainer import sync
 from angel_app.maintainer import update
 from angel_app.resource.local.basic import Basic
-from angel_app.resource.remote.clone import clonesToElement
-from twisted.web2.dav import davxml
-import angel_app.singlefiletransaction
-import os
-import random
-import time
 
 log = getLogger(__name__)
 AngelConfig = config.getConfig()
