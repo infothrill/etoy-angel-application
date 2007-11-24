@@ -49,7 +49,7 @@ setup(
     package_dir={
                  'angel_app' : 'src/angel_app'
                  },
-    install_requires = ["xattr>=0.3", "zope.interface>=3.3.0", "pycrypto>=2.0.1", "netaddress>=0.2"], #, "ezPyCrypto"],
+    install_requires = ["xattr>=0.3", "zope.interface>=3.3.0", "pycrypto>=2.0.1", "netaddress>=0.2.2"], #, "ezPyCrypto"],
     # wxPython does not conform to cheeseshop.python.org standards, so currently we cannot include it here
     #dependency_links = [
     #    "http://angelapp.missioneternity.org/index.py/Documentation/Install?action=AttachFile&do=get&target=ezPyCrypto.py#egg=ezPyCrypto-0.1"
