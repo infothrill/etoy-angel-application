@@ -2,18 +2,20 @@
 Provide a Mapping from XML-elements to xattr keys.
 Handle initialization of attributes with default values.
 """
-from angel_app import elements
-from angel_app.log import getLogger
-from angel_app.resource.IReadonlyPropertyManager import IReadonlyPropertyManager
-from angel_app.resource.remote.clone import clonesToElement
+import os.path
+import time
+import urllib
+
 from twisted.web2 import responsecode
 from twisted.web2.dav.element.base import WebDAVElement
 from twisted.web2.dav.xattrprops import xattrPropertyStore
 from twisted.web2.http import HTTPError, StatusResponse
 from zope.interface import implements
-import os.path
-import time
-import urllib
+
+from angel_app import elements
+from angel_app.log import getLogger
+from angel_app.resource.IReadonlyPropertyManager import IReadonlyPropertyManager
+from angel_app.resource.remote.clone import clonesToElement
 
 
 log = getLogger(__name__)
@@ -110,7 +112,7 @@ class PropertyManager(xattrPropertyStore):
         """
         This is ass-backwards, but isCollection is provided by DAVFile.
         """
-        return resource.isCollection()
+        return self.resource.isCollection()
 
     def getByElement(self, property):
         return self.get(property.qname())
