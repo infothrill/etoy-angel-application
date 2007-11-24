@@ -30,20 +30,12 @@ legalMatters = """
 
 author = """Vincent Kraeutler 2007"""
 
-from angel_app import elements
+import os
+
 from angel_app.config import config
-from angel_app.elements import Children
-from angel_app.resource.IResource import IAngelResource
-from angel_app.resource.abstractContentManager import REPR_DIRECTORY
-from angel_app.resource.local.basic import Basic
 from angel_app.resource.local.internal.resource import Crypto
 from angel_app.resource.remote.clone import Clone
 from angel_app.resource.test import resourceTest 
-from twisted.web2.dav.element import rfc2518
-import os
-import shutil
-import unittest
-import zope.interface.verify
 
 AngelConfig = config.getConfig()
 repositoryPath = AngelConfig.get("common","repository")
