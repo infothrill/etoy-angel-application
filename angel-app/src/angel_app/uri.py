@@ -39,7 +39,7 @@ path = path_abempty.setResultsName("path")
 
 angelPort = Optional(Literal(":") + port)
 angelPath = Optional(Combine(path), default = "/")
-angelHost = Optional(host, default = "localhost").setResultsName("host")
+angelHost = Optional(Combine(host), default = "localhost").setResultsName("host")
 # URI grammar as used in angel-app
 angelURI = prefix + angelHost + angelPort + angelPath
 

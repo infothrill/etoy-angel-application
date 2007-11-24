@@ -20,5 +20,12 @@ class URITest(unittest.TestCase):
         pp = uri.parse(_uri)
         #print "PARSE: ", pp.dump()
         #print "parse host: ", pp.host
+        
+    def testIPv6URI(self):
+        ipLiteral = "[2001::4136:e390:0:c952:c1f3:6f11]"
+        _uri = "http://" + ipLiteral + ":6221/foo" 
+        pp = uri.parse(_uri)
+        print "Parse dump: ", pp.dump()
+        print pp.host
              
     
