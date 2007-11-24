@@ -69,13 +69,14 @@ mv "${SCRIPTDIR}/angel.py" "${SCRIPTDIR}/AAngel.py" # rename twice (Mac OS X is 
 mv "${SCRIPTDIR}/AAngel.py" "${SCRIPTDIR}/Angel.py"
 APPNAME="Angel"
 
-export PYTHONPATH=$PWD/contrib/:$PWD/src/:$PYTHONPATH
+# include the source tree in the PYTHONPATH:
+export PYTHONPATH=$PWD/src/:$PYTHONPATH
 echo "Pythonpath: " $PYTHONPATH
 
 echo "Running py2applet..."
 rm -rf "${SCRIPTDIR}/${APPNAME}.app" # make sure it's not there yet
 py2applet --iconfile=${repo}/distrib/OSX/icons/m221e.icns "${SCRIPTDIR}/Angel.py" "${SCRIPTDIR}/master.py" "${SCRIPTDIR}/presenter.py" "${SCRIPTDIR}/provider.py" "${SCRIPTDIR}/maintainer.py" > $THISTMPDIR/py2applet.log 2>&1
-if [ $? -ne 0 ]
+if [[ $? -ne 0 ]]
 then
 	mv $THISTMPDIR/py2applet.log ${TMPDIR}/py2applet.log
 	error "py2applet exited with a non-zero exit code. Check ${TMPDIR}/py2applet.log for details"
