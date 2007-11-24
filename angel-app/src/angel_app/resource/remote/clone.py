@@ -87,11 +87,12 @@ class Clone(Resource):
     def validateHostPort(self):
         """
         if the clone is valid, we must be able to reconstruct the host, port, path from the string representation.
-        TODO: this is currently broken.
+        TODO: this is currently just a quick fix. It would be better to compare the clones directly, but for some
+        reason, this is broken.
         """
         rc = cloneFromURI(self.toURI())
         
-        if not rc == self:
+        if not `rc` == `self`:
             log.info("Clone doesn't self-match: %s vs. %s" % (`self`, `rc`))
             raise CloneError("Invalid host for clone: %s %s" % (`self`, `rc`))                                             
         
@@ -207,7 +208,7 @@ def cloneFromURI(_uri, defaultHost = None):
     Return a new instance of a clone given the URI
     """
     pp = uri.parse(_uri)
-    log.debug("parsed URI: %s" % `pp`)
+    #log.debug("parsed URI: %s" % `pp`)
     # check optional argument defaultHost
     if defaultHost is None:
         _host = str(pp.host)

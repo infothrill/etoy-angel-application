@@ -43,10 +43,10 @@ class LoggingProtocol(Protocol):
         # first 4 bytes specify the length of the pickle
         while len(self.buf) >= 4:
             if self.slen == 0:
-                log.debug("buf longer than 4, finding length of pickle")
+                #log.debug("buf longer than 4, finding length of pickle")
                 self.slen = struct.unpack(">L", self.buf[0:4])[0]
-            log.debug("length of pickle: %s" % str(self.slen))
-            log.debug("buffer length: %s" % str( len(self.buf)-4))
+            #log.debug("length of pickle: %s" % str(self.slen))
+            #log.debug("buffer length: %s" % str( len(self.buf)-4))
             if (len(self.buf)-4 >= self.slen):
                 try:
                     obj = cPickle.loads(self.buf[4:self.slen+4])
@@ -58,7 +58,7 @@ class LoggingProtocol(Protocol):
                 self.buf = self.buf[self.slen+4:]
                 self.slen = 0
             else:
-                log.debug("not enough in the buffer to unpickle")
+                #log.debug("not enough in the buffer to unpickle")
                 break
 
     def handleLogRecord(self, record):
