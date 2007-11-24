@@ -135,7 +135,7 @@ def validateBodyXML(doc):
     @param doc: the request body as a davxml document. 
     """
     assert isinstance(doc.root_element, davxml.PropertyUpdate), \
-        "Request XML body must be a propertyupdate element. Found: " + `update.sname()`
+        "Request XML body must be a propertyupdate element. Found: " + `doc.root_element`
     
     assert 1 == len(doc.root_element.children), "Only one PROPPATCH instruction allowed."
     
