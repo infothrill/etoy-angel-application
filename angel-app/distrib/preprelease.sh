@@ -138,6 +138,16 @@ echo -n " Python pre-compiled files"
 find ${SHORTNAME}/ -type f -name '.pyc' -print0 | xargs -0 rm -f
 echo ""
 
+# twisted: unpack the tarball we ship, so we are sure we use it during the build process
+twistedtar=`ls ${SHORTNAME}/twisted_trunk_*.tar.bz2`
+twistedsrc=`basename $twistedtar .tar.bz2`
+echo "Unpacking twisted from ${twistedtar} to ${SHORTNAME}/src/"
+tar xjf ${twistedtar}
+rm -rf ${SHORTNAME}/src/twisted/
+mv ${twistedsrc}/twisted/ ${SHORTNAME}/src/
+rm -rf ${twistedsrc}
+rm ${twistedtar} # we don't want to distribute the tar file
+
 echo "Setting correct version to '$RELEASE'..."
 if [ "x${RELEASE}" == "xSVN" ]
 then
