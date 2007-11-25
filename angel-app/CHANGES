@@ -1,7 +1,8 @@
-0.3
+0.3.0 November 25 2007
  * kicked out the twisted library from source tree
  * use netaddress for URI parsing
  * fix handling of numeric IPv6 addresses
+ * lots of small fixes/cleanups
 
 0.2.1 November 17 2007
  * switched GUI to have one window with tabs
