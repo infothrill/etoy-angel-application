@@ -182,8 +182,7 @@ class Clone(Resource):
         """
         Inform the remote clone that we have a local clone here.
         """
-        from angel_app.resource.remote import clone
-        requestBody = clone.makeCloneBody(localResource)
+        requestBody = makeCloneBody(localResource)
         if not self.ping(): return False
         if not self.exists(): return False
         self.remote.performRequest(method = "PROPPATCH", body = requestBody)
