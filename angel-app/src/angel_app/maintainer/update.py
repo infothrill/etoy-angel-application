@@ -103,7 +103,7 @@ def updateResource(af):
     
     if cloneLists.good == []:
         log.info("no valid clones found for " + af.fp.path)
-        return
-    
-    updateResourceFromClones(af, cloneLists.good)
+    else:
+        updateResourceFromClones(af, cloneLists.good)
+        
     storeClones(af, cloneLists.good, cloneLists.old + cloneLists.unreachable)

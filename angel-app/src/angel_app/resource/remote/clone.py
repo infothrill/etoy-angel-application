@@ -92,7 +92,7 @@ class Clone(Resource):
         """
         rc = cloneFromURI(self.toURI())
         
-        if not `rc` == `self`:
+        if not rc == self:
             log.info("Clone doesn't self-match: %s vs. %s" % (`self`, `rc`))
             raise CloneError("Invalid host for clone: %s %s" % (`self`, `rc`))                                             
         
@@ -121,8 +121,13 @@ class Clone(Resource):
         """
         @rtype boolean
         Comparison operator.
+        Two clones are equal exactly if they point to the same resource (they have the same URI representation).
         """
-        return self.host == clone.host and self.port == clone.port
+        if type(self) != type(clone):
+            return False
+        
+        log.debug("clones %s %s are equal: %s" % (self.toURI(), clone.toURI(), `self.toURI() == clone.toURI()`))
+        return self.toURI() == clone.toURI()
     
     def __repr__(self):
         return self.toURI()

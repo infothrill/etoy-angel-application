@@ -252,6 +252,7 @@ def cloneHandler(property, store, request):
     newClone = newClones[0]
     
     if newClone in residentClones:
+        log.info("clone %s already registered." % `newClone`)
         # nothing needs to be done, pretend everything is fine
         return responsecode.OK
     
