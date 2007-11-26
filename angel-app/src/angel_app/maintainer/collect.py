@@ -6,6 +6,7 @@ Routines for obtaining a best guess about the current replication state of a clo
 from angel_app.config import config
 from angel_app.log import getLogger
 import copy
+import itertools
 import random
 
 log = getLogger(__name__)
@@ -17,11 +18,11 @@ class CloneLists(object):
         self.good = []
         self.old = []
         self.unreachable = []
-        self.bad = []
 
 def accessible(clone):
     """
     Check if the clone is reachable, resolve redirects.
+    @return a tuple of (Clone, bool), where Clone is the (redirected) clone, and bool indicates whether it's reachable.
     """
     if not clone.ping():
         log.debug("iterateClones: clone " + `clone` + " not reachable, ignoring")
@@ -35,6 +36,128 @@ def accessible(clone):
     
     return (clone, True)
 
+def acceptable(clone, publicKeyString, resourceID):
+    """
+    Compare the clone against the metadata, perform validation.
+    
+    @return a boolean, indicating if the clone is valid
+    """
+    
+    if clone.resourceID() != resourceID:
+        # an invalid clone
+        log.debug("iterateClones: " + `clone` + " wrong resource ID")
+        log.debug("expected: " + `resourceID`)
+        log.debug("found: " + `clone.resourceID()`)
+        return False
+        
+    if clone.publicKeyString() != publicKeyString:
+        # an invalid clone
+        log.debug("iterateClones: " + `clone` + " wrong public key")
+        log.debug("expected: " + publicKeyString)
+        log.debug("found: " + clone.publicKeyString())
+        return False
+        
+    if not clone.validate():
+        # an invalid clone
+        log.debug("iterateClones: " + `clone` + " invalid signature")
+        return False
+    
+    return True
+
+
+def cloneList(cloneSeedList, publicKeyString, resourceID):
+    """
+    @return an iterable over _unique_ (clone, reachable) pairs
+    
+    @see accessible
+    """
+    
+    validate = lambda clone: acceptable(clone, publicKeyString, resourceID)
+    
+    toVisit = copy.copy(cloneSeedList)
+    visited = []
+    
+    while len(toVisit) != 0:
+        
+        # pop the next clone from the queue
+        cc = toVisit[0]
+        log.debug("inspecting clone: " + `cc`)
+        toVisit = toVisit[1:]
+    
+        if cc in visited:
+            # we have already looked at this clone -- don't bother with it
+            log.debug("iterateClones: " + `cc` + " already visited, ignoring")
+            continue
+
+        (cc, acc) = accessible(cc)
+
+        # otherwise, mark the clone as checked and proceed
+        visited.append(cc)
+        
+        if acc and not validate(cc):
+            log.debug("ignoring bad clone: " + `cc`)
+            continue
+        
+        toVisit += cc.cloneList()        
+        yield (cc, acc)
+    
+    raise StopIteration
+
+
+def cloneListPartitionReachable(cl = []):
+    """
+    Partition a list of (clone, reachable) pairs as produced by cloneList into a pair of two lists,
+    the first consisting of those that are reachable, the second consisting of those that are unreachable.
+    
+    @see cloneList
+    """
+    reachable = []
+    unreachable = []
+    for (clone, reach) in cl:
+        if reach:
+            reachable.append(clone)
+        else:
+            unreachable.append(clone)
+            
+    return (reachable, unreachable)
+
+def orderByRevision(cl):
+    """
+    Order a list of clones by their revision number. We do this by first sorting the list, then
+    using groupBy to produce a list of lists, the latter containing clones with the same revision number.
+    
+    Note the following about itertools groupBy (from http://docs.python.org/lib/itertools-functions.html):
+    
+    The returned group is itself an iterator that shares the underlying iterable with groupby(). 
+    Because the source is shared, when the groupby object is advanced, the previous group is no longer visible. 
+    So, if that data is needed later, it should be stored as a list:
+
+    groups = []
+    uniquekeys = []
+    for k, g in groupby(data, keyfunc):
+        groups.append(list(g))      # Store group iterator as a list
+        uniquekeys.append(k)
+    
+    @return a list of lists of clones, grouped by revision number
+    """
+    def rev(clone):
+        return clone.revision()
+    
+    def cmpRev(cloneA, cloneB):
+        return cmp(cloneA.revision(), cloneB.revision())
+    
+    # the clones, highest revision first
+    cl = reversed(sorted(cl, cmpRev))
+    
+    groups = []
+    for k, g in itertools.groupby(cl, rev):
+        groups.append(list(g))      # Store group iterator as a list
+        
+    return groups
+    
+    
+    
+
 def iterateClones(cloneSeedList, publicKeyString, resourceID):
     """
     get all the clones of the (valid) clones we have already looked at
@@ -44,95 +167,26 @@ def iterateClones(cloneSeedList, publicKeyString, resourceID):
     @rtype ([Clone], [Clone])
     @return a tuple of ([the list of valid clones], [the list of checked clones])
     """  
-    toVisit = copy.copy(cloneSeedList)
-    visited = []
     cl = CloneLists()
-    revision = 0
     
-    while len(toVisit) != 0:
-        # there are clones that we need to inspect
-        
-        # pop the next clone from the queue
-        cc = toVisit[0]
-        log.debug("inspecting clone: " + `cc`)
-        toVisit = toVisit[1:]
-        
-        if cc in visited:
-            # we have already looked at this clone -- don't bother with it
-            log.debug("iterateClones: " + `cc` + " already visited, ignoring")
-            continue
-               
-        # otherwise, mark the clone as checked and proceed
-        visited.append(cc)
-        
-        if not cc.ping():
-            log.debug("iterateClones: clone " + `cc` + " not reachable, ignoring")
-            cl.unreachable.append(cc)
-            continue
-        
-        cc = cc.checkForRedirect()
-        
-        if not cc.exists():
-            log.debug("iterateClones: resource " + `cc.path` + " not found on host " + `cc`)
-            cl.bad.append(cc)
-            continue
-        
-        if cc.resourceID() != resourceID:
-            # an invalid clone
-            log.debug("iterateClones: " + `cc` + " wrong resource ID")
-            log.debug("expected: " + `resourceID`)
-            log.debug("found: " + `cc.resourceID()`)
-            cl.bad.append(cc)
-            continue
-        
-        if cc.publicKeyString() != publicKeyString:
-            # an invalid clone
-            log.debug("iterateClones: " + `cc` + " wrong public key")
-            log.debug("expected: " + publicKeyString)
-            log.debug("found: " + cc.publicKeyString())
-            cl.bad.append(cc)
-            continue
-        
-        if not cc.validate():
-            # an invalid clone
-            log.debug("iterateClones: " + `cc` + " invalid signature")
-            cl.bad.append(cc)
-            continue
-        
-        rr = cc.revision()
-        
-        if rr < revision:
-            # too old
-            log.debug("iterateClones: " + `cc` + " too old: " + `rr` + " < " + `revision`)
-            if cc not in cl.old:
-                cl.old.append(cc)
-            continue
-        
-        if rr > revision:
-            # hah! the clone is newer than anything
-            # we've seen so far. all the clones we thought
-            # were good are in fact bad.
-            log.debug("iterateClones: " + `cc` + " very new: " + `rr` + " > " + `revision`)
-            cl.old.extend(cl.good)
-            cl.good = []
-            revision = rr
-        
-        # we only arrive here if the clone is valid and sufficiently new
-        cl.good.append(cc)
-        log.debug("iterateClones: adding good clone: " + `cc`)
-        log.debug(`cc.cloneList()`)
-        toVisit += cc.cloneList()
-        
-        
+    notBadClones = cloneList(cloneSeedList, publicKeyString, resourceID)
+    (goodClones, unreachableClones) = cloneListPartitionReachable(notBadClones)
+    
+    cl.unreachable = unreachableClones
+    
+    orderedGoodClones = [oc for oc in orderByRevision(goodClones)]
+    if len(orderedGoodClones) > 0:
+        # the good clones are the newest clones
+        cl.good = [gc for gc in orderedGoodClones[0]]
+    for gc in orderByRevision(goodClones)[1:]:
+        # append the rest to the old clones
+        cl.old.extend(gc)
 
-    log.info("iterateClones: good clones: " + `cl.good`)
-    log.info("iterateClones: bad clones: " + `cl.bad`)
-    
     return cl
     
 def eliminateSelfReferences(clones):
     selfReferences = ["localhost", "127.0.0.1", AngelConfig.get("maintainer","nodename")]
-    return [cc for cc in clones if cc.host not in selfReferences] 
+    return [cc for cc in clones if cc.host not in selfReferences]
 
 def clonesToStore(goodClones, unreachableClones):
     """
