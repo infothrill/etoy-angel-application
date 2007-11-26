@@ -19,6 +19,22 @@ class CloneLists(object):
         self.unreachable = []
         self.bad = []
 
+def accessible(clone):
+    """
+    Check if the clone is reachable, resolve redirects.
+    """
+    if not clone.ping():
+        log.debug("iterateClones: clone " + `clone` + " not reachable, ignoring")
+        return (clone, False)
+        
+    clone = clone.checkForRedirect()
+        
+    if not clone.exists():
+        log.debug("iterateClones: resource " + `clone.path` + " not found on host " + `clone.host`)
+        return (clone, False)
+    
+    return (clone, True)
+
 def iterateClones(cloneSeedList, publicKeyString, resourceID):
     """
     get all the clones of the (valid) clones we have already looked at
