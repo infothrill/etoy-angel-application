@@ -103,7 +103,7 @@ class AngelLogTwistedFilter(Filter):
             return True
 
 
-def initializeLogging(appname = "default", handlers = []):
+def initializeLogging(appname = "default", handlers = ['console']):
     """
     This is the single-step routine to initialize the logging system.
     """
