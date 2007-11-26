@@ -250,13 +250,16 @@ def cloneHandler(property, store, request):
         failWith("Received malformed clone property:" + `property` + ".")
         
     newClone = newClones[0]
-    
+
+    newClone = pingBack(newClone, request)
+
+    # check if this clone is already registered _after_ doing the potential
+    # IP resolution    
     if newClone in residentClones:
         log.info("clone %s already registered." % `newClone`)
         # nothing needs to be done, pretend everything is fine
         return responsecode.OK
     
-    newClone = pingBack(newClone, request)
     if not newClone:
         error = "Can't connect to you. I will ignore you."
         response = StatusResponse(responsecode.BAD_REQUEST, error)
