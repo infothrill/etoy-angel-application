@@ -12,7 +12,7 @@ class CollectTest(unittest.TestCase):
         assert acc
         assert cc == clone
         
-        clone2 = Clone("afadsf.net")
+        clone2 = Clone("sample.invalid")
         (cc, acc) = collect.accessible(clone2)
         assert False == acc
         assert cc == clone2
