@@ -93,7 +93,7 @@ def cloneList(cloneSeedList, publicKeyString, resourceID):
         try:
             (cc, acc) = accessible(cc)
         except CloneError, e:
-            errorMessage = "Failure on clone inspection: " + `e` + " Ignoring: " + cc
+            errorMessage = "Failure on clone inspection: " + `e` + " Ignoring: " + `cc`
             log.warn(errorMessage)
             # otherwise, mark the clone as checked and proceed (looking forward to the finally of python2.5)
             visited.append(cc)           
