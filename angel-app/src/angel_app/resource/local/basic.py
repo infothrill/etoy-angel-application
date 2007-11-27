@@ -181,7 +181,7 @@ class Basic(DAVFile, Resource):
         childLinks = childLink.parseChildren(self.childLinks())
         names = [cc.name for cc in childLinks]
         childPaths = [os.sep.join([self.fp.path, nn]) for nn in names]
-        childResources = [Basic(path) for path in childPaths]
+        childResources = [self.createSimilarFile(path) for path in childPaths]
         return childResources
 
     def render(self, req):

@@ -131,6 +131,9 @@ class BasicResourceTest(LocalResourceTest):
         """
         assert self.testDirectory.childLinks().qname() == Children.qname()
     
+    def testChildren(self):
+        assert type(self.testDirectory) == type(self.testDirectory.children()[0])
+    
     def testStream(self):
         """
         @return: an object that minimally supports the read() method, which in turn returns the stream contents as a string.
