@@ -12,6 +12,9 @@ import time
 # twisted imports
 from twisted.web2 import resource, http, http_headers
 
+from angel_app.config import config
+nodename = config.getConfig().get("maintainer","nodename")
+
 def formatFileSize(size):
     if size < 1024:
         return '%i' % size
@@ -128,10 +131,10 @@ class DirectoryLister(resource.Resource):
             <title>ANGEL APPLICATION: %s</title>
             <link href="http://missioneternity.org/files/m221e.css" rel="stylesheet" type="text/css" media="all" />
         <style type="text/css">
-          .even-dir { background-color: #eeeeee }
-          .even { background-color: #eeeeee }
-          .odd-dir {background-color: #ffffff }
-          .odd { background-color: #ffffff }
+          .even-dir { background-color: #ffffff }
+          .even { background-color: #ffffff }
+          .odd-dir {background-color: #eeeeee }
+          .odd { background-color: #eeeeee }
           th { white-space:nowrap; text-align:left; padding-right: 20px;}
           td { vertical-align: top; }
           div { margin-top: 20px; }
@@ -144,6 +147,7 @@ class DirectoryLister(resource.Resource):
         
         <div class="directory-listing">       
         <h1><a href="http://angelapp.missioneternity.org/">ANGEL APPLICATION</a>: %s</h1>""" % (title, linkList)
+        s += "<div> Running on node: " + nodename + "</div>"
         s += "<div> Clones: " + formatClones(self.path) + "</div>"
         s+='<div><table width="100%">'
         s+="<tr><th>Filename</th><th>Size</th><th>Last Modified</th><th>File Type</th><th>Clones</th></tr>"
