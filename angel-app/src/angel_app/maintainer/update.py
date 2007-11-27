@@ -105,5 +105,10 @@ def updateResource(af):
         log.info("no valid clones found for " + af.fp.path)
     else:
         updateResourceFromClones(af, cloneLists.good)
-        
-    storeClones(af, cloneLists.good, cloneLists.old + cloneLists.unreachable)
+
+    if af.exists():        
+        storeClones(af, cloneLists.good, cloneLists.old + cloneLists.unreachable)
+        return True
+    else:
+        log.warn("update did not create local resource for " + af.fp.path)
+        return False
