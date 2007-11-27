@@ -9,7 +9,10 @@ import os
 from angel_app.resource.local.basic import Basic
 
 getConfig().container['common']['loglevel'] = 'DEBUG' # global loglevel
-#del getConfig().container['logfilters'] # get rid of filters
+try:
+    del getConfig().container['logfilters']
+except:
+    pass
 
 initializeLogging()
 
