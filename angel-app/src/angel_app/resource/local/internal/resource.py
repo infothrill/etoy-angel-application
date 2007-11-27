@@ -232,6 +232,7 @@ class Crypto(
         nc = [cc for cc in oc if not str(cc.childOfType(rfc2518.HRef)) == urllib.quote(self.resourceName())]
         
         pdp.set(elements.Children(*nc))
+        pp.bumpRevisionNumber()
         pp.seal()
         log.debug("exiting _deRegisterWithParent")
     
@@ -256,9 +257,10 @@ class Crypto(
         ce = elements.Children(*nc)
         
         # add to parent and seal parent             
-        dummypdp = self.parent().deadProperties().set(ce)  
+        dummypdp = self.parent().deadProperties().set(ce)
+        
+        self.parent().bumpRevisionNumber()
         self.parent().seal()          
-    
         
         
     def _changeRegister(self, request):
