@@ -5,6 +5,7 @@ Routines for obtaining a best guess about the current replication state of a clo
 
 from angel_app.config import config
 from angel_app.log import getLogger
+from angel_app.resource.remote.exceptions import CloneError
 import copy
 import itertools
 import random
