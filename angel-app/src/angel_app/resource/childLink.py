@@ -1,5 +1,6 @@
-from twisted.web2.dav import davxml
 from angel_app import elements
+from angel_app.contrib import uuid
+from twisted.web2.dav import davxml
 import urllib
 
 class ChildLink(object):
@@ -14,7 +15,7 @@ class ChildLink(object):
         self.name = urllib.unquote(str(url))
         
         self.id = childElement.childOfType(elements.ResourceID)
-        self.uuid = childElement.childOfType(elements.UUID)
+        self.uuid = uuid.UUID(str(childElement.childOfType(elements.UUID)))
         
         return self
     

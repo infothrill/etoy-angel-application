@@ -26,14 +26,16 @@ class CollectTest(unittest.TestCase):
         """
         polPath = os.sep.join([repositoryPath, "pol"])
         polResource = Basic(polPath)
-        assert False == client.isMountOfMount(polResource)
+        #print polResource.children()
+        #print polResource.childLinks().toxml()
         polM221ePath = os.sep.join([polPath, "MISSION ETERNITY"])
         polM221eResource = Basic(polM221ePath)
-        print "writability: ", polM221eResource.isWritableFile()
-        print "parent writability: ", polM221eResource.parent().isWritableFile()
-        print "public key string: ", polM221eResource.publicKeyString()
-        print "parent public key string: ", polM221eResource.parent().publicKeyString()
-        assert True == client.isMountOfMount(polM221eResource)
-        print polResource.children()
+        #print "writability: ", polM221eResource.isWritableFile()
+        #print "parent writability: ", polM221eResource.parent().isWritableFile()
+        #print "public key string: ", polM221eResource.publicKeyString()
+        #print "parent public key string: ", polM221eResource.parent().publicKeyString()
+        assert polM221eResource not in client.getChildren(polResource)
+        print client.getChildren(polResource)
+
 
         

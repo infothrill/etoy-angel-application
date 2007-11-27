@@ -1,11 +1,13 @@
-import time
-
 from angel_app.config import config
 from angel_app.graph import graphWalker
 from angel_app.log import getLogger
 from angel_app.maintainer import sync
 from angel_app.maintainer import update
+from angel_app.resource import childLink
 from angel_app.resource.local.basic import Basic
+import os
+import time
+
 
 log = getLogger(__name__)
 AngelConfig = config.getConfig()
@@ -37,26 +39,21 @@ def newSleepTime(currentSleepTime, startTime):
         if sleepTime > maxSleepTime:
             sleepTime = maxSleepTime
     return sleepTime
-
-def isMountOfMount(resource):
-    """
-    We don't replicate other people's mount points (to avoid circular mounts).
-    @return True if this resource is a mount point of a mount point, false otherwise.
-    """
-    if resource.isWritableFile() or resource.parent().isWritableFile():
-        # either the resource or its parent belong to us. no mount of a mount
-        return False
-    elif resource.publicKeyString() == resource.parent().publicKeyString():
-        return False
-
-    return True
        
 def getChildren(resource):
     """
     @return the children of the resource which are not indirectly mounted.
     """
-    cleanChildren = [rr for rr in resource.children() if not isMountOfMount(rr)]
-    return cleanChildren
+    if resource.isWritableFile():
+        # either the resource belongs to us. no mount of a mount, none of the 
+        # chilren are mounts of mounts, simply return all children
+        return resource.children()
+    else:
+        # return only those children for which the key UUID is equal to
+        # the current resource's key UUID
+        parentUuid = resource.keyUUID()
+        childLinks = childLink.parseChildren(resource.childLinks())
+        return [Basic(os.sep.join([resource.fp.path, cl.name])) for cl in childLinks if cl.uuid == parentUuid]
 
 def traverseResourceTree(sleepTime):
     """
