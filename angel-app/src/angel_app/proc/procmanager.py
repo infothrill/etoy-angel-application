@@ -31,9 +31,12 @@ legalMatters = """
 author = """Paul Kremer, 2007"""
 
 import os
+import sys
 
 from twisted.internet.protocol import ProcessProtocol
+import twisted.internet.error.ProcessExitedAlready
 from twisted.internet import reactor
+
 from angel_app.log import getLogger
 
 log = getLogger(__name__)
@@ -48,7 +51,6 @@ def startProcesses(procsToStart = ['provider', 'presenter', 'maintainer']):
 
     @param privateMode: boolean, if True, will not start the "presenter" 
     """
-    import sys
     procManager = ExternalProcessManager()
     procManager.registerProcessStarter(reactor.spawnProcess)
     procManager.registerDelayedStarter(reactor.callLater) 
@@ -196,7 +198,6 @@ class ExternalProcessManager(object):
         """
         Method to physically stop the given process in synchronous fashion.
         """
-        import twisted.internet.error.ProcessExitedAlready
         self.log.info("stopping process %s", processObj.protocol)
         if not processObj.transport == None:
             self.log.debug("trying to kill process")
