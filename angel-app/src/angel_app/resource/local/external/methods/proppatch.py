@@ -42,6 +42,7 @@ from twisted.internet.defer import deferredGenerator, waitForDeferred
 from angel_app import elements
 from angel_app.log import getLogger
 from angel_app.resource.remote.clone import Clone
+from angel_app.maintainer import collect
 
 log = getLogger(__name__)
 
@@ -78,7 +79,7 @@ class ProppatchMixin:
         
         dp = self.deadProperties()
 
-        propertyResponses = [(property, cloneHandler(property, dp, request))
+        propertyResponses = [(property, cloneHandler(property, dp, request, self))
                              for property in requestProperties]
         
         for (property, response) in propertyResponses:
@@ -188,7 +189,7 @@ def isIPv6(ip_string):
     return True
 
 
-def pingBack(clone, request):  
+def pingBack(clone, request, publicKeyString, resourceID):  
     """
     Determine if the clone as advertised in the PROPPATCH request is reachable.
     
@@ -205,25 +206,21 @@ def pingBack(clone, request):
         # default to the request's originating ip address and try again.
         address = str(request.remoteAddr.host)
 
-        #if isIPv6(address):
-            # If it's an IPv6 address, we need to add '[address]' around the IP address to generate
-            # a valid url.
-            # Also, we need to check if ipv6 is enabled before trying to connect 
-            #if AngelConfig.getboolean("provider", "useIPv6"):
-            #    address = "[" + address + "]"
-            #else:
-                # we can't handle this (according to config), so don't bother trying
-            #    return False
             
         clone = Clone(address, clone.port, clone.path)
             
-        #clone.host = address
         # here, we should still expect to be fooled by NATs etc.
-        if not clone.ping() or not clone.exists():
+        (clone, access) = collect.accessible(clone)
+        if not access:
             error = "Invalid PROPPATCH request. Can't connect to clone at: " + `clone`
             log.info(error)
             return None
-        
+    
+    if not collect.acceptable(clone, publicKeyString, resourceID):
+        error = "Invalid PROPPATCH request. Invalid data for clone at: " + `clone`
+        log.info(error)
+        return None  
+          
     return clone 
 
 def failWith(errorMessage = ""):
@@ -231,7 +228,7 @@ def failWith(errorMessage = ""):
     response = StatusResponse(responsecode.BAD_REQUEST, errorMessage)
     raise HTTPError(response)
             
-def cloneHandler(property, store, request):
+def cloneHandler(property, store, request, resource):
     """
     The host from which the request originates must have access to a local clone,
     store if we want.
@@ -242,8 +239,8 @@ def cloneHandler(property, store, request):
     else:
         residentClones = []
         
-    if len(residentClones) >= maxclones: 
-        failWith("Too many clones. Not adding.")
+    #if len(residentClones) >= maxclones: 
+    #    failWith("Too many clones. Not adding.")
     
     newClones = clonesFromElement(property)
     if len(newClones) == 0:      
@@ -251,7 +248,7 @@ def cloneHandler(property, store, request):
         
     newClone = newClones[0]
 
-    newClone = pingBack(newClone, request)
+    newClone = pingBack(newClone, request, resource.publicKeyString(), resource.resourceID())
     
     if not newClone:
         error = "Can't connect to you. I will ignore you."
