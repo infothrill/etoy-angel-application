@@ -25,13 +25,13 @@ def accessible(clone):
     @return a tuple of (Clone, bool), where Clone is the (redirected) clone, and bool indicates whether it's reachable.
     """
     if not clone.ping():
-        log.debug("iterateClones: clone " + `clone` + " not reachable, ignoring")
+        log.debug("clone " + `clone` + " not reachable, ignoring")
         return (clone, False)
         
     clone = clone.checkForRedirect()
         
     if not clone.exists():
-        log.debug("iterateClones: resource " + `clone.path` + " not found on host " + `clone.host`)
+        log.debug("resource " + `clone.path` + " not found on host " + `clone.host`)
         return (clone, False)
     
     return (clone, True)
