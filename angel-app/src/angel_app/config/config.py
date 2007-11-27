@@ -83,7 +83,7 @@ def getDefaultConfigObj():
     initialsleep = 1 # it's nice to be fast on the first traversal
     treetraversaltime = 86400 # we want a tree traversal to take about one day after the initial sync
     maxsleeptime = 100
-    nodename = localhost
+    nodename = unknown.invalid
     
     [gui]
     autostartp2p = True
