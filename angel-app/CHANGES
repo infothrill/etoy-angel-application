@@ -1,3 +1,9 @@
+0.3.1 November 27 2007
+ * rolling clone list
+ * optimizations in maintenance loop
+ * test cases
+ * minor fixes
+
 0.3.0 November 25 2007
  * kicked out the twisted library from source tree
  * use netaddress for URI parsing
