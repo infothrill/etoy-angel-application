@@ -34,7 +34,7 @@ import os
 import sys
 
 from twisted.internet.protocol import ProcessProtocol
-import twisted.internet.error.ProcessExitedAlready
+import twisted.internet.error
 from twisted.internet import reactor
 
 from angel_app.log import getLogger
