@@ -6,7 +6,7 @@ from angel_app.maintainer import collect
 from angel_app.resource.remote.clone import Clone
 import unittest
 
-#getConfig().container['common']['loglevel'] = 'DEBUG' # global loglevel
+getConfig().container['common']['loglevel'] = 'DEBUG' # global loglevel
 #del getConfig().container['logfilters'] # get rid of filters
 
 initializeLogging()
