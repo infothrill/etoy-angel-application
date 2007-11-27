@@ -17,7 +17,7 @@ from angel_app.resource.resource import Resource
 from angel_app.resource.remote.exceptions import CloneError
 from angel_app.resource.remote.exceptions import CloneNotFoundError
 from netaddress.rfc3986 import path_absolute
-
+from pyparsing import ParseException
 log = getLogger(__name__)
 
 
@@ -115,7 +115,7 @@ class Clone(Resource):
             # for the time being, we require it's an absolute path
             try:
                 path_absolute.parseString(redirectlocation)
-            except ParseError:
+            except ParseException:
                 errorMessage = "Invalid redirect. Must be an absolute path. Found: " + redirectlocation
                 raise CloneError(errorMessage)
             redirectClone = Clone(self.host, self.port, redirectlocation)
