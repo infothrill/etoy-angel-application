@@ -16,6 +16,7 @@ from angel_app.resource.resource import Resource
 
 from angel_app.resource.remote.exceptions import CloneError
 from angel_app.resource.remote.exceptions import CloneNotFoundError
+from netaddress.rfc3986 import path_absolute
 
 log = getLogger(__name__)
 
@@ -111,6 +112,12 @@ class Clone(Resource):
             redirectlocation = response.getheader("location")
             # TODO: how to verify/validate redirectlocation ?
             # RFCs state it should be URI, but we gat a path only
+            # for the time being, we require it's an absolute path
+            try:
+                path_absolute.parseString(redirectlocation)
+            except ParseError:
+                errorMessage = "Invalid redirect. Must be an absolute path. Found: " + redirectlocation
+                raise CloneError(errorMessage)
             redirectClone = Clone(self.host, self.port, redirectlocation)
             log.info("Redirecting to: %s" % `redirectClone`)
             return redirectClone

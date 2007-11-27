@@ -27,7 +27,7 @@ def accessible(clone):
     if not clone.ping():
         log.debug("clone " + `clone` + " not reachable, ignoring")
         return (clone, False)
-        
+      
     clone = clone.checkForRedirect()
         
     if not clone.exists():
@@ -89,7 +89,14 @@ def cloneList(cloneSeedList, publicKeyString, resourceID):
             log.debug("iterateClones: " + `cc` + " already visited, ignoring")
             continue
 
-        (cc, acc) = accessible(cc)
+        try:
+            (cc, acc) = accessible(cc)
+        except CloneError, e:
+            errorMessage = "Failure on clone inspection: " + `e` + " Ignoring: " + cc
+            log.warn(errorMessage)
+            # otherwise, mark the clone as checked and proceed (looking forward to the finally of python2.5)
+            visited.append(cc)           
+            continue
 
         # otherwise, mark the clone as checked and proceed
         visited.append(cc)
