@@ -28,7 +28,7 @@ def accessible(clone):
     if not clone.ping():
         log.debug("clone " + `clone` + " not reachable, ignoring")
         return (clone, False)
-      
+
     clone = clone.checkForRedirect()
         
     if not clone.exists():
@@ -90,17 +90,20 @@ def cloneList(cloneSeedList, publicKeyString, resourceID):
             log.debug("iterateClones: " + `cc` + " already visited, ignoring")
             continue
 
+        # mark this clone as visited        
+        visited.append(cc) 
+
+        # here, we may receive a redirect, which may of course be broken and fail
         try:
             (cc, acc) = accessible(cc)
         except CloneError, e:
-            errorMessage = "Failure on clone inspection: " + `e` + " Ignoring: " + `cc`
-            log.warn(errorMessage)
-            # otherwise, mark the clone as checked and proceed (looking forward to the finally of python2.5)
-            visited.append(cc)           
+            errorMessage = "Failure on clone inspection: " + `e` + " (Invalid redirect?) Ignoring: " + `cc`
+            log.warn(errorMessage)          
             continue
 
-        # otherwise, mark the clone as checked and proceed
-        visited.append(cc)
+        # if a redirect happened, mark also the new clone as visited
+        if cc not in visited:
+            visited.append(cc)
         
         if acc and not validate(cc):
             log.debug("ignoring bad clone: " + `cc`)
@@ -189,6 +192,8 @@ def iterateClones(cloneSeedList, publicKeyString, resourceID):
     for gc in orderByRevision(goodClones)[1:]:
         # append the rest to the old clones
         cl.old.extend(gc)
+
+    log.info("good clones: " + `cl.good`)
 
     return cl
     
