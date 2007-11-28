@@ -11,6 +11,7 @@ from twisted.python.filepath import FilePath
 from twisted.web2.dav.element import rfc2518
 from twisted.web2.dav.static import DAVFile
 import os
+import shutil
 import urllib
 
 log = getLogger(__name__)
@@ -77,6 +78,16 @@ class Basic(DAVFile, Resource):
             return self.referenced()
         else:
             return True
+        
+    def remove(self):
+        # security check
+        if self.isRepositoryRoot():
+            raise Exception("Cowardly refusing to delete the root directory.")
+        
+        if self.isCollection():    
+            shutil.rmtree(self.fp.path, ignore_errors = True)
+        else:
+            os.remove(self.fp.path)
 
     def garbageCollect(self):
         """

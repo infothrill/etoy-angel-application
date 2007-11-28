@@ -92,6 +92,22 @@ def discoverPublicKey(af):
         from angel_app.resource.local.propertyManager import getOnePublicKey
         return getOnePublicKey(af)
 
+def removeUnreferencedChildren(resource):
+    """
+    Remove all child resources that on the file system that are not listed in the
+    parent's child list. To be called for _existing_ resources _after_ a completed
+    update.
+    """
+    # the resources linked in the metadata
+    linkedChildren = dict([(cc.resourceName(), cc) for cc in resource.children()]) 
+    # the child resources found on the file system
+    storedChildren = resource.findChildren("1") 
+    for (child, path) in storedChildren:
+        if not linkedChildren.has_key(child.resourceName()):
+            log.info("unlinking: " + `child`)
+            child.remove()
+    
+
 def updateResource(af):
     """
     Inspect the resource, updating it if necessary.
@@ -108,6 +124,7 @@ def updateResource(af):
 
     if af.exists():        
         storeClones(af, cloneLists.good, cloneLists.old + cloneLists.unreachable)
+        removeUnreferencedChildren(af)
         return True
     else:
         log.warn("update did not create local resource for " + af.fp.path)

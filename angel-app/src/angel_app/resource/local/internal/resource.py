@@ -6,7 +6,6 @@ from angel_app.resource.local.internal.methods import copy, delete, lock, mkcol,
 from twisted.web2 import stream
 from twisted.web2.dav.element import rfc2518
 import os
-import shutil
 import urllib
 
 log = getLogger(__name__)
@@ -285,18 +284,12 @@ class Crypto(
         return ccCallBack
         
     def remove(self):
-        # security check
-        if self.isRepositoryRoot():
-            raise Exception("Cowardly refusing to delete the root directory.")
 
         if self.isWritableFile():
             self._deRegisterWithParent()
             # else we don't own this, so can't
-        
-        if self.isCollection():    
-            shutil.rmtree(self.fp.path, ignore_errors = True)
-        else:
-            os.remove(self.fp.path)
+
+        super(Crypto, self).remove()
     
     def update(self, recursionLimit = 0):
         
