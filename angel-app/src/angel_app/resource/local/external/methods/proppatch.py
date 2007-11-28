@@ -261,5 +261,9 @@ def cloneHandler(property, store, request, resource):
         log.info("clone %s already registered." % `newClone`)
         # nothing needs to be done, pretend everything is fine
         return responsecode.OK
+    
+    newClones = [newClone] + residentClones
+    if len(newClones) > maxclones:
+        newClones = newClones[:maxclones]
             
-    return defaultHandler(clonesToElement(residentClones + [newClone]), store)     
+    return defaultHandler(clonesToElement(newClones), store)     
