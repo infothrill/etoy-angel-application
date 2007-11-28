@@ -393,6 +393,13 @@ class AngelMainFrameBase(wx.Frame):
         """
         platformwrap.showURLInBrowser(self.TECHNICALREPORT_URL)
 
+onShelLoad = [
+              "from angel_app.config.config import getConfig",
+              "cc = getConfig()",
+              "rootPath = cc.get('common', 'repository')",
+              "from angel_app.resource.local.internal.resource import Crypto",
+              "root = Crypto(rootPath)"
+              ]
     
 class AngelMainNoteBook(wx.Notebook):
     def __init__(self, parent, id, statuslog):
@@ -422,6 +429,8 @@ class AngelMainNoteBook(wx.Notebook):
         intro = 'ANGEL SHELL %s - EVERYTHING YOU NEED FOR BACKUP' % py.version.VERSION
         win = py.shell.Shell(self, -1, introText=intro)
         self.AddPage(win, _('Angelshell'))
+        for command in onShelLoad:
+            win.Execute(command)
 
 class AngelMainWindow(AngelMainFrameBase):
     def __init__(self, parent, id, title):
