@@ -89,22 +89,6 @@ class Basic(DAVFile, Resource):
         else:
             os.remove(self.fp.path)
 
-    def garbageCollect(self):
-        """
-        @rtype boolean
-        @return true if the resource was deleted, false otherwise
-        """
-        if self.isRepositoryRoot():
-            # the root is never referenced
-            return False
-        
-        if os.path.exists(self.fp.path) and not self.exists():
-            log.info(self.fp.path + " not referenced by parent, deleting")
-            self.remove()
-            return True
-        else:
-            return False
-
     def isWritableFile(self):
         """
         A file is writable, if we're the owner of that file, i.e. if
