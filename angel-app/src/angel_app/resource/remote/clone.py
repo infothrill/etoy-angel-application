@@ -53,6 +53,9 @@ class Clone(Resource):
         # a path string. must be valid as part of an absolute URL (i.e. quoted, using "/")
         typed(path, '')
         self.path = path
+
+        # does this URI correspond to the result of a redirect (MOVED_PERMANENTLY)?
+        self.redirected = False
         
         self.updateRemote(HTTPRemote(self.host, self.port, self.path))
        
@@ -109,6 +112,11 @@ class Clone(Resource):
         response = self.remote.performRequest(method = "HEAD", body = "")
         if response.status == responsecode.MOVED_PERMANENTLY:
             log.info("Received redirect for clone: " + `self`)
+            
+            if self.redirected:
+                errMsg = "Guarding against multiple redirects for " + `self`
+                raise CloneError(errMsg)
+            
             redirectlocation = response.getheader("location")
             # TODO: how to verify/validate redirectlocation ?
             # RFCs state it should be URI, but we gat a path only
@@ -119,6 +127,7 @@ class Clone(Resource):
                 errorMessage = "Invalid redirect. Must be an absolute path. Found: " + redirectlocation
                 raise CloneError(errorMessage)
             redirectClone = Clone(self.host, self.port, redirectlocation)
+            redirectClone.redirected = True
             log.info("Redirecting to: %s" % `redirectClone`)
             return redirectClone
         else:
@@ -133,7 +142,7 @@ class Clone(Resource):
         if type(self) != type(clone):
             return False
         
-        log.debug("clones %s %s are equal: %s" % (self.toURI(), clone.toURI(), `self.toURI() == clone.toURI()`))
+        #log.debug("clones %s %s are equal: %s" % (self.toURI(), clone.toURI(), `self.toURI() == clone.toURI()`))
         return self.toURI() == clone.toURI()
     
     def __repr__(self):
