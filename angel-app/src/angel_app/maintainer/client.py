@@ -81,6 +81,11 @@ def maintenanceLoop():
         # register with the tracker
         from angel_app.tracker.connectToTracker import connectToTracker
         dummystats = connectToTracker()
+        
+        # check all mount points
+        from angel_app.maintainer import mount
+        mount.addMounts()
+        
         traverseResourceTree(sleepTime)   
         sleepTime = newSleepTime(sleepTime, startTime)
 

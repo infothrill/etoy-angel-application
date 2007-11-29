@@ -1,7 +1,7 @@
 import wx
 import sys
 
-from angel_app.admin.initializeRepository import getMountTab
+from angel_app.maintainer.mount import getMountTab
 from angel_app.config.config import getConfig
 from angel_app.log import getLogger
 import  wx.lib.mixins.listctrl  as  listmix

@@ -44,7 +44,7 @@ class PropertyManager(object):
         """
         propertyDoc = self._propertiesDocument(properties)
         
-        okp =  okProperties(self, propertyDoc)
+        okp =  okProperties(propertyDoc)
         
         # cache the properties for later re-use    
         for pp in okp.children:
@@ -138,9 +138,9 @@ def makePropfindRequestBody(properties):
                 
                 
 
-def okProperties(clone, response):
+def okProperties(response):
     """
-    In addition to the validation carrid out by propertiesFromPropfindResponse,    
+    In addition to the validation carried out by propertiesFromPropfindResponse,    
     assert that the request succeeded for all requested properties. Raise a KeyError otherwise.
     
     @param the response body
@@ -155,7 +155,7 @@ def okProperties(clone, response):
         notOKCodes = [kk for kk in propertiesByResponseCode.keys() if kk != responsecode.OK]
         notOKResponses = [propertiesByResponseCode[kk] for kk in notOKCodes]
         errorProperties = "\n".join([rr.toxml() for rr in notOKResponses])
-        raise KeyError, "Clone: " + `clone` + "Property requests failed for: " + errorProperties
+        raise KeyError, "Property requests failed for: " + errorProperties
     
     # no requests failed, return the OK responses
     return propertiesByResponseCode[responsecode.OK]
