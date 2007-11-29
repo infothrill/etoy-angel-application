@@ -112,7 +112,7 @@ the storage process by embedding it into a social context. Unlike freenet,
 the primary goal of the ANGEL APPLICATION is not anonymity, but data preservation.
 </p>
 <p>
-This node is hosted on on %s. 
+This node is hosted on %s. 
 </p>
 """ % (linkList, hostName)
 
