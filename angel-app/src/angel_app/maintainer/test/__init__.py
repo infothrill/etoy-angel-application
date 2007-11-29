@@ -1,1 +1,1 @@
-all = ["clientTest", "collectTest"]
+all = ["clientTest", "collectTest", "mountTest"]
