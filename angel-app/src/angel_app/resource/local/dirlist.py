@@ -80,7 +80,7 @@ def showFile(even, link, linktext, size, lastmod, type):
 
 def showFileListing(data_listing):
     s = """
-<div id="bilder" rel="m221econtent">
+<div id="bilder">
     <div style="line-height: 1.6em; padding: 0 0 0 35px; margin:0 0 10px 0;">
         <table  style="background-color: #ffffff;" width="480px;">
         <tr>
