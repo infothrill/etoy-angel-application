@@ -29,7 +29,7 @@ def formatClones(path):
     from angel_app.resource.local import basic
     
     try:
-        return ", ".join([              
+        return ", \n".join([              
                    '<a href="' + `clone`+ '">' + clone.host + '</a>'
                    for clone in basic.Basic(path).clones()])
     except:
@@ -40,6 +40,92 @@ def getStatistics():
     from angel_app.tracker.connectToTracker import connectToTracker
     stats = connectToTracker()
     return "<br/>".join(stats.split("\n"))
+
+def showStatistics():
+    return "<h2>Global Network</h2><p>The following global statistics are available for the ANGEL APPLICATION network: <br/>" + getStatistics() + "</p>" 
+
+def htmlHead(title):
+    return """
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <title>ANGEL APPLICATION: %s</title>
+    <link href="http://www.missioneternity.org/themes/m221e/css/main.css" rel="stylesheet" type="text/css" media="all" />
+    <link rel="shortcut icon" href="http://www.missioneternity.org/themes/m221e/buttons/m221e-favicon.ico" type="image/x-icon" />
+    <style type="text/css">
+        .even-dir { background-color: #ffffff }
+        .even { background-color: #ffffff }
+        .odd-dir {background-color: #eeeeee }
+        .odd { background-color: #eeeeee }
+        td { vertical-align: top; }
+        th { white-space:nowrap; text-align:left; padding-right: 20px;}
+    </style>
+</head>""" % title
+
+def showClones(path):
+    return "<h2>Resource Network</h2><p>Replicas of this resource have last been seen at the following locations: <br/>" + formatClones(path) + "</p>"
+
+def showFile(even, link, linktext, size, lastmod, type):
+    even = even and "even" or "odd"
+    s = """
+<tr class="%s">
+    <td>
+        <a href="%s">%s</a>
+    </td>
+    <td align="right">%s</td>
+    <td>%s</td>
+    <td>%s</td>
+</tr>
+""" % (even, link, linktext, size, lastmod, type)    
+    return s
+
+def showFileListing(data_listing):
+    s = """
+<div id="bilder" rel="m221econtent">
+    <div style="line-height: 1.6em; padding: 0 0 0 35px; margin:0 0 10px 0;">
+        <table  style="background-color: #ffffff;" width="480px;">
+        <tr>
+            <th>Filename</th>
+            <th>Size</th>
+            <th>Last Modified</th>
+            <th>File Type</th>
+        </tr>"""
+    even = False
+    for row in data_listing:
+        s += '\n' + showFile(even, row["link"], row["linktext"], row["size"], row["lastmod"], row["type"])
+        even = not even               
+    s += "\n</table></p></div>"
+    return s
+
+def showDirectoryListing(linkList):
+    return "<p>Directory listing for %s</p>" % linkList
+
+def showBlurb(linkList, hostName):
+    return """
+<p>%s</p>
+<p>
+You are viewing a directory listing of the ANGEL APPLICATION,
+an autonomous peer-to-peer file system developed for MISSION ETERNITY.
+</p>
+<p>
+Much like <a href="http://freenetproject.org/">freenet</a>, it decouples
+the storage process by embedding it into a social context. Unlike freenet,
+the primary goal of the ANGEL APPLICATION is not anonymity, but data preservation.
+</p>
+<p>
+This node is hosted on on %s. 
+</p>
+""" % (linkList, hostName)
+
+def showNavi():
+    return """
+<div id="topnavi">
+    <ul>
+        <li><a href="http://missioneternity.org/cult-of-the-dead/">MISSION ETERNITY</a></li>
+        <li><a href="http://missioneternity.org/data-storage/">DATA STORAGE</a></li>
+        <li><a href="http://missioneternity.org/angel-application/">ANGEL APPLICATION</a></li>
+    </ul>
+</div>
+"""
 
 class DirectoryLister(resource.Resource):
     def __init__(self, pathname, dirs=None,
@@ -117,7 +203,7 @@ class DirectoryLister(resource.Resource):
         for segment in pathSegments[1:]:
             accumulated += urllib.quote(segment) + "/"
             linkTargets.append(accumulated)
-        linkList = "Directory listing for " +'<a href="%s">%s</a>' % ("/", "/")  + \
+        linkList = '<a href="%s">%s</a>' % ("/", "/")  + \
             "/".join(['<a href="%s">%s</a>' % (linkTarget, pathSegment) 
                     for (linkTarget, pathSegment) in 
                     zip(linkTargets[1:], pathSegments[1:])
@@ -125,46 +211,28 @@ class DirectoryLister(resource.Resource):
     
         s= """<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
         "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-        <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
-        <head>
-            <meta http-equiv="content-type" content="text/html; charset=utf-8" />
-            <title>ANGEL APPLICATION: %s</title>
-            <link href="http://missioneternity.org/files/m221e.css" rel="stylesheet" type="text/css" media="all" />
-        <style type="text/css">
-          .even-dir { background-color: #ffffff }
-          .even { background-color: #ffffff }
-          .odd-dir {background-color: #eeeeee }
-          .odd { background-color: #eeeeee }
-          th { white-space:nowrap; text-align:left; padding-right: 20px;}
-          td { vertical-align: top; }
-          div { margin-top: 20px; }
-        </style>
-        </head><body style="margin-bottom: 50px;">
-        <div id="container"  style="width:650px; padding:30px 0px 0px 0px;">
-        <div style="text-align:right">
-            <a href="http://www.missioneternity.org/"><img style="border:0;" src="http://angelapp.missioneternity.org/moin/share/moin/htdocs/rightsidebar/img/m221e-batch-logo.jpg" alt="MISSION ETERNITY"></a>
-        </div>
-        
-        <div class="directory-listing">       
-        <h1><a href="http://angelapp.missioneternity.org/">ANGEL APPLICATION</a>: %s</h1>""" % (title, linkList)
-        s += "<div> Running on node: " + nodename + "</div>"
-        s += "<div> Clones: " + formatClones(self.path) + "</div>"
-        s+='<div><table width="100%">'
-        s+="<tr><th>Filename</th><th>Size</th><th>Last Modified</th><th>File Type</th><th>Clones</th></tr>"
-        even = False
-        for row in self.data_listing(request, None):
-            s+='<tr class="%s">' % (even and 'even' or 'odd',)
-            s+='\n<td><a href="%(link)s">%(linktext)s</a></td><td align="right">%(size)s</td><td>%(lastmod)s</td><td>%(type)s</td><td>%(clones)s</td></tr>' % row
-            even = not even
-                
-        CC_LICENSE = """
-        <div style="margin-top:20px">
-            <a rel="license" href="http://creativecommons.org/licenses/by-nc-nd/3.0/"><img alt="Copyright etoy.VENTURE association -- Creative Commons License" style="border-width:0" src="http://i.creativecommons.org/l/by-nc-nd/3.0/80x15.png" /></a>
-        </div>
-            """
-        s+="""</table></div>
-        <div style="margin-top:20px;">%s</div>
-        </div>%s</div></body></html>""" % (getStatistics(), CC_LICENSE)
+        <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">"""
+        s += htmlHead(title)
+        s += """
+        <body class="bg-still3">
+        <div id="metanavi"><a href="http://www.etoy.com/">etoy.CORPORATION</a> 2007</div>
+        <div id="content">
+        <h1 class="rechts">
+            <a href="http://www.missioneternity.org/">
+                <img src="http://www.missioneternity.org/themes/m221e/images/m221e-logo2-o.gif" alt="" border="0" />
+            </a>
+        </h1>
+              
+        <h1>Directory Listing</h1>"""
+        s += '\n' + showBlurb(linkList, nodename)
+        s += "\n<br/><br/>"     
+        s += showClones(self.path)
+        s += "\n<br/><br/>"  
+        s += showStatistics()
+        s += "\n</div>"
+        s += '\n' + showNavi()
+        s += showFileListing(self.data_listing(request, None))   
+        s += "\n</body></html>"
         response = http.Response(200, {}, s)
         response.headers.setHeader("content-type", http_headers.MimeType('text', 'html'))
         return response
