@@ -107,9 +107,10 @@ You are viewing a directory listing of the ANGEL APPLICATION,
 an autonomous peer-to-peer file system developed for MISSION ETERNITY.
 </p>
 <p>
-Much like <a href="http://freenetproject.org/">freenet</a>, it decouples
-the storage process by embedding it into a social context. Unlike freenet,
-the primary goal of the ANGEL APPLICATION is not anonymity, but data preservation.
+Much like <a href="http://freenetproject.org/">freenet</a>, it decouples the storage 
+process from the physical storage medium by embedding data in a social network. 
+Unlike freenet, the primary goal of the ANGEL APPLICATION is not anonymity, but 
+data preservation.
 </p>
 <p>
 This node is hosted on %s. 
