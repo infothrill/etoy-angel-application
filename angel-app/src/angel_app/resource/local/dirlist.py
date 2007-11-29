@@ -93,7 +93,7 @@ def showFileListing(data_listing):
     for row in data_listing:
         s += '\n' + showFile(even, row["link"], row["linktext"], row["size"], row["lastmod"], row["type"])
         even = not even               
-    s += "\n</table></p></div>"
+    s += "\n</table></div></div>"
     return s
 
 def showDirectoryListing(linkList):
