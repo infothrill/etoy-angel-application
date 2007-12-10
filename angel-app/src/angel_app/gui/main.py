@@ -414,10 +414,6 @@ class AngelMainNoteBook(wx.Notebook):
         self.statuslog = statuslog
 
         
-        win = welcome.WelcomePanel(self, statuslog = self.statuslog)
-        self.AddPage(win, _('Welcome'))
-
-        
         win = mounttab.MountsPanel(self, statuslog = self.statuslog)
         self.AddPage(win, _('Mounts'))
         
@@ -431,6 +427,10 @@ class AngelMainNoteBook(wx.Notebook):
         self.AddPage(win, _('Angelshell'))
         for command in onShelLoad:
             win.Execute(command)
+        
+        win = welcome.WelcomePanel(self, statuslog = self.statuslog)
+        self.InsertPage(0, win, _('Welcome'), select = True)
+
 
 class AngelMainWindow(AngelMainFrameBase):
     def __init__(self, parent, id, title):
@@ -461,7 +461,7 @@ class AngelMainWindow(AngelMainFrameBase):
         self.nb = AngelMainNoteBook(self, -1, statuslog = statusbar.StatusLog())
         Sizer.Add(self.nb, proportion = 2, flag=wx.RIGHT|wx.LEFT|wx.EXPAND, border = 20)
         self.SetSizer(Sizer)
-        self.Centre()
+        #self.Centre()
 
 
 class AngelApp(wx.App):
