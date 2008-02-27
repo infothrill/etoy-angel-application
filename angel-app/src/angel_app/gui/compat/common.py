@@ -4,9 +4,8 @@ def getResourcePath():
     """
     Returns the path containing the resources (images, icons, platform scripts)
     """
-    based = os.path.split(os.path.dirname(os.getcwd()))[0]
-    for subdir in ["distrib", "Resources"]: # hm, this is sort of hacky
-        p = os.path.join(based, subdir)
-        if os.path.exists(p):
-            return p
-    raise Exception, "Could not find the path to the resources! (using basedir %s)" % based
+    if os.path.exists('../../distrib/'): # sort of a hack when running from the command line (bin/)
+        return '../../distrib/'
+    else:
+        # with py2app, the cwd is Contents/Resources/ of the app-bundle
+        return os.getcwd()
