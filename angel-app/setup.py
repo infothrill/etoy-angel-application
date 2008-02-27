@@ -15,7 +15,7 @@ ez_setup.use_setuptools()
 from setuptools import setup, find_packages
 
 VERSION = '0.3.1' # TODO: use version from angel_app.version.getVersionString()
-DESCRIPTION = "The angel-app distributed file system."
+DESCRIPTION = "ANGEL APPLICATION - long term peer to peer backup"
 LONG_DESCRIPTION = """
 See http://angelapp.missioneternity.org/
 """
@@ -35,7 +35,10 @@ Topic :: Software Development :: Libraries :: Python Modules
 """.splitlines()))
 
 setup(
-    name="angel_app",
+    # py2app does not (yet?) support multiple targets, which means that only the gui will be bundled but not the other scripts... ;-(
+    #app = ['src/bin/angel.py', 'src/bin/master.py', 'src/bin/presenter.py', 'src/bin/provider.py', 'src/bin/maintainer.py'],
+    app = ['src/bin/angel.py'],
+    name="Angel",
     version=VERSION,
     description=DESCRIPTION,
     long_description=LONG_DESCRIPTION,
@@ -49,7 +52,8 @@ setup(
     package_dir={
                  'angel_app' : 'src/angel_app'
                  },
-    install_requires = ["xattr>=0.3", "zope.interface>=3.3.0", "pycrypto>=2.0.1", "netaddress>=0.2.2"], #, "ezPyCrypto"],
+    install_requires = ["xattr>=0.3", "zope.interface>=3.3.0", "netaddress>=0.2.2"], #"pycrypto>=2.0.1"
+    # for some unkown reason pycrypto gets bundled fine only if installed manually from its tarball (easy_install not so easy)
     # wxPython does not conform to cheeseshop.python.org standards, so currently we cannot include it here
     #dependency_links = [
     #    "http://angelapp.missioneternity.org/index.py/Documentation/Install?action=AttachFile&do=get&target=ezPyCrypto.py#egg=ezPyCrypto-0.1"
