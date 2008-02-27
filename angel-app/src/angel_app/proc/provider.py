@@ -1,5 +1,51 @@
 import sys
 
+# dyndns: initial test. Should probably go somewhere else than this module
+import angel_app.contrib.dyndnsc as dyndnsc
+
+def getDynDnsConfiguration(AngelConfig):
+    "fetches dyndns configuration, if unconfigured, returns None"
+    cfg = {}
+    try:
+        cfg['hostname'] = AngelConfig.get('dyndns', 'hostname') 
+        cfg['updatekey'] = AngelConfig.get('dyndns', 'updatekey') 
+    except:
+        return None
+    else:
+        return cfg
+
+class AngelDynDnsClient(object):
+    "Minimal class to handle all of the dyndns logic using callbacks started from the reactor loop"
+    def __init__(self, config, callLaterMethod):
+        """
+        @param config: a dictionary object
+        @param callLaterMethod: the twisted reactors callLater method
+        """
+        sleeptime = 60
+        hostname = config['hostname'] 
+        key = config['updatekey'] 
+        
+        dnsChecker = dyndnsc.IPDetector_DNS()
+        dnsChecker.setHostname(hostname)
+    
+        protoHandler = dyndnsc.DyndnsUpdateProtocol(hostname = hostname, key = key)
+    
+        dyndnsclient = dyndnsc.DynDnsClient( sleeptime = sleeptime)
+        dyndnsclient.setProtocolHandler(protoHandler)
+        dyndnsclient.setDNSDetector(dnsChecker)
+        dyndnsclient.setChangeDetector(dyndnsc.IPDetector_TeredoOSX())
+        self.client = dyndnsclient 
+        self.callLaterMethod = callLaterMethod
+
+        # do an initial synchronization:
+        self.client.sync()
+
+    def check(self):
+        "call this regularily to ensure dns is up to date"
+        self.client.check()
+        self.callLaterMethod(60, self.check)
+
+
 def bootInit():
     """
     Method to be called in __main__ before anything else. This method cannot rely on any
@@ -37,6 +83,11 @@ def dance(options):
     reactor.listenTCP(providerport, channel.HTTPFactory(site), 50)
     getLogger().info("Listening on port %d and serving content from %s", providerport, repository)
 
+    # initial test version to integrate a dyndns client into the provider loop
+    dyndnscfg = getDynDnsConfiguration(AngelConfig)
+    if not dyndnscfg is None: # if it's configured
+        dyndnsclient = AngelDynDnsClient(config = dyndnscfg, callLaterMethod = reactor.callLater)
+        reactor.callLater(60, dyndnsclient.check)
     reactor.run()
 
 def boot():
