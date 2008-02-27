@@ -31,7 +31,9 @@ def reSign(path = ""):
         rr._signContent()
         rr.seal()
 
-def setKey(path = "", key = secretKeys.values()[0]):
+def setKey(path = "", key = None):
+    if key is None: # fetch default key
+        key = secretKeys.values()[0]
     from angel_app.elements import PublicKeyString
     # first set the key -- this won't work with Crypto
     rr = Basic(absPath(path))
