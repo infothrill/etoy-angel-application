@@ -51,7 +51,7 @@ Other:
 
 __author__ = "Paul Kremer < pkremer TA spurious TOD biz >"
 __license__ = "MIT License"
-__revision__ = "$Id: dyndnsc.py 476 2007-10-13 12:26:17Z pkremer $"
+__revision__ = "$Id: dyndnsc.py 487 2008-02-28 09:57:08Z pkremer $"
 
 import sys
 import os
@@ -61,6 +61,9 @@ from urllib2 import URLError
 import re
 import socket
 import time
+import logging
+
+logger = logging.getLogger()
 
 def daemonize(stdout='/dev/null', stderr=None, stdin='/dev/null', # os.devnull only python 2.4
               pidfile=None, startmsg = 'started with pid %s' ):
@@ -116,24 +119,25 @@ def daemonize(stdout='/dev/null', stderr=None, stdin='/dev/null', # os.devnull o
     os.dup2(so.fileno(), sys.stdout.fileno())
     os.dup2(se.fileno(), sys.stderr.fileno())
 
+#growl = None
+#try:
+#    import Growl
+#    growl = Growl.GrowlNotifier(applicationName = 'dyndns', notifications = ['update'], defaultNotifications = ['update'])
+#    growl.register()
+#    growl.notify(noteType = 'update', title = "starting up", description = "")
+#except:
+#    print "No growl support"
+
 
 class BaseClass(object):
     """
     A common base class providing logging and desktop-notification.
     """
-    def log(self, message):
-        """
-        Formats the given string and prints it with time and program name.
-        """
-        now = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-        me = os.path.basename(sys.argv[0])
-        print "%s %s[%s]: %s" % (now, me, os.getpid(), message)
-
     def emit(self, message):
         """
         logs and notifies the message
         """
-        self.log(message)
+        logger.info(message)
         self.growlNotify('dynamic dns message:', message)
 
     def growlNotify(self, title, message):
@@ -146,7 +150,7 @@ class BaseClass(object):
             proc = subprocess.Popen(cmd)
             proc.wait()
         except:
-            pass
+            logger.debug("growlnotify failed")
 
 
 class HTTPGetHelper(BaseClass):
@@ -190,14 +194,14 @@ class HTTPGetHelper(BaseClass):
         try:
             response = urllib2.urlopen(req)
         except URLError, e:
-            self.log("Got an exception while opening and reading from url '%s'" % (url) )
+            logger.warning("Got an exception while opening and reading from url '%s'" % (url) )
             if hasattr(e, 'reason'):
-                self.log('Failed to reach the server with reason: %s' % e.reason)
+                logger.warning('Failed to reach the server with reason: %s' % e.reason)
             elif hasattr(e, 'code'):
                 from BaseHTTPServer import BaseHTTPRequestHandler
-                self.log("HTTP error code: %s, %s" % ( e.code, BaseHTTPRequestHandler.responses[e.code] ) )
+                logger.warning("HTTP error code: %s, %s" % ( e.code, BaseHTTPRequestHandler.responses[e.code] ) )
         except IOError, e:
-            self.log("IO error: %s" % ( e ) )
+            logger.warning("IO error: %s" % ( e ) )
         else:
             # everything seems fine:
             data = response.read(size)
@@ -346,7 +350,7 @@ class IPDetector_WebCheck(IPDetector):
             ip = self._getClientIPFromUrl(url)
             if not ip is None: break
         if ip is None:
-            self.log("Could not detect IP using webchecking! Offline?")
+            logger.info("Could not detect IP using webchecking! Offline?")
         self.setCurrentValue(ip)
         return ip
 
@@ -377,7 +381,7 @@ class DyndnsUpdateProtocol(BaseClass):
         params = {'myip': self.ip, 'key': self.key , 'hostname': self.hostname }
         self.updateResult = self.httpgetter.get(self.updateurl, params, size = 1024)
         self.lastUpdate = time.time()
-        self.log("Update result: '%s'" % self.updateResult )
+        logger.debug("Update result: '%s'" % self.updateResult )
         if self.updateResult == 'good':
             self.success()
         elif self.updateResult == 'nochg':
@@ -402,10 +406,11 @@ class DyndnsUpdateProtocol(BaseClass):
     def nochg(self):
         self.failcount = 0
         self.nochgcount += 1
-        self.log("IP address of '%s' is unchanged [%s]" % (self.hostname, self.ip))
+        logger.debug("IP address of '%s' is unchanged [%s]" % (self.hostname, self.ip))
 
     def failure(self):
         self.failcount +=1
+        logger.warning("DynDns service is failing with result '%s'!" % (self.updateResult))
         self.emit("DynDns service is failing with result '%s'!" % (self.updateResult))
 
 
@@ -416,7 +421,7 @@ class DynDnsClient(BaseClass):
     def __init__(self, sleeptime = 300):
         self.ipchangedetection_sleep = sleeptime # check every n seconds if our IP changed
         self.forceipchangedetection_sleep = sleeptime * 5 # force check every n seconds if our IP changed
-        self.log("DynDnsClient instantiated")
+        logger.debug("DynDnsClient instantiated")
 
     def setProtocolHandler(self, proto):
         self.proto = proto
@@ -441,7 +446,7 @@ class DynDnsClient(BaseClass):
         """
         if self.dns.detect() != self.detector.detect():
             if not self.detector.getCurrentValue() is None:
-                self.log("Current dns IP '%s' does not match current detected IP '%s', updating" % (self.dns.getCurrentValue(), self.detector.getCurrentValue()))
+                logger.info("Current dns IP '%s' does not match current detected IP '%s', updating" % (self.dns.getCurrentValue(), self.detector.getCurrentValue()))
                 self.proto.sendUpdateRequest(self.detector.getCurrentValue())
                 # TODO: handle response
             else:
@@ -466,10 +471,10 @@ class DynDnsClient(BaseClass):
             # this produces traffic, but probably less traffic overall than the detector
             self.detector.detect()
         if self.detector.hasChanged() == True:
-            self.log("detector changed")
+            logger.debug("detector changed")
             return True
         elif self.dns.hasChanged() == True:
-            self.log("dns changed")
+            logger.debug("dns changed")
             return True
         else:
             return False
@@ -501,12 +506,12 @@ class DynDnsClient(BaseClass):
         
     def check(self):
         if self.needsCheck():
-            #self.log("needs a check according to ipchangedetection_sleep")
+            logger.debug("needs a check according to ipchangedetection_sleep")
             if self.stateHasChanged():
-                self.log("state changed, syncing...")
+                logger.debug("state changed, syncing...")
                 self.sync()
             elif self.needsForcedCheck():
-                #self.log("forcing sync after %s seconds" % self.forceipchangedetection_sleep)
+                logger.debug("forcing sync after %s seconds" % self.forceipchangedetection_sleep)
                 self.lastforce = time.time()
                 self.sync()
             else:
@@ -523,6 +528,7 @@ class DynDnsClient(BaseClass):
 
 
 def main():
+    logging.basicConfig(level=logging.INFO,format='%(asctime)s %(levelname)s %(message)s')
     from optparse import OptionParser
     parser = OptionParser()
     parser.add_option("-d", "--daemon", dest="daemon", help="go into daemon mode (implies --loop)", action="store_true", default=False)
