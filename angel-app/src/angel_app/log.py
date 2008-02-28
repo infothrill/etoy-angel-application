@@ -7,8 +7,9 @@ __author__ = """Paul Kremer, 2007"""
 
 """
 This is a module that provides simple wrapping services for logging.
-It is responsible for tying together possibbly different logging engines,
-configuring them ...
+It is responsible for tying together possibly different logging engines,
+initializing them and configuring them ...
+It uses the logging module from the python standard library.
 Logfiles are in $HOME/.angel_app/log/
 The directory $HOME/.angel_app/log/ will automatically get created if needed.
 
@@ -103,7 +104,7 @@ class AngelLogTwistedFilter(Filter):
             return True
 
 
-def initializeLogging(appname = "default", handlers = ['console']):
+def initializeLogging(appname = "default", handlers = ['console', 'growl']):
     """
     This is the single-step routine to initialize the logging system.
     """
@@ -128,6 +129,8 @@ def setup():
 def enableHandler(handlername, handler = None):
     if handlername == "console":
         __addConsoleHandler()
+    if handlername == "growl":
+        __addGrowlHandler()
     if handlername == "socket":
         __addSocketHandler()
     if handlername == "file":
@@ -272,6 +275,13 @@ def __addSocketHandler():
     logging.getLogger().addHandler(socketHandler)
     #getLogger().addHandler(socketHandler)
 
+def __addGrowlHandler():
+    # growl support is optional:
+    try:
+        growlHandler = GrowlHandler()
+        logging.getLogger().addHandler(growlHandler)
+    except:
+        pass
 
 def getLoggingFilters():
     """
@@ -314,3 +324,69 @@ def getLoggingFilters():
         filters.append( [ logfilter, level] )
     #print "=======END CONFIG================"
     return filters
+
+# Growl support is optional:
+try:
+    import Growl
+
+    class GrowlHandler(logging.Handler):
+        """
+        This is a logging handler doing growl notifications.
+        TODO: it's unclear how this could be best integrated with regard to log levels, as the core
+        design of such log levels is that the higher the level, the more important the message.
+        Maybe just log growl messages with the highest priority (so they never get dumped), and decide in this class,
+        based on the loglvl?
+        Anoter problem is that Growl has a concept of notification types that can be edited/configured in the
+        system prefs, and re-using the logging interface would not allow using this.
+
+        In this first draft implementation, it will growl everything that is higher or equal to logging.INFO
+        """
+        app_icon = Growl.Image.imageWithIconForApplication('Terminal')
+        notifications = {
+                         logging.DEBUG:'Debug',
+                         logging.INFO:'Info',
+                         logging.WARNING:'Warning',
+                         logging.ERROR:'Error',
+                         logging.CRITICAL:'Critical'
+                         }
+        title = None
+        _notifier = Growl._growl
+        _registered = False
+    
+        def __init__(self, level=logging.INFO, app_name='Angel', app_icon=None, notifications=None, title=None, net_account=None):
+            logging.Handler.__init__(self, level)
+            self.app_name = app_name
+            self.title = title
+           
+            if app_icon is not None:
+                if isinstance(app_icon, str):
+                    self.app_icon = Growl._RawImage(Growl.appicon)
+                else:
+                    self.app_icon = app_icon
+            if notifications is not None:
+                self.notifications = notifications
+            if net_account is not None:
+                self._notifier = Growl.netgrowl(net_account[0], net_account[1])
+    
+        def emit(self, record):
+            assert record.levelno in self.notifications, 'Error level %s not registered within GrowlHandler' % record.levelno
+           
+            if not self._registered:
+                reginfo = {Growl.GROWL_APP_NAME: self.app_name, 
+                           Growl.GROWL_NOTIFICATIONS_ALL: self.notifications.values(), 
+                           Growl.GROWL_NOTIFICATIONS_DEFAULT: self.notifications.values(), 
+                           Growl.GROWL_APP_ICON:self.app_icon}
+                self._notifier.PostRegistration(reginfo)
+                self._registered = True
+    
+            notifyinfo = {Growl.GROWL_NOTIFICATION_NAME: self.notifications[record.levelno], 
+                            Growl.GROWL_APP_NAME: self.app_name, 
+                            Growl.GROWL_NOTIFICATION_DESCRIPTION: record.msg}
+            if self.title is None:
+                notifyinfo[Growl.GROWL_NOTIFICATION_TITLE] = '%s (%s)' % (self.notifications[record.levelno], record.name)
+            else:
+                notifyinfo[Growl.GROWL_NOTIFICATION_TITLE] = self.title
+            self._notifier.PostNotification(notifyinfo)
+
+except ImportError:
+    pass
