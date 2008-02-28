@@ -21,7 +21,7 @@ class AngelDynDnsClient(object):
         @param config: a dictionary object
         @param callLaterMethod: the twisted reactors callLater method
         """
-        sleeptime = 5
+        self.sleeptime = 60 # TODO: raise this to a reasonable value
         hostname = config['hostname'] 
         key = config['updatekey'] 
         
@@ -32,7 +32,7 @@ class AngelDynDnsClient(object):
     
         protoHandler = dyndnsc.DyndnsUpdateProtocol(hostname = hostname, key = key)
     
-        dyndnsclient = dyndnsc.DynDnsClient( sleeptime = sleeptime)
+        dyndnsclient = dyndnsc.DynDnsClient( sleeptime = self.sleeptime)
         dyndnsclient.setProtocolHandler(protoHandler)
         dyndnsclient.setDNSDetector(dnsChecker)
         dyndnsclient.setChangeDetector(dyndnsc.IPDetector_TeredoOSX())
@@ -43,9 +43,9 @@ class AngelDynDnsClient(object):
         self.client.sync()
 
     def check(self):
-        "call this regularily to ensure dns is up to date"
+        "this will make the dyndns client check its state and also insert an additional callLater timer"
         self.client.check()
-        self.callLaterMethod(5, self.check)
+        self.callLaterMethod(self.sleeptime, self.check)
 
 
 def bootInit():
@@ -91,6 +91,7 @@ def dance(options):
         dyndnsclient = AngelDynDnsClient(config = dyndnscfg, callLaterMethod = reactor.callLater)
         reactor.callLater(60, dyndnsclient.check)
     reactor.run()
+    getLogger().info("Quit")
 
 def boot():
     from optparse import OptionParser

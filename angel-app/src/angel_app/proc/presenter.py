@@ -80,6 +80,7 @@ def dance(options):
     reactor.listenTCP(port, channel.HTTPFactory(site), 50, interface)
     getLogger().info('Listening on IP %s port %d and serving content from %s', interface, port, repository)
     reactor.run()
+    getLogger().info("Quit")
 
     
 if __name__ == '__main__':

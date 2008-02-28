@@ -31,6 +31,7 @@ def dance(options):
         client.maintenanceLoop()
     except Exception, e:
         log.critical("An exception occured in the maintenance loop", exc_info = e)
+    log.info("Quit")
 
 
 def boot():

@@ -70,7 +70,8 @@ def dance(options):
     from angel_app.log import getLogger
     getLogger().growl("User", "Network", "P2P processes started (%s)" % ", ".join(options.procsToStart))
     reactor.run()
-    
+    getLogger().info("Quit")
+
 if __name__ == '__main__':
     options = boot()
     dance(options)
