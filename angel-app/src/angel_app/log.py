@@ -76,6 +76,29 @@ def getAngelLogFilename():
 def getAngelLogFilenameForApp(app):
     return path.join(getAngelLogPath(), app + ".log")
 
+class AngelLogger(logging.getLoggerClass()):
+    "We use our own Logger class so we can introduce additional logger methods"
+    def growl(self, type, title, msg):
+        """
+        Method to explicitly send a notification to the desktop of the user
+        
+        Essentially, this method is an alternative to using loglevels for the decision wether the
+        message should be a desktop notification or not. 
+         
+        @param type: a notification type
+        @param title: the title of the notification
+        @param msg: the actual message
+        """
+        # TODO: this is ugly and probably slow
+        try:
+            g = getAngelGrowlNotifier()
+            g.notify(type, title, msg)
+        except:
+            pass
+        #self.info("%s %s" % (title, msg))
+        
+logging.setLoggerClass(AngelLogger)
+    
 from logging import Filter
 import re
 class AngelLogFilter(Filter):
@@ -214,7 +237,7 @@ def getAllowedLogLevels():
 
     @return: list
     """
-    levelnames = ['DEBUG', 'INFO', 'WARNING', 'ERROR',  'CRITICAL']
+    levelnames = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
     return levelnames
     
 
@@ -274,11 +297,12 @@ def __addSocketHandler():
     # add the handler to the app's logger
     logging.getLogger().addHandler(socketHandler)
     #getLogger().addHandler(socketHandler)
-
+ 
 def __addGrowlHandler():
     # growl support is optional:
     try:
-        growlHandler = GrowlHandler()
+        g = getAngelGrowlNotifier()
+        growlHandler = GrowlHandler(growl = g)
         logging.getLogger().addHandler(growlHandler)
     except:
         pass
@@ -329,64 +353,57 @@ def getLoggingFilters():
 try:
     import Growl
 
+    def getAngelGrowlNotifier():
+        # TODO: this should return a singleton
+        "returns a GrowlNotifier initialized/customized for Angel"
+        from angel_app.gui.compat.common import getResourcePath
+        import os
+        app_icon = Growl.Image.imageFromPath(os.path.join(getResourcePath(), 'images', 'm221e.png')) # TODO: we should not need to know about paths/filenames here
+        notifications = getAllowedLogLevels()
+        notifications.append('User')
+        g = Growl.GrowlNotifier(applicationName="Angel", notifications=notifications, defaultNotifications=['User'], applicationIcon=app_icon)
+        g.register()
+        return g
+
     class GrowlHandler(logging.Handler):
         """
         This is a logging handler doing growl notifications.
+
         TODO: it's unclear how this could be best integrated with regard to log levels, as the core
         design of such log levels is that the higher the level, the more important the message.
         Maybe just log growl messages with the highest priority (so they never get dumped), and decide in this class,
-        based on the loglvl?
-        Anoter problem is that Growl has a concept of notification types that can be edited/configured in the
-        system prefs, and re-using the logging interface would not allow using this.
+        based on the loglevel?
+        Another problem is that Growl has a concept of notification types that can be edited/configured in the
+        system preferences, and re-using the logging interface would not allow using this.
 
-        In this first draft implementation, it will growl everything that is higher or equal to logging.INFO
+        Also, as we have multiple processe that use a network logging system. This means that we might get multiple
+        notifications with the same message if handlers are not configured correctly, because the logging client
+        and the logging server do the notification. 
+
+        In this implementation, everything that is higher or equal to logging.WARNING will be growled
         """
-        app_icon = Growl.Image.imageWithIconForApplication('Terminal')
         notifications = {
-                         logging.DEBUG:'Debug',
-                         logging.INFO:'Info',
-                         logging.WARNING:'Warning',
-                         logging.ERROR:'Error',
-                         logging.CRITICAL:'Critical'
+                         logging.DEBUG:'DEBUG',
+                         logging.INFO:'INFO',
+                         logging.WARNING:'WARNING',
+                         logging.ERROR:'ERROR',
+                         logging.CRITICAL:'CRITICAL'
                          }
-        title = None
-        _notifier = Growl._growl
-        _registered = False
-    
-        def __init__(self, level=logging.INFO, app_name='Angel', app_icon=None, notifications=None, title=None, net_account=None):
+
+        def __init__(self, level = logging.WARNING, growl = None):
+            """
+            Constructor
+            
+            @param level: the minimum loglevel at which the messages get displayed
+            @param growl: the GrowlNotifier object to use
+            """
             logging.Handler.__init__(self, level)
-            self.app_name = app_name
-            self.title = title
-           
-            if app_icon is not None:
-                if isinstance(app_icon, str):
-                    self.app_icon = Growl._RawImage(Growl.appicon)
-                else:
-                    self.app_icon = app_icon
-            if notifications is not None:
-                self.notifications = notifications
-            if net_account is not None:
-                self._notifier = Growl.netgrowl(net_account[0], net_account[1])
-    
+            self.growl = growl
+        
         def emit(self, record):
             assert record.levelno in self.notifications, 'Error level %s not registered within GrowlHandler' % record.levelno
-           
-            if not self._registered:
-                reginfo = {Growl.GROWL_APP_NAME: self.app_name, 
-                           Growl.GROWL_NOTIFICATIONS_ALL: self.notifications.values(), 
-                           Growl.GROWL_NOTIFICATIONS_DEFAULT: self.notifications.values(), 
-                           Growl.GROWL_APP_ICON:self.app_icon}
-                self._notifier.PostRegistration(reginfo)
-                self._registered = True
-    
-            notifyinfo = {Growl.GROWL_NOTIFICATION_NAME: self.notifications[record.levelno], 
-                            Growl.GROWL_APP_NAME: self.app_name, 
-                            Growl.GROWL_NOTIFICATION_DESCRIPTION: record.msg}
-            if self.title is None:
-                notifyinfo[Growl.GROWL_NOTIFICATION_TITLE] = '%s (%s)' % (self.notifications[record.levelno], record.name)
-            else:
-                notifyinfo[Growl.GROWL_NOTIFICATION_TITLE] = self.title
-            self._notifier.PostNotification(notifyinfo)
+            title = "%s (%s)" % (self.notifications[record.levelno], record.name)
+            self.growl.notify(self.notifications[record.levelno], title, record.msg)
 
 except ImportError:
     pass
