@@ -122,7 +122,7 @@ class ExternalProcessManager(object):
         """
         register the given callback as the function responsible for starting a process.
         The callback will be called like so:
-        callback(ExternalProcessObject.protocol, ExternalProcessObject.executable, ExternalProcessObject.args, env=os.environ, path='/', uid=None, gid=None, usePTY=True)
+        callback(ExternalProcessObject.protocol, ExternalProcessObject.executable, ExternalProcessObject.args, env=os.environ, uid=None, gid=None, usePTY=True)
         """
         self.starter = callback
 
@@ -181,7 +181,7 @@ class ExternalProcessManager(object):
         """
         if not processObj.wantDown:
             if delay == 0:
-                transport = self.starter(processObj.protocol, processObj.executable, processObj.args, env=os.environ, path='/', uid=None, gid=None, usePTY=True)
+                transport = self.starter(processObj.protocol, processObj.executable, processObj.args, env=os.environ, uid=None, gid=None, usePTY=True)
                 self.log.info("started process '%s' with PID '%s'" % (processObj.protocol, transport.pid))
                 processObj.setTransport(transport)
                 return True
