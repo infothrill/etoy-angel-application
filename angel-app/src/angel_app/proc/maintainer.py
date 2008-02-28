@@ -27,7 +27,10 @@ def dance(options):
     AngelConfig = config.getConfig()
     repository = AngelConfig.get("common", "repository")
     log.info("starting maintenance loop at: " + repository)
-    client.maintenanceLoop()
+    try:
+        client.maintenanceLoop()
+    except Exception, e:
+        log.critical("An exception occured in the maintenance loop", exc_info = e)
 
 
 def boot():
