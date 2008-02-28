@@ -51,7 +51,7 @@ Other:
 
 __author__ = "Paul Kremer < pkremer TA spurious TOD biz >"
 __license__ = "MIT License"
-__revision__ = "$Id: dyndnsc.py 487 2008-02-28 09:57:08Z pkremer $"
+__revision__ = "$Id: dyndnsc.py 488 2008-02-28 18:01:43Z pkremer $"
 
 import sys
 import os
@@ -63,7 +63,6 @@ import socket
 import time
 import logging
 
-logger = logging.getLogger()
 
 def daemonize(stdout='/dev/null', stderr=None, stdin='/dev/null', # os.devnull only python 2.4
               pidfile=None, startmsg = 'started with pid %s' ):
@@ -119,38 +118,56 @@ def daemonize(stdout='/dev/null', stderr=None, stdin='/dev/null', # os.devnull o
     os.dup2(so.fileno(), sys.stdout.fileno())
     os.dup2(se.fileno(), sys.stderr.fileno())
 
-#growl = None
-#try:
-#    import Growl
-#    growl = Growl.GrowlNotifier(applicationName = 'dyndns', notifications = ['update'], defaultNotifications = ['update'])
-#    growl.register()
-#    growl.notify(noteType = 'update', title = "starting up", description = "")
-#except:
-#    print "No growl support"
-
+class DyndnsLogger(logging.getLoggerClass()):
+    "We use our own Logger class so we can introduce additional logger methods"
+    def growl(self, type, title, msg):
+        """
+        Method to explicitly send a notification to the desktop of the user
+        
+        Essentially, this method is an alternative to using loglevels for the decision wether the
+        message should be a desktop notification or not. 
+         
+        @param type: a notification type
+        @param title: the title of the notification
+        @param msg: the actual message
+        """
+        # TODO: this is ugly and probably slow
+        if not vars(self).has_key('__growlnotifier'):
+            try:
+                import Growl
+            except ImportError:
+                logger.debug("No native growl support")
+                self.__growlnotifier = False
+            else:
+                self.__growlnotifier = Growl.GrowlNotifier(applicationName = 'dyndns', notifications = ['User'], defaultNotifications = ['User'])
+                self.__growlnotifier.register()
+        
+        if not self.growl == False:
+            logger.debug('trying growl native')
+            self.__growlnotifier.notify(noteType = 'User', title = title, description = msg)
+        else:
+            logger.debug('trying growlnotify cmd line')
+            cmd = ["/usr/local/bin/growlnotify", '-i', '.term', '-t', title, '-m', msg]
+            try:
+                import subprocess
+                proc = subprocess.Popen(cmd)
+                proc.wait()
+            except:
+                logger.debug("growlnotify cmd line failed")
 
 class BaseClass(object):
     """
     A common base class providing logging and desktop-notification.
     """
+    # TODO: clean this up!
+
     def emit(self, message):
         """
         logs and notifies the message
         """
         logger.info(message)
-        self.growlNotify('dynamic dns message:', message)
+        logger.growl('User', 'Dynamic DNS', "%s" % message)
 
-    def growlNotify(self, title, message):
-        """
-        Growl notification (see http://growl.info/)
-        """
-        cmd = ["/usr/local/bin/growlnotify", '-i', '.term', '-t', title, '-m', message]
-        try:
-            import subprocess
-            proc = subprocess.Popen(cmd)
-            proc.wait()
-        except:
-            logger.debug("growlnotify failed")
 
 
 class HTTPGetHelper(BaseClass):
@@ -422,6 +439,7 @@ class DynDnsClient(BaseClass):
         self.ipchangedetection_sleep = sleeptime # check every n seconds if our IP changed
         self.forceipchangedetection_sleep = sleeptime * 5 # force check every n seconds if our IP changed
         logger.debug("DynDnsClient instantiated")
+        logger.growl("User", "Network", "Dynamic DNS client activated")
 
     def setProtocolHandler(self, proto):
         self.proto = proto
@@ -528,7 +546,6 @@ class DynDnsClient(BaseClass):
 
 
 def main():
-    logging.basicConfig(level=logging.INFO,format='%(asctime)s %(levelname)s %(message)s')
     from optparse import OptionParser
     parser = OptionParser()
     parser.add_option("-d", "--daemon", dest="daemon", help="go into daemon mode (implies --loop)", action="store_true", default=False)
@@ -579,4 +596,7 @@ def main():
     return 0
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.DEBUG,format='%(asctime)s %(levelname)s %(message)s')
+    logging.setLoggerClass(DyndnsLogger)
+    logger = logging.getLogger('a')
     sys.exit(main())
