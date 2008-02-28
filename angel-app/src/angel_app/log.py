@@ -183,36 +183,50 @@ def logTwisted(eventDict):
     """
     callback for the twisted logging engine
     """
-    # TODO : beautify more... see twisted.python.log for details on how to implement that
     ourTwistedLogger = getLogger("twisted")
-    # according to the twisted doc, the eventDict always has the 'isError' key set to indicate wether it is an error or not
-    isError = eventDict['isError']
-    # buggy twisted: sometimes it also has the eventDict-key isErr:
-    if eventDict.has_key('isErr'):
-        isError = eventDict['isErr']
-
-    if eventDict.has_key('failure'):
-        import string
-        ourTwistedLogger.critical(eventDict.get('why') or 'Unhandled Error')
-        if callable(getattr(eventDict['failure'], 'getTraceback')):
-            for line in string.split(eventDict['failure'].getTraceback(), '\n'):
-                #print "line: %s" % line
-                ourTwistedLogger.critical(line)
+    # to make sure this log observer for twisted never gets removed, we
+    # must ensure never to throw an exception from it, so we encapsulate it in a try block:
+    try:
+        #print "START ---------"
+        #print eventDict
+        #print "END ---------"
+        # TODO : beautify more... see twisted.python.log for details on how to implement that
+        # according to the twisted doc, the eventDict always has the 'isError' key set to indicate wether it is an error or not
+        isError = eventDict['isError']
+        # buggy twisted: sometimes it also has the eventDict-key isErr:
+        if eventDict.has_key('isErr'):
+            isError = eventDict['isErr']
+        isWarning = False
+        if eventDict.has_key('warning'):
+            isWarning= True
+    
+        if isError and eventDict.has_key('failure'):
+            import string
+            ourTwistedLogger.critical(eventDict.get('why') or 'Unhandled Error')
+            if callable(getattr(eventDict['failure'], 'getTraceback')):
+                ourTwistedLogger.critical("Exception:", exc_info = eventDict['failure'])
+                for line in string.split(eventDict['failure'].getTraceback(), '\n'):
+                    #print "line: %s" % line
+                    ourTwistedLogger.critical(line)
+            else:
+                ourTwistedLogger.critical("failure has no getTraceBack() method. hmmm")
+            return
+    
+        text = ""
+        if eventDict.has_key("system"):
+            text = eventDict["system"] + ": "
+        if eventDict.has_key("message"):
+            text += " ".join([str(m) for m in eventDict["message"]])
+    
+        if isError == 1:
+            ourTwistedLogger.error(text)
+        elif isWarning:
+            text = "%s: %s (Filename: %s, Line number: %s)" %( eventDict['category'], eventDict['warning'], eventDict['filename'], eventDict['lineno'] )
+            ourTwistedLogger.warn(text, exc_info = eventDict['warning'])
         else:
-            ourTwistedLogger.critical("failure has no getTraceBack() method. hmmm")
-        return
-
-
-    text = ""
-    if eventDict.has_key("system"):
-        text = eventDict["system"] + ": "
-    if eventDict.has_key("message"):
-        text += " ".join([str(m) for m in eventDict["message"]])
-
-    if isError == 1:
-        ourTwistedLogger.error(text)
-    else:
-        ourTwistedLogger.info(text)
+            ourTwistedLogger.info(text)
+    except Exception, e:
+        ourTwistedLogger.critical("A exception occured in the twisted log observer", exc_info = e)
         
 
 
