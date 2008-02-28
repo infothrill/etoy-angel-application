@@ -48,6 +48,7 @@ def boot():
     if len(options.daemon) > 0:
         from angel_app.proc import daemonizer
         daemonizer.startstop(action=options.daemon, stdout=appname+'.stdout', stderr=appname+'.stderr', pidfile=appname+'.pid')
+
     return options
 
 
@@ -66,6 +67,8 @@ def dance(options):
     # start processes _after_ starting the logging server!
     angel_app.proc.procmanager.startProcesses(options.procsToStart)
     from twisted.internet import reactor
+    from angel_app.log import getLogger
+    getLogger().growl("User", "Network", "P2P processes started (%s)" % ", ".join(options.procsToStart))
     reactor.run()
     
 if __name__ == '__main__':

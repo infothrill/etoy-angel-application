@@ -37,7 +37,7 @@ def boot():
     appname = "presenter"
     # setup/configure logging
     from angel_app.log import initializeLogging
-    loghandlers = ['file', 'growl'] # always log to file # TODO: growl?
+    loghandlers = ['file'] # always log to file
     if len(options.daemon) > 0:
         loghandlers.append('socket')
     else:
@@ -45,6 +45,8 @@ def boot():
             loghandlers.append('socket')
         else:
             loghandlers.append('console')
+            loghandlers.append('growl')
+            
     initializeLogging(appname, loghandlers)
 
     if angelConfig.get(appname, 'enable') == False:
