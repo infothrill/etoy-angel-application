@@ -29,7 +29,7 @@ def boot():
     appname = "gui"
     # setup/configure logging
     from angel_app.log import initializeLogging
-    loghandlers = ['file', 'console'] # always log to file
+    loghandlers = ['file', 'console', 'growl'] # always log to file # TODO: growl?
     initializeLogging(appname, loghandlers)
 
     return True

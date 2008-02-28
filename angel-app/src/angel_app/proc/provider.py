@@ -21,10 +21,12 @@ class AngelDynDnsClient(object):
         @param config: a dictionary object
         @param callLaterMethod: the twisted reactors callLater method
         """
-        sleeptime = 60
+        sleeptime = 5
         hostname = config['hostname'] 
         key = config['updatekey'] 
         
+        from angel_app.log import getLogger
+        dyndnsc.logger = getLogger('dyndns')
         dnsChecker = dyndnsc.IPDetector_DNS()
         dnsChecker.setHostname(hostname)
     
@@ -43,7 +45,7 @@ class AngelDynDnsClient(object):
     def check(self):
         "call this regularily to ensure dns is up to date"
         self.client.check()
-        self.callLaterMethod(60, self.check)
+        self.callLaterMethod(5, self.check)
 
 
 def bootInit():
@@ -80,8 +82,8 @@ def dance(options):
     if AngelConfig.getboolean("provider", "useIPv6"):
         from angel_app.ipv6 import reactor as ignored
     site = server.Site(root)
-    reactor.listenTCP(providerport, channel.HTTPFactory(site), 50)
-    getLogger().info("Listening on port %d and serving content from %s", providerport, repository)
+    reactor.listenTCP(providerport, channel.HTTPFactory(site), 50) 
+    getLogger().info("Listening on port %d and serving content from %s" % (providerport, repository))
 
     # initial test version to integrate a dyndns client into the provider loop
     dyndnscfg = getDynDnsConfiguration(AngelConfig)
@@ -108,7 +110,7 @@ def boot():
     appname = "provider"
     # setup/configure logging
     from angel_app.log import initializeLogging
-    loghandlers = ['file'] # always log to file
+    loghandlers = ['file', 'growl'] # always log to file # TODO: growl?
     if len(options.daemon) > 0:
         loghandlers.append('socket')
     else:

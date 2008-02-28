@@ -38,7 +38,7 @@ def boot():
 
     # setup/configure logging
     from angel_app.log import initializeLogging
-    loghandlers = ['file']
+    loghandlers = ['file', 'growl'] # always log to file # TODO: growl?
     if len(options.daemon) == 0: # not in daemon mode, so we log to console!
         loghandlers.append('console')
     initializeLogging(appname, loghandlers)

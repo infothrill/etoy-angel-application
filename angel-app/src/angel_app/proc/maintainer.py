@@ -48,7 +48,7 @@ def boot():
     appname = "maintainer"
     # setup/configure logging
     from angel_app.log import initializeLogging
-    loghandlers = ['file'] # always log to file
+    loghandlers = ['file', 'growl'] # always log to file # TODO: growl?
     if len(options.daemon) > 0:
         loghandlers.append('socket')
     else:
