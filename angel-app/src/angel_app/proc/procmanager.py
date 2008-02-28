@@ -114,7 +114,6 @@ class ExternalProcessManager(object):
         Initialize internal process dictionary, set some defaults and
         get a logger object.
         """
-        from angel_app.log import getLogger
         self.procDict = {}
         self.startendedprocessdelay = 5 # number of seconds to delay the restarting of an ended process
         self.log = getLogger("ExternalProcessManager")
@@ -143,7 +142,7 @@ class ExternalProcessManager(object):
         """
         processObj.wantDown = False
         processObj.protocol.setProcManager(self)
-        self.log.info("startServicing %s", processObj.protocol)
+        self.log.info("startServicing %s" % processObj.protocol)
         if not self.procDict.has_key(processObj):
             self.log.debug("process is not known")
             self.startProcess(processObj)
@@ -163,7 +162,7 @@ class ExternalProcessManager(object):
         attempt to stop it and also disable the servicing, so it will
         not be restarted when it dies/stops.
         """
-        self.log.info("stop servicing %s", processObj.protocol)
+        self.log.info("stop servicing %s" % processObj.protocol)
         processObj.wantDown = True
         self.stopProcess(processObj)
 
@@ -183,11 +182,11 @@ class ExternalProcessManager(object):
         if not processObj.wantDown:
             if delay == 0:
                 transport = self.starter(processObj.protocol, processObj.executable, processObj.args, env=os.environ, path='/', uid=None, gid=None, usePTY=True)
-                self.log.info("started process '%s' with PID '%s'", processObj.protocol, transport.pid)
+                self.log.info("started process '%s' with PID '%s'" % (processObj.protocol, transport.pid))
                 processObj.setTransport(transport)
                 return True
             else:
-                self.log.debug("delay startProcess '%s' by %d seconds", processObj.protocol, delay)
+                self.log.debug("delay startProcess '%s' by %d seconds" % (processObj.protocol, delay))
                 self.delayedstarter(delay, self.startProcess, processObj)
                 return True
         else:
@@ -198,7 +197,7 @@ class ExternalProcessManager(object):
         """
         Method to physically stop the given process in synchronous fashion.
         """
-        self.log.info("stopping process %s", processObj.protocol)
+        self.log.info("stopping process %s" % processObj.protocol)
         if not processObj.transport == None:
             self.log.debug("trying to kill process")
             try:
@@ -232,14 +231,14 @@ class ExternalProcessManager(object):
         Callback for the ProcessProtocol 'processEnded' event.
         """
         processObj = self.__findProcessWithProtocol(protocol) # TODO: catch exception
-        self.log.debug("process with protocol '%s' and PID '%s' ended with exit code '%s'", protocol, processObj.transport.pid, reason.value.exitCode)
+        self.log.debug("process with protocol '%s' and PID '%s' ended with exit code '%s'" % ( protocol, processObj.transport.pid, reason.value.exitCode))
         processObj.transport = None
         if not reason.value.exitCode == 0:
             processObj.failures += 1
         if processObj.failures > 5:
-            self.log.warn("service %s keeps failing!", protocol)
+            self.log.warn("service %s keeps failing!" % protocol)
         if processObj.failures > 10:
-            self.log.error("Stopping service of %s because of too many failures", protocol)
+            self.log.error("Stopping service of %s because of too many failures" % protocol)
             self.stopServicing(processObj)
         # when a process end, the default is to just start it again,
         # the start routine knows if the process must really  be started again
@@ -263,7 +262,6 @@ class ExternalProcessProtocol(ProcessProtocol):
     This class shall not be used directly. It must be used as a base class!
     """
     def __init__(self):
-        from angel_app.log import getLogger
         self.log = getLogger(self.__class__.__name__)
 
     def setProcManager(self, procManager):
@@ -280,13 +278,13 @@ class ExternalProcessProtocol(ProcessProtocol):
 
     def outReceived(self, data):
         print  data
-        self.log.info("STDOUT from '%s': %s", self.__class__.__name__, data)
+        self.log.info("STDOUT from '%s': %s" % ( self.__class__.__name__, data ))
 
     def errReceived(self, data):
-        self.log.warn("STDERR from '%s': %s", self.__class__.__name__, data)
+        self.log.warn("STDERR from '%s': %s" % ( self.__class__.__name__, data ))
 
     def processEnded(self, reason):
-        self.log.info("external Process with protocol '%s' ended with reason: '%s'" , self.__class__.__name__, reason.getErrorMessage())
+        self.log.info("external Process with protocol '%s' ended with reason: '%s'" % ( self.__class__.__name__, reason.getErrorMessage() ))
         self.procManager.endedProcess(self, reason)
 
 """
