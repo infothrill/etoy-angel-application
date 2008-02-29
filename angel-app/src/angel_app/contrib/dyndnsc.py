@@ -51,7 +51,7 @@ Other:
 
 __author__ = "Paul Kremer < pkremer TA spurious TOD biz >"
 __license__ = "MIT License"
-__revision__ = "$Id: dyndnsc.py 488 2008-02-28 18:01:43Z pkremer $"
+__revision__ = "$Id: dyndnsc.py 490 2008-02-29 11:32:40Z pkremer $"
 
 import sys
 import os
@@ -300,7 +300,9 @@ class IPDetector_TeredoOSX(IPDetector):
         try:
             import netifaces
         except ImportError:
-            return None
+            logger.critical("The 'netifaces' module is not installed!")
+            raise
+            #return None
         addrlist = netifaces.ifaddresses(self.interfacename)[netifaces.AF_INET6]
         for pair in addrlist:
             matchObj = re.match("2001:.*", pair['addr'])
@@ -309,24 +311,26 @@ class IPDetector_TeredoOSX(IPDetector):
                 return pair['addr']
         return None
 
-    def _popenGrep(self):
-        "uses the command line tools to detect ifconfig information"
-        cmd = "/sbin/ifconfig %s" % self.interfacename
-        try:
-            stdout = os.popen(cmd).readlines()
-            for line in stdout:
-                matchObj = re.match("\tinet6 (2001.*?) .*", line)
-                if not matchObj is None:
-                    ip = matchObj.group(1)
-                    return ip
-        except:
-            raise
-            return None
+#    def _popenGrep(self):
+#        "uses the command line tools to detect ifconfig information"
+#        # this method must be avoided when running in a twisted thread, because twisted breaks SIGCHLD
+#        cmd = "/sbin/ifconfig %s" % self.interfacename
+#        try:
+#            stdout = os.popen(cmd).readlines()
+#            for line in stdout:
+#                matchObj = re.match("\tinet6 (2001.*?) .*", line)
+#                if not matchObj is None:
+#                    ip = matchObj.group(1)
+#                    return ip
+#        except:
+#            raise
+#            return None
 
     def detect(self):
         ip = self._netifaces()
         if ip is None:
-            ip = self._popenGrep() 
+            logger.debug("The teredo ipv6 address could not be detected with 'netifaces'")
+#            ip = self._popenGrep() 
         # at this point, ip can be None
         self.setCurrentValue(ip)
         return ip
@@ -524,7 +528,7 @@ class DynDnsClient(BaseClass):
         
     def check(self):
         if self.needsCheck():
-            logger.debug("needs a check according to ipchangedetection_sleep")
+            logger.debug("needs a check according to ipchangedetection_sleep (%s sec)" % self.ipchangedetection_sleep)
             if self.stateHasChanged():
                 logger.debug("state changed, syncing...")
                 self.sync()
@@ -596,7 +600,7 @@ def main():
     return 0
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG,format='%(asctime)s %(levelname)s %(message)s')
+    logging.basicConfig(level=logging.INFO,format='%(asctime)s %(levelname)s %(message)s')
     logging.setLoggerClass(DyndnsLogger)
     logger = logging.getLogger('a')
     sys.exit(main())
