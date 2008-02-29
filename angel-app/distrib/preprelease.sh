@@ -40,7 +40,7 @@ function usage()
 }
 
 # setup a temp dir for temp junk:
-THISTMPDIR=$(mktemp -d -t `basename $0`)
+THISTMPDIR=$(mktemp -d -t `basename $0`XXXXXX)
 
 #clean env:
 env -i
@@ -147,7 +147,7 @@ twistedsrc=`basename $twistedtar .tar.bz2`
 echo "Unpacking twisted from ${twistedtar} to ${SHORTNAME}/src/"
 tar xjf ${twistedtar} || error "Could not untar ${twistedtar}"
 rm -rf ${SHORTNAME}/src/twisted/
-mv ${twistedsrc}/twisted/ ${SHORTNAME}/src/
+mv ${twistedsrc}/twisted/ ${SHORTNAME}
 rm -rf ${twistedsrc}
 rm ${twistedtar} # we don't want to distribute the tar file
 
