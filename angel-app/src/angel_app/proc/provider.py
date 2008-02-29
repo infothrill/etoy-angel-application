@@ -7,8 +7,9 @@ def getDynDnsConfiguration(AngelConfig):
     "fetches dyndns configuration, if unconfigured, returns None"
     cfg = {}
     try:
-        cfg['hostname'] = AngelConfig.get('dyndns', 'hostname') 
+        cfg['hostname'] = AngelConfig.get('dyndns', 'hostname')
         cfg['updatekey'] = AngelConfig.get('dyndns', 'updatekey') 
+        cfg['sleeptime'] = 60 # no need to leave this up to users for now 
     except:
         return None
     else:
@@ -21,7 +22,7 @@ class AngelDynDnsClient(object):
         @param config: a dictionary object
         @param callLaterMethod: the twisted reactors callLater method
         """
-        self.sleeptime = 60 # TODO: raise this to a reasonable value
+        self.sleeptime = config['sleeptime']
         hostname = config['hostname'] 
         key = config['updatekey'] 
         
@@ -89,7 +90,7 @@ def dance(options):
     dyndnscfg = getDynDnsConfiguration(AngelConfig)
     if not dyndnscfg is None: # if it's configured
         dyndnsclient = AngelDynDnsClient(config = dyndnscfg, callLaterMethod = reactor.callLater)
-        reactor.callLater(60, dyndnsclient.check)
+        reactor.callLater(1, dyndnsclient.check) 
     reactor.run()
     getLogger().info("Quit")
 
