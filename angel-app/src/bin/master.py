@@ -19,7 +19,7 @@ def py2appletWorkaroundIgnoreMe():
     import twisted.web2.dav.method.report_expand
     import twisted.web2.dav.method.report
     # end fix to make py2applet happy
-    import maintainer, presenter, provider
+    import maintainer, presenter, provider, zeo
 
 def main():
     import angel_app.proc.master
