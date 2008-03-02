@@ -10,7 +10,6 @@ def getFileStorage():
             self.quota = None
         def getSectionName(self):
             return self._name
-    #name = str(1 + len(self.storages))
     # From StorageServer constructor docs:
     # By convention, storage names are typically
     # strings representing small integers starting at '1'.
@@ -35,10 +34,6 @@ def main(args=None):
 
     import ThreadedAsync.LoopCallback
     ThreadedAsync.LoopCallback.loop()
-    #options = ZEOOptions()
-    #options.realize(args)
-    #s = ZEOServer(options)
-    #s.main()
 
 if __name__ == "__main__":
     main()
