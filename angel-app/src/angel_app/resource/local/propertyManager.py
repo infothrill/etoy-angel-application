@@ -153,8 +153,6 @@ class PropertyManager(object):
             raise
         
         # the property is available in the property store
-        #if super(PropertyManager, self).contains(qname):
-        #    return super(PropertyManager, self).get(qname)
         if self.store.contains(qname):
             return self.store.get(qname)
         
@@ -164,7 +162,6 @@ class PropertyManager(object):
             df = self.defaultValues[qname](self)
             self.set(df)
             return self.store.get(qname)
-            #return super(PropertyManager, self).get(qname)
         
         else:
             raise KeyError("Attribute for element %s not found on resource %s." % 
@@ -183,7 +180,6 @@ class PropertyManager(object):
         
         self.assertExistence()
         
-        #super(PropertyManager, self).set(element)
         self.store.set(element)
             
             
