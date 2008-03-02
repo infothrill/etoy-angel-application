@@ -1,6 +1,5 @@
 all = [
        "config",
-       "defaults",
        "internal"
        ]
 """
