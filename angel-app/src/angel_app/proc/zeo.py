@@ -50,7 +50,7 @@ def main(args=None):
     ac = config.getConfig()
     getZEOServer(ac, getFileStorage(ac))
 
-    getLogger().growl("User", "Database", "Starting service.")
+    getLogger().growl("User", "Database (ZEO)", "Starting service on port %i." % ac.getint("zeo","listenPort"))
     import ThreadedAsync.LoopCallback
     ThreadedAsync.LoopCallback.loop()
 
