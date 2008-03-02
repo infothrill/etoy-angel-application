@@ -43,13 +43,18 @@ def getDefaultConfigObj():
     Return a configobj instance with default values
     """
     from logging.handlers import DEFAULT_TCP_LOGGING_PORT
-
+    from twisted.python.runtime import platform
+    if platform.isMacOSX():
+        logdir = os.path.join(os.environ["HOME"], "Library", "Logs", "Angel")
+    else:
+        logdir = os.path.join(os.environ["HOME"], ".angel-app", "log"),
+        
     #some defaults have to be computed first:
     defaults = {
             "angelhome" : os.path.join(os.environ["HOME"], ".angel-app"),
             "repository" : os.path.join(os.environ["HOME"], ".angel-app", "repository"),
             "keyring" : os.path.join(os.environ["HOME"], ".angel-app", "keyring"),
-            "logdir" : os.path.join(os.environ["HOME"], ".angel-app", "log"),
+            "logdir" : logdir,
             "loglistenport" : str(DEFAULT_TCP_LOGGING_PORT),
             "logformat" : '%(asctime)s %(levelname)-6s %(name)-20s - %(message)s',
             "consolelogformat" : '%(levelname)-6s %(name)-20s - %(message)s',
