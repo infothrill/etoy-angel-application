@@ -13,19 +13,26 @@ def getFileStorage():
     # From StorageServer constructor docs:
     # By convention, storage names are typically
     # strings representing small integers starting at '1'.
+    # TODO: we should definitely get these from config
     UNIQUE_NAME_FOR_STORAGE = '1' 
+    DATA_BASE_FILE = "/Users/vincent/foo.fs"
     opener = FileStorage(
                        FSConfig(
                                 UNIQUE_NAME_FOR_STORAGE, 
-                                "/Users/vincent/foo.fs"))
+                                DATA_BASE_FILE))
     return {UNIQUE_NAME_FOR_STORAGE : opener.open()}
 
 def getZEOServer(storage):
     from ZEO.StorageServer import StorageServer
+    
+    # TODO: we should get this from config
     address = ("127.0.0.1", 6223)
     return StorageServer(address, storage)
 
 def main(args=None):
+    
+    # TODO: it's complaining about lack of logging handler.
+    # integrate with angel_app logger.
     from angel_app.log import getLogger
     from angel_app.config import config
     import logging
