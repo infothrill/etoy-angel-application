@@ -91,6 +91,10 @@ def getDefaultConfigObj():
     maxsleeptime = 100
     nodename = unknown.invalid
     
+    [zeo]
+    zodbfs = '%(zodbfs)s'
+    listenPort = 6223
+    
     [gui]
     autostartp2p = True
 

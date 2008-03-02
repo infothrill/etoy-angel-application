@@ -1,4 +1,7 @@
-def getFileStorage():
+def getFileStorage(angelConfig):
+    """
+    @param angelConfig -- an angel-app configuration instance
+    """
     from ZODB.config import FileStorage # That's a FileStorage *opener*!
     class FSConfig:
         def __init__(self, name, path):
@@ -15,19 +18,25 @@ def getFileStorage():
     # strings representing small integers starting at '1'.
     # TODO: we should definitely get these from config
     UNIQUE_NAME_FOR_STORAGE = '1' 
-    DATA_BASE_FILE = "/Users/vincent/foo.fs"
+    DATA_BASE_FILE = angelConfig.get("zeo", "zodbfs")
     opener = FileStorage(
                        FSConfig(
                                 UNIQUE_NAME_FOR_STORAGE, 
                                 DATA_BASE_FILE))
     return {UNIQUE_NAME_FOR_STORAGE : opener.open()}
 
-def getZEOServer(storage):
-    from ZEO.StorageServer import StorageServer
+def getZEOServer(angelConfig, storage):
+    """
+    @param angelConfig -- an angel-app configuration instance
+    @param storage -- a ZEO FileStorage instance as returned by getFileStorage
+    """
+    listenAddress = (
+                     "127.0.0.1", 
+                     angelConfig.getint("zeo","listenPort")
+                     )
     
-    # TODO: we should get this from config
-    address = ("127.0.0.1", 6223)
-    return StorageServer(address, storage)
+    from ZEO.StorageServer import StorageServer
+    return StorageServer(listenAddress, storage)
 
 def main(args=None):
     
@@ -37,7 +46,9 @@ def main(args=None):
     from angel_app.config import config
     import logging
     logging.basicConfig()
-    getZEOServer(getFileStorage())
+
+    ac = config.getConfig()
+    getZEOServer(ac, getFileStorage(ac))
 
     getLogger().growl("User", "Database", "Starting service.")
     import ThreadedAsync.LoopCallback
