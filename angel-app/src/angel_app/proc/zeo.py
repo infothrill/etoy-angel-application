@@ -39,27 +39,40 @@ def getZEOServer(angelConfig, storage):
     return StorageServer(listenAddress, storage)
 
 def main(args=None):
+    from optparse import OptionParser
+    parser = OptionParser()
+    parser.add_option("-d", "--daemon", dest="daemon", help="daemon mode?", default='')
+    parser.add_option("-c", "--config", dest="config", help="alternative config file", default=None)
+    parser.add_option("-l", "--log", dest="networklogging", help="use network logging?", action="store_true" , default=False)
+    (options, dummyargs) = parser.parse_args()
     
-    # TODO: it's complaining about lack of logging handler.
-    # integrate with angel_app logger.
-    from angel_app.config import config
+    from angel_app.config.config import getConfig
+    angelConfig = getConfig(options.config)
 
-    ac = config.getConfig()
-    ac.bootstrapping = False
+    angelConfig.bootstrapping = False
 
+    appname = 'zeo'
     from angel_app.log import initializeLogging
     loghandlers = ['file'] # always log to file
-    loghandlers.append('socket')
-    loghandlers.append('console')
-    loghandlers.append('growl')
-    initializeLogging('zeo', loghandlers)
+    if len(options.daemon) > 0:
+        loghandlers.append('socket')
+    else:
+        if (options.networklogging):
+            loghandlers.append('socket')
+        else:
+            loghandlers.append('console')
+            loghandlers.append('growl')
+
+    initializeLogging(appname, loghandlers)
     from angel_app.log import getLogger
 
+    if len(options.daemon) > 0:
+        from angel_app.proc import daemonizer
+        daemonizer.startstop(action=options.daemon, stdout=appname+'.stdout', stderr=appname+'.stderr', pidfile=appname+'.pid')
 
-    getZEOServer(ac, getFileStorage(ac))
+    getZEOServer(angelConfig, getFileStorage(angelConfig))
 
-    getLogger().info("test")
-    getLogger().growl("User", "Database (ZEO)", "Starting service on port %i." % ac.getint("zeo","listenPort"))
+    getLogger().growl("User", "Database (ZEO)", "Starting service on port %i." % angelConfig.getint("zeo","listenPort"))
     import ThreadedAsync.LoopCallback
     ThreadedAsync.LoopCallback.loop()
 
