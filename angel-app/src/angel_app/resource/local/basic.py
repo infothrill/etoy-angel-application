@@ -4,7 +4,7 @@ from angel_app.config.internal import loadKeysFromFile
 from angel_app.log import getLogger
 from angel_app.resource import childLink
 from angel_app.resource.local.contentManager import ContentManager
-from angel_app.resource.local.propertyManager import PropertyManager
+from angel_app.resource.local import propertyManager
 from angel_app.resource.local.renderManager import RenderManager
 from angel_app.resource.resource import Resource
 from twisted.python.filepath import FilePath
@@ -38,7 +38,7 @@ class Basic(DAVFile, Resource):
         # disallow the creation of resources outside of the repository
         self.assertInRepository()
         
-        self._dead_properties = PropertyManager(self)
+        self._dead_properties = propertyManager.getDefaultPropertyManager(self)
         
         self.contentManager = ContentManager(self)
         self.renderManager = RenderManager(self)

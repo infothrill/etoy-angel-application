@@ -16,6 +16,7 @@ from angel_app import elements
 from angel_app.log import getLogger
 from angel_app.resource.IReadonlyPropertyManager import IReadonlyPropertyManager
 from angel_app.resource.remote.clone import clonesToElement
+from angel_app.resource.IDeadPropertyStore import IDeadPropertyStore
 
 
 log = getLogger(__name__)
@@ -95,16 +96,26 @@ defaultMetaData = {
                    elements.Children.qname()           : lambda x: elements.Children()
                    }
 
-class PropertyManager(xattrPropertyStore):
+def getDefaultPropertyManager(_resource):
+    return PropertyManager(_resource, xattrPropertyStore(_resource))
+
+class PropertyManager(object):
     """
-    I am an xattrPropertyStore with default values.
+    A wrapper around a deadPropertyStore (e.g. an xattrProps instance) that provides
+    default value handling.
+    
+    To be able to support both xattrPropertyStores and (future) ZODB-based property stores,
+    this is from now on implemented via composition rather than inheritance. The store implementation
+    to be used at run-time is provided to the constructor (i.e. depdendency injection).
     
     TODO: consider adding default value handling for contains() and listProperties()
     """
-    implements(IReadonlyPropertyManager)
+    implements(IReadonlyPropertyManager, IDeadPropertyStore)
     
-    def __init__(self, resource):
-        super(PropertyManager, self).__init__(resource)
+    def __init__(self, _resource, _store):
+        self.resource = _resource
+         
+        self.store = _store
         # create a per-instance copy of the default generators
         self.defaultValues = dict(defaultMetaData.items())
 
@@ -113,6 +124,15 @@ class PropertyManager(xattrPropertyStore):
         This is ass-backwards, but isCollection is provided by DAVFile.
         """
         return self.resource.isCollection()
+    
+    def contains(self, element):
+        return self.store.contains(element)
+    
+    def list(self):
+        return self.store.list()
+    
+    def delete(self, qnamd):
+        return self.store.delete(qname)
 
     def getByElement(self, property):
         return self.get(property.qname())
@@ -133,15 +153,18 @@ class PropertyManager(xattrPropertyStore):
             raise
         
         # the property is available in the property store
-        if super(PropertyManager, self).contains(qname):
-            return super(PropertyManager, self).get(qname)
+        #if super(PropertyManager, self).contains(qname):
+        #    return super(PropertyManager, self).get(qname)
+        if self.store.contains(qname):
+            return self.store.get(qname)
         
         # the property is not available in the property store,
         # but we have an initializer   
         if qname in self.defaultValues.keys():
             df = self.defaultValues[qname](self)
             self.set(df)
-            return super(PropertyManager, self).get(qname)
+            return self.store.get(qname)
+            #return super(PropertyManager, self).get(qname)
         
         else:
             raise KeyError("Attribute for element %s not found on resource %s." % 
@@ -160,6 +183,7 @@ class PropertyManager(xattrPropertyStore):
         
         self.assertExistence()
         
-        super(PropertyManager, self).set(element)
+        #super(PropertyManager, self).set(element)
+        self.store.set(element)
             
             
