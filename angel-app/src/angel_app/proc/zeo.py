@@ -39,6 +39,7 @@ def main(args=None):
     logging.basicConfig()
     getZEOServer(getFileStorage())
 
+    getLogger().growl("User", "Database", "Starting service.")
     import ThreadedAsync.LoopCallback
     ThreadedAsync.LoopCallback.loop()
 

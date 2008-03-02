@@ -79,6 +79,7 @@ def dance(options):
     site = server.Site(root)
     reactor.listenTCP(port, channel.HTTPFactory(site), 50, interface)
     getLogger().info('Listening on IP %s port %d and serving content from %s', interface, port, repository)
+    getLogger().growl("User", "Virtual Filesystem", "Started serving on port %s." % port)
     reactor.run()
     getLogger().info("Quit")
 
