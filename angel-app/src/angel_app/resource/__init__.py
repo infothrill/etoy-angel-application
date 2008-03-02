@@ -15,6 +15,7 @@ all = [
         "abstractContentManager",
         "basic", 
         "childLink",
+        "IDeadPropertyStore",
         "IReadOnlyContentManager", 
         "IReadOnlyPropertyManager", 
         "IResource", 
