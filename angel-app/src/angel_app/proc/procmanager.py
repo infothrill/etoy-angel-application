@@ -48,8 +48,6 @@ def startProcesses(procsToStart = ['provider', 'presenter', 'maintainer']):
     This method ties together the classes in this module and
     instantiates/initializes and starts the complete suite of external
     processes.
-
-    @param privateMode: boolean, if True, will not start the "presenter" 
     """
     procManager = ExternalProcessManager()
     procManager.registerProcessStarter(reactor.spawnProcess)
