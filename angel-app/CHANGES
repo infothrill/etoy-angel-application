@@ -1,4 +1,12 @@
-0.3.2
+0.3.3 ****** NOT YET RELEASED ******
+ * on Mac OS X, logs are now in ~/Library/Logs/Angel/  
+ * added Growl support
+ * mounting of resources moved to maintainer loop, e.g. mounts will automatically be retried
+ * experimental dynamic dns client in provider (defaults to teredo for now, disabled by default).
+   This adds a new dependency for the module 'netifaces'.
+ * minor fixes
+
+0.3.2 November 28 2007
  * stability fixes (resource initialization & redirect handling)
 
 0.3.1 November 27 2007
