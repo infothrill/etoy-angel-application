@@ -248,7 +248,11 @@ def cloneFromURI(_uri, defaultHost = None):
 
 def tryNumericAddress(family = socket.AF_INET, address = "127.0.0.1"):
     """
-    @return whether (numerice) address is a valid member of family
+    Test if address and address family match. 
+    
+    @param family: one of socket.AF_*
+    @param address: string representation of address
+    @return: boolean whether (numeric) address is a valid member of family
     """
     try:
         socket.inet_pton(family, address)
