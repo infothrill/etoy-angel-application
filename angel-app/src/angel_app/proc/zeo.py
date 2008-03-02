@@ -16,7 +16,6 @@ def getFileStorage(angelConfig):
     # From StorageServer constructor docs:
     # By convention, storage names are typically
     # strings representing small integers starting at '1'.
-    # TODO: we should definitely get these from config
     UNIQUE_NAME_FOR_STORAGE = '1' 
     DATA_BASE_FILE = angelConfig.get("zeo", "zodbfs")
     opener = FileStorage(
