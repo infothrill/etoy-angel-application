@@ -1,8 +1,7 @@
 all = [
        "config",
        "defaults",
-       "internal",
-       "rootDefaults"
+       "internal"
        ]
 """
 config:         routines to access the actual configuration file
