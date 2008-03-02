@@ -113,7 +113,7 @@ def dance(options):
     if AngelConfig.getboolean("provider", "useIPv6"):
         from angel_app.ipv6 import reactor as ignored
     site = server.Site(root)
-    log.growl("User", "Data Distribution Server", "Started serving on port %s." % providerport)
+    getLogger().growl("User", "Data Distribution Server", "Started serving on port %s." % providerport)
     reactor.listenTCP(providerport, channel.HTTPFactory(site), 50) 
     getLogger().info("Listening on port %d and serving content from %s" % (providerport, repository))
 
