@@ -53,6 +53,7 @@ def getDefaultConfigObj():
     defaults = {
             "angelhome" : os.path.join(os.environ["HOME"], ".angel-app"),
             "repository" : os.path.join(os.environ["HOME"], ".angel-app", "repository"),
+            "zodbfs" : os.path.join(os.environ["HOME"], ".angel-app", "zodb.fs"),
             "keyring" : os.path.join(os.environ["HOME"], ".angel-app", "keyring"),
             "logdir" : logdir,
             "loglistenport" : str(DEFAULT_TCP_LOGGING_PORT),
