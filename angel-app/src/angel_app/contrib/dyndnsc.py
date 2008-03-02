@@ -3,7 +3,7 @@
 
 """
 =======================================================================
-Copyright (c) 2007 Paul Kremer
+Copyright (c) 2007-2008 Paul Kremer
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -41,7 +41,6 @@ Design:
       DynDnsClient to make sure everything is fine
 
 Ideas:
-- add other protocol handlers, for example for dyndns.org
 - use timer events?
 - detection of internet connectivity, other than querying an IP from a webpage?
 
@@ -51,7 +50,7 @@ Other:
 
 __author__ = "Paul Kremer < pkremer TA spurious TOD biz >"
 __license__ = "MIT License"
-__revision__ = "$Id: dyndnsc.py 490 2008-02-29 11:32:40Z pkremer $"
+__revision__ = "$Id: dyndnsc.py 494 2008-03-02 17:48:58Z pkremer $"
 
 import sys
 import os
@@ -62,7 +61,10 @@ import re
 import socket
 import time
 import logging
-
+import netifaces
+import IPy
+import random
+import base64
 
 def daemonize(stdout='/dev/null', stderr=None, stdin='/dev/null', # os.devnull only python 2.4
               pidfile=None, startmsg = 'started with pid %s' ):
@@ -131,7 +133,7 @@ class DyndnsLogger(logging.getLoggerClass()):
         @param title: the title of the notification
         @param msg: the actual message
         """
-        # TODO: this is ugly and probably slow
+        # Try native growl first
         if not vars(self).has_key('__growlnotifier'):
             try:
                 import Growl
@@ -159,8 +161,6 @@ class BaseClass(object):
     """
     A common base class providing logging and desktop-notification.
     """
-    # TODO: clean this up!
-
     def emit(self, message):
         """
         logs and notifies the message
@@ -169,6 +169,13 @@ class BaseClass(object):
         logger.growl('User', 'Dynamic DNS', "%s" % message)
 
 
+class NoRedirectHandler(urllib2.HTTPRedirectHandler):
+    "Class to hook into urllib2 to handle http redirects"
+    def redirect_request(self, req, fp, code, msg, hdrs, *args, **kwargs):
+        """
+        Refuse to handle redirects. We are working with known services, so we know what to expect.
+        """
+        raise urllib2.HTTPError(req.get_full_url(), code, msg, hdrs, fp)
 
 class HTTPGetHelper(BaseClass):
     """
@@ -197,33 +204,38 @@ class HTTPGetHelper(BaseClass):
         """
         self.useragent = useragent
 
-    def get(self, url, params = {}, size = -1):
+    def get(self, url, params = {}, size = -1, authheader = None):
         """
         This fetches the data returned from the given url and the given params.
         If size is specified, only size amount of bytes are read and returned.
         I anything goes wrong, this returns an empty string.
         """
-        # TODO: refuse to follow redirects
         params = urllib.urlencode(params) # needs urllib
         headers = { 'User-Agent' : self.useragent }
+        opener = urllib2.build_opener(NoRedirectHandler()) # refuse redirects
         req = urllib2.Request(url + '?' + params, headers = headers)
+        if authheader:
+            req.add_header("Authorization", authheader)
         data = ''
         try:
-            response = urllib2.urlopen(req)
+            response = opener.open(req)
         except URLError, e:
             logger.warning("Got an exception while opening and reading from url '%s'" % (url) )
             if hasattr(e, 'reason'):
                 logger.warning('Failed to reach the server with reason: %s' % e.reason)
+                return e.reason
             elif hasattr(e, 'code'):
                 from BaseHTTPServer import BaseHTTPRequestHandler
                 logger.warning("HTTP error code: %s, %s" % ( e.code, BaseHTTPRequestHandler.responses[e.code] ) )
+                return "HTTP error code %s, %s" % (e.code, BaseHTTPRequestHandler.responses[e.code][0])
         except IOError, e:
-            logger.warning("IO error: %s" % ( e ) )
+            msg = "IO error: %s" % ( e ) 
+            logger.warning(msg)
+            return msg
         else:
             # everything seems fine:
             data = response.read(size)
         return data
-
 
 class IPDetector(BaseClass):
     """
@@ -285,6 +297,100 @@ class IPDetector_DNS(IPDetector):
         self.setCurrentValue(ip)
         return ip
 
+class RandomIPGenerator:
+    def __init__(self, maxRandomTries = None):
+        self.maxRandomTries = maxRandomTries
+
+        # Reserved list from http://www.iana.org/assignments/ipv4-address-space
+        # (dated 2001 September 12)
+        self._reserved_netmasks = frozenset([
+                "0.0.0.0/8",
+                "1.0.0.0/8",
+                "2.0.0.0/8",
+                "5.0.0.0/8",
+                "7.0.0.0/8",
+                "10.0.0.0/8",
+                "23.0.0.0/8",
+                "27.0.0.0/8",
+                "31.0.0.0/8",
+                "36.0.0.0/8",
+                "39.0.0.0/8",
+                "41.0.0.0/8",
+                "42.0.0.0/8",
+                "58.0.0.0/8",
+                "59.0.0.0/8",
+                "60.0.0.0/8",
+                "127.0.0.0/8",
+                "169.254.0.0/16",
+                "172.16.0.0/12",
+                "192.168.0.0/16",
+                "197.0.0.0/8",
+                "224.0.0.0/3",
+                "240.0.0.0/8"
+                ])
+
+    def isReservedIP(self, ip):
+        """
+        Check if the given ip address is in a reserved ipv4 address space
+        
+        @param ip: IPy ip address
+        @return: boolean
+        """
+        for res in self._reserved_netmasks:
+            if ip in IPy.IP(res):
+                return True
+        return False
+
+    def randomIP(self):
+        """
+        Return a randomly generated IPv4 address that is not in a reserved ipv4 address space
+
+        @return: IPy ip address
+        """
+        randomip = IPy.IP("%i.%i.%i.%i" % (random.randint(1, 254),random.randint(1, 254),random.randint(1, 254),random.randint(1, 254)))
+        while self.isReservedIP(randomip):
+            randomip = IPy.IP("%i.%i.%i.%i" % (random.randint(1, 254),random.randint(1, 254),random.randint(1, 254),random.randint(1, 254)))
+        return randomip
+
+    def next(self):
+        """
+        Generator that returns randomly generated IPv4 addresses that are not in a reserved ipv4 address space
+        until we hit self.maxRandomTries
+
+        @return: IPy ip address
+        """
+        if self.maxRandomTries is None or self.maxRandomTries > 0:
+            generate = True
+        c = 0
+        while generate:
+            if not self.maxRandomTries is None:
+                c += 1
+            yield self.randomIP()
+            if not self.maxRandomTries is None and c < self.maxRandomTries:
+                generate = False        
+
+        raise StopIteration
+
+    def __iter__(self):
+        "Iterator for this class. See method next()"
+        return self.next()
+
+class IPDetector_Random(IPDetector):
+    """
+    For testing: detect randomly generated IP addresses
+    """
+    def __init__(self):
+        self.rips = RandomIPGenerator()
+
+    def canDetectOffline(self):
+        "Returns True"
+        return True
+
+    def detect(self):
+        for ip in self.rips:
+            logger.debug('detected %s' % str(ip))
+            self.setCurrentValue(str(ip))
+            return str(ip)
 
 class IPDetector_TeredoOSX(IPDetector):
     """
@@ -297,48 +403,25 @@ class IPDetector_TeredoOSX(IPDetector):
 
     def _netifaces(self):
         "uses the netifaces module to detect ifconfig information"
-        try:
-            import netifaces
-        except ImportError:
-            logger.critical("The 'netifaces' module is not installed!")
-            raise
-            #return None
         addrlist = netifaces.ifaddresses(self.interfacename)[netifaces.AF_INET6]
         for pair in addrlist:
             matchObj = re.match("2001:.*", pair['addr'])
             if not matchObj is None:
-                #print "Found ipv6 addr with netifaces on interface '%s': %s" % (self.interfacename, pair['addr'])
+                #logger.debug("Found ipv6 addr with netifaces on interface '%s': %s" % (self.interfacename, pair['addr']))
                 return pair['addr']
+        logger.debug("The teredo ipv6 address could not be detected with 'netifaces'")
         return None
-
-#    def _popenGrep(self):
-#        "uses the command line tools to detect ifconfig information"
-#        # this method must be avoided when running in a twisted thread, because twisted breaks SIGCHLD
-#        cmd = "/sbin/ifconfig %s" % self.interfacename
-#        try:
-#            stdout = os.popen(cmd).readlines()
-#            for line in stdout:
-#                matchObj = re.match("\tinet6 (2001.*?) .*", line)
-#                if not matchObj is None:
-#                    ip = matchObj.group(1)
-#                    return ip
-#        except:
-#            raise
-#            return None
 
     def detect(self):
         ip = self._netifaces()
-        if ip is None:
-            logger.debug("The teredo ipv6 address could not be detected with 'netifaces'")
-#            ip = self._popenGrep() 
-        # at this point, ip can be None
+        # ip can still be None!
         self.setCurrentValue(ip)
         return ip
 
 
 class IPDetector_WebCheck(IPDetector):
     """
-    Class to detect an IP address as seen by an online website that returns parsable output
+    Class to detect an IP address as seen by an online web site that returns parsable output
     """
 
     def canDetectOffline(self):
@@ -375,44 +458,17 @@ class IPDetector_WebCheck(IPDetector):
         self.setCurrentValue(ip)
         return ip
 
-
-class DyndnsUpdateProtocol(BaseClass):
-    """
-    This class contains the logic for talking to the update service of dyndns.majimoto.net
-    
-    For other protocols, you can just implement a different class. This one might be compatible
-    with dyndns.org, but that's untested.
-    """
-    def __init__(self, hostname, key, usessl = False):
-        self.key = key
-        self.hostname = hostname
-        if usessl:
-            self.updateurl = "https://dyndns.majimoto.net/nic/update"
-        else:
-            self.updateurl = "http://dyndns.majimoto.net/nic/update"
-
-        self.failcount = 0
-        self.nochgcount = 0
-        self.httpgetter = HTTPGetHelper()
-
-    def sendUpdateRequest(self, ip):
-        # TODO: before sending an update request, make sure we are not abusing the service
-        # e.g. is it in 911 state or avoid too many 'nochg' reponses
+class UpdateProtocol(BaseClass):
+    "the base class for all update protocols"
+    def update(self, ip):
         self.ip = ip
-        params = {'myip': self.ip, 'key': self.key , 'hostname': self.hostname }
-        self.updateResult = self.httpgetter.get(self.updateurl, params, size = 1024)
-        self.lastUpdate = time.time()
-        logger.debug("Update result: '%s'" % self.updateResult )
-        if self.updateResult == 'good':
-            self.success()
-        elif self.updateResult == 'nochg':
-            self.nochg()
-        elif self.updateResult == 'abuse':
-            self.abuse()
-        elif self.updateResult == '911':
-            self.failure()
-        else:
-            self.emit("Problem updating IP address of '%s' to %s: %s" % (self.hostname, self.ip, self.updateResult))
+        return self.protocol()
+
+    def httpauthentication(self):
+        raise Exception, "abstract method, please implement in subclass"
+
+    def updateUrl(self):
+        raise Exception, "abstract method, please implement in subclass"
 
     def success(self):
         self.failcount = 0
@@ -429,10 +485,115 @@ class DyndnsUpdateProtocol(BaseClass):
         self.nochgcount += 1
         logger.debug("IP address of '%s' is unchanged [%s]" % (self.hostname, self.ip))
 
+    def nohost(self):
+        self.failcount += 1
+        self.emit("Invalid/non-existant hostname: [%s]" % (self.hostname))
+
     def failure(self):
         self.failcount +=1
-        logger.warning("DynDns service is failing with result '%s'!" % (self.updateResult))
-        self.emit("DynDns service is failing with result '%s'!" % (self.updateResult))
+        self.emit("Service '%s' is failing with result '%s'!" % (self.name, self.updateResult))
+
+class UpdateProtocolMajimoto(UpdateProtocol):
+    """
+    This class contains the logic for talking to the update service of dyndns.majimoto.net
+    """
+    def __init__(self, protocol_options):
+        for k in ['key', 'hostname']:
+            assert protocol_options.has_key(k), "Protocol option '%s' is missing" % k
+            assert protocol_options[k] is not None, "Protocol option '%s' is not set" % k
+            assert type(protocol_options[k]) == type(""), "Protocol option '%s' is not a string" % k
+
+        self.key = protocol_options['key']
+        self.hostname = protocol_options['hostname']
+
+        self.failcount = 0
+        self.nochgcount = 0
+
+    def protocol(self):
+        # TODO: before sending an update request, make sure we are not abusing the service
+        # e.g. is it in 911 state or avoid too many 'nochg' reponses
+        # have a helper for doing the http work:
+        if not vars(self).has_key('httpgetter'):
+            self.httpgetter = HTTPGetHelper()
+
+        params = {'myip': self.ip, 'key': self.key , 'hostname': self.hostname }
+        self.updateResult = self.httpgetter.get(self.updateUrl(), params, size = 1024, authheader = self.httpauthentication())
+        logger.debug("Update result: '%s'" % self.updateResult )
+        if self.updateResult == 'good':
+            self.success()
+        elif self.updateResult == 'nochg':
+            self.nochg()
+        elif self.updateResult == 'nohost':
+            self.nohost()
+        elif self.updateResult == 'abuse':
+            self.abuse()
+        elif self.updateResult == '911':
+            self.failure()
+        else:
+            self.emit("Problem updating IP address of '%s' to %s: %s" % (self.hostname, self.ip, self.updateResult))
+
+    def updateUrl(self):
+        return "https://dyndns.majimoto.net/nic/update"
+
+    def httpauthentication(self):
+        return ''
+
+
+class UpdateProtocolDyndns(UpdateProtocol):
+    "Protocol handler for dyndns.com"
+
+    def __init__(self, protocol_options):
+        for k in ['hostname', 'userid', 'password']:
+            assert protocol_options.has_key(k), "Protocol option '%s' is missing" % k
+            assert protocol_options[k] is not None, "Protocol option '%s' is not set" % k
+            assert type(protocol_options[k]) == type(""), "Protocol option '%s' is not a string" % k
+
+        self.hostname = protocol_options['hostname']
+        self.userid = protocol_options['userid']
+        self.password = protocol_options['password']
+
+        self.failcount = 0
+        self.nochgcount = 0
+
+    def httpauthentication(self):
+        a = base64.encodestring(self.userid + ':' + self.password)
+        return 'Basic ' + a.strip()
+
+    def updateUrl(self):
+        return "https://members.dyndns.org/nic/update"
+
+    def protocol(self):
+        # TODO: before sending an update request, make sure we are not abusing the service
+        # e.g. is it in 911 state or avoid too many 'nochg' reponses
+        # have a helper for doing the http work:
+        if not vars(self).has_key('httpgetter'):
+            self.httpgetter = HTTPGetHelper()
+
+        params = {'myip': self.ip, 'hostname': self.hostname }
+        self.updateResult = self.httpgetter.get(self.updateUrl(), params, size = 1024, authheader = self.httpauthentication())
+        logger.debug("Update result: '%s'" % self.updateResult )
+        if self.updateResult.startswith('good'):
+            self.success()
+        elif self.updateResult == 'nochg':
+            self.nochg()
+        elif self.updateResult == 'nohost':
+            self.nohost()
+        elif self.updateResult == 'abuse':
+            self.abuse()
+        elif self.updateResult == '911':
+            self.failure()
+        else:
+            self.emit("Problem updating IP address of '%s' to %s: %s" % (self.hostname, self.ip, self.updateResult))
+
+
+
+def getProtocolHandlerClass( protoname = 'dyndns'):
+    "factory method to get the correct protocol Handler given its name"
+    avail = {
+             'dyndns': UpdateProtocolDyndns,
+             'majimoto': UpdateProtocolMajimoto,
+             }
+    return avail[protoname]
 
 
 class DynDnsClient(BaseClass):
@@ -469,11 +630,15 @@ class DynDnsClient(BaseClass):
         if self.dns.detect() != self.detector.detect():
             if not self.detector.getCurrentValue() is None:
                 logger.info("Current dns IP '%s' does not match current detected IP '%s', updating" % (self.dns.getCurrentValue(), self.detector.getCurrentValue()))
-                self.proto.sendUpdateRequest(self.detector.getCurrentValue())
+                self.proto.update(self.detector.getCurrentValue())
                 # TODO: handle response
             else:
+                #print self.detector.detect()
+                logger.debug("DNS is out of sync, but we don't know what to update it to (detector returns None)")
                 # we don't have a value to set it to, so don't update! Still shouldn't happen though
                 pass
+        else:
+            logger.debug("Nothing to do, dns '%s' equals detection '%s'" % (self.detector.getCurrentValue(), self.detector.getCurrentValue()))
 
     def stateHasChanged(self):
         """
@@ -548,6 +713,49 @@ class DynDnsClient(BaseClass):
             self.check()
             time.sleep(self.ipchangedetection_sleep)
 
+def getChangeDetectorClass(name):
+    avail = {
+             'webcheck': IPDetector_WebCheck,
+             'teredoosx': IPDetector_TeredoOSX,
+             'random': IPDetector_Random
+             }
+    return avail[name]
+
+def getDynDnsClientForConfig(config):
+    """
+    factory method to instantiate and initialize a complete and working dyndns client
+    
+    @param config: a dictionary with configuration pairs
+    """
+    if config is None: return None
+    if not config.has_key('hostname'):
+        logger.warn("No hostname configured")
+        return None
+    dnsChecker = IPDetector_DNS()
+    dnsChecker.setHostname(config['hostname'])
+    try:
+        klass = getProtocolHandlerClass(config['protocol'])
+    except:
+        logger.warn("Invalid protocol: '%s'" % config['protocol'])
+        return None
+    try:
+        protoHandler = klass(config)
+    except Exception, e:
+        logger.warn("Invalid protocol configuration: '%s'" % (str(e)),  exc_info = e)
+        return None
+
+    dyndnsclient = DynDnsClient( sleeptime = config['sleeptime'])
+    dyndnsclient.setProtocolHandler(protoHandler)
+    dyndnsclient.setDNSDetector(dnsChecker)
+
+    try:
+        klass = getChangeDetectorClass(config['method'])
+        dyndnsclient.setChangeDetector(klass())
+    except:
+        logger.warn("Invalid change detector configuration: '%s'" % config['method'])
+        return None
+
+    return dyndnsclient
 
 def main():
     from optparse import OptionParser
@@ -555,36 +763,29 @@ def main():
     parser.add_option("-d", "--daemon", dest="daemon", help="go into daemon mode (implies --loop)", action="store_true", default=False)
     parser.add_option("--hostname", dest="hostname", help="hostname to update", default=None)
     parser.add_option("--key", dest="key", help="your authentication key", default=None)
+    parser.add_option("--userid", dest="userid", help="your userid", default=None)
+    parser.add_option("--password", dest="password", help="your password", default=None)    
+    parser.add_option("--protocol", dest="protocol", help="protocol/service to use for updating your IP (default dyndns)", default='dyndns')
     parser.add_option("--method", dest="method", help="method for detecting your IP (default webcheck)", default='webcheck')
     parser.add_option("--loop", dest="loop", help="loop forever (default is to update once)", action="store_true", default=False)
     parser.add_option("--sleeptime", dest="sleeptime", help="how long to sleep between checks in seconds", default=300)
     (options, dummyargs) = parser.parse_args()
 
     if options.hostname is None: raise Exception, "Please specify a hostname using --hostname"
-    hostname = options.hostname
-    if options.key is None: raise Exception, "Please specify a key using --key"
-    key = options.key
-    if not options.sleeptime is None: sleeptime = int(options.sleeptime)
-    if sleeptime < 60:
-        print "WARNING: sleeptime should be > 60 sec, but it might be fine if you use an offline method for IP detection"
 
-    if options.method == 'webcheck':
-        changeDetector = IPDetector_WebCheck()
-    elif options.method == 'teredoosx':
-        changeDetector = IPDetector_TeredoOSX()
-    else: raise Exception, "unknown method given! Allowed: webcheck, teredoosx"
+    config = {}
+    config['hostname'] = options.hostname
+    config['key'] = options.key
+    config['userid'] = options.userid
+    config['password'] = options.password
+    config['protocol'] = options.protocol
+    config['method'] = options.method
+    config['sleeptime'] = int(options.sleeptime)
 
-    # done with option parsing, bring on the dancing girls
-    
-    dnsChecker = IPDetector_DNS()
-    dnsChecker.setHostname(hostname)
-
-    protoHandler = DyndnsUpdateProtocol(hostname = hostname, key = key)
-
-    dyndnsclient = DynDnsClient( sleeptime = sleeptime)
-    dyndnsclient.setProtocolHandler(protoHandler)
-    dyndnsclient.setDNSDetector(dnsChecker)
-    dyndnsclient.setChangeDetector(changeDetector)
+    # done with command line options, bring on the dancing girls
+    dyndnsclient = getDynDnsClientForConfig(config)
+    if dyndnsclient is None:
+        return 1
     # do an initial syncronisation, before going into endless loop:
     dyndnsclient.sync()
     

@@ -3,51 +3,81 @@ import sys
 # dyndns: initial test. Should probably go somewhere else than this module
 import angel_app.contrib.dyndnsc as dyndnsc
 
-def getDynDnsConfiguration(AngelConfig):
-    "fetches dyndns configuration, if unconfigured, returns None"
-    cfg = {}
-    try:
-        cfg['hostname'] = AngelConfig.get('dyndns', 'hostname')
-        cfg['updatekey'] = AngelConfig.get('dyndns', 'updatekey') 
-        cfg['sleeptime'] = 60 # no need to leave this up to users for now 
-    except:
+def getDynDnsConfiguration(angelConfig):
+    """
+    fetches dyndns configuration from angel config, if unconfigured or wrongly configured,
+    returns None.
+    
+    This method serves as a bridge, so we can re-use dyndnsc.getDynDnsClientForConfig().
+
+    @param angelConfig: an AngelConfig instance
+    @return: a dictionary with key value pair options
+    """
+    from angel_app.log import getLogger
+    required_keys = {'protocol': 'dyndns', 'hostname': None }
+    other_keys = {'key': None, 'userid': None, 'password': None, 'sleeptime': 60, 'method': 'webcheck'}
+    for key in required_keys.keys():
+        try:
+            option = angelConfig.get('dyndns', key)
+        except:
+            # if a required key is missing, return None to disable dyndns explicitly
+            getLogger().warn("dyndns config incomplete: missing key '%s'" % key)
+            return None
+        else:
+            required_keys[key] = option
+    for key in other_keys.keys():
+        try:
+            option = angelConfig.get('dyndns', key)
+        except:
+            # if an optional key is missing, ignore and use our default
+            pass
+        else:
+            other_keys[key] = option
+
+    # merge require and optional keys into one dictionary:
+    for key in other_keys.keys():
+        required_keys[key] = other_keys[key]
+    return required_keys
+
+
+def getCallLaterDynDnsClientForAngelConfig(angelConfig, callLaterMethod, logger):
+    """
+    factory method to instantiate and initialize a complete and working dyndns client for 
+    use in the reactor loop.
+    
+    @param config: a dictionary with configuration pairs
+    @return: None or a valid object for use with reactor.callLater()  
+    """
+    # no need to expose this class globally 
+    class CallLaterDynDnsClient(object):
+        "Minimal class to handle all of the dyndns logic using callbacks started from the reactor loop"
+        def __init__(self, dyndnsclient, callLaterMethod, sleeptime):
+            """
+            @param dyndnsclient: a dyndnsclient object
+            @param callLaterMethod: the twisted reactors callLater method
+            @param sleeptime: how long to wait until callLater (secs)
+            """
+            self.sleeptime = sleeptime
+            self.client = dyndnsclient 
+            self.callLaterMethod = callLaterMethod
+            # do an initial synchronization:
+            self.client.sync()
+    
+        def check(self):
+            "this will make the dyndns client check its state and also insert an additional callLater timer"
+            self.client.check()
+            self.callLaterMethod(self.sleeptime, self.check)
+
+    # actual method
+    dyndnsc.logger = logger
+    config = getDynDnsConfiguration(angelConfig)
+    if config is None:
         return None
+    client = dyndnsc.getDynDnsClientForConfig(config)
+    if not client is None:
+        return CallLaterDynDnsClient(client, callLaterMethod, config['sleeptime'])
     else:
-        return cfg
-
-class AngelDynDnsClient(object):
-    "Minimal class to handle all of the dyndns logic using callbacks started from the reactor loop"
-    def __init__(self, config, callLaterMethod):
-        """
-        @param config: a dictionary object
-        @param callLaterMethod: the twisted reactors callLater method
-        """
-        self.sleeptime = config['sleeptime']
-        hostname = config['hostname'] 
-        key = config['updatekey'] 
-        
-        from angel_app.log import getLogger
-        dyndnsc.logger = getLogger('dyndns')
-        dnsChecker = dyndnsc.IPDetector_DNS()
-        dnsChecker.setHostname(hostname)
-    
-        protoHandler = dyndnsc.DyndnsUpdateProtocol(hostname = hostname, key = key)
-    
-        dyndnsclient = dyndnsc.DynDnsClient( sleeptime = self.sleeptime)
-        dyndnsclient.setProtocolHandler(protoHandler)
-        dyndnsclient.setDNSDetector(dnsChecker)
-        dyndnsclient.setChangeDetector(dyndnsc.IPDetector_TeredoOSX())
-        self.client = dyndnsclient 
-        self.callLaterMethod = callLaterMethod
-
-        # do an initial synchronization:
-        self.client.sync()
-
-    def check(self):
-        "this will make the dyndns client check its state and also insert an additional callLater timer"
-        self.client.check()
-        self.callLaterMethod(self.sleeptime, self.check)
-
+        return None
 
 def bootInit():
     """
@@ -87,9 +117,8 @@ def dance(options):
     getLogger().info("Listening on port %d and serving content from %s" % (providerport, repository))
 
     # initial test version to integrate a dyndns client into the provider loop
-    dyndnscfg = getDynDnsConfiguration(AngelConfig)
-    if not dyndnscfg is None: # if it's configured
-        dyndnsclient = AngelDynDnsClient(config = dyndnscfg, callLaterMethod = reactor.callLater)
+    dyndnsclient = getCallLaterDynDnsClientForAngelConfig(AngelConfig, callLaterMethod = reactor.callLater, logger = getLogger('dyndns'))
+    if not dyndnsclient is None:
         reactor.callLater(1, dyndnsclient.check) 
     reactor.run()
     getLogger().info("Quit")
