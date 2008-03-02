@@ -68,6 +68,7 @@ def startProcesses(procsToStart = ['provider', 'presenter', 'maintainer']):
                             'provider': ProviderProtocol, 
                             'presenter': PresenterProtocol, 
                             'maintainer': MaintainerProtocol, 
+                            'zeo': ZEOProtocol
                             }
     apps = []
     for procToStart in procsToStart:
@@ -297,6 +298,8 @@ class MaintainerProtocol(ExternalProcessProtocol):
 class MasterProtocol(ExternalProcessProtocol):
     pass
 class TestProtocol(ExternalProcessProtocol):
+    pass
+class ZEOProtocol(ExternalProcessProtocol):
     pass
 
 if __name__ == '__main__':

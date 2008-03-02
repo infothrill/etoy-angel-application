@@ -14,6 +14,14 @@ def bootInit():
     """
     pass
 
+def getProcsToStart(angelConfig):
+    procsThatShouldBeExplicitlyEnabled = ['provider', 'presenter', 'maintainer']
+    def enabled(procName):
+        return angelConfig.getboolean(procName, 'enable')
+    enabledProcs = filter(enabled, procsThatShouldBeExplicitlyEnabled)
+    # we always need ZEO for DB support
+    return enabledProcs + ['zeo']
+
 def boot():
     from optparse import OptionParser
     bootInit()
@@ -30,11 +38,7 @@ def boot():
     postConfigInit()
     angelConfig.bootstrapping = False
     # find out which processes are enabled:
-    options.procsToStart = []
-    for name in ['provider', 'presenter', 'maintainer']:
-        if angelConfig.getboolean(name, 'enable'):
-            # remember:
-            options.procsToStart.append(name)
+    options.procsToStart = getProcsToStart(angelConfig)
 
     # setup/configure logging
     from angel_app.log import initializeLogging

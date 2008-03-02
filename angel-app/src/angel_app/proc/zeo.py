@@ -375,6 +375,10 @@ def getZEOServer(storage):
     return StorageServer(address, storage)
 
 def main(args=None):
+    from angel_app.log import getLogger
+    from angel_app.config import config
+    import logging
+    logging.basicConfig()
     getZEOServer(getFileStorage())
 
     import ThreadedAsync.LoopCallback
