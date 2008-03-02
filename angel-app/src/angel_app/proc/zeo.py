@@ -42,14 +42,23 @@ def main(args=None):
     
     # TODO: it's complaining about lack of logging handler.
     # integrate with angel_app logger.
-    from angel_app.log import getLogger
     from angel_app.config import config
-    import logging
-    logging.basicConfig()
 
     ac = config.getConfig()
+    ac.bootstrapping = False
+
+    from angel_app.log import initializeLogging
+    loghandlers = ['file'] # always log to file
+    loghandlers.append('socket')
+    loghandlers.append('console')
+    loghandlers.append('growl')
+    initializeLogging('zeo', loghandlers)
+    from angel_app.log import getLogger
+
+
     getZEOServer(ac, getFileStorage(ac))
 
+    getLogger().info("test")
     getLogger().growl("User", "Database (ZEO)", "Starting service on port %i." % ac.getint("zeo","listenPort"))
     import ThreadedAsync.LoopCallback
     ThreadedAsync.LoopCallback.loop()
