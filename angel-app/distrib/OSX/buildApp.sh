@@ -75,7 +75,7 @@ echo "Running py2applet..."
 rm -rf "${SCRIPTDIR}/${APPNAME}.app" # make sure it's not there yet
 py2app_opts="--iconfile=${repo}/distrib/OSX/icons/m221e.icns --resources=${repo}/distrib/applescript,${repo}/distrib/images,${repo}/distrib/files"
 #python setup.py py2app --use-pythonpath $py2app_opts
-py2applet $py2app_opts "${SCRIPTDIR}/Angel.py" "${SCRIPTDIR}/master.py" "${SCRIPTDIR}/presenter.py" "${SCRIPTDIR}/provider.py" "${SCRIPTDIR}/maintainer.py" > $THISTMPDIR/py2applet.log 2>&1
+py2applet $py2app_opts "${SCRIPTDIR}/Angel.py" "${SCRIPTDIR}/master.py" "${SCRIPTDIR}/presenter.py" "${SCRIPTDIR}/provider.py" "${SCRIPTDIR}/maintainer.py" "${SCRIPTDIR}/zeo.py" > $THISTMPDIR/py2applet.log 2>&1
 if [[ $? -ne 0 ]]
 then
 #	cat ${THISTMPDIR}/py2applet.log
