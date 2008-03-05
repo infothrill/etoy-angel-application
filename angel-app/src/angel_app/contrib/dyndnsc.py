@@ -50,7 +50,7 @@ Other:
 
 __author__ = "Paul Kremer < pkremer TA spurious TOD biz >"
 __license__ = "MIT License"
-__revision__ = "$Id: dyndnsc.py 494 2008-03-02 17:48:58Z pkremer $"
+__revision__ = "$Id: dyndnsc.py 496 2008-03-03 12:07:11Z pkremer $"
 
 import sys
 import os
@@ -208,7 +208,14 @@ class HTTPGetHelper(BaseClass):
         """
         This fetches the data returned from the given url and the given params.
         If size is specified, only size amount of bytes are read and returned.
-        I anything goes wrong, this returns an empty string.
+        If anything goes wrong, this returns an empty string.
+        
+        @param url: string url
+        @param params: dictionary with GET/POST parameters
+        @param size: read this many bytes, default all
+        @param authheader: string http authentication header
+        
+        @return tuple (bool success, mixed value)
         """
         params = urllib.urlencode(params) # needs urllib
         headers = { 'User-Agent' : self.useragent }
@@ -223,19 +230,19 @@ class HTTPGetHelper(BaseClass):
             logger.warning("Got an exception while opening and reading from url '%s'" % (url) )
             if hasattr(e, 'reason'):
                 logger.warning('Failed to reach the server with reason: %s' % e.reason)
-                return e.reason
+                return (False, e)
             elif hasattr(e, 'code'):
                 from BaseHTTPServer import BaseHTTPRequestHandler
                 logger.warning("HTTP error code: %s, %s" % ( e.code, BaseHTTPRequestHandler.responses[e.code] ) )
-                return "HTTP error code %s, %s" % (e.code, BaseHTTPRequestHandler.responses[e.code][0])
+                return (False, e)
         except IOError, e:
             msg = "IO error: %s" % ( e ) 
             logger.warning(msg)
-            return msg
+            return (False, e)
         else:
             # everything seems fine:
             data = response.read(size)
-        return data
+        return (True, data)
 
 class IPDetector(BaseClass):
     """
@@ -429,13 +436,14 @@ class IPDetector_WebCheck(IPDetector):
         return False
 
     def _getClientIPFromUrl(self, url):
-        data = HTTPGetHelper().get(url, size = 1024)
-        lines = data.splitlines()
-        self.regex = re.compile("Current IP Address: (.*?)(<.*){0,1}$")
-        for line in lines:
-            matchObj = self.regex.search(line)
-            if not matchObj is None:
-                return matchObj.group(1)
+        (success, data) = HTTPGetHelper().get(url, size = 1024)
+        if success:
+            lines = data.splitlines()
+            self.regex = re.compile("Current IP Address: (.*?)(<.*){0,1}$")
+            for line in lines:
+                matchObj = self.regex.search(line)
+                if not matchObj is None:
+                    return matchObj.group(1)
         return None
 
     def detect(self):
@@ -517,9 +525,11 @@ class UpdateProtocolMajimoto(UpdateProtocol):
             self.httpgetter = HTTPGetHelper()
 
         params = {'myip': self.ip, 'key': self.key , 'hostname': self.hostname }
-        self.updateResult = self.httpgetter.get(self.updateUrl(), params, size = 1024, authheader = self.httpauthentication())
-        logger.debug("Update result: '%s'" % self.updateResult )
-        if self.updateResult == 'good':
+        (httpsuccess, self.updateResult) = self.httpgetter.get(self.updateUrl(), params, size = 1024, authheader = self.httpauthentication())
+        #logger.debug("Update result: '%s'" % self.updateResult )
+        if httpsuccess == False:
+            pass # TODO: how to behave here??? we might just be offline
+        elif self.updateResult == 'good':
             self.success()
         elif self.updateResult == 'nochg':
             self.nochg()
@@ -570,9 +580,11 @@ class UpdateProtocolDyndns(UpdateProtocol):
             self.httpgetter = HTTPGetHelper()
 
         params = {'myip': self.ip, 'hostname': self.hostname }
-        self.updateResult = self.httpgetter.get(self.updateUrl(), params, size = 1024, authheader = self.httpauthentication())
-        logger.debug("Update result: '%s'" % self.updateResult )
-        if self.updateResult.startswith('good'):
+        (httpsuccess, self.updateResult) = self.httpgetter.get(self.updateUrl(), params, size = 1024, authheader = self.httpauthentication())
+        #logger.debug("Update result: '%s'" % self.updateResult )
+        if httpsuccess == False:
+            pass # TODO: how to behave here??? we might just be offline
+        elif self.updateResult == 'good':
             self.success()
         elif self.updateResult == 'nochg':
             self.nochg()
@@ -604,7 +616,7 @@ class DynDnsClient(BaseClass):
         self.ipchangedetection_sleep = sleeptime # check every n seconds if our IP changed
         self.forceipchangedetection_sleep = sleeptime * 5 # force check every n seconds if our IP changed
         logger.debug("DynDnsClient instantiated")
-        logger.growl("User", "Network", "Dynamic DNS client activated")
+        #logger.growl("User", "Network", "Dynamic DNS client activated")
 
     def setProtocolHandler(self, proto):
         self.proto = proto
@@ -801,7 +813,7 @@ def main():
     return 0
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO,format='%(asctime)s %(levelname)s %(message)s')
+    logging.basicConfig(level=logging.DEBUG,format='%(asctime)s %(levelname)s %(message)s')
     logging.setLoggerClass(DyndnsLogger)
     logger = logging.getLogger('a')
     sys.exit(main())
