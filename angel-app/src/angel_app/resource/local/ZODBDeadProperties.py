@@ -1,17 +1,17 @@
 from zope.interface import implements
 from angel_app.resource.IDeadPropertyStore import IDeadPropertyStore
+from ZEO.ClientStorage import ClientStorage
 
 class ZODBDeadProperties(object):
     """
     """
     implements(IDeadPropertyStore)
     
-    def __init__(self):
-        pass
-    
-        """
-    Provide a zope interface specification of property stores as found in twisted.web2.dav
-    """
+    def __init__(self, _resource):
+        self.resource = _resource
+        addr = "localhost", 6223
+        self.connection = ClientStorage(addr)
+
     def get(self, qname):
         """
         @param qname (see twisted.web2.dav.davxml) of the property to look for.

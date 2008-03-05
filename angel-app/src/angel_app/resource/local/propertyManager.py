@@ -117,6 +117,7 @@ class PropertyManager(object):
          
         self.store = _store
         # create a per-instance copy of the default generators
+        # TODO: review: is this necessary?
         self.defaultValues = dict(defaultMetaData.items())
 
     def isCollection(self):

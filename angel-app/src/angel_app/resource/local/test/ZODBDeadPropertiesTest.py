@@ -42,7 +42,14 @@ import zope.interface.verify
 AngelConfig = config.getConfig()
 repositoryPath = AngelConfig.get("common","repository")
 
+from angel_app.log import initializeLogging
+loghandlers = ['console'] # always log to file
+initializeLogging("test", loghandlers)
+
 class ZODBTest(unittest.TestCase):
+    
+    def setUp(self):
+        self.testStore = ZODBDeadProperties(None)
         
     def testInterfaceCompliance(self):
         """
