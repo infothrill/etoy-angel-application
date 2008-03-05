@@ -1,6 +1,13 @@
-from zope.interface import implements
-from angel_app.resource.IDeadPropertyStore import IDeadPropertyStore
 from ZEO.ClientStorage import ClientStorage
+from angel_app.config.config import getConfig
+from angel_app.resource.IDeadPropertyStore import IDeadPropertyStore
+from zope.interface import implements
+
+def getZEOAddress():
+    return (
+        "127.0.0.1", 
+        getConfig().getint("zeo","listenPort")
+        )
 
 class ZODBDeadProperties(object):
     """
@@ -9,8 +16,7 @@ class ZODBDeadProperties(object):
     
     def __init__(self, _resource):
         self.resource = _resource
-        addr = "localhost", 6223
-        self.connection = ClientStorage(addr)
+        self.connection = ClientStorage(getZEOAddress())
 
     def get(self, qname):
         """
