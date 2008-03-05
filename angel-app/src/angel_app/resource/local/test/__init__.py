@@ -1,1 +1,1 @@
-all = ["localResourceTest", "localResourceTest", "propertyStoreTest"]
+all = ["localResourceTest", "localResourceTest", "propertyStoreTest", "ZODBPropertyManagerTest"]

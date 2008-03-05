@@ -24,4 +24,5 @@ all = [
        "propertyManager"
        "renderManager"
        "util",
+       "ZODBDeadProperties"
        ]
