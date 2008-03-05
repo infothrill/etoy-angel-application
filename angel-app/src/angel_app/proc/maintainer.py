@@ -28,7 +28,7 @@ def dance(options):
     repository = AngelConfig.get("common", "repository")
     log.info("starting maintenance loop at: " + repository)
     try:
-        log.growl("User", "Resource Maintainance", "Process Started.")
+        log.growl("User", "MAINTENANCE PROCESS", "Started.")
         client.maintenanceLoop()
     except Exception, e:
         log.critical("An exception occured in the maintenance loop", exc_info = e)

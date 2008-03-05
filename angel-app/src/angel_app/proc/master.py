@@ -72,7 +72,7 @@ def dance(options):
     angel_app.proc.procmanager.startProcesses(options.procsToStart)
     from twisted.internet import reactor
     from angel_app.log import getLogger
-    getLogger().growl("User", "Network", "P2P processes started (%s)" % ", ".join(options.procsToStart))
+    getLogger().growl("User", "NODE ACTIVATED", "Launching sub-processes.")
     reactor.run()
     getLogger().info("Quit")
 

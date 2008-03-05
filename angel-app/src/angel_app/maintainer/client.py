@@ -63,7 +63,7 @@ def traverseResourceTree(sleepTime):
         time.sleep(sleepTime)
         return (inspectResource(resource), None)
     
-    log.growl("User", "Resource Maintainance", "Starting resource tree traversal.")
+    log.growl("User", "MAINTENANCE PROCESS", "Starting resource tree traversal.")
      
     for dummyii in graphWalker(Basic(repository), getChildren, toEvaluate):
         continue

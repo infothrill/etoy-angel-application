@@ -71,7 +71,7 @@ def main(args=None):
 
     getZEOServer(angelConfig, getFileStorage(angelConfig))
 
-    getLogger().growl("User", "Database (ZEO)", "Starting service on port %i." % angelConfig.getint("zeo","listenPort"))
+    getLogger().growl("User", "STARDUST COLLECTOR", "Starting service on port %i." % angelConfig.getint("zeo","listenPort"))
     import ThreadedAsync.LoopCallback
     ThreadedAsync.LoopCallback.loop()
 
