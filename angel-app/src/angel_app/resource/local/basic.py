@@ -110,7 +110,7 @@ class Basic(DAVFile, Resource):
 
     def relativePath(self):
         """
-        Returns the relative path with respect to the repository root as an absolute path,
+        @return the relative path with respect to the repository root as an absolute path,
         i.e. ${repository}/foo becomes "/foo", for the repository itself, "/" is returned.
         """
         if self.isRepositoryRoot(): return os.sep
