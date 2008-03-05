@@ -1,9 +1,10 @@
 0.3.3 ****** NOT YET RELEASED ******
- * on Mac OS X, logs are now in ~/Library/Logs/Angel/  
+ * added ZEO process for storing resource properties (to replace xattr propertyStor)
+ * on Mac OS X, logs are now in ~/Library/Logs/Angel/ by default
  * added Growl support
  * mounting of resources moved to maintainer loop, e.g. mounts will automatically be retried
- * experimental dynamic dns client in provider (defaults to teredo for now, disabled by default).
-   This adds a new dependency for the module 'netifaces'.
+ * added experimental dynamic dns client in provider (disabled by default).
+   This adds new dependencies for the modules 'netifaces' and 'IPy'
  * minor fixes
 
 0.3.2 November 28 2007
