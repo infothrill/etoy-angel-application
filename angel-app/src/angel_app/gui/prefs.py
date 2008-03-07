@@ -104,7 +104,7 @@ class PrefsPanel(wx.Panel):
         # Other
         ######################
         panelOther = wx.Panel(self, -1)
-        sbSizerOther = wx.StaticBoxSizer(wx.StaticBox(panelOther, -1, _("Other")), flag = wx.VERTICAL)
+        sbSizerOther = wx.StaticBoxSizer(wx.StaticBox(panelOther, -1, _("Other")), wx.VERTICAL)
         panelOther.SetSizer(sbSizerOther)
         panelOther.SetAutoLayout(True)
         sbSizerOther.Fit(panelOther)
