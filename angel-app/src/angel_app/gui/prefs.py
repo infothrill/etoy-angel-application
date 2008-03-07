@@ -19,9 +19,9 @@ class PrefsPanel(wx.Panel):
         vboxMain = wx.BoxSizer(wx.VERTICAL)
 
         hboxCfgFile = wx.BoxSizer(wx.HORIZONTAL)
-        hboxCfgFile.Add(wx.StaticText(self, -1, _("Config file: ")), 0, wx.ALIGN_CENTER_VERTICAL)
-        hboxCfgFile.Add(wx.StaticText(self, -1, self.app.config.getConfigFilename()), 1, wx.EXPAND, 0)
-        vboxMain.Add(hboxCfgFile, 0, wx.ALL | wx.EXPAND, 4)
+        hboxCfgFile.Add(wx.StaticText(self, -1, _("Using configuration file: ")), proportion = 0, flag = wx.ALIGN_CENTER, border = 0)
+        hboxCfgFile.Add(wx.StaticText(self, -1, self.app.config.getConfigFilename()), proportion = 0, flag = wx.ALIGN_CENTER, border = 0)
+        vboxMain.Add(hboxCfgFile, proportion = 0, flag = wx.ALL | wx.ALIGN_CENTER, border = 4)
 
         ######################
         # Network
@@ -234,6 +234,6 @@ class PrefsWindow(wx.Dialog):
 
         Sizer  = wx.BoxSizer(wx.VERTICAL)
         p = PrefsPanelForWindow(self, statuslog = StatusLog())
-        Sizer.Add(p)
+        Sizer.Add(p, proportion = 1, flag = wx.ALL | wx.EXPAND, border = 0)
         self.SetSizer(Sizer)
         self.Fit()
