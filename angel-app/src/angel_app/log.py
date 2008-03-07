@@ -20,11 +20,14 @@ and
 for more information.
 """
 
+import os
+import re
 import logging
-import angel_app.config.config
+
 from twisted.python import log as twistedlog
 
-from os import path, mkdir
+from angel_app.config.config import getConfig
+
 
 DEBUG = False # this will start printing to the console if set to True
 """
@@ -33,7 +36,7 @@ Defaults for the logging backend (RotatingFileHandler)
 log_maxbytes = 1024 * 1024 # each logfile has a max of 1 MB
 log_backupcount = 7        # max 7 "rotated" logfiles
 
-angelConfig = angel_app.config.config.getConfig()
+angelConfig = getConfig()
 loggers = {}
 
 appname = "default" # this string is prepended with a trailing dot to all log messages
@@ -64,9 +67,6 @@ def _getLogger(area = ''):
 
 
 def getAngelLogPath():
-    from angel_app.config.config import getConfig
-    angelConfig = getConfig()
-    
     angelLogPath = angelConfig.get("common", "logdir")
     return angelLogPath
 
@@ -75,7 +75,7 @@ def getAngelLogFilename():
     return getAngelLogFilenameForApp(appname)
 
 def getAngelLogFilenameForApp(app):
-    return path.join(getAngelLogPath(), app + ".log")
+    return os.path.join(getAngelLogPath(), app + ".log")
 
 class AngelLogger(logging.getLoggerClass()):
     "We use our own Logger class so we can introduce additional logger methods"
@@ -103,9 +103,7 @@ class AngelLogger(logging.getLoggerClass()):
         
 logging.setLoggerClass(AngelLogger)
     
-from logging import Filter
-import re
-class AngelLogFilter(Filter):
+class AngelLogFilter(logging.Filter):
     def __init__(self, f):
         self.f = f
     def filter(self, record):
@@ -120,7 +118,7 @@ class AngelLogFilter(Filter):
             return False
         return True
 
-class AngelLogTwistedFilter(Filter):
+class AngelLogTwistedFilter(logging.Filter):
     def __init__(self):
         self.re = re.compile("HTTPChannel,\d+,.*: (PROPFIND )|(HEAD )\/.* HTTP\/1\.1")
     def filter(self, record):
@@ -135,6 +133,7 @@ def initializeLogging(appname = "default", handlers = ['console']):
     """
     This is the single-step routine to initialize the logging system.
     """
+    import angel_app #hmja, stupid, but needed to set the module variable, afaik
     angel_app.log.appname = appname
     setup()
     for handler in handlers:
@@ -148,9 +147,9 @@ def setup():
     """
     __configLoggerBasic()
     angelLogPath = getAngelLogPath()
-    if not path.exists(angelLogPath):
-        mkdir(angelLogPath)
-    elif not path.isdir(angelLogPath):
+    if not os.path.exists(angelLogPath):
+        os.mkdir(angelLogPath)
+    elif not os.path.isdir(angelLogPath):
         raise Exception, "Filesystem entry '%s' occupied, cannot create directory here." % angelLogPath
 
 def enableHandler(handlername, handler = None):
@@ -268,8 +267,7 @@ def loglevelToInt(loglevel = 'NOTSET'):
 
 
 def __getConfiguredLogLevel():
-    AngelConfig = angel_app.config.config.getConfig()
-    loglevel = AngelConfig.get('common', 'loglevel')
+    loglevel = angelConfig.get('common', 'loglevel')
     return loglevelToInt(loglevel)
 
 
@@ -279,8 +277,7 @@ def __addConsoleHandler():
     console.setLevel(__getConfiguredLogLevel())
     #console.setLevel(logging.WARN) # for the console logger, we always use DEBUG!
     # set a format which is simpler for console use
-    AngelConfig = angel_app.config.config.getConfig()
-    formatstring = AngelConfig.get('common', 'consolelogformat')
+    formatstring = angelConfig.get('common', 'consolelogformat')
     formatter = logging.Formatter(formatstring)
     # tell the handler to use this format
     console.setFormatter(formatter)
@@ -294,8 +291,7 @@ def __addRotatingFileHandler():
     fileHandler = logging.handlers.RotatingFileHandler(getAngelLogFilename(), 'a', log_maxbytes, log_backupcount)
     fileHandler.setLevel(__getConfiguredLogLevel())
     # set a format which is simpler for console use
-    AngelConfig = angel_app.config.config.getConfig()
-    formatstring = AngelConfig.get('common', 'logformat')
+    formatstring = angelConfig.get('common', 'logformat')
     formatter = logging.Formatter(formatstring)
     # tell the handler to use this format
     fileHandler.setFormatter(formatter)    
@@ -305,8 +301,6 @@ def __addRotatingFileHandler():
 
 
 def __addSocketHandler():
-    from angel_app.config.config import getConfig
-    angelConfig = getConfig()
     # define a socket Handler:
     socketHandler = logging.handlers.SocketHandler('localhost', angelConfig.getint("common", "loglistenport"))
     socketHandler.setLevel(__getConfiguredLogLevel())
@@ -320,7 +314,7 @@ def __addGrowlHandler():
     # growl support is optional:
     try:
         g = getAngelGrowlNotifier()
-        growlHandler = GrowlHandler(growl = g)
+        growlHandler = GrowlHandler(level = __getConfiguredLogLevel(), growl = g)
         logging.getLogger().addHandler(growlHandler)
     except:
         pass
@@ -350,8 +344,6 @@ def getLoggingFilters():
     digits = re.compile("\d+")
     sectionname = 'logfilters'
     log = getLogger(__name__)
-    from angel_app.config.config import getConfig
-    angelConfig = getConfig()
     if not angelConfig.has_section(sectionname):
         log.info("No section '%s' in config file, skipping" % sectionname)
         return []
@@ -375,7 +367,6 @@ try:
         # TODO: this should return a singleton
         "returns a GrowlNotifier initialized/customized for Angel"
         from angel_app.gui.compat.common import getResourcePath
-        import os
         app_icon = Growl.Image.imageFromPath(os.path.join(getResourcePath(), 'images', 'm221e.png')) # TODO: we should not need to know about paths/filenames here
         notifications = getAllowedLogLevels()
         notifications.append('User')
@@ -387,18 +378,14 @@ try:
         """
         This is a logging handler doing growl notifications.
 
-        TODO: it's unclear how this could be best integrated with regard to log levels, as the core
-        design of such log levels is that the higher the level, the more important the message.
-        Maybe just log growl messages with the highest priority (so they never get dumped), and decide in this class,
-        based on the loglevel?
-        Another problem is that Growl has a concept of notification types that can be edited/configured in the
-        system preferences, and re-using the logging interface would not allow using this.
+        It receives _all_ log messages and decides on the configured loglevel (given at construction or via setLevel())
+        if it shall growl or not.
+        
+        To explicitely growl, you must call the logger's "growl()" method which bypasses the actual logging system.
 
-        Also, as we have multiple processe that use a network logging system. This means that we might get multiple
-        notifications with the same message if handlers are not configured correctly, because the logging client
-        and the logging server do the notification. 
-
-        In this implementation, everything that is higher or equal to logging.WARNING will be growled
+        NOTE: as we have multiple processes that use a network logging system, we might get multiple
+        calls with the same message if handlers are not configured correctly (e.g. the logging client
+        and the logging server do the notification). To avoid this, you have to properly initialize the logging system. 
         """
         notifications = {
                          logging.DEBUG:'DEBUG',
@@ -408,7 +395,7 @@ try:
                          logging.CRITICAL:'CRITICAL'
                          }
 
-        def __init__(self, level = logging.WARNING, growl = None):
+        def __init__(self, level = logging.DEBUG, growl = None):
             """
             Constructor
             
