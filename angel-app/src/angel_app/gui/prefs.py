@@ -103,51 +103,46 @@ class PrefsPanel(wx.Panel):
         ######################
         # Other
         ######################
-        panelTest = wx.Panel(self, -1)
-        sbSizerTest = wx.StaticBoxSizer(wx.StaticBox(panelTest, -1, _("Other")), wx.VERTICAL)
-        panelTest.SetSizer(sbSizerTest)
-        panelTest.SetAutoLayout(True)
-        sbSizerTest.Fit(panelTest)
-        vboxMain.Add(panelTest, 0, wx.ALL | wx.EXPAND, 5)
+        panelOther = wx.Panel(self, -1)
+        sbSizerOther = wx.StaticBoxSizer(wx.StaticBox(panelOther, -1, _("Other")), flag = wx.VERTICAL)
+        panelOther.SetSizer(sbSizerOther)
+        panelOther.SetAutoLayout(True)
+        sbSizerOther.Fit(panelOther)
+        vboxMain.Add(panelOther, proportion = 0, flag = wx.ALL | wx.EXPAND, border = 5)
 
-        gridtest = wx.FlexGridSizer(2, 2, 1, 1)
-        #gridtest.AddGrowableCol(1) # second column epands
+        gridOther = wx.FlexGridSizer(2, 2, 1, 1)
+        #gridOther.AddGrowableCol(1) # second column epands
 
         #### Log level ####
-        gridtest.Add(wx.StaticText(panelTest, -1, _("Log level: ")), 0, wx.ALIGN_CENTER_VERTICAL)
+        gridOther.Add(wx.StaticText(panelOther, -1, _("Log level: ")), proportion = 0, flag = wx.ALIGN_CENTER_VERTICAL)
 
         from angel_app.log import getAllowedLogLevels
         levelNames = map(unicode, getAllowedLogLevels())
-        self.loglevelChooser = wx.ComboBox(panelTest, wx.NewId(), 
+        self.loglevelChooser = wx.ComboBox(panelOther, wx.NewId(), 
                                     self.app.config.get('common', 'loglevel'), 
                                     wx.Point(-1, -1), 
                                     wx.Size(-1, -1), levelNames, wx.TE_READONLY)
         
-        gridtest.Add(self.loglevelChooser, 0, wx.EXPAND)
+        gridOther.Add(self.loglevelChooser, 0, wx.EXPAND)
       
         #### Max clones ####
-        gridtest.Add(wx.StaticText(panelTest, -1, _("Max clones: ")), 0, wx.ALIGN_CENTER_VERTICAL)
-        self.maxClones = wx.TextCtrl(panelTest, -1, unicode(self.app.config.get('common', 'maxclones')))
-        gridtest.Add(self.maxClones, 0, wx.EXPAND)
+        gridOther.Add(wx.StaticText(panelOther, -1, _("Max clones: ")), 0, wx.ALIGN_CENTER_VERTICAL)
+        self.maxClones = wx.TextCtrl(panelOther, -1, unicode(self.app.config.get('common', 'maxclones')))
+        gridOther.Add(self.maxClones, 0, wx.EXPAND)
 
-        sbSizerTest.Add(gridtest, 0, wx.ALL | wx.EXPAND, 4)
-        
-        # OK, add OK/Cancel buttons
+        ### Desktop notification ###
+        ID_onDesktopNotificationCheckbox = wx.NewId()
+        self.desktopnotificationCheckbox = wx.CheckBox(panelOther, ID_onDesktopNotificationCheckbox, _('Enable desktop notifications'))
+        self.desktopnotificationCheckbox.SetValue(self.app.config.get('common','desktopnotification'))
+        gridOther.Add(self.desktopnotificationCheckbox, proportion = 0, flag = wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, border = 20)
 
-#        hboxButtons = wx.BoxSizer(wx.HORIZONTAL)
-#
-#        ID_ON_OK = wx.NewId()
-#        self.buttonOK = wx.Button(self, ID_ON_OK, _("OK"))
-#        hboxButtons.Add(self.buttonOK, 0, wx.ALL | wx.EXPAND, 1)
-#
-#        ID_ON_CANCEL = wx.NewId()
-#        self.buttonCancel = wx.Button(self, ID_ON_CANCEL, _("Cancel"))
-#        hboxButtons.Add(self.buttonCancel, 0, wx.ALL | wx.EXPAND, 1)
-
+        sbSizerOther.Add(gridOther, proportion = 0, flag = wx.ALL | wx.EXPAND, border = 4)
+        ### Apply/OK/Cancel buttons ###
         hboxButtons = self.buttons()
 
-        vboxMain.Add(hboxButtons, 0, wx.ALL | wx.ALIGN_CENTER, 4)
+        vboxMain.Add(hboxButtons, proportion = 0, flag = wx.ALL | wx.ALIGN_CENTER, border = 4)
 
+        ### do layout ###
         self.SetSizer(vboxMain)
         self.Fit()
 
@@ -185,6 +180,7 @@ class PrefsPanel(wx.Panel):
         self.app.config.container['provider']['useIPv6'] = self.useIpv6Checkbox.GetValue()
         self.app.config.container['maintainer']['enable'] = self.maintainerCheckbox.GetValue()
         self.app.config.container['maintainer']['nodename'] = self.nodeName.GetValue()
+        self.app.config.container['common']['desktopnotification'] = self.desktopnotificationCheckbox.GetValue()
 
         self.app.config.commit()
         
@@ -214,7 +210,7 @@ class PrefsPanelForWindow(PrefsPanel):
     def onOK(self, event):
         self.savePrefs()
         wx.GetApp().p2p.conditionalRestart()
-        self.statuslog.WriteText("Preferences saved")
+        self.statuslog.WriteText(_("Preferences saved"))
         self.closeMe()
 
     def onCancel(self, event):
