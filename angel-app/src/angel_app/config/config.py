@@ -73,6 +73,7 @@ def getDefaultConfigObj():
     loglistenport = %(loglistenport)s
     logformat = '%(logformat)s'
     consolelogformat = '%(consolelogformat)s'
+    desktopnotification = True
     
     [presenter]
     enable = True
@@ -123,6 +124,7 @@ def _configspec_lines():
     loglistenport = integer(min=1025)
     logformat = string
     consolelogformat = string
+    desktopnotification = boolean(default=True)
     
     [presenter]
     enable = boolean(default=True)

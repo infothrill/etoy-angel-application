@@ -33,6 +33,7 @@ Defaults for the logging backend (RotatingFileHandler)
 log_maxbytes = 1024 * 1024 # each logfile has a max of 1 MB
 log_backupcount = 7        # max 7 "rotated" logfiles
 
+angelConfig = angel_app.config.config.getConfig()
 loggers = {}
 
 appname = "default" # this string is prepended with a trailing dot to all log messages
@@ -89,11 +90,14 @@ class AngelLogger(logging.getLoggerClass()):
         @param title: the title of the notification
         @param msg: the actual message
         """
-        # TODO: this is ugly and probably slow
+        # before explicitly growling, check wether it's enabled:
+        if not angelConfig.getboolean('common', 'desktopnotification'): return
+        # otherwise, try to growl and don't fail if it's not working, but say so in the log
         try:
             g = getAngelGrowlNotifier()
             g.notify(type, title, msg)
-        except:
+        except Exception, e:
+            getLogger().debug("Growling failed", exc_info = e)
             pass
         #self.info("%s %s" % (title, msg))
         
@@ -127,7 +131,7 @@ class AngelLogTwistedFilter(Filter):
             return True
 
 
-def initializeLogging(appname = "default", handlers = ['console', 'growl']):
+def initializeLogging(appname = "default", handlers = ['console']):
     """
     This is the single-step routine to initialize the logging system.
     """

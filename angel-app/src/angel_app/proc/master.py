@@ -42,12 +42,14 @@ def boot():
 
     # setup/configure logging
     from angel_app.log import initializeLogging
-    loghandlers = ['file', 'growl'] # always log to file # TODO: growl?
+    loghandlers = ['file']
+    if angelConfig.getboolean('common', 'desktopnotification'):
+        loghandlers.append('growl')
     if len(options.daemon) == 0: # not in daemon mode, so we log to console!
         loghandlers.append('console')
     initializeLogging(appname, loghandlers)
 
-    import angel_app.proc.procmanager # import before daemonizing
+    import angel_app.proc.procmanager # import before daemonizing @UnusedImport
 
     if len(options.daemon) > 0:
         from angel_app.proc import daemonizer
@@ -65,11 +67,11 @@ def dance(options):
     from angel_app.admin import initializeRepository
     initializeRepository.initializeRepository()
 
-    import angel_app.logserver
-    import angel_app.proc.procmanager
-    angel_app.logserver.startLoggingServer()
+    from angel_app.logserver import startLoggingServer
+    from angel_app.proc.procmanager import startProcesses 
+    startLoggingServer()
     # start processes _after_ starting the logging server!
-    angel_app.proc.procmanager.startProcesses(options.procsToStart)
+    startProcesses(options.procsToStart)
     from twisted.internet import reactor
     from angel_app.log import getLogger
     getLogger().growl("User", "NODE ACTIVATED", "Launching sub-processes.")

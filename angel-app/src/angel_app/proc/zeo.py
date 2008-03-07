@@ -60,7 +60,8 @@ def main(args=None):
             loghandlers.append('socket')
         else:
             loghandlers.append('console')
-            loghandlers.append('growl')
+            if angelConfig.getboolean('common', 'desktopnotification'):
+                loghandlers.append('growl')
 
     initializeLogging(appname, loghandlers)
     from angel_app.log import getLogger
