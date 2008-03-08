@@ -50,11 +50,12 @@ def getDefaultConfigObj():
         logdir = os.path.join(os.environ["HOME"], ".angel-app", "log"),
         
     #some defaults have to be computed first:
-    defaults = {
+    defaults = {   
             "angelhome" : os.path.join(os.environ["HOME"], ".angel-app"),
             "repository" : os.path.join(os.environ["HOME"], ".angel-app", "repository"),
             "zodbfs" : os.path.join(os.environ["HOME"], ".angel-app", "zodb.fs"),
             "keyring" : os.path.join(os.environ["HOME"], ".angel-app", "keyring"),
+            "angelshellinit" : os.path.join(os.environ["HOME"], ".angel-app", "angelshellinit.py"),
             "logdir" : logdir,
             "loglistenport" : str(DEFAULT_TCP_LOGGING_PORT),
             "logformat" : '%(asctime)s %(levelname)-6s %(name)-20s - %(message)s',
@@ -64,42 +65,65 @@ def getDefaultConfigObj():
     # create a string for the default config:
     defaultconfig_txt = """
     [common]
+    # the root of all persistent state
     angelhome = "%(angelhome)s"
+    # where we keep the actual file system data
     repository =  "%(repository)s"
+    # where we keep key files
     keyring = "%(keyring)s"
+    # logs go here
     logdir = "%(logdir)s"
+    # remember at most this many clones of a resource
     maxclones = 5
+    # one of DEBUG, INFO, WARN, ERROR, CRITICAL
     loglevel = INFO
     loglistenport = %(loglistenport)s
     logformat = '%(logformat)s'
     consolelogformat = '%(consolelogformat)s'
+    # enable growling and the likes:
     desktopnotification = True
     
     [presenter]
+    # presenter provides priviledged DAV support on localhost (=> Finder) 
     enable = True
     listenPort = 6222
     listenInterface = localhost
     
     [provider]
+    # provider provides read-only DAV access to remote clients
     enable = True
     listenPort = 6221
+    # may use IPv6 for improved connectivity (teredo)
     useIPv6 = False
     
     [maintainer]
+    # steps through resources, syncs with remote clones
     enable = True
+    # sleep this long between resource inspection
     initialsleep = 1 # it's nice to be fast on the first traversal
-    treetraversaltime = 86400 # we want a tree traversal to take about one day after the initial sync
+    # don't sleep longer than this (in seconds) between resource inspections
     maxsleeptime = 100
+    # try to make a complete traversal take about this long 
+    # (use a long time for low resource usage, a short one for tight synchronization)
+    treetraversaltime = 86400 # we want a tree traversal to take about one day after the initial sync
+    # the default name of this node with which it will advertise itself
+    # to remote nodes. if you have a valid host name (DNS entry), use it here:
     nodename = unknown.invalid
     
     [zeo]
+    # where to put the ZODB database file
     zodbfs = '%(zodbfs)s'
     listenPort = 6223
     
     [gui]
+    # start maintainer process on startup
     autostartp2p = True
+    # if it exists, this (python) script will be executed by the angelshell when you load it
+    angelshellinit = '%(angelshellinit)s'
 
     [mounttab]
+    # list of default mounts.
+    # $URL = $MOUNT_POINT
     "http://missioneternity.org:6221/" = "MISSION ETERNITY"
 
     """ % ( defaults )
