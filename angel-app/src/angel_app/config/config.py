@@ -116,7 +116,7 @@ def getDefaultConfigObj():
     listenPort = 6223
     
     [gui]
-    # start maintainer process on startup
+    # start master process on gui startup
     autostartp2p = True
     # if it exists, this (python) script will be executed by the angelshell when you load it
     angelshellinit = '%(angelshellinit)s'
