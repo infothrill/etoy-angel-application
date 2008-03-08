@@ -4,7 +4,7 @@ import sys
 
 def check_python():
     if sys.version_info < (2,4):
-        print "Python 2.4 or higher is required to run Angel-App."
+        print "Python 2.4 or higher is required to run Angel."
         sys.exit(256)
 
 check_python()
@@ -50,9 +50,18 @@ setup(
     packages=find_packages('src'),
     platforms=['MacOS X', 'Linux', 'FreeBSD'],
     package_dir={
-                 'angel_app' : 'src/angel_app'
+                 #'angel_app' : 'src/angel_app'
+                 '' : 'src'
                  },
-    install_requires = ["xattr<=0.4", "zope.interface>=3.3.0", "netaddress>=0.2.2", "ZODB3<=3.6", "netifaces>=0.4", "IPy>=0.56"], #"pycrypto>=2.0.1"
+    install_requires = [
+                        "xattr<=0.4",
+                        "zope.interface>=3.3.0",
+                        "netaddress>=0.2.2",
+                        "ZODB3<=3.6",
+                        "netifaces>=0.4",
+                        "IPy>=0.56",
+                        "pycrypto>=2.0.1",
+                        ], 
     # for some unkown reason pycrypto gets bundled fine only if installed manually from its tarball (easy_install not so easy)
     # wxPython does not conform to cheeseshop.python.org standards, so currently we cannot include it here
     #dependency_links = [
