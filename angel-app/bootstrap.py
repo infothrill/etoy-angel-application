@@ -3,7 +3,7 @@
 import os
 import sys
 import shutil
-import subprocess
+import commands
 
 def check_python():
     if sys.version_info < (2,4):
@@ -22,7 +22,16 @@ else:
 
 def run(command, description):
     print description
-    proc = subprocess.Popen(command, stdout=sys.stdout, stderr=sys.stderr, env=os.environ, stdin=None)
+    restuple = commands.getstatusoutput(" ".join(command))
+    if restuple[0] != 0:
+        print "Command %s returned non-zero exit code '%s' and output '%s'" % (command, restuple[0], restuple[1])
+        sys.exit(256)
+
+def runARGH(command, description): # unused
+    # for some fucked up reason, ez_setup.py returns a non-zero exit code when called with subprocess ;-( ARGHHH going fucking mad with it
+    import subprocess
+    print description
+    proc = subprocess.Popen(command, stdout=sys.stdout, stderr=sys.stderr)
     alive = True
     while alive:
         exitcode = proc.poll()
