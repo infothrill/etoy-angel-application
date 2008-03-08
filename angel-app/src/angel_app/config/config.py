@@ -47,7 +47,7 @@ def getDefaultConfigObj():
     if platform.isMacOSX():
         logdir = os.path.join(os.environ["HOME"], "Library", "Logs", "Angel")
     else:
-        logdir = os.path.join(os.environ["HOME"], ".angel-app", "log"),
+        logdir = os.path.join(os.environ["HOME"], ".angel-app", "log")
         
     #some defaults have to be computed first:
     defaults = {   
