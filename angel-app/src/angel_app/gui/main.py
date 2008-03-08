@@ -393,13 +393,24 @@ class AngelMainFrameBase(wx.Frame):
         """
         platformwrap.showURLInBrowser(self.TECHNICALREPORT_URL)
 
-onShelLoad = [
+# executed by angelshell if no angelshellinit.py is found:
+defaultShellCommands = [
               "from angel_app.config.config import getConfig",
               "cc = getConfig()",
               "rootPath = cc.get('common', 'repository')",
               "from angel_app.resource.local.internal.resource import Crypto",
               "root = Crypto(rootPath)"
               ]
+
+def getInitCommands():
+    try:
+        fileName = config.getConfig().get("gui", "angelshellinit")
+        return open(fileName).readlines()
+    except IOError: # file not found
+        return defaultShellCommands
+
+# fail early -- evaluate on module import
+onShellLoad = getInitCommands()
     
 class AngelMainNoteBook(wx.Notebook):
     def __init__(self, parent, id, statuslog):
@@ -425,7 +436,7 @@ class AngelMainNoteBook(wx.Notebook):
         intro = 'ANGEL SHELL %s - EVERYTHING YOU NEED FOR BACKUP' % py.version.VERSION
         win = py.shell.Shell(self, -1, introText=intro)
         self.AddPage(win, _('Angelshell'))
-        for command in onShelLoad:
+        for command in onShellLoad:
             win.Execute(command)
         
         win = welcome.WelcomePanel(self, statuslog = self.statuslog)
