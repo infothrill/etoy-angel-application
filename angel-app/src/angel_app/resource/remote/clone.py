@@ -20,6 +20,7 @@ from netaddress.rfc3986 import path_absolute
 from pyparsing import ParseException
 log = getLogger(__name__)
 
+PROVIDER_PUBLIC_LISTEN_PORT = 6221
 
 AngelConfig = config.getConfig()
 providerport = AngelConfig.getint("provider","listenPort")
@@ -236,8 +237,7 @@ def cloneFromURI(_uri, defaultHost = None):
         _host = defaultHost
     # if port is empty, fallback to default 
     if pp.port == "":
-        from angel_app.config.defaults import providerPublicListenPort
-        port = providerPublicListenPort
+        port = PROVIDER_PUBLIC_LISTEN_PORT
     else:
         port = pp.port
     # if path is empty, fallback to root "/"
