@@ -132,7 +132,7 @@ class PropertyManager(object):
     def list(self):
         return self.store.list()
     
-    def delete(self, qnamd):
+    def delete(self, qname):
         return self.store.delete(qname)
 
     def getByElement(self, property):
