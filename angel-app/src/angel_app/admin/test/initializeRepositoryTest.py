@@ -36,7 +36,7 @@ from angel_app.resource.remote.clone import Clone
 import os
 import shutil
 import unittest
-from angel_app.admin.resourceProperties import setMountPoint
+from angel_app.maintainer.mount import setMountPoint
 from angel_app.elements import ResourceID
 
 AngelConfig = config.getConfig()
