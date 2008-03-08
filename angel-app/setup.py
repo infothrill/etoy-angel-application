@@ -52,7 +52,7 @@ setup(
     package_dir={
                  'angel_app' : 'src/angel_app'
                  },
-    install_requires = ["xattr>=0.3", "zope.interface>=3.3.0", "netaddress>=0.2.2", "ZODB3>=3.8", "netifaces>=0.4", "IPy>=0.56"], #"pycrypto>=2.0.1"
+    install_requires = ["xattr>=0.3", "zope.interface>=3.3.0", "netaddress>=0.2.2", "ZODB3<3.7", "netifaces>=0.4", "IPy>=0.56"], #"pycrypto>=2.0.1"
     # for some unkown reason pycrypto gets bundled fine only if installed manually from its tarball (easy_install not so easy)
     # wxPython does not conform to cheeseshop.python.org standards, so currently we cannot include it here
     #dependency_links = [
