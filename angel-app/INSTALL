@@ -5,19 +5,24 @@ This will download the latest development source tree (which might be broken)
 
 Installing
 ----------
+See http://angelapp.missioneternity.org/index.py/Documentation/Install
 
-Unsafe install:
+Below is just a mini-summary of how to install (both methods require setuptools).
+
+Unsafe install (will probably write into the python site-packages directory),
+can optionally be appended with a --prefix option
 	$ python setup.py install
 
-Safe install:
-	$ python bootstrap.py
+Safe install (existing site-packages won't be changed):
+	$ python bootstrap.py $TARGETDIRECTORY
 
 the latter will install a virtual-python installation in 
-$PWD/angel-app and install the angel-app packages there. 
-this guarantees easy de-installation and avoidance of package conflicts.
+$TARGETDIRECTORY and install the angel packages there. 
+this guarantees easy de-installation and avoidance of python
+package conflicts.
 
-the angel-app may then be launched by
+Angel may then be launched by
 	$ cd angel-app/bin
 	$ ./python ./master.py
 
-see also the README file for alternative ways to start the angel-app.
+see also the README file for alternative ways to start Angel.
