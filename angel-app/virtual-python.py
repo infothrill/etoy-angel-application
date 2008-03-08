@@ -89,6 +89,14 @@ def main():
 
     mkdir(join(lib_dir, 'site-packages'))
     if not options.no_site_packages:
+        # platform BUG: on Mac OS X 10.5, sys.prefix does not point to /Library/Python/$version/ ! ;-(
+        if sys.platform == 'darwin':
+            import platform
+            (release, versioninfo, machine) = platform.mac_ver()
+            if release.startswith('10.5'):
+                if not os.path.exists(join(stdlib_dir, 'site-packages')):
+                    print "Mac OS X Leopard detected, hacking stdlib_dir"
+                    stdlib_dir = '/Library/Python/2.5/'
         for fn in os.listdir(join(stdlib_dir, 'site-packages')):
             symlink(join(stdlib_dir, 'site-packages', fn),
                     join(lib_dir, 'site-packages', fn))
