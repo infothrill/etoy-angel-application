@@ -9,6 +9,8 @@ angelConfig = getConfig()
 
 keyBase = angelConfig.get("common", "keyring")
 
+# TODO: it seems odd to have one module for a single function. review.
+
 def loadKeysFromFile(keyDir = keyBase):
     """
     Load the ***SECRET*** keys from the appropriate location in the angel-app directory.
