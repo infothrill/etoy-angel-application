@@ -2,6 +2,7 @@ import sys
 
 # dyndns: initial test. Should probably go somewhere else than this module
 import angel_app.contrib.dyndnsc as dyndnsc
+from angel_app.log import getLogger
 
 def getDynDnsConfiguration(angelConfig):
     """
@@ -13,7 +14,6 @@ def getDynDnsConfiguration(angelConfig):
     @param angelConfig: an AngelConfig instance
     @return: a dictionary with key value pair options
     """
-    from angel_app.log import getLogger
     required_keys = {'protocol': 'dyndns', 'hostname': None }
     other_keys = {'key': None, 'userid': None, 'password': None, 'sleeptime': 60, 'method': 'webcheck'}
     for key in required_keys.keys():
@@ -69,15 +69,19 @@ def getCallLaterDynDnsClientForAngelConfig(angelConfig, callLaterMethod, logger)
             self.callLaterMethod(self.sleeptime, self.check)
 
     # actual method
-    dyndnsc.logger = logger
-    config = getDynDnsConfiguration(angelConfig)
-    if config is None:
-        return None
-    client = dyndnsc.getDynDnsClientForConfig(config)
-    if not client is None:
-        return CallLaterDynDnsClient(client, callLaterMethod, config['sleeptime'])
-    else:
-        return None
+    try:
+        dyndnsc.logger = logger
+        config = getDynDnsConfiguration(angelConfig)
+        if config is None:
+            return None
+        client = dyndnsc.getDynDnsClientForConfig(config)
+        if not client is None:
+            return CallLaterDynDnsClient(client, callLaterMethod, config['sleeptime'])
+        else:
+            return None
+    except Exception, e:
+        getLogger().error("Initializing dyndns client crashed", exc_info = e)
+        return None 
 
 def bootInit():
     """
@@ -98,7 +102,6 @@ def postConfigInit():
     singlefiletransaction.setup()
 
 def dance(options):
-    from angel_app.log import getLogger
     from angel_app.config import config
     AngelConfig = config.getConfig()
     providerport = AngelConfig.getint("provider", "listenPort")
@@ -120,7 +123,7 @@ def dance(options):
     # initial test version to integrate a dyndns client into the provider loop
     dyndnsclient = getCallLaterDynDnsClientForAngelConfig(AngelConfig, callLaterMethod = reactor.callLater, logger = getLogger('dyndns'))
     if not dyndnsclient is None:
-        reactor.callLater(1, dyndnsclient.check) 
+        reactor.callLater(1, dyndnsclient.check)
     reactor.run()
     getLogger().info("Quit")
 
@@ -156,7 +159,6 @@ def boot():
     initializeLogging(appname, loghandlers)
 
     if angelConfig.get(appname, 'enable') == False:
-        from angel_app.log import getLogger
         getLogger().info("%s process is disabled in the configuration, quitting." % appname)
         sys.exit(0)
 
