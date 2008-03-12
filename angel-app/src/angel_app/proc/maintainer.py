@@ -24,16 +24,19 @@ def dance(options):
     from angel_app.maintainer import client
     
     log = getLogger("maintainer")
-    AngelConfig = config.getConfig()
-    repository = AngelConfig.get("common", "repository")
-    log.info("starting maintenance loop at: " + repository)
+    angelConfig = config.getConfig()
+    repository = angelConfig.get("common", "repository")
+    log.info("starting maintenance loop at '%s'" % repository)
+    log.growl("User", "MAINTENANCE PROCESS", "Started.")
     try:
-        log.growl("User", "MAINTENANCE PROCESS", "Started.")
         client.maintenanceLoop()
     except Exception, e:
-        log.critical("An exception occured in the maintenance loop", exc_info = e)
-    log.growl("User", "Resource Maintainance", "Process Terminated.")
-    log.info("Quit")
+        log.critical("An exception occurred in the maintenance loop", exc_info = e)
+        log.growl("User", "MAINTENANCE PROCESS", "Crash.")
+        raise
+    else:
+        log.growl("User", "MAINTENANCE PROCESS", "Quit.")
+        log.info("Quit")
 
 
 def boot():
