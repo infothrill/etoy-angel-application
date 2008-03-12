@@ -50,7 +50,7 @@ Other:
 
 __author__ = "Paul Kremer < pkremer TA spurious TOD biz >"
 __license__ = "MIT License"
-__revision__ = "$Id: dyndnsc.py 496 2008-03-03 12:07:11Z pkremer $"
+__revision__ = "$Id: dyndnsc.py 500 2008-03-12 00:08:16Z pkremer $"
 
 import sys
 import os
@@ -65,6 +65,7 @@ import netifaces
 import IPy
 import random
 import base64
+import string
 
 def daemonize(stdout='/dev/null', stderr=None, stdin='/dev/null', # os.devnull only python 2.4
               pidfile=None, startmsg = 'started with pid %s' ):
@@ -248,6 +249,8 @@ class IPDetector(BaseClass):
     """
     Base class for IP detectors. Really is just a state machine for old/current value.
     """
+    def __init__(self, *args, **kwargs):
+        pass
 
     def canDetectOffline(self):
         """
@@ -403,14 +406,23 @@ class IPDetector_TeredoOSX(IPDetector):
     """
     Class to detect the local Teredo ipv6 address by checking the local 'ifconfig' information
     """
-    interfacename = "tun0" 
+    def __init__(self, opts):
+        self.opts = {'iface': 'tun0'}
+        for k in opts.keys():
+            logger.debug("%s explicitly got option: %s -> %s" % (self.__class__.__name__, k, opts[k]))
+            self.opts[k] = opts[k]
+
     def canDetectOffline(self):
         "Returns true, as this detector only queries local data"
         return True
 
     def _netifaces(self):
         "uses the netifaces module to detect ifconfig information"
-        addrlist = netifaces.ifaddresses(self.interfacename)[netifaces.AF_INET6]
+        try:
+            addrlist = netifaces.ifaddresses(self.opts['iface'])[netifaces.AF_INET6]
+        except Exception, e:
+            logger.error("netifaces choked while trying to get inet6 interface information for interface %s" % self.opts['iface'], exc_info = e)
+            return None
         for pair in addrlist:
             matchObj = re.match("2001:.*", pair['addr'])
             if not matchObj is None:
@@ -760,11 +772,35 @@ def getDynDnsClientForConfig(config):
     dyndnsclient.setProtocolHandler(protoHandler)
     dyndnsclient.setDNSDetector(dnsChecker)
 
+    # allow config['method'] to be a list or a comma-separated string:
+    if type([]) != type(config['method']):
+        dummy = config['method'].split(',')
+    else:
+        dummy = config['method']
+    method = dummy[0]
+    if len(dummy) > 1:
+        method_optlist = dummy[1:]
+    else:
+        method_optlist = []
     try:
-        klass = getChangeDetectorClass(config['method'])
-        dyndnsclient.setChangeDetector(klass())
-    except:
-        logger.warn("Invalid change detector configuration: '%s'" % config['method'])
+        klass = getChangeDetectorClass(method)
+    except Exception, e:
+        logger.warn("Invalid change detector configuration: '%s'" % method, exc_info = e)
+        return None
+
+    # make a dictionary from method_optlist:
+    opts = {}
+    for o in method_optlist:
+        # options are key value pairs, separated by a colon ":"
+        # allow whitespaces in input, but strip them here:
+        (k,v) = map(string.strip, o.split(":"))
+        #k = k.strip()
+        #v = v.strip()
+        opts[k] = v
+    try:
+        dyndnsclient.setChangeDetector(klass(opts))
+    except Exception, e:
+        logger.warn("Invalid change detector parameters: '%s'" % opts, exc_info = e)
         return None
 
     return dyndnsclient
