@@ -120,7 +120,7 @@ class AngelLogFilter(logging.Filter):
 
 class AngelLogTwistedFilter(logging.Filter):
     def __init__(self):
-        self.re = re.compile("HTTPChannel,\d+,.*: (PROPFIND )|(HEAD )\/.* HTTP\/1\.1")
+        self.re = re.compile("HTTPChannel,\d+,.*: (PROPFIND )|(HEAD )|(OPTIONS )\/.* HTTP\/1\.1")
     def filter(self, record):
         if DEBUG: print "TWISTED LOGFILTER"
         if self.re.search(record.msg):
