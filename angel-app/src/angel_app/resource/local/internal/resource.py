@@ -1,12 +1,14 @@
+import os
+import urllib
+
+from twisted.web2 import stream
+from twisted.web2.dav.element import rfc2518
+
 from angel_app import elements
 from angel_app.config.internal import loadKeysFromFile
 from angel_app.log import getLogger
 from angel_app.resource.local.basic import Basic
 from angel_app.resource.local.internal.methods import copy, delete, lock, mkcol, move, put
-from twisted.web2 import stream
-from twisted.web2.dav.element import rfc2518
-import os
-import urllib
 
 log = getLogger(__name__)
 # DO NOT EXPOSE THIS KEY!!!!
@@ -337,6 +339,6 @@ class Crypto(
 def reloadKeys():  
     log.info("reloading keys") 
     Crypto.keyRing = loadKeysFromFile()
-    log.info("available keys: " + `Crypto.keyRing.keys()`)
+    log.debug("available keys: " + `Crypto.keyRing.keys()`)
     
 reloadKeys()
