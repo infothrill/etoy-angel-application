@@ -7,9 +7,6 @@ import wx
 
 import angel_app.proc.subprocessthread as masterthread
 import angel_app.gui.compat.wrap as platformwrap
-import angel_app.gui.welcome as welcome
-import angel_app.gui.prefs as prefs
-import angel_app.gui.mounttab as mounttab
 from angel_app.config import config
 from angel_app.gui import statusbar
 
@@ -57,12 +54,10 @@ class AngelMainFrameBase(wx.Frame):
         fileMenuItems = [
             ("O&pen repository in web-browser", "Open repository in web-browser", self.on_help_presenter),
             ("O&pen repository in %s" % filemanager, "Open repository in %s" % filemanager, self.on_repo_in_filemanager),
-            ("I&mport crypto key...", "Import crypto key...", self.on_file_import_key),
-            ("E&xport personal ANGEL KEY...", "Export personal ANGEL KEY...", self.on_file_export_key),  
             ("Purge repository", "Purge repository", self.on_file_purge_repository),
-            #("L&og console", "Log console", self.on_log_console)  
+            ("L&og console", "Log console", self.on_log_console)  
                          ]
-        
+
         file_menu = self.__buildMenuWith(fileMenuItems)
 
         # finally, attach "special" (i.e. with custom-id's) functionality:
@@ -74,7 +69,7 @@ class AngelMainFrameBase(wx.Frame):
 
         file_menu.Append(wx.ID_CLOSE, "Q&uit", "Quit")
         self.Bind(wx.EVT_MENU, self.doExit, id=wx.ID_CLOSE)
-        
+
         return file_menu
 
         
@@ -85,6 +80,21 @@ class AngelMainFrameBase(wx.Frame):
                         ("Re&start p2p service", "Restart p2p service", self.on_net_restart),
                         ]
         return self.__buildMenuWith(netMenuItems)
+    
+    def __buildUserMenu(self):
+        keysMenuItems = [
+                        ("I&mport crypto key...", "Import crypto key...", self.on_file_import_key),
+                        ("E&xport personal ANGEL KEY...", "Export personal ANGEL KEY...", self.on_file_export_key),
+                        ]
+        keysMenu = self.__buildMenuWith(keysMenuItems)
+
+        menuItems = [
+                        ("M&ounts", "Mounts", self.on_mounts),
+                        ("Open a&ngelshell...", "Open angelshell...", self.on_angelshell),
+                    ]
+        m = self.__buildMenuWith(menuItems)
+        m.AppendMenu(wx.NewId(),'Keys', keysMenu)
+        return m
     
     def __buildHelpMenu(self):
         helpMenuItems = [
@@ -112,6 +122,10 @@ class AngelMainFrameBase(wx.Frame):
         # network menu
         self.menu_bar.Append(self.__buildNetworkMenu(), 
                              "&Network")
+
+        # Settings menu
+        self.menu_bar.Append(self.__buildUserMenu(), 
+                             "&User")
 
         # Help menu
         self.menu_bar.Append(self.__buildHelpMenu(), 
@@ -186,6 +200,20 @@ class AngelMainFrameBase(wx.Frame):
             dlg.Destroy()
         return 1
  
+    def on_angelshell(self, event):
+        class SimpleWidgetWindow(wx.Frame):
+            def __init__(self, parent, id, title, size = None):
+                wx.Frame.__init__(self, parent, id, title, size=(500, 300))
+                self.Statusbar = self.CreateStatusBar(1, 0)
+                Sizer = wx.BoxSizer(wx.VERTICAL)
+                Sizer.Add(angelshell(parent = self), proportion = 2, flag=wx.ALL|wx.EXPAND, border = 1)
+                self.SetSizer(Sizer)
+                self.CentreOnParent()
+                self.Show(True)
+        window = SimpleWidgetWindow(parent = self, id = -1, title = _("Angelshell"), size=None)
+        window.CenterOnParent()
+        window.Show()
+
     def on_file_export_key(self, evt):
         saveasfilename = "ANGEL.key"
         wildcard = "Key files (*.key)|*.key|"     \
@@ -299,6 +327,12 @@ class AngelMainFrameBase(wx.Frame):
         dlg.ShowModal()
         dlg.Destroy()
 
+    def on_mounts(self, event):
+        from angel_app.gui.mounttab import MountsWindow 
+        window = MountsWindow(self, -1, _("Mounts"))
+        window.CenterOnParent()
+        window.ShowModal()
+
     def on_net_restart(self, event):
         """
         Restart the p2p process
@@ -332,6 +366,11 @@ class AngelMainFrameBase(wx.Frame):
         port = wx.GetApp().config.get("presenter", "listenPort")
         platformwrap.showRepositoryInFilemanager(interface, port)
         
+
+    def on_log_console(self, event):
+        from angel_app.gui.log import LogFrame
+        l = LogFrame(self)
+
     def on_about_request(self, event):
         """
         Shows the about window
@@ -402,43 +441,45 @@ defaultShellCommands = [
               "root = Crypto(rootPath)"
               ]
 
-def getInitCommands():
-    try:
-        fileName = config.getConfig().get("gui", "angelshellinit")
-        return open(fileName).readlines()
-    except IOError: # file not found
-        return defaultShellCommands
-
-# fail early -- evaluate on module import
-onShellLoad = getInitCommands()
+def angelshell(parent):
+    """
+    return a wxwindow with an interactive python shell
+    """
+    # sort of a joke for now ;-)
+    def getInitCommands():
+        try:
+            fileName = config.getConfig().get("gui", "angelshellinit")
+            return open(fileName).readlines()
+        except IOError: # file not found
+            return defaultShellCommands
     
-class AngelMainNoteBook(wx.Notebook):
+    # fail early -- evaluate on module import
+    onShellLoad = getInitCommands()
+    import wx.py as py
+    intro = 'ANGELSHELL %s - EVERYTHING YOU NEED FOR BACKUP' % py.version.VERSION
+    win = py.shell.Shell(parent, -1, introText=intro)
+    for command in onShellLoad:
+        win.Execute(command)
+    return win
+
+
+class AngelMainNoteBook(wx.Notebook): # deprecated
     def __init__(self, parent, id, statuslog):
-        wx.Notebook.__init__(self, parent, id, size=(-1,-1),
-                             #style=
-                             #wx.NB_TOP # | wx.NB_MULTILINE
-                             #wx.NB_BOTTOM
-                             #wx.NB_LEFT
-                             #wx.NB_RIGHT
-                             )
+        wx.Notebook.__init__(self, parent, id, size=(-1,-1))
         self.parent = parent
         self.statuslog = statuslog
 
-        
+        from angel_app.gui import mounttab
         win = mounttab.MountsPanel(self, statuslog = self.statuslog)
         self.AddPage(win, _('Mounts'))
         
+        from angel_app.gui import prefs
         win = prefs.PrefsPanel(self, statuslog = self.statuslog)
         self.AddPage(win, _('Preferences'))
         
-        # sort of a joke for now ;-)
-        import wx.py as py
-        intro = 'ANGEL SHELL %s - EVERYTHING YOU NEED FOR BACKUP' % py.version.VERSION
-        win = py.shell.Shell(self, -1, introText=intro)
-        self.AddPage(win, _('Angelshell'))
-        for command in onShellLoad:
-            win.Execute(command)
-        
+        self.AddPage(angelshell(parent = self), _('Angelshell'))
+    
+        from angel_app.gui import welcome
         win = welcome.WelcomePanel(self, statuslog = self.statuslog)
         self.InsertPage(0, win, _('Welcome'), select = True)
 
@@ -449,13 +490,14 @@ class AngelMainWindow(AngelMainFrameBase):
         The constructor, initializes the menus, the mainframe with the logo and the statusbar.
         By default, also starts the p2p process automatically on start-up
         """
-        wx.Frame.__init__(self, parent, id, title, wx.DefaultPosition, wx.Size(870, 615))
+        wx.Frame.__init__(self, parent, id, title, wx.DefaultPosition, wx.Size(820, 535))
 
         self._buildMenus()
 
         self.SetStatusBar(statusbar.AngelStatusBar(self))
 
-        self.doNoteBookLayout()
+        #self.doNoteBookLayout() # deprecated
+        self.doControllerLayout()
 
         # start the p2p process:
         if wx.GetApp().config.getboolean('gui', 'autostartp2p'):
@@ -468,11 +510,23 @@ class AngelMainWindow(AngelMainFrameBase):
         self.Show(True)
 
     def doNoteBookLayout(self):
+        """
+        main window organized with tabs
+        """
+        log.debug("deprecated layout ;-) ")
         Sizer = wx.BoxSizer(wx.VERTICAL)
         self.nb = AngelMainNoteBook(self, -1, statuslog = statusbar.StatusLog())
         Sizer.Add(self.nb, proportion = 2, flag=wx.RIGHT|wx.LEFT|wx.EXPAND, border = 20)
         self.SetSizer(Sizer)
-        #self.Centre()
+        
+    def doControllerLayout(self):
+        """
+        media player style main window organized. For now, we just show the intro screen.
+        """
+        Sizer = wx.BoxSizer(wx.VERTICAL)
+        from angel_app.gui import welcome
+        win = welcome.WelcomePanel(self, None)
+        Sizer.Add(win)
 
 
 class AngelApp(wx.App):
@@ -483,10 +537,16 @@ class AngelApp(wx.App):
         """
         Instantiates the main frame and shows it
         """
+        bitmapfilename = os.path.join(platformwrap.getResourcePath(), "images", "skull.png")
+        assert os.path.isfile(bitmapfilename), "Splash screen picture '%s' could not be found" % bitmapfilename
+        aBitmap = wx.Image(name = bitmapfilename).ConvertToBitmap()
+        splashDuration = 3000 # milliseconds
+        splash = wx.SplashScreen(aBitmap, wx.SPLASH_CENTRE_ON_SCREEN | wx.SPLASH_TIMEOUT, splashDuration, None)
+
         self.config = config.getConfig()
         self.p2p = masterthread.MasterThread()
         self.p2p.setDaemon(True)
-        mainframe = AngelMainWindow(None, -1, _("ANGEL APPLICATION: THE CODE THAT CROSSES THE DEAD-LINE"))
+        mainframe = AngelMainWindow(None, -1, _("ANGEL APPLICATION"))
         mainframe.Show(True)
         self.SetTopWindow(mainframe)
         return True
