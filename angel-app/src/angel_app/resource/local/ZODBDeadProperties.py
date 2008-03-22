@@ -85,27 +85,35 @@ class ZODBDeadProperties(object):
     
     def __init__(self, _resource):
         self.resource = _resource
+        self.zodb = lookup(getZODBDefaultRoot(), self.resource).properties
         
     def get(self, qname):
         """
         @param qname (see twisted.web2.dav.davxml) of the property to look for.
         """
+        return self.zodb[qname]
 
     def set(self, property):
         """
         @param property -- an instance of twisted.web2.dav.davxml.WebDAVElement
         """
+        self.zodb[property.qname()] = property
+        transaction.commit()
         
     def delete(self, qname):
         """
         @param qname (see twisted.web2.dav.davxml) of the property to look for.
         """
+        self.zodb.remove(qname)
 
     def contains(self, qname):
         """
         @param qname (see twisted.web2.dav.davxml) of the property to look for.
         """
+        return qname in self.zodb
 
     def list(self):
         """
         """
+        return self.zodb.keys()
+        

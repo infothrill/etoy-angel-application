@@ -50,7 +50,8 @@ initializeLogging("test", loghandlers)
 class ZODBTest(unittest.TestCase):
     
     def setUp(self):
-        self.testStore = ZODBDeadProperties.ZODBDeadProperties(None)
+        self.testResource = Crypto(repositoryPath)
+        self.testStore = ZODBDeadProperties.ZODBDeadProperties(self.testResource)
         
     def testInterfaceCompliance(self):
         """
