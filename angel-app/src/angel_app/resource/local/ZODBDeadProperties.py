@@ -104,7 +104,8 @@ class ZODBDeadProperties(object):
         """
         @param qname (see twisted.web2.dav.davxml) of the property to look for.
         """
-        self.zodb.remove(qname)
+        del self.zodb[qname]
+        transaction.commit()
 
     def contains(self, qname):
         """

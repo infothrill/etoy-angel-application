@@ -40,6 +40,7 @@ import os
 import shutil
 import unittest
 import zope.interface.verify
+from angel_app import elements
 
 AngelConfig = config.getConfig()
 repositoryPath = AngelConfig.get("common","repository")
@@ -49,9 +50,20 @@ initializeLogging("test", loghandlers)
 
 class ZODBTest(unittest.TestCase):
     
+    testDirPath = os.path.sep.join([repositoryPath, "TEST"])
+    testFilePath = os.path.sep.join([testDirPath, "file.txt"])
+    testText = "lorem ipsum"
+    
+    def makeTestDirectory(self):
+        self.testDirectory = Crypto(self.testDirPath) 
+        if not self.testDirectory.fp.exists():
+            os.mkdir(self.testDirPath)
+        self.testDirectory._registerWithParent()
+        self.testDirectory._updateMetadata()
+    
     def setUp(self):
-        self.testResource = Crypto(repositoryPath)
-        self.testStore = ZODBDeadProperties.ZODBDeadProperties(self.testResource)
+        self.makeTestDirectory()
+        self.testStore = ZODBDeadProperties.ZODBDeadProperties(self.testDirectory)
         
     def testInterfaceCompliance(self):
         """
@@ -75,3 +87,15 @@ class ZODBTest(unittest.TestCase):
             ZODBDeadProperties.lookup(zodb, cc)
             print cc.resourceName(), zodb
             assert cc.resourceName() in zodb["repository"].children
+            
+    def testModify(self):
+        myProps = ZODBDeadProperties.ZODBDeadProperties(self.testDirectory)
+        myProps.list()
+        myElement = elements.Revision("0")
+        if not myProps.contains(myElement.qname()):
+            myProps.set(myElement)
+        assert myProps.contains(myElement.qname())
+        assert 1 == len(myProps.list())
+        assert myProps.contains(myElement.qname())
+        myProps.delete(myElement.qname())
+        assert 0 == len(myProps.list())
