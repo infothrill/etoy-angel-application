@@ -30,10 +30,12 @@ legalMatters = """
 
 author = """Vincent Kraeutler 2007"""
 
-from angel_app.resource.IDeadPropertyStore import IDeadPropertyStore
-from angel_app.resource.local.propertyManager import PropertyManager
-from angel_app.resource.local.ZODBDeadProperties import ZODBDeadProperties
 from angel_app.config import config
+from angel_app.log import initializeLogging
+from angel_app.resource.IDeadPropertyStore import IDeadPropertyStore
+from angel_app.resource.local import ZODBDeadProperties
+from angel_app.resource.local.internal.resource import Crypto
+from angel_app.resource.local.propertyManager import PropertyManager
 import os
 import shutil
 import unittest
@@ -42,18 +44,33 @@ import zope.interface.verify
 AngelConfig = config.getConfig()
 repositoryPath = AngelConfig.get("common","repository")
 
-from angel_app.log import initializeLogging
 loghandlers = ['console'] # always log to file
 initializeLogging("test", loghandlers)
 
 class ZODBTest(unittest.TestCase):
     
     def setUp(self):
-        self.testStore = ZODBDeadProperties(None)
+        self.testStore = ZODBDeadProperties.ZODBDeadProperties(None)
         
     def testInterfaceCompliance(self):
         """
         Verify interface compliance.
         """
-        assert IDeadPropertyStore.implementedBy(ZODBDeadProperties)
-        assert zope.interface.verify.verifyClass(IDeadPropertyStore, ZODBDeadProperties)   
+        assert IDeadPropertyStore.implementedBy(ZODBDeadProperties.ZODBDeadProperties)
+        assert zope.interface.verify.verifyClass(
+                                                 IDeadPropertyStore, 
+                                                 ZODBDeadProperties.ZODBDeadProperties)   
+        
+    def testLookup(self):
+        """
+        Lookup a resource. Will hang if no running ZEO instance.
+        """
+        root = Crypto(repositoryPath)
+        zodb = ZODBDeadProperties.getZODBDefaultRoot()
+        ZODBDeadProperties.lookup(zodb, root)
+        assert "repository" in zodb
+        #print zodb
+        for cc in root.children():
+            ZODBDeadProperties.lookup(zodb, cc)
+            print cc.resourceName(), zodb
+            assert cc.resourceName() in zodb["repository"].children

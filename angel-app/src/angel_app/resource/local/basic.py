@@ -106,7 +106,12 @@ class Basic(DAVFile, Resource):
         DEPRECATED.
         """
         return self.validate()
-            
+
+    def relativePathEntries(self):
+        if self.isRepositoryRoot(): 
+            return []
+        else:
+            return self.fp.segmentsFrom(repository)           
 
     def relativePath(self):
         """
@@ -114,7 +119,7 @@ class Basic(DAVFile, Resource):
         i.e. ${repository}/foo becomes "/foo", for the repository itself, "/" is returned.
         """
         if self.isRepositoryRoot(): return os.sep
-        path = os.sep + os.sep.join(self.fp.segmentsFrom(repository))
+        path = os.sep + os.sep.join(self.relativePathEntries())
         if self.isCollection():
             path += os.sep
         return path
