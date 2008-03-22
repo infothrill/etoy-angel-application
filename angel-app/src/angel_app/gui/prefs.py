@@ -187,7 +187,7 @@ class PrefsPanel(wx.Panel):
     def onOK(self, event):
         self.savePrefs()
         wx.GetApp().p2p.conditionalRestart()
-        self.statuslog.WriteText("Preferences saved")
+        self.statuslog.WriteText(_("Preferences saved"))
 
     def onCancel(self, event):
         pass
