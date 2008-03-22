@@ -20,7 +20,7 @@ def getProcsToStart(angelConfig):
         return angelConfig.getboolean(procName, 'enable')
     enabledProcs = filter(enabled, procsThatShouldBeExplicitlyEnabled)
     # we always need ZEO for DB support
-    return enabledProcs + ['zeo']
+    return enabledProcs
 
 def boot():
     from optparse import OptionParser
@@ -65,15 +65,17 @@ def dance(options):
     Also, it contains the hooks to events in the Twisted reactor.
     """
     from angel_app.admin import initializeRepository
-    initializeRepository.initializeRepository()
 
     from angel_app.logserver import startLoggingServer
     from angel_app.proc.procmanager import startProcesses 
     startLoggingServer()
+    startProcesses(['zeo'])
+    initializeRepository.initializeRepository()
     # start processes _after_ starting the logging server!
+    from angel_app.log import getLogger
+    getLogger().debug(options.procsToStart)
     startProcesses(options.procsToStart)
     from twisted.internet import reactor
-    from angel_app.log import getLogger
     getLogger().growl("User", "NODE ACTIVATED", "Launching sub-processes.")
     reactor.run()
     getLogger().info("Quit")
