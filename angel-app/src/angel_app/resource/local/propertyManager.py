@@ -9,6 +9,7 @@ import urllib
 from twisted.web2 import responsecode
 from twisted.web2.dav.element.base import WebDAVElement
 from twisted.web2.dav.xattrprops import xattrPropertyStore
+from angel_app.resource.local.ZODBDeadProperties import ZODBDeadProperties
 from twisted.web2.http import HTTPError, StatusResponse
 from zope.interface import implements
 
@@ -97,7 +98,8 @@ defaultMetaData = {
                    }
 
 def getDefaultPropertyManager(_resource):
-    return PropertyManager(_resource, xattrPropertyStore(_resource))
+    #return PropertyManager(_resource, xattrPropertyStore(_resource))
+    return PropertyManager(_resource,  ZODBDeadProperties(_resource))
 
 class PropertyManager(object):
     """
