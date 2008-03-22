@@ -88,6 +88,9 @@ class Basic(DAVFile, Resource):
             shutil.rmtree(self.fp.path, ignore_errors = True)
         else:
             os.remove(self.fp.path)
+            
+        # try to remove metadata as well
+        self.getPropertyManager().remove()
 
     def isWritableFile(self):
         """

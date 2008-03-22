@@ -92,10 +92,19 @@ class ZODBTest(unittest.TestCase):
         myProps = ZODBDeadProperties.ZODBDeadProperties(self.testDirectory)
         myProps.list()
         myElement = elements.Revision("0")
-        if not myProps.contains(myElement.qname()):
-            myProps.set(myElement)
+        myProps.set(myElement)
         assert myProps.contains(myElement.qname())
-        assert 1 == len(myProps.list())
+        print myProps.list()
+        assert 1 <= len(myProps.list())
         assert myProps.contains(myElement.qname())
+        ll = len(myProps.list())
         myProps.delete(myElement.qname())
-        assert 0 == len(myProps.list())
+        assert ll - 1 == len(myProps.list())
+        
+    def testDelete(self):
+        td = self.testDirectory
+        td.remove()
+        key = td.resourceName()
+        dict = self.testDirectory.parent().getPropertyManager().store.zodb.children
+        assert key not in dict
+        

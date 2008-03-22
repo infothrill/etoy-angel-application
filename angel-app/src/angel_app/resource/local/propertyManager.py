@@ -178,6 +178,16 @@ class PropertyManager(object):
             error = "Resource %s not found in xattr lookup." % self.resource.fp.path
             log.warn(error)
             raise HTTPError(StatusResponse(responsecode.NOT_FOUND, error))
+    
+    def remove(self):
+        """
+        Deletes the property store for this resource, if possible (not possible for xattr-props).
+        """
+        #try:
+        self.store.remove()
+        #except:
+        #    pp = self.resource.relativePath()
+        #    log.warning("Failed to remove property manager for resource: " + pp)
         
     def set(self, element):
         
