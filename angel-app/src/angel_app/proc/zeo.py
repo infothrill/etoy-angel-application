@@ -1,3 +1,5 @@
+import sys
+
 def getFileStorage(angelConfig):
     """
     @param angelConfig -- an angel-app configuration instance
@@ -70,7 +72,11 @@ def main(args=None):
         from angel_app.proc import daemonizer
         daemonizer.startstop(action=options.daemon, stdout=appname+'.stdout', stderr=appname+'.stderr', pidfile=appname+'.pid')
 
-    getZEOServer(angelConfig, getFileStorage(angelConfig))
+    try:
+        getZEOServer(angelConfig, getFileStorage(angelConfig))
+    except Exception, e:
+        getLogger().fatal("ZEO startup failed '%s'" % e, exc_info = e)
+        sys.exit(-1)
 
     getLogger().growl("User", "STARDUST COLLECTOR", "Starting service on port %i." % angelConfig.getint("zeo","listenPort"))
     import ThreadedAsync.LoopCallback
