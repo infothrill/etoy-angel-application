@@ -64,21 +64,17 @@ def dance(options):
     the actual angel-app ;-)
     Also, it contains the hooks to events in the Twisted reactor.
     """
-    from angel_app.admin import initializeRepository
-
     from angel_app.logserver import startLoggingServer
     from angel_app.proc.procmanager import startProcesses 
-    startLoggingServer()
-    startProcesses(['zeo'])
-    initializeRepository.initializeRepository()
-    # start processes _after_ starting the logging server!
     from angel_app.log import getLogger
-    getLogger().debug(options.procsToStart)
-    startProcesses(options.procsToStart)
     from twisted.internet import reactor
-    getLogger().growl("User", "NODE ACTIVATED", "Launching sub-processes.")
+    log = getLogger(__name__)
+    startLoggingServer()
+    log.debug('logging server started')
+    startProcesses(['zeo'] + options.procsToStart)
+    log.growl("User", "NODE ACTIVATED", "Launching sub-processes.")
     reactor.run()
-    getLogger().info("Quit")
+    log.info("Quit")
 
 if __name__ == '__main__':
     options = boot()

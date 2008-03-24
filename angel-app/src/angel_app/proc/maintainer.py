@@ -22,8 +22,13 @@ def dance(options):
     from angel_app.log import getLogger
     from angel_app.config import config
     from angel_app.maintainer import client
-    
+    from angel_app.admin import initializeRepository
+
     log = getLogger("maintainer")
+
+    log.debug("initializing repository")
+    initializeRepository.initializeRepository()
+
     angelConfig = config.getConfig()
     repository = angelConfig.get("common", "repository")
     log.info("starting maintenance loop at '%s'" % repository)
