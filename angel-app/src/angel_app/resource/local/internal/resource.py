@@ -287,6 +287,10 @@ class Crypto(
         
     def remove(self):
 
+        # security check
+        if self.isRepositoryRoot():
+            raise Exception("Cowardly refusing to delete the root directory.")
+        
         if self.isWritableFile():
             self._deRegisterWithParent()
             # else we don't own this, so can't
