@@ -19,7 +19,11 @@ def absPath(relativePathInRepository):
     """
     Given the path relative to the repository root, return the absolute path on the file system.
     """
-    return os.path.join(AngelConfig.get("common","repository"), relativePathInRepository)
+    
+    # workaround for os.path.join "feature"
+    rp = relativePathInRepository.lstrip(os.sep)
+    
+    return os.path.join(repository, rp)
             
 def reSign(path = ""):
     """
