@@ -95,8 +95,8 @@ class Putable(object):
             yield x
             x.getResult()
             log.debug("__putFile: read stream into tmpfile: " + safe.name)
-        except:
-            log.debug("failed to write to tmpfile: " + safe.name)
+        except Exception, e:
+            log.debug("failed to write to tmpfile: " + safe.name, exc_info = e)
             raise HTTPError(statusForFailure(
                                              Failure(),
                 "writing to tmpfile: %s" % (safe.path,)
