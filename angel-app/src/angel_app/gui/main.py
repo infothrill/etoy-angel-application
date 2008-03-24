@@ -55,7 +55,7 @@ class AngelMainFrameBase(wx.Frame):
             ("O&pen repository in web-browser", "Open repository in web-browser", self.on_help_presenter),
             ("O&pen repository in %s" % filemanager, "Open repository in %s" % filemanager, self.on_repo_in_filemanager),
             ("Purge repository", "Purge repository", self.on_file_purge_repository),
-            ("L&og console", "Log console", self.on_log_console)  
+            #("L&og console", "Log console", self.on_log_console)  
                          ]
 
         file_menu = self.__buildMenuWith(fileMenuItems)
@@ -89,8 +89,8 @@ class AngelMainFrameBase(wx.Frame):
         keysMenu = self.__buildMenuWith(keysMenuItems)
 
         menuItems = [
-                        ("M&ounts", "Mounts", self.on_mounts),
-                        ("Open a&ngelshell...", "Open angelshell...", self.on_angelshell),
+                        ("Configure backups...", "Configure backups...", self.on_mounts),
+                        ("Interactive A&ngelshell...", "Interactive Angelshell...", self.on_angelshell),
                     ]
         m = self.__buildMenuWith(menuItems)
         m.AppendMenu(wx.NewId(),'Keys', keysMenu)
@@ -201,16 +201,8 @@ class AngelMainFrameBase(wx.Frame):
         return 1
  
     def on_angelshell(self, event):
-        class SimpleWidgetWindow(wx.Frame):
-            def __init__(self, parent, id, title, size = None):
-                wx.Frame.__init__(self, parent, id, title, size=(500, 300))
-                self.Statusbar = self.CreateStatusBar(1, 0)
-                Sizer = wx.BoxSizer(wx.VERTICAL)
-                Sizer.Add(angelshell(parent = self), proportion = 2, flag=wx.ALL|wx.EXPAND, border = 1)
-                self.SetSizer(Sizer)
-                self.CentreOnParent()
-                self.Show(True)
-        window = SimpleWidgetWindow(parent = self, id = -1, title = _("Angelshell"), size=None)
+        from angel_app.gui.angelshell import AngelShellWindow
+        window = AngelShellWindow(parent = self, id = -1, title = _("Angelshell"), size=None)
         window.CenterOnParent()
         window.Show()
 
@@ -367,10 +359,6 @@ class AngelMainFrameBase(wx.Frame):
         platformwrap.showRepositoryInFilemanager(interface, port)
         
 
-    def on_log_console(self, event):
-        from angel_app.gui.log import LogFrame
-        l = LogFrame(self)
-
     def on_about_request(self, event):
         """
         Shows the about window
@@ -432,36 +420,6 @@ class AngelMainFrameBase(wx.Frame):
         """
         platformwrap.showURLInBrowser(self.TECHNICALREPORT_URL)
 
-# executed by angelshell if no angelshellinit.py is found:
-defaultShellCommands = [
-              "from angel_app.config.config import getConfig",
-              "cc = getConfig()",
-              "rootPath = cc.get('common', 'repository')",
-              "from angel_app.resource.local.internal.resource import Crypto",
-              "root = Crypto(rootPath)"
-              ]
-
-def angelshell(parent):
-    """
-    return a wxwindow with an interactive python shell
-    """
-    # sort of a joke for now ;-)
-    def getInitCommands():
-        try:
-            fileName = config.getConfig().get("gui", "angelshellinit")
-            return open(fileName).readlines()
-        except IOError: # file not found
-            return defaultShellCommands
-    
-    # fail early -- evaluate on module import
-    onShellLoad = getInitCommands()
-    import wx.py as py
-    intro = 'ANGELSHELL %s - EVERYTHING YOU NEED FOR BACKUP' % py.version.VERSION
-    win = py.shell.Shell(parent, -1, introText=intro)
-    for command in onShellLoad:
-        win.Execute(command)
-    return win
-
 
 class AngelMainNoteBook(wx.Notebook): # deprecated
     def __init__(self, parent, id, statuslog):
@@ -477,6 +435,7 @@ class AngelMainNoteBook(wx.Notebook): # deprecated
         win = prefs.PrefsPanel(self, statuslog = self.statuslog)
         self.AddPage(win, _('Preferences'))
         
+        from angel_app.gui.angelshell import angelshell 
         self.AddPage(angelshell(parent = self), _('Angelshell'))
     
         from angel_app.gui import welcome
