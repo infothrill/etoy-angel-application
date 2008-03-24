@@ -22,8 +22,10 @@ def absPath(relativePathInRepository):
     
     # workaround for os.path.join "feature"
     rp = relativePathInRepository.lstrip(os.sep)
-    
-    return os.path.join(repository, rp)
+    if "" == rp:
+        return repository
+    else:
+        return os.path.join(repository, rp)
             
 def reSign(path = ""):
     """
