@@ -1,7 +1,5 @@
-import os
  
 from angel_app.log import getLogger
-from angel_app.config.config import getConfig
 log = getLogger(__name__)
 
 def initializeRepository():
