@@ -8,6 +8,9 @@ from angel_app.version import getVersionString
 from angel_app.version import getBuildString
 from angel_app.version import getPythonVersionString
 from angel_app.version import getTwistedVersionString
+from angel_app.log import getLogger
+
+log = getLogger(__name__)
 
 _ = wx.GetTranslation
 
@@ -104,13 +107,13 @@ class LicenseWindow(wx.Frame):
         # Read licence file
         #
         try:
-            fd = open(os.path.join(platformwrap.getResourcePath(), "files", 'copying.html'))
+            licensefilename = os.path.join(platformwrap.getResourcePath(), "files", 'copying.html')
+            fd = open(licensefilename)
             data = fd.read()
             fd.close()
         except Exception, e:
-            print `e` # TODO
-            #systemLog(ERROR, "Unable to read licence file: %s" % e)
-            data = "Error: <i>licence file not found</i>"
+            log.error("Unable to read licence file: %s" % licensefilename, exc_info = e)
+            data = "Error: <i>license file not found</i>"
 
         scWinAbout = wx.ScrolledWindow(self, -1, wx.DefaultPosition,
                                     wx.Size(-1, -1))
