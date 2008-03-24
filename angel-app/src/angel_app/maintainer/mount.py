@@ -92,8 +92,9 @@ def addMounts():
     
     fstab = getMountTab()
     for mount in fstab:
-        bb = Basic(absPath(mount[1]))
-        log.info(`bb.clones()`)
+        ap = absPath(mount[1])
+        log.info("Attempting to mount %s at %s (in repository) => %s (on file system)." % (mount[0], mount[1], ap))
+        bb = Basic(ap)
         if (not bb.exists()) or (not bb.validate()):
             log.info("mounting '%s' to '%s'" % (mount[0], mount[1]))
             try:
