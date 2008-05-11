@@ -119,31 +119,13 @@ class MountListCtrlPanel(wx.Panel): #, listmix.ColumnSorterMixin
         self.list.SetColumnWidth(0, wx.LIST_AUTOSIZE)
         self.list.SetColumnWidth(1, wx.LIST_AUTOSIZE)
 
-        # select first row:
-        #self.list.SetItemState(self.currentItem, wx.LIST_STATE_SELECTED, wx.LIST_STATE_SELECTED)
-
-        # show how to change the colour of a couple items
-#        item = self.list.GetItem(1)
-#        item.SetTextColour(wx.BLUE)
-#        self.list.SetItem(item)
-#        item = self.list.GetItem(2)
-#        item.SetTextColour(wx.RED)
-#        self.list.SetItem(item)
-
 
     def refreshContent(self):
-        #cur = self.currentItem
-        #self.list.ClearAll()
-        #wx.CallAfter(self.PopulateList)
-        #self.list.SetItemState(cur, wx.LIST_STATE_SELECTED, wx.LIST_STATE_SELECTED)
-        #return
         self.itemDataMap = mountDict()
         items = mountDict().items()
         for key, data in items:
-            #index = self.list.InsertImageStringItem(sys.maxint, data[0], self.idx1)
             index = self.list.InsertStringItem(sys.maxint, data[0])
             self.list.SetStringItem(index, 1, data[1])
-            #self.list.SetStringItem(index, 2, data[2])
             self.list.SetItemData(index, key)
         
         # select  row:
@@ -196,7 +178,7 @@ class MountListCtrlPanel(wx.Panel): #, listmix.ColumnSorterMixin
         #    wx.CallAfter(self.list.SetItemState, 11, wx.LIST_STATE_SELECTED, wx.LIST_STATE_SELECTED)
         event.Skip()
 
-    def showDialog(self, source, mountpoint):
+    def showDialog(self, title, source, mountpoint):
         """
         @return: a (source, mountpoint) pair, unless the dialog was cancelled, in which case we return None
         """
@@ -232,7 +214,7 @@ Example valid URI: http://missioneternity.org:6221/"""
             
             return None
         
-        dlg = MountEditDialog(self, source = source, mountpoint = mountpoint)
+        dlg = MountEditDialog(self, title = _(title), source = source, mountpoint = mountpoint)
         dlg.CenterOnParent()
         
         res = dlg.ShowModal()
@@ -260,21 +242,18 @@ Example valid URI: http://missioneternity.org:6221/"""
                 # display error message and let the user correct it:
                 from angel_app.gui.errorDialog import errorDialog
                 errorDialog("Invalid mount.", errorMessage)
-                return self.showDialog(source, mountpoint)
-
-    def edit(self, item):
-        #self.currentItem = event.m_itemIndex
-        #self.GetListCtrl().EditLabel(self.currentItem)
-
-        #list = self.GetListCtrl()
-        #item = list.GetFocusedItem()
-
-        #i =  list.GetItemData(item)
-        log.debug("Want to edit %d" % item)
-        oldsource = self.getColumnText(item, 0)
-        oldmountpoint = self.getColumnText(item, 1)
-        
-        res = self.showDialog(oldsource, oldmountpoint)
+                return self.showDialog(title, source, mountpoint)
+            
+    def modifyMountPoints(self, title, oldsource = "", oldmountpoint = ""):
+        """
+        @param title: title for dialog
+        @param oldsource: old value for source uri
+        @param oldmountpoint: old value for mount point (file system path relative to repository)
+           
+        Ask the user to provide a new mount point / source URI.
+        Write the results to the config file, if they pass validation.
+        """        
+        res = self.showDialog(title, oldsource, oldmountpoint)
         if None == res:
             # user cancelled:
             return
@@ -284,11 +263,29 @@ Example valid URI: http://missioneternity.org:6221/"""
             
             log.debug("source: '%s' mount: %s" % (source, mountpoint))
             config = wx.GetApp().config
-            del config.container['mounttab'][oldsource]
+            #del config.container['mounttab'][oldsource]
             config.container['mounttab'][source] = mountpoint
-            config.commit()
+            config.commit() 
+            
+            # refresh the view of available mount points:
             self.list.DeleteAllItems()
-            self.refreshContent()
+            self.refreshContent()      
+
+    def add(self):
+        """
+        We want to add a new mount point.
+        """
+        self.modifyMountPoints("Add new mount point")
+
+
+    def edit(self, item):
+        """
+        We want to modify a mount point that already exists:
+        """
+        log.debug("Want to edit %d" % item)
+        oldsource = self.getColumnText(item, 0)
+        oldmountpoint = self.getColumnText(item, 1)
+        self.modifyMountPoints("Edit mount point", oldsource, oldmountpoint)
         
     def delete(self, item):
         if item == -1:
@@ -422,27 +419,7 @@ class MountsPanel(wx.Panel):
         self.listPanel.edit(selectedItem)
 
     def OnAdd(self, event):
-        list = self.listPanel.GetListCtrl()
-        dlg = MountEditDialog(self, title = _("Add new mount point"))
-        dlg.CenterOnParent()
-        res = dlg.ShowModal()
-        log.debug("result of add mount dialogue: %s" % res)
-        if res == wx.ID_OK:
-            source = dlg.getSource()
-            mountpoint = dlg.getMountPoint()
-            log.debug("source: '%s' mount: %s" % (source, mountpoint))
-            #self.listPanel.itemDataMap[i][0] = str(source)
-            #self.listPanel.itemDataMap[i][1] = str(mountpoint)
-            config = wx.GetApp().config
-            #del config.container['mounttab'][oldsource]
-            config.container['mounttab'][source] = mountpoint
-            config.commit()
-            list.DeleteAllItems()
-            #self.listPanel.PopulateList()
-            self.listPanel.refreshContent()
-
-        dlg.Destroy()
-        print self.listPanel.itemDataMap
+        self.listPanel.add()
 
     def OnDelete(self, event):
         selectedItem = self.listPanel.GetListCtrl().GetFocusedItem()
