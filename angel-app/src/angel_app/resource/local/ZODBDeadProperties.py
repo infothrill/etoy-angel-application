@@ -80,6 +80,8 @@ class PersistentPropertyNode(Persistent):
     
 class ZODBDeadProperties(object):
     """
+    An implementation of a DeadPropertyStore (i.e. store for persistent properties)
+    with a ZODB-based backend.
     """
     implements(IDeadPropertyStore)
     
