@@ -9,9 +9,10 @@ class WelcomePanel(wx.Panel):
         Sizer = wx.BoxSizer(wx.VERTICAL)
 
         self.SetBackgroundColour(wx.WHITE)
-        bitmapfilename = os.path.join(platformwrap.getResourcePath(), "images", "angel_app_welcomescreen.jpg")
+        bitmapfilename = os.path.join(platformwrap.getResourcePath(), "images", "skull.png")
         assert os.path.isfile(bitmapfilename), "Welcome screen picture '%s' could not be found" % bitmapfilename
-        bmp = wx.Bitmap(bitmapfilename, wx.BITMAP_TYPE_JPEG)
+        bmp = wx.Image(name = bitmapfilename).ConvertToBitmap()
+        #bmp = wx.Bitmap(bitmapfilename, wx.BITMAP_TYPE_JPEG)
         pic = wx.StaticBitmap(self, -1, bmp, wx.Point(bmp.GetWidth(), bmp.GetHeight()))
 
         # adding stretchable space before and after centers the image.
