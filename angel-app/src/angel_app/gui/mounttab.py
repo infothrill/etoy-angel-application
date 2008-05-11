@@ -196,6 +196,71 @@ class MountListCtrlPanel(wx.Panel): #, listmix.ColumnSorterMixin
         #    wx.CallAfter(self.list.SetItemState, 11, wx.LIST_STATE_SELECTED, wx.LIST_STATE_SELECTED)
         event.Skip()
 
+    def showDialog(self, source, mountpoint):
+        """
+        @return: a (source, mountpoint) pair, unless the dialog was cancelled, in which case we return None
+        """
+                
+        def validate(source, mountpoint):
+            """
+            @return: an error message, if validation failed, None otherwise
+            """                    
+            # validate the source url
+            from angel_app.uri import parse
+            try:
+                parse(source)
+                # valid uri
+            except Exception, e:
+                # couldn't parse, so fail    
+                return "Not a valid angel-app URI: " + source  + """
+Example valid URI: http://missioneternity.org:6221/"""   
+            
+            # validate the destination path
+            try:
+                from angel_app.resource.local.basic import Basic
+                repositoryPath = wx.GetApp().config.container['common']['repository']
+                import os
+                destination = Basic(repositoryPath + os.sep + mountpoint)
+                if not destination.fp.exists() or not destination.isCollection():
+                    return "Mount point target must exist and be a directory."
+                    
+            except Exception, e:
+                import traceback, cStringIO
+                err = cStringIO.StringIO()
+                traceback.print_exc(file=err)
+                return "An error occured while validating the mount point: " + err.getvalue()
+            
+            return None
+        
+        dlg = MountEditDialog(self, source = source, mountpoint = mountpoint)
+        dlg.CenterOnParent()
+        
+        res = dlg.ShowModal()
+        # get user input and clean up:
+        source = dlg.getSource()
+        mountpoint = dlg.getMountPoint()    
+        dlg.Destroy()
+        
+        # now decide what to do with the input
+        
+        if wx.ID_CANCEL == res:
+            # user aborted
+            return None
+        else:
+            # wx.ID_OK == res 
+            
+            # validate input
+            errorMessage = validate(source, mountpoint)
+            
+            if None == errorMessage:
+                # all is fine, return:
+                return (source, mountpoint)
+            
+            else:
+                # display error message and let the user correct it:
+                from angel_app.gui.errorDialog import errorDialog
+                errorDialog("Invalid mount.", errorMessage)
+                return self.showDialog(source, mountpoint)
 
     def edit(self, item):
         #self.currentItem = event.m_itemIndex
@@ -208,26 +273,22 @@ class MountListCtrlPanel(wx.Panel): #, listmix.ColumnSorterMixin
         log.debug("Want to edit %d" % item)
         oldsource = self.getColumnText(item, 0)
         oldmountpoint = self.getColumnText(item, 1)
-
-        dlg = MountEditDialog(self, source = oldsource , mountpoint = oldmountpoint)
-        dlg.CenterOnParent()
-        res = dlg.ShowModal()
-        log.debug("result of dialogue: %s" % res)
-        if res == wx.ID_OK:
-            source = dlg.getSource()
-            mountpoint = dlg.getMountPoint()
+        
+        res = self.showDialog(oldsource, oldmountpoint)
+        if None == res:
+            # user cancelled:
+            return
+        else:
+            # store user settings:
+            (source, mountpoint) = res
+            
             log.debug("source: '%s' mount: %s" % (source, mountpoint))
-            #self.itemDataMap[i][0] = str(source)
-            #self.itemDataMap[i][1] = str(mountpoint)
             config = wx.GetApp().config
             del config.container['mounttab'][oldsource]
             config.container['mounttab'][source] = mountpoint
             config.commit()
             self.list.DeleteAllItems()
-            #self.PopulateList()
             self.refreshContent()
-
-        dlg.Destroy()
         
     def delete(self, item):
         if item == -1:
