@@ -4,7 +4,7 @@ from angel_app.resource.IDeadPropertyStore import IDeadPropertyStore
 from zope.interface import implements
 from ZODB import DB
 import transaction
-from persistent.mapping import PersistentMapping
+from BTrees.OOBTree import OOBTree
 from persistent import Persistent
 
 def getZEOAddress():
@@ -55,11 +55,11 @@ def lookup(_zodb, _resource):
         
         # add resource if not already present
         res = _rr[0]
-        if res not in _zz.children:
-            _zz.children[res] = PersistentPropertyNode()
-            return walk(_zz.children[res], _rr[1:], True)
+        if res not in _zz.childNodes:
+            _zz.childNodes[res] = PersistentPropertyNode()
+            return walk(_zz.childNodes[res], _rr[1:], True)
         else:    
-            return walk(_zz.children[res], _rr[1:])
+            return walk(_zz.childNodes[res], _rr[1:])
     
     # create the root node for the repository, if necessary
     if repositoryRootPrefix not in _zodb:
@@ -71,11 +71,11 @@ def lookup(_zodb, _resource):
 class PersistentPropertyNode(Persistent):
     """
     A persistent object that contains "properties" (a persistent mapping from strings to strings)
-    and "children" (a persistent mapping from strings to PersistentPropertyNodes)
+    and "childNodes" (a persistent mapping from strings to PersistentPropertyNodes)
     """
     def __init__(self):
-        self.children = PersistentMapping()
-        self.properties = PersistentMapping()
+        self.childNodes = OOBTree()
+        self.properties = OOBTree()
      
     
 class ZODBDeadProperties(object):
@@ -124,7 +124,7 @@ class ZODBDeadProperties(object):
         """
         Remove this entry from the data base.
         """
-        dict = self.resource.parent().getPropertyManager().store.zodb.children
+        dict = self.resource.parent().getPropertyManager().store.zodb.childNodes
         key = self.resource.resourceName()
         del dict[key]
         transaction.commit()
