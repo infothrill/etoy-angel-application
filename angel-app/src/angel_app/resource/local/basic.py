@@ -22,7 +22,6 @@ repository = FilePath(AngelConfig.get("common","repository"))
 
 # the public keys of the secret keys we have
 keyRing = loadKeysFromFile().keys()
-log.debug(keyRing)
 
 class Basic(DAVFile, Resource):
     """
