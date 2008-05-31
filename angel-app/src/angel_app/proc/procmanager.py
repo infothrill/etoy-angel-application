@@ -67,8 +67,7 @@ def startProcesses(procsToStart = ['provider', 'presenter', 'maintainer']):
     knownProcessProtocols = {
                             'provider': ProviderProtocol, 
                             'presenter': PresenterProtocol, 
-                            'maintainer': MaintainerProtocol, 
-                            'zeo': ZEOProtocol
+                            'maintainer': MaintainerProtocol
                             }
     apps = []
     for procToStart in procsToStart:
