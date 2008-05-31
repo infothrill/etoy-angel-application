@@ -9,7 +9,7 @@ import urllib
 from twisted.web2 import responsecode
 from twisted.web2.dav.element.base import WebDAVElement
 from twisted.web2.dav.xattrprops import xattrPropertyStore
-from angel_app.resource.local.ZODBDeadProperties import ZODBDeadProperties
+from angel_app.resource.local.DirectoryDeadProperties import DirectoryDeadProperties
 from twisted.web2.http import HTTPError, StatusResponse
 from zope.interface import implements
 
@@ -99,7 +99,7 @@ defaultMetaData = {
 
 def getDefaultPropertyManager(_resource):
     #return PropertyManager(_resource, xattrPropertyStore(_resource))
-    return PropertyManager(_resource,  ZODBDeadProperties(_resource))
+    return PropertyManager(_resource,  DirectoryDeadProperties(_resource))
 
 class PropertyManager(object):
     """
@@ -144,10 +144,12 @@ class PropertyManager(object):
         
         assert type(qname) == type(WebDAVElement.qname())
         
+        # no longer necessary -- this is for xattr only, where it's required that
+        # the file proper exists, before we can attach properties to it.
         # if the resource doesn't yet exist, return a default value
-        if not os.path.exists(self.resource.fp.path):
-            if qname in self.defaultValues.keys():
-                return self.defaultValues[qname](self)
+        #if not os.path.exists(self.resource.fp.path):
+        #    if qname in self.defaultValues.keys():
+        #        return self.defaultValues[qname](self)
             
         try:
             self.assertExistence()
