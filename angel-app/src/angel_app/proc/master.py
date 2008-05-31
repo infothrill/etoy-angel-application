@@ -71,7 +71,7 @@ def dance(options):
     log = getLogger(__name__)
     startLoggingServer()
     log.debug('logging server started')
-    startProcesses(['zeo'] + options.procsToStart)
+    startProcesses(options.procsToStart)
     log.growl("User", "NODE ACTIVATED", "Launching sub-processes.")
     reactor.run()
     log.info("Quit")
