@@ -53,7 +53,6 @@ def getDefaultConfigObj():
     defaults = {   
             "angelhome" : os.path.join(os.environ["HOME"], ".angel-app"),
             "repository" : os.path.join(os.environ["HOME"], ".angel-app", "repository"),
-            "zodbfs" : os.path.join(os.environ["HOME"], ".angel-app", "zodb.fs"),
             "keyring" : os.path.join(os.environ["HOME"], ".angel-app", "keyring"),
             "angelshellinit" : os.path.join(os.environ["HOME"], ".angel-app", "angelshellinit.py"),
             "logdir" : logdir,
@@ -109,11 +108,6 @@ def getDefaultConfigObj():
     # the default name of this node with which it will advertise itself
     # to remote nodes. if you have a valid host name (DNS entry), use it here:
     nodename = unknown.invalid
-    
-    [zeo]
-    # where to put the ZODB database file
-    zodbfs = '%(zodbfs)s'
-    listenPort = 6223
     
     [gui]
     # start master process on gui startup
