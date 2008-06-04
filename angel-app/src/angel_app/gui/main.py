@@ -9,6 +9,7 @@ import angel_app.proc.subprocessthread as masterthread
 import angel_app.gui.compat.wrap as platformwrap
 from angel_app.config import config
 from angel_app.gui import statusbar
+from angel_app.resource.local.propertyManager import getDefaultPropertyManager # needed when purging
 
 
 from angel_app.log import getLogger
@@ -181,6 +182,10 @@ class AngelMainFrameBase(wx.Frame):
         if not wx.GetApp().p2p.isAlive():
             from angel_app.admin.directories import removeDirectory 
             removeDirectory('repository')
+            rootPath = wx.GetApp().config.get('common', 'repository')
+            from angel_app.resource.local.internal.resource import Crypto
+            root = Crypto(rootPath)
+            getDefaultPropertyManager(root).remove()
             dlg.Update(2)
             if was_alive:
                 wx.GetApp().p2p.run()
