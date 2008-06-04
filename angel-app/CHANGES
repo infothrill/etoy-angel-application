@@ -1,12 +1,13 @@
 0.3.3 ****** NOT YET RELEASED ******
+ * repository initialization moved to maintainer
  * GUI revamp, splash screen, menus
- * added ZEO process for storing resource properties (to replace xattr propertyStor)
+ * added custom DeadPropertyStore for managing resource metadata
  * on Mac OS X, logs are now in ~/Library/Logs/Angel/ by default
  * added Growl support
  * mounting of resources moved to maintainer loop, e.g. mounts will automatically be retried
  * added experimental dynamic dns client in provider (disabled by default).
    This adds new dependencies for the modules 'netifaces' and 'IPy'
- * minor fixes
+ * minor changes (sometimes you win, sometimes you lose)
 
 0.3.2 November 28 2007
  * stability fixes (resource initialization & redirect handling)
