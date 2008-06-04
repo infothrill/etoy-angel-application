@@ -2,8 +2,22 @@
 # -*- coding: utf-8 -*-
 
 """
-=======================================================================
-Copyright (c) 2007-2008 Paul Kremer
+a dynamic dns update client that tries to be consistent, stable and efficient on network resources
+
+Design:
+    - updating a dyndns entry is done by a "DynDNS Update Protocol handler"
+    - detecting IPs, both in DNS or elsewhere is done using IPDetector's
+      which all have a detect() method and bookkeeping about changes
+    - the DynDnsClient uses the Protocol Handler to do the updates and
+      the IPDetectors to decide when an update needs to occur
+    - a dummy endless loop ( used for time.sleep() ) repeatedly asks the
+      DynDnsClient to make sure everything is fine
+
+Other:
+ should work with python 2.3, tested with python 2.4 and python 2.5
+"""
+
+__copyright__ = """Copyright (c) 2007-2008 Paul Kremer
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -26,31 +40,11 @@ THE SOFTWARE.
 def daemonize() is from http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/66012
 which was written by by Juergen Hermann, Noah Spurrier, Clark Evans.
 That code had no license with it, so I assume it is OK to re-use it here.
-
-=======================================================================
-
-dyndnsc.py - a dynamic dns update client that tries to be consistent, stable and efficient on network resources
-
-Design:
-    - updating a dyndns entry is done by a "DynDNS Update Protocol handler"
-    - detecting IPs, both in DNS or elsewhere is done using IPDetector's
-      which all have a detect() method and bookkeeping about changes
-    - the DynDnsClient uses the Protocol Handler to do the updates and
-      the IPDetectors to decide when an update needs to occur
-    - a dummy endless loop ( used for time.sleep() ) repeatedly asks the
-      DynDnsClient to make sure everything is fine
-
-Ideas:
-- use timer events?
-- detection of internet connectivity, other than querying an IP from a webpage?
-
-Other:
- requires python 2.3, Growl notification works with python 2.4 (subprocess module)
 """
 
-__author__ = "Paul Kremer < pkremer TA spurious TOD biz >"
+__author__ = "Paul Kremer <pkremer TA spurious TOD biz>"
 __license__ = "MIT License"
-__revision__ = "$Id: dyndnsc.py 500 2008-03-12 00:08:16Z pkremer $"
+__version__ = "$Revision: 511 $"
 
 import sys
 import os
@@ -61,15 +55,16 @@ import re
 import socket
 import time
 import logging
-import netifaces
-import IPy
 import random
 import base64
 import string
+import netifaces
+import IPy
+import unittest
 
 def daemonize(stdout='/dev/null', stderr=None, stdin='/dev/null', # os.devnull only python 2.4
               pidfile=None, startmsg = 'started with pid %s' ):
-    '''
+    """
         This forks the current process into a daemon.
         The stdin, stdout, and stderr arguments are file names that
         will be opened and be used to replace the standard file descriptors
@@ -78,7 +73,7 @@ def daemonize(stdout='/dev/null', stderr=None, stdin='/dev/null', # os.devnull o
         Note that stderr is opened unbuffered, so
         if it shares a file with stdout then interleaved output
         may not appear in the order that you expect.
-    '''
+    """
     # Do first fork.
     try: 
         pid = os.fork() 
@@ -122,10 +117,9 @@ def daemonize(stdout='/dev/null', stderr=None, stdin='/dev/null', # os.devnull o
     os.dup2(se.fileno(), sys.stderr.fileno())
 
 class DyndnsLogger(logging.getLoggerClass()):
-    "We use our own Logger class so we can introduce additional logger methods"
+    """We use our own Logger class so we can introduce additional logger methods"""
     def growl(self, type, title, msg):
-        """
-        Method to explicitly send a notification to the desktop of the user
+        """Method to explicitly send a notification to the desktop of the user
         
         Essentially, this method is an alternative to using loglevels for the decision wether the
         message should be a desktop notification or not. 
@@ -140,7 +134,7 @@ class DyndnsLogger(logging.getLoggerClass()):
                 import Growl
             except ImportError:
                 logger.debug("No native growl support")
-                self.__growlnotifier = False
+                self.growl = False
             else:
                 self.__growlnotifier = Growl.GrowlNotifier(applicationName = 'dyndns', notifications = ['User'], defaultNotifications = ['User'])
                 self.__growlnotifier.register()
@@ -150,17 +144,17 @@ class DyndnsLogger(logging.getLoggerClass()):
             self.__growlnotifier.notify(noteType = 'User', title = title, description = msg)
         else:
             logger.debug('trying growlnotify cmd line')
-            cmd = ["/usr/local/bin/growlnotify", '-i', '.term', '-t', title, '-m', msg]
+            tool = "/usr/local/bin/growlnotify"
+            cmd = [tool, '-i', '.term', '-t', title, '-m', msg]
             try:
                 import subprocess
                 proc = subprocess.Popen(cmd)
                 proc.wait()
-            except:
-                logger.debug("growlnotify cmd line failed")
+            except Exception, e:
+                logger.debug("executing '%s' failed" % tool, exc_info = e)
 
 class BaseClass(object):
-    """
-    A common base class providing logging and desktop-notification.
+    """A common base class providing logging and desktop-notification.
     """
     def emit(self, message):
         """
@@ -171,7 +165,7 @@ class BaseClass(object):
 
 
 class NoRedirectHandler(urllib2.HTTPRedirectHandler):
-    "Class to hook into urllib2 to handle http redirects"
+    """Class to hook into urllib2 to handle http redirects"""
     def redirect_request(self, req, fp, code, msg, hdrs, *args, **kwargs):
         """
         Refuse to handle redirects. We are working with known services, so we know what to expect.
@@ -179,35 +173,30 @@ class NoRedirectHandler(urllib2.HTTPRedirectHandler):
         raise urllib2.HTTPError(req.get_full_url(), code, msg, hdrs, fp)
 
 class HTTPGetHelper(BaseClass):
-    """
-    This class really just wraps the python urllib/urllib2 for fetching URLs
+    """This class really just wraps the python urllib/urllib2 for fetching URLs
     with GET parameters and handle exceptions/problems gracefully by logging and
     returning an empty string.
 
     Also sets the User-Agent header.
     """
     def __init__(self):
-        """
-        By default sets the user agent string to
+        """By default sets the user agent string to
         dyndnsc.py/%s (http://dyndns.majimoto.net/)
         where %s is the subversion revision currently
         """
-        regex = re.compile('^\$Id: (.*?) (\d+) (.*)\$$')
+        regex = re.compile('^\$Revision: (\d+) \$$')
         v = 'unknown'
-        matchObj = regex.search(__revision__)
+        matchObj = regex.search(__version__)
         if not matchObj is None:
-            v = matchObj.group(2)
+            v = matchObj.group(1)
         self.useragent = 'dyndnsc.py/%s (http://dyndns.majimoto.net/)' % v
 
     def setUserAgent(self, useragent):
-        """
-        Explicitly set the user agent to the given string
-        """
-        self.useragent = useragent
+        """Explicitly set the user agent to the given string"""
+        self.useragent = str(useragent)
 
     def get(self, url, params = {}, size = -1, authheader = None):
-        """
-        This fetches the data returned from the given url and the given params.
+        """This fetches the data returned from the given url and the given params.
         If size is specified, only size amount of bytes are read and returned.
         If anything goes wrong, this returns an empty string.
         
@@ -246,16 +235,12 @@ class HTTPGetHelper(BaseClass):
         return (True, data)
 
 class IPDetector(BaseClass):
-    """
-    Base class for IP detectors. Really is just a state machine for old/current value.
-    """
+    """Base class for IP detectors. Really is just a state machine for old/current value."""
     def __init__(self, *args, **kwargs):
         pass
 
     def canDetectOffline(self):
-        """
-        Must be overwritten. Return True when the IP detection can work offline without causing network traffic.
-        """
+        """Must be overwritten. Return True when the IP detection can work offline without causing network traffic."""
         raise Exception, "Abstract method, must be overridden"
 
     def getOldValue(self):
@@ -277,9 +262,7 @@ class IPDetector(BaseClass):
         return self._currentvalue
 
     def hasChanged(self):
-        """
-        Detect a state change with old and current value
-        """
+        """Detect a state change with old and current value"""
         if self.getOldValue() == self.getCurrentValue():
             return False
         else:
@@ -287,11 +270,9 @@ class IPDetector(BaseClass):
 
 
 class IPDetector_DNS(IPDetector):
-    """
-    Class to resolve a hostname using socket.getaddrinfo()
-    """
+    """Class to resolve a hostname using socket.getaddrinfo()"""
     def canDetectOffline(self):
-        "Returns false, as this detector generates dns traffic"
+        """Returns false, as this detector generates dns traffic"""
         return False
 
     def setHostname(self, hostname):
@@ -340,8 +321,7 @@ class RandomIPGenerator:
                 ])
 
     def isReservedIP(self, ip):
-        """
-        Check if the given ip address is in a reserved ipv4 address space
+        """Check if the given ip address is in a reserved ipv4 address space
         
         @param ip: IPy ip address
         @return: boolean
@@ -352,8 +332,7 @@ class RandomIPGenerator:
         return False
 
     def randomIP(self):
-        """
-        Return a randomly generated IPv4 address that is not in a reserved ipv4 address space
+        """Return a randomly generated IPv4 address that is not in a reserved ipv4 address space
 
         @return: IPy ip address
         """
@@ -363,8 +342,7 @@ class RandomIPGenerator:
         return randomip
 
     def next(self):
-        """
-        Generator that returns randomly generated IPv4 addresses that are not in a reserved ipv4 address space
+        """Generator that returns randomly generated IPv4 addresses that are not in a reserved ipv4 address space
         until we hit self.maxRandomTries
 
         @return: IPy ip address
@@ -382,18 +360,16 @@ class RandomIPGenerator:
         raise StopIteration
 
     def __iter__(self):
-        "Iterator for this class. See method next()"
+        """Iterator for this class. See method next()"""
         return self.next()
 
 class IPDetector_Random(IPDetector):
-    """
-    For testing: detect randomly generated IP addresses
-    """
+    """For testing: detect randomly generated IP addresses"""
     def __init__(self):
         self.rips = RandomIPGenerator()
 
     def canDetectOffline(self):
-        "Returns True"
+        """Returns True"""
         return True
 
     def detect(self):
@@ -402,49 +378,93 @@ class IPDetector_Random(IPDetector):
             self.setCurrentValue(str(ip))
             return str(ip)
 
-class IPDetector_TeredoOSX(IPDetector):
+class IPDetector_Iface(IPDetector):
+    """IPDetector to detect any ip address of a local interface.
     """
-    Class to detect the local Teredo ipv6 address by checking the local 'ifconfig' information
-    """
-    def __init__(self, opts):
-        self.opts = {'iface': 'tun0'}
-        for k in opts.keys():
-            logger.debug("%s explicitly got option: %s -> %s" % (self.__class__.__name__, k, opts[k]))
-            self.opts[k] = opts[k]
+    def __init__(self, options):
+        """
+        Constructor
+        @param options: dictionary
+        """
+        self.opts = {'iface': 'en0', 'family': "INET6"} # TODO: clarify address family option!
+        for k in options.keys():
+            logger.debug("%s explicitly got option: %s -> %s" % (self.__class__.__name__, k, options[k]))
+            self.opts[k] = options[k]
 
     def canDetectOffline(self):
-        "Returns true, as this detector only queries local data"
+        """Returns true, as this detector only queries local data"""
         return True
 
-    def _netifaces(self):
-        "uses the netifaces module to detect ifconfig information"
+    def detect(self):
+        """uses the netifaces module to detect ifconfig information"""
+        ip = None
         try:
             addrlist = netifaces.ifaddresses(self.opts['iface'])[netifaces.AF_INET6]
         except Exception, e:
-            logger.error("netifaces choked while trying to get inet6 interface information for interface %s" % self.opts['iface'], exc_info = e)
-            return None
-        for pair in addrlist:
-            matchObj = re.match("2001:.*", pair['addr'])
-            if not matchObj is None:
-                #logger.debug("Found ipv6 addr with netifaces on interface '%s': %s" % (self.interfacename, pair['addr']))
-                return pair['addr']
-        logger.debug("The teredo ipv6 address could not be detected with 'netifaces'")
-        return None
+            logger.error("netifaces choked while trying to get inet6 interface information for interface '%s'" % self.opts['iface'], exc_info = e)
+        else:
+            netmask = IPy.IP("2001:0000::/32")
+            for pair in addrlist:
+                try:
+                    detip = IPy.IP(pair['addr'])
+                except Exception, e:
+                    logger.debug("Found invalid IP '%s' on interface %s!?" % (pair['addr'], self.opts['iface']))
+                    continue
+                if detip in netmask:
+                    ip = pair['addr']
+                    break
+        # ip can still be None at this point!
+        self.setCurrentValue(ip)
+        return ip
+
+class IPDetector_Teredo(IPDetector):
+    """IPDetector to detect a Teredo ipv6 address of a local interface.
+    Bits 0 to 31 of the ipv6 address are set to the Teredo prefix (normally 2001:0000::/32).
+    This detector only checks the first 16 bits!
+    See http://en.wikipedia.org/wiki/Teredo_tunneling for more information on Teredo.
+    """
+    def __init__(self, options):
+        """
+        Constructor
+        @param options: dictionary
+        """
+        self.opts = {'iface': 'tun0'}
+        for k in options.keys():
+            logger.debug("%s explicitly got option: %s -> %s" % (self.__class__.__name__, k, options[k]))
+            self.opts[k] = options[k]
+
+    def canDetectOffline(self):
+        """Returns true, as this detector only queries local data"""
+        return True
 
     def detect(self):
-        ip = self._netifaces()
-        # ip can still be None!
+        """uses the netifaces module to detect ifconfig information"""
+        ip = None
+        try:
+            addrlist = netifaces.ifaddresses(self.opts['iface'])[netifaces.AF_INET6]
+        except Exception, e:
+            logger.error("netifaces choked while trying to get inet6 interface information for interface '%s'" % self.opts['iface'], exc_info = e)
+        else:
+            netmask = IPy.IP("2001:0000::/32")
+            for pair in addrlist:
+                try:
+                    detip = IPy.IP(pair['addr'])
+                except Exception, e:
+                    logger.debug("Found invalid IP '%s' on interface %s!?" % (pair['addr'], self.opts['iface']))
+                    continue
+                if detip in netmask:
+                    ip = pair['addr']
+                    break
+        # ip can still be None at this point!
         self.setCurrentValue(ip)
         return ip
 
 
 class IPDetector_WebCheck(IPDetector):
-    """
-    Class to detect an IP address as seen by an online web site that returns parsable output
-    """
+    """Class to detect an IP address as seen by an online web site that returns parsable output"""
 
     def canDetectOffline(self):
-        "Returns false, as this detector generates http traffic"
+        """Returns false, as this detector generates http traffic"""
         return False
 
     def _getClientIPFromUrl(self, url):
@@ -479,7 +499,7 @@ class IPDetector_WebCheck(IPDetector):
         return ip
 
 class UpdateProtocol(BaseClass):
-    "the base class for all update protocols"
+    """the base class for all update protocols"""
     def update(self, ip):
         self.ip = ip
         return self.protocol()
@@ -513,10 +533,12 @@ class UpdateProtocol(BaseClass):
         self.failcount +=1
         self.emit("Service '%s' is failing with result '%s'!" % (self.name, self.updateResult))
 
+    def notfqdn(self):
+        self.failcount +=1
+        self.emit("The provided hostname '%s' is not a valid hostname!" % (self.hostname))
+
 class UpdateProtocolMajimoto(UpdateProtocol):
-    """
-    This class contains the logic for talking to the update service of dyndns.majimoto.net
-    """
+    """This class contains the logic for talking to the update service of dyndns.majimoto.net"""
     def __init__(self, protocol_options):
         for k in ['key', 'hostname']:
             assert protocol_options.has_key(k), "Protocol option '%s' is missing" % k
@@ -551,6 +573,8 @@ class UpdateProtocolMajimoto(UpdateProtocol):
             self.abuse()
         elif self.updateResult == '911':
             self.failure()
+        elif self.updateResult == 'notfqdn':
+            self.notfqdn()
         else:
             self.emit("Problem updating IP address of '%s' to %s: %s" % (self.hostname, self.ip, self.updateResult))
 
@@ -562,7 +586,7 @@ class UpdateProtocolMajimoto(UpdateProtocol):
 
 
 class UpdateProtocolDyndns(UpdateProtocol):
-    "Protocol handler for dyndns.com"
+    """Protocol handler for dyndns.com"""
 
     def __init__(self, protocol_options):
         for k in ['hostname', 'userid', 'password']:
@@ -606,13 +630,15 @@ class UpdateProtocolDyndns(UpdateProtocol):
             self.abuse()
         elif self.updateResult == '911':
             self.failure()
+        elif self.updateResult == 'notfqdn':
+            self.notfqdn()
         else:
             self.emit("Problem updating IP address of '%s' to %s: %s" % (self.hostname, self.ip, self.updateResult))
 
 
 
 def getProtocolHandlerClass( protoname = 'dyndns'):
-    "factory method to get the correct protocol Handler given its name"
+    """factory method to get the correct protocol Handler given its name"""
     avail = {
              'dyndns': UpdateProtocolDyndns,
              'majimoto': UpdateProtocolMajimoto,
@@ -621,9 +647,7 @@ def getProtocolHandlerClass( protoname = 'dyndns'):
 
 
 class DynDnsClient(BaseClass):
-    """
-    This class represents a client to the dynamic dns service.
-    """
+    """This class represents a client to the dynamic dns service."""
     def __init__(self, sleeptime = 300):
         self.ipchangedetection_sleep = sleeptime # check every n seconds if our IP changed
         self.forceipchangedetection_sleep = sleeptime * 5 # force check every n seconds if our IP changed
@@ -640,8 +664,7 @@ class DynDnsClient(BaseClass):
         self.detector = detector
 
     def sync(self):
-        """
-        Forces a syncronisation if there is a difference between the IP from DNS and the detector.
+        """Forces a syncronisation if there is a difference between the IP from DNS and the detector.
         This can be expensive, mostly depending on the detector, but also because updating the
         dynamic ip in itself is costly.
         Therefore, this method should usually only be called on startup or when the state changes.
@@ -665,8 +688,7 @@ class DynDnsClient(BaseClass):
             logger.debug("Nothing to do, dns '%s' equals detection '%s'" % (self.detector.getCurrentValue(), self.detector.getCurrentValue()))
 
     def stateHasChanged(self):
-        """
-        Detects a change either in the offline detector or a
+        """Detects a change either in the offline detector or a
         difference between the real DNS value and what the online
         detector last got.
         This is efficient, as it only generates minimal dns traffic
@@ -691,8 +713,7 @@ class DynDnsClient(BaseClass):
             return False
 
     def needsCheck(self):
-        """
-        This checks if the planned time between checks has elapsed.
+        """This checks if the planned time between checks has elapsed.
         When this time has elapsed, a state change check through stateHasChanged() should be performed and eventually a sync().
         """
         if not vars(self).has_key('lastcheck'):
@@ -703,8 +724,7 @@ class DynDnsClient(BaseClass):
         return True
         
     def needsForcedCheck(self):
-        """
-        This checks if self.forceipchangedetection_sleep between checks has elapsed.
+        """This checks if self.forceipchangedetection_sleep between checks has elapsed.
         When this time has elapsed, a sync() should be performed, no matter what stateHasChanged() says.
         This is really just a safety thing to enforce consistency in case the state gets messed up.
         """
@@ -730,9 +750,7 @@ class DynDnsClient(BaseClass):
                 pass
 
     def loop(self):
-        """
-        Blocking endless loop with built-in sleeping between checks and updates.
-        """
+        """Blocking endless loop with built-in sleeping between checks and updates."""
         while True:
             self.check()
             time.sleep(self.ipchangedetection_sleep)
@@ -740,14 +758,14 @@ class DynDnsClient(BaseClass):
 def getChangeDetectorClass(name):
     avail = {
              'webcheck': IPDetector_WebCheck,
-             'teredoosx': IPDetector_TeredoOSX,
+             'teredoosx': IPDetector_Teredo,
+             'teredo': IPDetector_Teredo,
              'random': IPDetector_Random
              }
     return avail[name]
 
 def getDynDnsClientForConfig(config):
-    """
-    factory method to instantiate and initialize a complete and working dyndns client
+    """Factory method to instantiate and initialize a complete and working dyndns client
     
     @param config: a dictionary with configuration pairs
     """
@@ -793,10 +811,9 @@ def getDynDnsClientForConfig(config):
     for o in method_optlist:
         # options are key value pairs, separated by a colon ":"
         # allow whitespaces in input, but strip them here:
-        (k,v) = map(string.strip, o.split(":"))
-        #k = k.strip()
-        #v = v.strip()
-        opts[k] = v
+        res = map(string.strip, o.split(":", 2))
+        if len(res) == 2:
+            opts[res[0]] = res[1]
     try:
         dyndnsclient.setChangeDetector(klass(opts))
     except Exception, e:
@@ -805,9 +822,41 @@ def getDynDnsClientForConfig(config):
 
     return dyndnsclient
 
+
+class TestCases(unittest.TestCase):
+    def setUp(self):
+        logger.info("TestCases are being initialized")
+        unittest.TestCase.setUp(self)
+    
+    def tearDown(self):
+        unittest.TestCase.tearDown(self)
+    
+    def testAdetectorTypes(self):
+        # make sure all advertised "types" are actually available and instantiatable
+        avail = ['teredo', 'teredoosx', 'webcheck']
+        for a in avail:
+            try:
+                DetectorClass = getChangeDetectorClass(a)
+            except Exception, e:
+                self.fail("Invalid options test failed %s" % e)
+            d = DetectorClass(options = {'': '', 'foo': 'bar', 'iface': 'sdfsd'})
+            self.assertTrue(isinstance(d, DetectorClass))
+    
+    def testGrowl(self):
+        logger.growl('User', 'Dynamic DNS', "%s" % "Test")
+
+    def testKTeredo(self):
+        # constructor: test invalid options
+        DetectorClass = getChangeDetectorClass('teredo')
+        d = DetectorClass(options = {'iface': 'tun0'})
+        self.assertTrue(isinstance(d, DetectorClass))
+        print d.detect()
+        #self.assertEquals(type(d.detect()), type(''))
+        
 def main():
     from optparse import OptionParser
     parser = OptionParser()
+    parser.add_option("-t", "--test", dest="test", help="run test-suite", action="store_true", default=False)
     parser.add_option("-d", "--daemon", dest="daemon", help="go into daemon mode (implies --loop)", action="store_true", default=False)
     parser.add_option("--hostname", dest="hostname", help="hostname to update", default=None)
     parser.add_option("--key", dest="key", help="your authentication key", default=None)
@@ -818,6 +867,14 @@ def main():
     parser.add_option("--loop", dest="loop", help="loop forever (default is to update once)", action="store_true", default=False)
     parser.add_option("--sleeptime", dest="sleeptime", help="how long to sleep between checks in seconds", default=300)
     (options, dummyargs) = parser.parse_args()
+
+    if options.test:
+        sys.argv = sys.argv[:1] # unittest module chokes with arguments ;-(
+        logging.basicConfig(level=logging.DEBUG,format='%(asctime)s %(levelname)s %(message)s')
+        unittest.main()
+        sys.exit()
+    else:
+        logging.basicConfig(level=logging.INFO,format='%(asctime)s %(levelname)s %(message)s')
 
     if options.hostname is None: raise Exception, "Please specify a hostname using --hostname"
 
@@ -849,7 +906,6 @@ def main():
     return 0
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG,format='%(asctime)s %(levelname)s %(message)s')
     logging.setLoggerClass(DyndnsLogger)
-    logger = logging.getLogger('a')
+    logger = logging.getLogger('dyndns') # we have to set this here in order to make it a module scope variable
     sys.exit(main())
