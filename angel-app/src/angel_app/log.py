@@ -381,7 +381,7 @@ try:
         It receives _all_ log messages and decides on the configured loglevel (given at construction or via setLevel())
         if it shall growl or not.
         
-        To explicitely growl, you must call the logger's "growl()" method which bypasses the actual logging system.
+        To explicitly growl, you must call the logger's "growl()" method which bypasses the actual logging system.
 
         NOTE: as we have multiple processes that use a network logging system, we might get multiple
         calls with the same message if handlers are not configured correctly (e.g. the logging client
@@ -406,9 +406,12 @@ try:
             self.growl = growl
         
         def emit(self, record):
-            assert record.levelno in self.notifications, 'Error level %s not registered within GrowlHandler' % record.levelno
-            title = "%s (%s)" % (self.notifications[record.levelno], record.name)
-            self.growl.notify(self.notifications[record.levelno], title, record.msg)
+            if record.levelno not in self.notifications:
+                #assert record.levelno in self.notifications, 'Error level %s not registered within GrowlHandler' % record.levelno
+                pass # 'Error level %s not registered within GrowlHandler' % record.levelno
+            else:
+                title = "%s (%s)" % (self.notifications[record.levelno], record.name)
+                self.growl.notify(self.notifications[record.levelno], title, record.msg)
 
 except ImportError:
     pass
