@@ -144,19 +144,6 @@ class PropertyManager(object):
         
         assert type(qname) == type(WebDAVElement.qname())
         
-        # no longer necessary -- this is for xattr only, where it's required that
-        # the file proper exists, before we can attach properties to it.
-        # if the resource doesn't yet exist, return a default value
-        #if not os.path.exists(self.resource.fp.path):
-        #    if qname in self.defaultValues.keys():
-        #        return self.defaultValues[qname](self)
-            
-        try:
-            self.assertExistence()
-        except:
-            log.info("failed to look up element %s for resource %s" % (`qname`, self.resource.fp.path))
-            raise
-        
         # the property is available in the property store
         if self.store.contains(qname):
             return self.store.get(qname)
@@ -165,7 +152,6 @@ class PropertyManager(object):
         # but we have an initializer   
         if qname in self.defaultValues.keys():
             df = self.defaultValues[qname](self)
-            self.set(df)
             return self.store.get(qname)
         
         else:
@@ -177,7 +163,7 @@ class PropertyManager(object):
         Raise and log an appropriate error if the resource does not exist on the file system.
         """
         if not os.path.exists(self.resource.fp.path):
-            error = "Resource %s not found in xattr lookup." % self.resource.fp.path
+            error = "Resource %s not found on file system." % self.resource.fp.path
             log.warn(error)
             raise HTTPError(StatusResponse(responsecode.NOT_FOUND, error))
     
