@@ -17,20 +17,15 @@ class Putable(object):
     A mixin class (for AngelFile) that implements put operations.
     """
     def _put(self, stream): 
-       
-        if not os.path.exists(self.fp.path):
-            log.debug("adding new file at: " + self.fp.path)
 
         if not self.isWritableFile():
             message = "http_PUT: not authorized to put file: " + self.fp.path
             log.error(message)
             raise HTTPError(StatusResponse(responsecode.UNAUTHORIZED, message))
-        
-        log.debug("_put: deleting file at: " + self.fp.path)        
+         
         response = waitForDeferred(deferredGenerator(self.__putDelete)())
         yield response
         response = response.getResult()
-        log.debug("_put: return code for deleting file: " + `response`)
         
         xx  = waitForDeferred(deferredGenerator(self.__putFile)(stream))
         yield xx
@@ -40,8 +35,6 @@ class Putable(object):
         
         xx = waitForDeferred(deferredGenerator(self._updateMetadata)())
         yield xx
-        
-        log.debug("return code for updating meta data: " + `response`)
         
         yield response
         
@@ -70,16 +63,13 @@ class Putable(object):
         if the destination already exists, or L{responsecode.NO_CONTENT} if the
         destination was created by the X{PUT} operation.
         """
-        log.debug("Deleting file %s" % (self.fp.path,))
         
         # TODO: actually do the above
         
         if os.path.exists(self.fp.path):
-            log.debug("deleting: " + self.fp.path)
             self.remove()
             success_code = responsecode.NO_CONTENT
         else:
-            log.debug("__putDelete, file does not exist, not deleted.")
             success_code = responsecode.CREATED
         yield success_code
     
@@ -94,19 +84,15 @@ class Putable(object):
             x = waitForDeferred(readIntoFile(stream, safe))
             yield x
             x.getResult()
-            log.debug("__putFile: read stream into tmpfile: " + safe.name)
         except Exception, e:
-            log.debug("failed to write to tmpfile: " + safe.name, exc_info = e)
             raise HTTPError(statusForFailure(
                                              Failure(),
                 "writing to tmpfile: %s" % (safe.path,)
                 ))
 
         # it worked, commit the file:
-        log.debug("committing tmpfile %s to file %s" % (`safe.name`, `self.fp.path`))
         t.commit() # TODO: catch exception here!
         
-        log.debug("__putFile: done putting file stream: " + self.fp.path)
         yield None
 
             
