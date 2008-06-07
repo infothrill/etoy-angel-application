@@ -26,8 +26,7 @@ def inspectResource(af):
         sync.broadCastAddress(af)
         return True
     except Exception, e:
-        log.error("Resource inspection failed for resource: " + af.fp.path)
-        log.error(`e`)
+        log.error("Resource inspection failed for resource: " + af.fp.path, exc_info = e)
         return False
     
 def newSleepTime(currentSleepTime, startTime):
