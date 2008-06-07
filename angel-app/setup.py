@@ -57,7 +57,6 @@ setup(
                         "xattr<=0.4",
                         "zope.interface>=3.3.0",
                         "netaddress>=0.2.2",
-                        "ZODB3<=3.6",
                         "netifaces>=0.4",
                         "IPy>=0.56",
                         "pycrypto>=2.0.1",
