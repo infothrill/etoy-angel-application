@@ -57,7 +57,7 @@ class ProppatchMixin:
     def preconditions_PROPPATCH(self, request):
         
         if not os.path.exists(self.fp.path):
-            error = "File not found: %s" % (self.fp.path,)
+            error = "File not found in PROPPATCH: %s" % (self.fp.path,)
             log.error(error)
             raise HTTPError(StatusResponse(
                        responsecode.NOT_FOUND, error))
