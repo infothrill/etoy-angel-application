@@ -12,13 +12,17 @@ def graphWalker(node, getChildren, toEvaluate, backPack = None):
             g(node, backPack)[1] is passed on to the child nodes.
     @returns an iterator over the results of applying toEvaluate to every node in the tree
     
+    If rr evaluates to a false value (False, [], {}, None etc.) for any node, the graph walker will
+    not proceed to evaluate the children.
+    
     @see walkTest() for an example.
     """
     rr = toEvaluate(node, backPack)
     yield rr[0]
-    for child in getChildren(node):
-        for result in graphWalker(child, getChildren, toEvaluate, rr[1]):
-            yield result
+    if rr[0]:
+        for child in getChildren(node):
+            for result in graphWalker(child, getChildren, toEvaluate, rr[1]):
+                yield result
 
 
 """

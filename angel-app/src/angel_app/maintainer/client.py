@@ -21,8 +21,14 @@ def inspectResource(af):
     to whoever is inclined to listen.
     """
     log.info("inspecting resource: " + af.fp.path)
-    update.updateResource(af)
-    sync.broadCastAddress(af)
+    try:
+        update.updateResource(af)
+        sync.broadCastAddress(af)
+        return True
+    except Exception, e:
+        log.error("Resource inspection failed for resource: " + af.fp.path)
+        log.error(`e`)
+        return False
     
 def newSleepTime(currentSleepTime, startTime):
     """
