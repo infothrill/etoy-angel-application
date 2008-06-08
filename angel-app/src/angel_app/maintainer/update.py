@@ -128,7 +128,11 @@ def updateResource(af):
     if af.exists():        
         storeClones(af, cloneLists.good, cloneLists.old + cloneLists.unreachable)
         removeUnreferencedChildren(af)
-        return True
+        if af.validate():
+            return True
+        else:
+            log.warn("Resource was not valid after update: " + af.fp.path)
+            return False
     else:
         log.warn("update did not create local resource for " + af.fp.path)
         return False
