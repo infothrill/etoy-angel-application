@@ -151,8 +151,7 @@ class PropertyManager(object):
         # the property is not available in the property store,
         # but we have an initializer   
         if qname in self.defaultValues.keys():
-            df = self.defaultValues[qname](self)
-            return self.store.get(qname)
+            return self.defaultValues[qname](self)
         
         else:
             raise KeyError("Attribute for element %s not found on resource %s." % 
