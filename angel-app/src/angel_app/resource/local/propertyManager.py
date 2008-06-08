@@ -132,7 +132,8 @@ class PropertyManager(object):
         return (self.store.contains(element) or  (element in self.defaultValues.keys()))
     
     def list(self):
-        return self.store.list() + self.defaultValues.keys()
+        union = (set(self.store.list()) | self.defaultValues.keys())
+        return [e for e in union]
     
     def delete(self, qname):
         """
