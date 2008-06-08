@@ -33,9 +33,10 @@ def reSign(path = ""):
     Path is a relative path with respect to repository root.
     """
     rr = Crypto(absPath(path))
-    if not rr.verify():
+    if not rr.validate():
         rr._signContent()
         rr.seal()
+        assert rr.validate()
 
 def setKey(path = "", key = None):
     if key is None: # fetch default key
