@@ -108,7 +108,7 @@ class PropertyManager(object):
     
     To be able to support both xattrPropertyStores and (future) ZODB-based property stores,
     this is from now on implemented via composition rather than inheritance. The store implementation
-    to be used at run-time is provided to the constructor (i.e. depdendency injection).
+    to be used at run-time is provided to the constructor (i.e. dependency injection).
     
     TODO: consider adding default value handling for contains() and listProperties()
     """
@@ -129,7 +129,7 @@ class PropertyManager(object):
         return self.resource.isCollection()
     
     def contains(self, element):
-        return (self.store.contains(element) or  (element in self.defaultValues.keys()))
+        return (self.store.contains(element) or (element in self.defaultValues.keys()))
     
     def list(self):
         union = (set(self.store.list()) | set(self.defaultValues.keys()))
@@ -155,7 +155,15 @@ class PropertyManager(object):
         # the property is not available in the property store,
         # but we have an initializer   
         if qname in self.defaultValues.keys():
-            return self.defaultValues[qname](self)
+            dp = self.defaultValues[qname](self)
+            try:
+                # try to write the metadata -- this may fail e.g. if 
+                # the metadata container does not yet exist on the file system
+                # TODO: I don't feel good about this "solution" -- review when time permits
+                self.set(dp)
+            except Exception, e:
+                log.info("Failed to persist default property: " + `dp`)
+            return dp
         
         else:
             raise KeyError("Attribute for element %s not found on resource %s." % 
