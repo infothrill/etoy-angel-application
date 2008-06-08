@@ -13,7 +13,6 @@ log = getLogger(__name__)
 AngelConfig = config.getConfig()
 repository = AngelConfig.get("common","repository")
 
-
 def inspectResource(af):
     """
     I take care of the inspection of a single resource, by first comparing it to all

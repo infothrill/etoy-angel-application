@@ -43,27 +43,25 @@ def acceptable(clone, publicKeyString, resourceID):
     
     @return a boolean, indicating if the clone is valid
     """
-    
-    if clone.resourceID() != resourceID:
-        # an invalid clone
-        log.debug("iterateClones: " + `clone` + " wrong resource ID")
-        log.debug("expected: " + `resourceID`)
-        log.debug("found: " + `clone.resourceID()`)
-        return False
+    try:
+        if clone.resourceID() != resourceID:
+            # an invalid clone
+            return False
         
-    if clone.publicKeyString() != publicKeyString:
-        # an invalid clone
-        log.debug("iterateClones: " + `clone` + " wrong public key")
-        log.debug("expected: " + publicKeyString)
-        log.debug("found: " + clone.publicKeyString())
-        return False
+        if clone.publicKeyString() != publicKeyString:
+            # an invalid clone
+            return False
         
-    if not clone.validate():
-        # an invalid clone
-        log.debug("iterateClones: " + `clone` + " invalid signature")
-        return False
+        if not clone.validate():
+            # an invalid clone
+            log.debug("iterateClones: " + `clone` + " invalid signature")
+            return False
     
-    return True
+        return True
+        
+    except Exception, e:
+        log.info("Clone " + clone.toURI() + " not acceptable().", exc_info = e)
+        return False
 
 
 def cloneList(cloneSeedList, publicKeyString, resourceID):
@@ -82,12 +80,10 @@ def cloneList(cloneSeedList, publicKeyString, resourceID):
         
         # pop the next clone from the queue
         cc = toVisit[0]
-        log.debug("inspecting clone: " + `cc`)
         toVisit = toVisit[1:]
     
         if cc in visited:
             # we have already looked at this clone -- don't bother with it
-            log.debug("iterateClones: " + `cc` + " already visited, ignoring")
             continue
 
         # mark this clone as visited        

@@ -38,11 +38,14 @@ def updateResourceFromClone(resource, referenceClone):
 
 def updateResourceFromClones(resource, cloneList):
     """
-    Step through a list of clones, syncrhonizing the local resource, until the resource is valid.
+    Step through a list of clones, synchronizing the local resource, until the resource is valid.
     """
     for clone in cloneList:
-        if updateResourceFromClone(resource, clone):
-            return
+        try:
+            if updateResourceFromClone(resource, clone):
+                return
+        except Exception, e:
+            log.info("Failed to update local resource from clone: " + clone.toURI(),  exc_info = e)
     assert False, "Failed to update local resource %s from clone list." % resource.fp.path
         
 
