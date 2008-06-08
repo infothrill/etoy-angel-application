@@ -101,7 +101,13 @@ class Resource(object):
         #log.debug(ms)
         #log.debug(sm)
         try:
-            return publicKey.verifyString(sm, ms)
+            isCorrect = publicKey.verifyString(sm, ms)
+            if not isCorrect:
+                log.info("Incorrect meta data for: " + `self.resourceID()`)
+                log.info("Meta data to be signed: " + `self.signableMetadata()`)
+                return False
+            else:
+                return True
         except:
             log.info("Can not verify metadata %s against signature %s" % (sm, ms))
             return False
