@@ -45,12 +45,12 @@ def getLogger(area = ""):
     """
     the most important method in here. Call this to get a logger object, so
     you can log a message using one of the methods 'error' 'info' 'critical' 'debug' ...
-    See the pyhton 'logging' module documentation for more information.
-    Additionally, this method can be called using an additionnal parameter called 'area'.
+    See the python 'logging' module documentation for more information.
+    Additionally, this method can be called using an additional parameter called 'area'.
     The area is used to tag the logged messages, so it is easier to read the log.
-    The value of area really can be anyt string you like, it might make sense to use
+    The value of area really can be any string you like, it might make sense to use
     for example the class/module name you are in.
-    In logged messages, the area appears just behind the applicaton name, prepended with a dot:
+    In logged messages, the area appears just behind the application name, prepended with a dot:
     "presenter.config" means the log message is from application presenter and area config.
     """
     if len(area) > 0:
@@ -83,7 +83,7 @@ class AngelLogger(logging.getLoggerClass()):
         """
         Method to explicitly send a notification to the desktop of the user
         
-        Essentially, this method is an alternative to using loglevels for the decision wether the
+        Essentially, this method is an alternative to using loglevels for the decision whether the
         message should be a desktop notification or not. 
          
         @param type: a notification type
