@@ -129,12 +129,15 @@ class PropertyManager(object):
         return self.resource.isCollection()
     
     def contains(self, element):
-        return self.store.contains(element)
+        return (self.store.contains(element) or  (element in self.defaultValues.keys()))
     
     def list(self):
-        return self.store.list()
+        return self.store.list() + self.defaultValues.keys()
     
     def delete(self, qname):
+        """
+        TODO: need to be able to handle default values as well?
+        """
         return self.store.delete(qname)
 
     def getByElement(self, property):
