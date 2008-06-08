@@ -100,9 +100,4 @@ def addMounts():
             try:
                 setMountPoint(mount[1], mount[0])
             except Exception, e:
-                log.warn("Mount failed for " + `mount[1]`)
-                import traceback
-                import cStringIO
-                ff = cStringIO.StringIO()
-                traceback.print_exc(ff)
-                log.warn("Reason: " + ff.getvalue())
+                log.warn("Mount failed for " + `mount[1]`, exc_info = e)
