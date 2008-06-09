@@ -454,7 +454,7 @@ class AngelMainWindow(AngelMainFrameBase):
         The constructor, initializes the menus, the mainframe with the logo and the statusbar.
         By default, also starts the p2p process automatically on start-up
         """
-        wx.Frame.__init__(self, parent, id, title, wx.DefaultPosition, wx.Size(820, 535))
+        wx.Frame.__init__(self, parent, id, title, wx.DefaultPosition, wx.Size(450, 535))
 
         self._buildMenus()
 
