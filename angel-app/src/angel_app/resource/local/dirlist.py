@@ -56,8 +56,8 @@ def htmlHead(title):
         .even { background-color: #ffffff }
         .odd-dir {background-color: #eeeeee }
         .odd { background-color: #eeeeee }
-        td { vertical-align: top; }
-        th { white-space:nowrap; text-align:left; padding-right: 20px;}
+        td { vertical-align: top;}
+        th { white-space:nowrap; text-align:left; padding-right: 10px;}
     </style>
 </head>""" % title
 
