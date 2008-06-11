@@ -311,7 +311,7 @@ Example valid URI: http://missioneternity.org:6221/"""
             try:
                 wx.GetApp().p2p.conditionalRestart()
             except Exception, e:
-                log.warn("Caught an exception while trying to restart the p2p process: %s" % `e`)
+                log.warn("Caught an exception while trying to restart the p2p process", exc_info = e)
                 self.statuslog.WriteText(_("Could not restart the p2p process"))
 
         dlg.Destroy()
