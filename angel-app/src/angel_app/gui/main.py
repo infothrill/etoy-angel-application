@@ -328,7 +328,6 @@ class AngelMainFrameBase(wx.Frame):
         from angel_app.gui.mounttab import MountsWindow 
         window = MountsWindow(self, -1, _("Mounts"))
         window.CenterOnParent()
-        window.ShowModal()
 
     def on_net_restart(self, event):
         """
