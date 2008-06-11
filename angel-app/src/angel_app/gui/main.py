@@ -18,7 +18,19 @@ log = getLogger(__name__)
 _ = wx.GetTranslation
 
 
+ID_FILE_OPEN_REPO_IN_WEBBROWSER = wx.NewId()
+ID_FILE_OPEN_REPO_IN_FILEMANAGER = wx.NewId()
+ID_NET_START = wx.NewId()
+ID_NET_STOP = wx.NewId()
+ID_NET_RESTART = wx.NewId()
+
+# list of IDs that require an active p2p subsystem:
+P2PRequired = [ ID_FILE_OPEN_REPO_IN_WEBBROWSER, ID_FILE_OPEN_REPO_IN_FILEMANAGER, ID_NET_STOP, ID_NET_RESTART ]
+# list of IDs that are not allowed while the p2p subsystem is active:
+P2PForbidden = [ ID_NET_START ]
+
 class AngelMainFrameBase(wx.Frame):
+
     BUGREPORT_URL = "https://gna.org/support/?func=additem&group=angel-app" # use "support", because "bugs" requires a gna account
     TECHNICALREPORT_URL = "http://svn.gna.org/viewcvs/*checkout*/angel-app/trunk/angel-app/doc/report/m221e-angel-app-0.2.pdf" # TODO: this URL needs to have NO version in it!!!
 
@@ -50,18 +62,20 @@ class AngelMainFrameBase(wx.Frame):
         """
         Build/populate the File menu.
         """              
+        file_menu = wx.Menu()
+
+        # attach functionality with custom-id's:
+        file_menu.Append(ID_FILE_OPEN_REPO_IN_WEBBROWSER, "O&pen repository in web-browser", "Open repository in web-browser")
+        self.Bind(wx.EVT_MENU, self.on_help_presenter, id=ID_FILE_OPEN_REPO_IN_WEBBROWSER)               
 
         filemanager = (platformwrap.isMacOSX() and "Finder") or "file manager"            
-        fileMenuItems = [
-            ("O&pen repository in web-browser", "Open repository in web-browser", self.on_help_presenter),
-            ("O&pen repository in %s" % filemanager, "Open repository in %s" % filemanager, self.on_repo_in_filemanager),
-            ("Purge repository", "Purge repository", self.on_file_purge_repository),
-            #("L&og console", "Log console", self.on_log_console)  
-                         ]
+        file_menu.Append(ID_FILE_OPEN_REPO_IN_FILEMANAGER, "O&pen repository in %s" % filemanager, "Open repository in %s" % filemanager)
+        self.Bind(wx.EVT_MENU, self.on_repo_in_filemanager, id=ID_FILE_OPEN_REPO_IN_FILEMANAGER)               
 
-        file_menu = self.__buildMenuWith(fileMenuItems)
+        ID_PURGE = wx.NewId()
+        file_menu.Append(ID_PURGE, "Purge repository", "Purge repository")
+        self.Bind(wx.EVT_MENU, self.on_file_purge_repository, id=ID_PURGE)               
 
-        # finally, attach "special" (i.e. with custom-id's) functionality:
         file_menu.Append(wx.ID_PREFERENCES, _("P&references"), _("Preferences"))
         self.Bind(wx.EVT_MENU, self.on_file_prefs, id=wx.ID_PREFERENCES)
 
@@ -75,12 +89,18 @@ class AngelMainFrameBase(wx.Frame):
 
         
     def __buildNetworkMenu(self):
-        netMenuItems = [
-                        ("Sta&rt p2p service", "Start p2p service", self.on_net_start),
-                        ("Sto&p p2p service", "Stop p2p service", self.on_net_stop),
-                        ("Re&start p2p service", "Restart p2p service", self.on_net_restart),
-                        ]
-        return self.__buildMenuWith(netMenuItems)
+        net_menu = wx.Menu()
+        
+        net_menu.Append(ID_NET_START, _("Sta&rt p2p service"), _("Start p2p service"))
+        self.Bind(wx.EVT_MENU, self.on_net_start, id=ID_NET_START)
+    
+        net_menu.Append(ID_NET_STOP, _("Sto&p p2p service"), _("Stop p2p service"))
+        self.Bind(wx.EVT_MENU, self.on_net_stop, id=ID_NET_STOP)
+    
+        net_menu.Append(ID_NET_RESTART, _("Re&start p2p service"), _("Restart p2p service"))
+        self.Bind(wx.EVT_MENU, self.on_net_restart, id=ID_NET_RESTART)
+    
+        return net_menu
     
     def __buildUserMenu(self):
         keysMenuItems = [
@@ -334,8 +354,18 @@ class AngelMainFrameBase(wx.Frame):
         Restart the p2p process
         """
         wx.GetApp().p2p.conditionalRestart()
-        #self.on_net_stop(event)
-        #self.on_net_start(event)
+    
+    def enableP2PMenuItems(self, enable = True):
+        """
+        Enable or disable menu items based on the enable parameter.
+        Useful to prevent users from clicking on menu items that actually require the p2p subsystem.
+
+        @param enable: boolean
+        """
+        for id in P2PRequired:
+            self.menu_bar.Enable(id, enable)
+        for id in P2PForbidden:
+            self.menu_bar.Enable(id, not enable)
         
     def on_net_start(self, event):
         """
@@ -344,6 +374,7 @@ class AngelMainFrameBase(wx.Frame):
         if not wx.GetApp().p2p.isAlive():
             log.info("Starting the p2p process")
             wx.GetApp().p2p.run()
+        self.enableP2PMenuItems(True)
 
     def on_net_stop(self, event):
         """
@@ -352,6 +383,7 @@ class AngelMainFrameBase(wx.Frame):
         if wx.GetApp().p2p.isAlive():
             log.info("Stopping the p2p process")
             wx.GetApp().p2p.stop()
+        self.enableP2PMenuItems(False)
     
     def on_repo_in_filemanager(self, event):
         """
@@ -465,6 +497,9 @@ class AngelMainWindow(AngelMainFrameBase):
         # start the p2p process:
         if wx.GetApp().config.getboolean('gui', 'autostartp2p'):
             wx.GetApp().p2p.start()
+            self.enableP2PMenuItems(True)
+        else:
+            self.enableP2PMenuItems(False)
 
         # make sure to have a handler when quitting (shutdown p2p) 
         self.Bind(wx.EVT_CLOSE, self.OnQuit)
