@@ -1,13 +1,18 @@
-0.3.3 ****** NOT YET RELEASED ******
- * repository initialization moved to maintainer
+0.4 Not yet released
+ * Upgrade notice: you must purge your repository once
+ * repository initialization moved to maintainer (from master)
+ * replaced xattr metadata store with custom DeadPropertyStore; this removes
+   the dependency of only supporting filesystems with extended attributes
  * GUI revamp, splash screen, menus
- * added custom DeadPropertyStore for managing resource metadata
- * on Mac OS X, logs are now in ~/Library/Logs/Angel/ by default
- * added Growl support
- * mounting of resources moved to maintainer loop, e.g. mounts will automatically be retried
- * added experimental dynamic dns client in provider (disabled by default).
-   This adds new dependencies for the modules 'netifaces' and 'IPy'
+ * on Mac OS X, logs are now in ~/Library/Logs/Angel/ by default (on new install)
+ * added Growl support on Mac OS X
+ * mounting of external resources was moved to the maintainer loop, so that
+   mounts will automatically be retried if they failed earlier
+ * added built-in dynamic dns client to the provider loop (disabled by default);
+   this adds new dependencies for the modules 'netifaces' and 'IPy' but allows
+   better addressing. Manual configuration only.
  * minor changes (sometimes you win, sometimes you lose)
+ * improved stability of maintenance loop
 
 0.3.2 November 28 2007
  * stability fixes (resource initialization & redirect handling)
