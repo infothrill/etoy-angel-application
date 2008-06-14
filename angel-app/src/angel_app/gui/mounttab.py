@@ -204,8 +204,19 @@ Example valid URI: http://missioneternity.org:6221/"""
                 import os
                 destination = Basic(repositoryPath + os.sep + mountpoint)
                 if not destination.fp.exists() or not destination.isCollection():
-                    return "Mount point target must exist and be a directory."
-                    
+                    from angel_app.resource.local.internal.resource import Crypto
+                    try:
+                        newResource = Crypto(repositoryPath + os.sep + mountpoint)
+                        os.mkdir(repositoryPath + os.sep + mountpoint)
+                        newResource.seal()
+                    except Exception, e:
+                        log.warn("Error creating mount point '%s'" % mountpoint, exc_info = e)
+                        return "Error creating the mount point '%s'!" % mountpoint
+                    else:
+                        return None
+                else:
+                    return "Cannot mount to existing resource '%s'!" % mountpoint
+
             except Exception, e:
                 import traceback, cStringIO
                 err = cStringIO.StringIO()
