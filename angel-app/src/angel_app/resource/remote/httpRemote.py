@@ -35,7 +35,7 @@ class HTTPRemote(object):
         TODO: It would be nice if we could set timeouts on a per-socket basis. For the time being, it
         seems we have to operate with socket.setdefaulttimeout(), which is obviously a dangerous and
         annoying hack (since it applies to all future sockets). We need to make sure that in the end, 
-        the default time out is set back to the original value (typpically None). Since python2.4 does
+        the default time out is set back to the original value (typically None). Since python2.4 does
         not yet support the finally clause, we have to do that in two places (i.e. in the try statement,
         if the request succeeds, in the catch statement otherwise).
         
