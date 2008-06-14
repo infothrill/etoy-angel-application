@@ -42,7 +42,23 @@ def getStatistics():
     return "<br/>".join(stats.split("\n"))
 
 def showStatistics():
-    return "<h2>Global Network</h2><p>The following global statistics are available for the ANGEL APPLICATION network: <br/>" + getStatistics() + "</p>" 
+    return """
+<p style="line-height: 1.6em;
+    padding: 0 15px;
+    margin:0 0 5px 0;">
+%s
+<br/>
+<span style="font-size:xx-small">
+DISCLAIMER: Lifetime estimate assumes:
+(i) Availability of digital communication, i.e. the absence of 
+nuclear wars, major meteorite impacts and lethal pandemics. 
+(ii) Maintenance of the ANGEL APPLICATION by etoy and
+its contributors. 
+<br/>
+Please help us make these assumptions hold, by becoming an
+<a href="http://www.etoy.com/contact/">etoy.INVESTOR</a>.
+</span>
+</p>""" % getStatistics()
 
 def htmlHead(title):
     return """
@@ -62,7 +78,10 @@ def htmlHead(title):
 </head>""" % title
 
 def showClones(path):
-    return "<h2>Resource Network</h2><p>Replicas of this resource have last been seen at the following locations: <br/>" + formatClones(path) + "</p>"
+    return """
+<p style="line-height: 1.6em; padding: 0 15px; margin:0 0 5px 0; ">
+Recently seen replicas of this resource: 
+<br/> %s </p>""" % formatClones(path)
 
 def showFile(even, link, linktext, size, lastmod, type):
     even = even and "even" or "odd"
@@ -99,23 +118,25 @@ def showFileListing(data_listing):
 def showDirectoryListing(linkList):
     return "<p>Directory listing for %s</p>" % linkList
 
-def showBlurb(linkList, hostName):
+def showBlurb(linkList):
     return """
 <p>%s</p>
 <p>
-You are viewing a directory listing of the ANGEL APPLICATION,
-an autonomous peer-to-peer file system developed for MISSION ETERNITY.
+You are viewing a directory listing of the <a href="http://angelapp.missioneternity.org">ANGEL APPLICATION</a>,
+an autonomous peer-to-peer file system developed for <a href="http://missioneternity.org">MISSION ETERNITY</a>.
 </p>
 <p>
 Much like <a href="http://freenetproject.org/">freenet</a>, it decouples the storage 
 process from the physical storage medium by embedding data in a social network. 
-Unlike freenet, the primary goal of the ANGEL APPLICATION is not anonymity, but 
+Unlike freenet, our primary goal is not anonymity, but 
 data preservation.
 </p>
 <p>
-This node is hosted on %s. 
+Like the content on this site? You can help to preserve and share it (and add your own) 
+by running the <a href="http://angelapp.missioneternity.org">ANGEL APPLICATION</a> 
+on your computer.
 </p>
-""" % (linkList, hostName)
+""" % (linkList)
 
 def showNavi():
     return """
@@ -127,6 +148,26 @@ def showNavi():
     </ul>
 </div>
 """
+
+def showHost(nodeName):
+    return """
+<p style="line-height: 1.6em; padding: 0 15px; margin:0 0 5px 0; ">
+This node is hosted on: %s
+</p>
+""" % nodeName
+
+def showResourceStatistics(path, nodeName):
+    return """
+<div id="bilder" 
+style="left:900px; top:86px; width: 300px; background-color: #ffffff; padding:5px 0 5px 0; margin-left: 15px">
+<h3>About This Network</h3>
+    %s
+<br/>
+    %s
+    
+    %s
+</div>
+""" % (showHost(nodeName), showClones(path), showStatistics())
 
 class DirectoryLister(resource.Resource):
     def __init__(self, pathname, dirs=None,
@@ -225,14 +266,11 @@ class DirectoryLister(resource.Resource):
         </h1>
               
         <h1>Directory Listing</h1>"""
-        s += '\n' + showBlurb(linkList, nodename)
-        s += "\n<br/><br/>"     
-        s += showClones(self.path)
-        s += "\n<br/><br/>"  
-        s += showStatistics()
+        s += '\n' + showBlurb(linkList)
         s += "\n</div>"
-        s += '\n' + showNavi()
+        #s += '\n' + showNavi()
         s += showFileListing(self.data_listing(request, None))   
+        s += showResourceStatistics(self.path, nodename)
         s += "\n</body></html>"
         response = http.Response(200, {}, s)
         response.headers.setHeader("content-type", http_headers.MimeType('text', 'html'))
