@@ -526,6 +526,12 @@ class AngelMainWindow(AngelMainFrameBase):
         win = welcome.WelcomePanel(self, None)
         Sizer.Add(win)
 
+def showSplashScreen():
+    bitmapfilename = os.path.join(platformwrap.getResourcePath(), "images", "skull.png")
+    assert os.path.isfile(bitmapfilename), "Splash screen picture '%s' could not be found" % bitmapfilename
+    aBitmap = wx.Image(name = bitmapfilename).ConvertToBitmap()
+    splashDuration = 3000 # milliseconds
+    wx.SplashScreen(aBitmap, wx.SPLASH_CENTRE_ON_SCREEN | wx.SPLASH_TIMEOUT, splashDuration, None)
 
 class AngelApp(wx.App):
     """
@@ -535,12 +541,7 @@ class AngelApp(wx.App):
         """
         Instantiates the main frame and shows it
         """
-        bitmapfilename = os.path.join(platformwrap.getResourcePath(), "images", "skull.png")
-        assert os.path.isfile(bitmapfilename), "Splash screen picture '%s' could not be found" % bitmapfilename
-        aBitmap = wx.Image(name = bitmapfilename).ConvertToBitmap()
-        splashDuration = 3000 # milliseconds
-        splash = wx.SplashScreen(aBitmap, wx.SPLASH_CENTRE_ON_SCREEN | wx.SPLASH_TIMEOUT, splashDuration, None)
-
+        #showSplashScreen()
         self.config = config.getConfig()
         self.p2p = masterthread.MasterThread()
         self.p2p.setDaemon(True)
