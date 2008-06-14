@@ -23,7 +23,7 @@ class RenderManager(object):
         if self.resource.isCollection():
             return self.renderDirectory(req)
         else:
-            return self.renderFile()
+            return self.__renderFile()
 
     def renderDirectory(self, req):
         if req.uri[-1] != "/":
@@ -46,7 +46,7 @@ class RenderManager(object):
                     self.resource.defaultType
                 ).render(req)
 
-    def getResponse(self):
+    def __getResponse(self):
         """
         Set up a response to a GET request.
         """
@@ -61,19 +61,19 @@ class RenderManager(object):
                 
         return response
     
-    def getResponseStream(self):        
+    def __getResponseStream(self):        
         """
-        The Basic AngelFile just returns the cypthertext of the file.
+        The Basic AngelFile just returns the cyphertext of the file.
         """
         f = self.resource.open()
         
         return stream.FileStream(f, 0, self.resource.fp.getsize())
 
-    def renderFile(self):
+    def __renderFile(self):
         
-        log.debug("running renderFile")
+        log.debug("running __renderFile")
         
-        response = self.getResponse()
-        response.stream = self.getResponseStream()
-        log.debug("done running renderFile")
+        response = self.__getResponse()
+        response.stream = self.__getResponseStream()
+        log.debug("done running __renderFile")
         return response
