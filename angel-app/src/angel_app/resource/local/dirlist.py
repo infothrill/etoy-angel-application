@@ -50,7 +50,7 @@ def showStatistics():
 <br/>
 <span style="font-size:xx-small">
 DISCLAIMER: Lifetime estimate assumes:
-(i) Availability of digital communication, i.e. the absence of 
+(i) Availability of digital communication, the absence of 
 nuclear wars, major meteorite impacts and lethal pandemics. 
 (ii) Maintenance of the ANGEL APPLICATION by etoy and
 its contributors. 
@@ -131,8 +131,10 @@ process from the physical storage medium by embedding data in a social network.
 Unlike freenet, our primary goal is not anonymity, but 
 data preservation.
 </p>
+<br/>
+<br/>
 <p>
-Like the content on this site? You can help to preserve and share it (and add your own) 
+Like the content on this site? You can help preserving and sharing it (and add your own) 
 by running the <a href="http://angelapp.missioneternity.org">ANGEL APPLICATION</a> 
 on your computer.
 </p>
@@ -159,7 +161,7 @@ This node is hosted on: %s
 def showResourceStatistics(path, nodeName):
     return """
 <div id="bilder" 
-style="left:900px; top:86px; width: 300px; background-color: #ffffff; padding:5px 0 5px 0; margin-left: 15px">
+style="left:900px; top:86px; width: 300px; background-color: #ffffff; padding:5px 0 5px 0; margin-left: 25px">
 <h3>About This Network</h3>
     %s
 <br/>
