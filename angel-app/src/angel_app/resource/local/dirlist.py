@@ -134,10 +134,20 @@ data preservation.
 <br/>
 <br/>
 <p>
-Like the content on this site? You can help preserving and sharing it (and add your own) 
+Like the content on this site? 
+<ul>
+<li>
+You can help preserving and sharing it (and add your own) 
 by running the <a href="http://angelapp.missioneternity.org">ANGEL APPLICATION</a> 
 on your computer.
+</li>
+<li>
+The ANGEL APPLICATION fully supports WebDAV. You can make this directory part of your desktop.
+E.g. on Mac OS X, simply type Command-K in the finder, and "connect to" this page's URL.
+</li>
+<ul>
 </p>
+
 """ % (linkList)
 
 def showNavi():
