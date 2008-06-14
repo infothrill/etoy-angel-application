@@ -1,5 +1,4 @@
-0.4 Not yet released
- * Upgrade notice: you must purge your repository once
+0.4.0 "zhong guo" June 14 2008
  * repository initialization moved to maintainer (from master)
  * replaced xattr metadata store with custom DeadPropertyStore; this removes
    the dependency of only supporting filesystems with extended attributes
