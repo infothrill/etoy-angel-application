@@ -20,12 +20,7 @@ def loadKeysFromFile(keyDir = secretKey.getKeyringDirectory()):
     keyRing = {}
     for fileName in keyFiles:
         log.info("loading secret key: " + `fileName`)
-        angelKey = ezKey()                                             
-        angelKey.importKey(
-                     open(
-                       keyDir + sep + fileName
-                       ).read()
-                       ) 
+        angelKey = secretKey.getKeyFor(keyDir + sep + fileName)
         keyRing[angelKey.exportKey()] = angelKey
     return keyRing
 

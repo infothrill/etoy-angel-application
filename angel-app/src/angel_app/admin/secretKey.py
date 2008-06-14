@@ -21,12 +21,35 @@ def getKeyringDirectory():
     else:
         raise NameError, "The keyring directory '%s' does not exist" % directoryname
 
-def createKey(filePath = os.path.join(getKeyringDirectory(), "default.key")):
+def defaultKeyFilePath():
+    return os.path.join(getKeyringDirectory(), "default.key")
+
+def createKey(filePath = defaultKeyFilePath()):
     kk = ezKey()
     # TODO: make key size configurable
     kk.makeNewKeys() 
     log.info("creating new key in file: " + `filePath`)
     open(filePath, 'w').write(kk.exportKeyPrivate())
+    return kk
+
+def getKeyFor(path = defaultKeyFilePath()):
+    """
+    @return: the key stored in the supplied file
+    """
+    keyContent = open(path).read()
+    angelKey = ezKey()
+    angelKey.importKey(open(path).read())
+    return angelKey
+
+def getDefaultKey():
+    """
+    @return: the default key for this node
+    """
+    return getKeyFor(defaultKeyFilePath())
+
+def defaultPublicKey():
+    return getDefaultKey().exportKey()
+
 
 def createAtLeastOneKey():
     

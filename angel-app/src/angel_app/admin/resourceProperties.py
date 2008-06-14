@@ -9,6 +9,7 @@ log = getLogger(__name__)
 from angel_app.resource.local.basic import Basic
 from angel_app.resource.local.internal.resource import Crypto
 from angel_app.config import config
+from angel_app.admin import secretKey
 AngelConfig = config.getConfig()
 repository = AngelConfig.get("common", "repository")
 
@@ -40,14 +41,14 @@ def reSign(path = ""):
 
 def setKey(path = "", key = None):
     if key is None: # fetch default key
-        key = secretKeys.values()[0]
+        key = secretKey.getDefaultKey()
     from angel_app.elements import PublicKeyString
     # first set the key -- this won't work with Crypto
     rr = Basic(absPath(path))
     try:
         presentKey = rr.publicKeyString()
-    except:
-        log.info("no key set for " + path)
+    except Exception, e:
+        log.info("Could not set key for " + path, exc_info = e)
         presentKey = ""
 
     try: 

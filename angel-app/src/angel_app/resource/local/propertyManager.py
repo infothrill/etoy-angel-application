@@ -18,6 +18,7 @@ from angel_app.log import getLogger
 from angel_app.resource.IReadonlyPropertyManager import IReadonlyPropertyManager
 from angel_app.resource.remote.clone import clonesToElement
 from angel_app.resource.IDeadPropertyStore import IDeadPropertyStore
+from angel_app.admin.secretKey import defaultPublicKey
 
 
 log = getLogger(__name__)
@@ -27,9 +28,8 @@ def getOnePublicKey(resource):
     This is used in the initialization phase of a resource's meta-data:
     get hold of a meaningful public key.
     """
-    if resource.isRepositoryRoot():
-        from angel_app.config.internal import loadKeysFromFile    
-        return loadKeysFromFile().keys()[0]
+    if resource.isRepositoryRoot():   
+        return defaultPublicKey()
     else:
         return resource.parent().publicKeyString()
 
