@@ -72,9 +72,7 @@ class Crypto(
         On a similar note: why is this method "protected", when the (only) method it
         calls is public?
         """
-        log.debug("entering _updateMetadata for resource " + self.fp.path)
         self.update(1)
-        log.debug("exiting _updateMetadata for resource " + self.fp.path)
 
     
     
@@ -85,14 +83,10 @@ class Crypto(
         return right away if the resource is a directory or self.secretKey
         is None.
         </p>
-        """
-        
+        """   
         if self.fp.isdir() or self.secretKey() == None: return
 
         import angel_app.singlefiletransaction
-
-        log.debug("encrypting file: " + self.fp.path)
-
         encrypter = self.secretKey()
         myFile = self.fp.open()
         t = angel_app.singlefiletransaction.SingleFileTransaction()
@@ -141,7 +135,6 @@ class Crypto(
         Increase the revision number by one, if it not initialized, set it to 1.
         """
         nn = self.revision() + 1
-        log.debug("revision number for " + self.fp.path +" now at: " + `nn`)
         self.deadProperties().set(elements.Revision.fromString(`nn`))
         return int(nn)
 
@@ -156,10 +149,7 @@ class Crypto(
         the parent directory exists and is writable.
         
         @returns True if the location is writable, False otherwise
-        """
-        
-        log.debug("testing for writability of: " + self.fp.path)
-        
+        """    
         try: 
             self.secretKey()
         except KeyError, e:
@@ -186,7 +176,6 @@ class Crypto(
                 
         myKeyString = self.secretKey().exportKey()    
         fileKeyString = self.publicKeyString()
-        log.debug("public key for " + self.fp.path + ": " + fileKeyString)
         return fileKeyString == myKeyString
 
     def seal(self):
@@ -198,11 +187,8 @@ class Crypto(
         
         See also: L{ezPyCrypto.key}
         """
-        
-        log.debug("Crypto: sealing " + self.fp.path)
         signature = self.secretKey().signString(self.signableMetadata())
         self.deadProperties().set(elements.MetaDataSignature.fromString(signature))
-        log.debug("Crypto: signature is " + signature)
         return signature
     
     def updateParent(self, recursionLimit = 0):
@@ -210,32 +196,26 @@ class Crypto(
         TODO: This is a one-liner and should go into self.update()
         """
         pp = self.parent()
-        log.debug("updating parent of " + self.fp.path)
         pp and pp.update()
 
     def _deRegisterWithParent(self):
         """
         Remove this resource from its parent's child elements.
         """
-        log.debug("entering _deRegisterWithParent for: " + self.fp.path)
-
         pp = self.parent()
         
         if None == pp:
             log.warn("Can not deregister root resource with parent.")
                
-        log.debug(`self.parent()`)
         pdp = pp.deadProperties()
         
         oc = pdp.get(elements.Children.qname()).children
-        
-        log.debug("resourceName: " + self.resourceName())     
+         
         nc = [cc for cc in oc if not str(cc.childOfType(rfc2518.HRef)) == urllib.quote(self.resourceName())]
         
         pdp.set(elements.Children(*nc))
         pp.bumpRevisionNumber()
         pp.seal()
-        log.debug("exiting _deRegisterWithParent")
     
     def _registerWithParent(self):
         """
@@ -277,7 +257,6 @@ class Crypto(
             self._deRegisterWithParent()
             
             destination_uri = request.headers.getHeader("destination")
-            log.debug("changeRegister: " + `self.__class__`)
             destination = resourceFromURI(destination_uri, self.__class__)
             destination._registerWithParent()
         
@@ -299,8 +278,6 @@ class Crypto(
     
     def update(self, recursionLimit = 0):
         
-        log.debug("called update on: " + self.fp.path)
-        
         if not self.isWritableFile(): 
             raise RuntimeError, "not authorized to perform update of signed meta data"
 
@@ -316,11 +293,8 @@ class Crypto(
         # certainly not going to hurt if we do this:
         self.fp.restat()
         
-        log.debug(self.fp.path + " now at revision: " + `self.revision()`) 
         if recursionLimit > 0:
             self.updateParent(recursionLimit - 1)
-            
-        log.debug("done update for resource " + self.fp.path)
     
         
     def getResponseStream(self):
@@ -329,7 +303,6 @@ class Crypto(
         
         @see Basic.getResponseStream
         """
-        log.debug("rendering file in plaintext: " + self.fp.path)
         if self.isEncrypted():
             
             fileContents = self.secretKey().decString(self.fp.open().read())
@@ -343,6 +316,5 @@ class Crypto(
 def reloadKeys():  
     log.info("reloading keys") 
     Crypto.keyRing = loadKeysFromFile()
-    log.debug("available keys: " + `Crypto.keyRing.keys()`)
     
 reloadKeys()
