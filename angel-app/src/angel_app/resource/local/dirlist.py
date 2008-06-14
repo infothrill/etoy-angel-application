@@ -56,7 +56,7 @@ nuclear wars, major meteorite impacts and lethal pandemics.
 its contributors. 
 <br/>
 Please help us make these assumptions hold, by becoming an
-<a href="http://www.etoy.com//fundamentals/etoy-share/">etoy.INVESTOR</a>.
+<a href="http://www.etoy.com/fundamentals/etoy-share/">etoy.INVESTOR</a>.
 </span>
 </p>""" % getStatistics()
 
