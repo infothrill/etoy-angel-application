@@ -127,7 +127,7 @@ an autonomous peer-to-peer file system developed for <a href="http://missioneter
 </p>
 <p>
 Much like <a href="http://freenetproject.org/">freenet</a>, it decouples the storage 
-process from the physical storage medium by embedding data in a social network. 
+process from the physical storage medium by embedding data in a root-less and therefore fail-safe social network. 
 Unlike freenet, our primary goal is not anonymity, but 
 data preservation.
 </p>
