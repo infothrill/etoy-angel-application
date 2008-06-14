@@ -270,7 +270,10 @@ class Crypto(
         if self.isRepositoryRoot():
             raise Exception("Cowardly refusing to delete the root directory.")
         
-        if self.isWritableFile():
+        if self.isWritableFile() or self.parent().isWritableFile():
+            # the former is the case if we're the owner of the resource,
+            # the latter holds if this is the root of a mount point,
+            # which we should of course also be able to unmount.
             self._deRegisterWithParent()
             # else we don't own this, so can't
 
