@@ -118,7 +118,7 @@ def getDefaultConfigObj():
     [mounttab]
     # list of default mounts.
     # $URL = $MOUNT_POINT
-    #"http://missioneternity.org:6221/" = "MISSION ETERNITY"
+    "http://missioneternity.org:6221/" = "MISSION ETERNITY"
 
     """ % ( defaults )
 
