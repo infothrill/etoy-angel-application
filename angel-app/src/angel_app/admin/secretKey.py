@@ -36,7 +36,6 @@ def getKeyFor(path = defaultKeyFilePath()):
     """
     @return: the key stored in the supplied file
     """
-    keyContent = open(path).read()
     angelKey = ezKey()
     angelKey.importKey(open(path).read())
     return angelKey

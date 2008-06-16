@@ -27,7 +27,9 @@ def dance(options):
     log = getLogger("maintainer")
 
     log.debug("initializing repository")
-    initializeRepository.initializeRepository()
+    if not initializeRepository.initializeRepository():
+        log.warn("Going to quit because initializeRepository failed.")
+        return 1
 
     angelConfig = config.getConfig()
     repository = angelConfig.get("common", "repository")
@@ -38,10 +40,11 @@ def dance(options):
     except Exception, e:
         log.critical("An exception occurred in the maintenance loop", exc_info = e)
         log.growl("User", "MAINTENANCE PROCESS", "Crash.")
-        raise
+        return -1
     else:
         log.growl("User", "MAINTENANCE PROCESS", "Quit.")
         log.info("Quit")
+        return 0
 
 
 def boot():
@@ -88,4 +91,4 @@ def boot():
 
 if __name__ == '__main__':
     options = boot()
-    dance(options)
+    sys.exit(dance(options))
