@@ -47,6 +47,8 @@ def setKey(path = "", key = None):
     rr = Basic(absPath(path))
     try:
         presentKey = rr.publicKeyString()
+    except KeyboardInterrupt:
+        raise
     except Exception, e:
         log.info("Could not set key for " + path, exc_info = e)
         presentKey = ""
@@ -54,6 +56,8 @@ def setKey(path = "", key = None):
     try: 
         key.importKey(presentKey)
         log.info("key already set to %s for resource: %s"  % (presentKey, rr.fp.path))
+    except KeyboardInterrupt:
+        raise
     except:       
         rr.deadProperties().set(PublicKeyString(key.exportKey()))
     

@@ -6,6 +6,9 @@ import os
 from angel_app import elements
 import angel_app
 
+from angel_app.log import getLogger
+log = getLogger(__name__)
+
 def syncContents(resource, referenceClone):
     """
     Synchronize the contents of the resource from the reference clone.
@@ -67,7 +70,9 @@ def broadCastAddress(localResource):
         try:
             if clone.ping() and clone.exists():
                 clone.announce(localResource)
-        except:
+        except KeyboardInterrupt:
+            raise
+        except Exception, e:
             log.warn(
                      "Address broadcast failed for clone " + clone.toURI() \
-                     + " of resource: " + localResource.fp.path)
+                     + " of resource: " + localResource.fp.path, exc_info = e)

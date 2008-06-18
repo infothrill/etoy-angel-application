@@ -24,7 +24,9 @@ def updateResourceFromClone(resource, referenceClone):
     try:
         # this will fail, if the resource does not (yet) actually exist on the file system
         old = referenceClone.revision() > resource.revision()
-    except:
+    except KeyboardInterrupt:
+        raise
+    except Exception:
         # in that case, our current resource is most certainly outdated...
         # TODO: throws an HTTPError, which is certainly inappropriate..
         old = True
@@ -44,6 +46,8 @@ def updateResourceFromClones(resource, cloneList):
         try:
             if updateResourceFromClone(resource, clone):
                 return
+        except KeyboardInterrupt:
+            raise
         except Exception, e:
             log.info("Failed to update local resource from clone: " + clone.toURI(),  exc_info = e)
     assert False, "Failed to update local resource %s from clone list." % resource.fp.path

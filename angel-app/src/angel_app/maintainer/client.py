@@ -24,6 +24,8 @@ def inspectResource(af):
         update.updateResource(af)
         sync.broadCastAddress(af)
         return True
+    except KeyboardInterrupt:
+        raise
     except Exception, e:
         log.error("Resource inspection failed for resource: " + af.fp.path, exc_info = e)
         return False
@@ -64,6 +66,7 @@ def traverseResourceTree(sleepTime):
     I do one traversal of the local resource tree.
     """
     def toEvaluate(resource, dummy = None):
+        log.info("sleeping for %d sec" %sleepTime)
         time.sleep(sleepTime)
         return (inspectResource(resource), None)
     

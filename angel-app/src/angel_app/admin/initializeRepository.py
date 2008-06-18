@@ -22,6 +22,8 @@ def initializeRepository():
         # switch to crypto and sign
         reSign()
         return True
+    except KeyboardInterrupt:
+        raise
     except Exception, e:
         log.error("Error initializing the repository", exc_info = e)
         return False

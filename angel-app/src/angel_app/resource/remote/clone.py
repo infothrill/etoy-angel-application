@@ -167,6 +167,8 @@ class Clone(Resource):
         try:
             response = self.remote.performRequest(method = "HEAD", body = "")
             return response.status == responsecode.OK
+        except KeyboardInterrupt:
+            raise
         except:
             return False       
 
@@ -178,6 +180,8 @@ class Clone(Resource):
         try:
             dummyresponse = self.remote.performRequestWithTimeOut()
             return True
+        except KeyboardInterrupt:
+            raise
         except:
             return False   
 
@@ -192,6 +196,8 @@ class Clone(Resource):
             prop = self.getProperty(elements.Clones)
                                        
             return clonesFromElement(prop)
+        except KeyboardInterrupt:
+            raise
         except:
             return []
         
@@ -257,6 +263,8 @@ def tryNumericAddress(family = socket.AF_INET, address = "127.0.0.1"):
     try:
         socket.inet_pton(family, address)
         return True
+    except KeyboardInterrupt:
+        raise
     except socket.error:
         return False
     
@@ -279,6 +287,8 @@ def maybeCloneFromElement(cc):
     """
     try:
         return cloneFromElement(cc)
+    except KeyboardInterrupt:
+        raise
     except:
         log.info("ignoring invalid clone uri: " + `cc`)
         return None

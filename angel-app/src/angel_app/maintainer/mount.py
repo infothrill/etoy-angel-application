@@ -85,8 +85,10 @@ def setMountPoint(mountPoint, URLToMount):
     
     try:
         inspectResource(rr)
-    except:
-        log.warn("Resource inspection failed for mount point: " + pp)
+    except KeyboardInterrupt:
+        raise
+    except Exception, e:
+        log.warn("Resource inspection failed for mount point: " + pp, exc_info = e)
 
 def addMounts():
     
