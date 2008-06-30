@@ -1,3 +1,7 @@
+0.4.1 "zhong guo" July 1 2008
+ * bugfix: don't try unreachable clones in maintenance
+ * bugfix: require a default crypto key
+
 0.4.0 "zhong guo" June 14 2008
  * repository initialization moved to maintainer (from master)
  * replaced xattr metadata store with custom DeadPropertyStore; this removes
