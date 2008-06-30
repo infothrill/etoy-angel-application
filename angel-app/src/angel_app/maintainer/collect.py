@@ -82,9 +82,12 @@ def cloneList(cloneSeedList, publicKeyString, resourceID):
         # pop the next clone from the queue
         cc = toVisit[0]
         toVisit = toVisit[1:]
+        
+        log.debug("visiting: " + `cc`)
     
         if cc in visited:
             # we have already looked at this clone -- don't bother with it
+            log.debug("ignoring already visited clone: " + `cc`)
             continue
 
         # mark this clone as visited        
@@ -104,11 +107,17 @@ def cloneList(cloneSeedList, publicKeyString, resourceID):
         if cc not in visited:
             visited.append(cc)
         
-        if acc and not validate(cc):
+        # the clone is reachable -- check if it's good.
+        if acc and (not validate(cc)):
             log.debug("ignoring bad clone: " + `cc`)
             continue
         
-        toVisit += cc.cloneList()        
+        if acc:
+            log.debug("accepting good clone: " + `cc` + " and extending clone list.")
+            # clone is reachable and good -- look also at its clones:
+            toVisit += cc.cloneList()
+        else:
+            log.debug("keeping unreachable clone (it might be good eventually): " + `cc`)        
         yield (cc, acc)
     
     raise StopIteration
