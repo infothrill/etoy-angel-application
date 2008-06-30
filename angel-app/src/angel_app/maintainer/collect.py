@@ -96,8 +96,6 @@ def cloneList(cloneSeedList, publicKeyString, resourceID):
         # here, we may receive a redirect, which may of course be broken and fail
         try:
             (cc, acc) = accessible(cc)
-        except KeyboardInterrupt:
-            raise
         except CloneError, e:
             errorMessage = "Failure on clone inspection: " + `e` + " (Invalid redirect?) Ignoring: " + `cc`
             log.warn(errorMessage)          
