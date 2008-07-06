@@ -85,19 +85,11 @@ class HTTPRemote(object):
                     hooked in, but this would essentially mean writing our
                     own request() method (not relying on httplib) and going
                     down the rabbit hole on urlencoding/multipart mime content encoding etc.
+                    
+        vinc: I still keep getting hangs in the maintainer -- and I think we will never be able to guarantee the absence 
+        thereof, which is a major pain. I'll make performRequest use a (long) timeout.
         """
-        conn = HTTPConnection(self.host, self.port)
-        headers["content-length"] = str(len(body))
-        conn.connect() 
-
-        conn.request(
-                 method, 
-                 self.path,
-                 headers = headers,
-                 body = body
-                 )
-        
-        return conn.getresponse()
+        return self.performRequestWithTimeOut(method, headers, body, timeout = 30.0)
 
 
 
