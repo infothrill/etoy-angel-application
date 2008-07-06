@@ -13,6 +13,13 @@ Design:
     - a dummy endless loop ( used for time.sleep() ) repeatedly asks the
       DynDnsClient to make sure everything is fine
 
+Features:
+    - relatively easy to embed in your own application (see main())
+    - Growl desktop notification support (optional)
+
+Example use:
+    python dyndnsc.py  --hostname test.dyndns.com --userid bob --method=Iface,netmask:2001:0000::/32,iface:tun0,family:INET6
+
 Other:
  should work with python 2.3, tested with python 2.4 and python 2.5
 """
@@ -44,7 +51,7 @@ That code had no license with it, so I assume it is OK to re-use it here.
 
 __author__ = "Paul Kremer <pkremer TA spurious TOD biz>"
 __license__ = "MIT License"
-__version__ = "$Revision: 511 $"
+__version__ = "$Revision: 513 $"
 
 import sys
 import os
@@ -117,7 +124,16 @@ def daemonize(stdout='/dev/null', stderr=None, stdin='/dev/null', # os.devnull o
     os.dup2(se.fileno(), sys.stderr.fileno())
 
 class DyndnsLogger(logging.getLoggerClass()):
-    """We use our own Logger class so we can introduce additional logger methods"""
+    """We use our own Logger class so we can introduce the growl() logger method.
+    
+    If you want to use your own logger, you can use a logging compatible logger
+    and register it like so:
+        import dynsdnsc
+        dynsdnsc.logger = yourLoggerObject
+    
+    This implementation has one additional method growl(), which is optional and
+    can be missing in your own logger.
+    """
     def growl(self, type, title, msg):
         """Method to explicitly send a notification to the desktop of the user
         
@@ -161,7 +177,12 @@ class BaseClass(object):
         logs and notifies the message
         """
         logger.info(message)
-        logger.growl('User', 'Dynamic DNS', "%s" % message)
+        # We try: logger.growl() to make it possible to use other logging
+        # classes than DyndnsLogger.
+        try:
+            logger.growl('User', 'Dynamic DNS', "%s" % message)
+        except:
+            pass
 
 
 class NoRedirectHandler(urllib2.HTTPRedirectHandler):
@@ -385,8 +406,14 @@ class IPDetector_Iface(IPDetector):
         """
         Constructor
         @param options: dictionary
+
+        available options:
+
+        iface: name of interface (default: en0)
+        family: IP address family (default: INET, possible: INET6)
+        netmask: netmask to be matched if multiple IPs on interface (default: none (match all)", example for teredo: "2001:0000::/32")
         """
-        self.opts = {'iface': 'en0', 'family': "INET6"} # TODO: clarify address family option!
+        self.opts = {'iface': 'en0', 'family': "INET", "netmask": None}
         for k in options.keys():
             logger.debug("%s explicitly got option: %s -> %s" % (self.__class__.__name__, k, options[k]))
             self.opts[k] = options[k]
@@ -395,69 +422,68 @@ class IPDetector_Iface(IPDetector):
         """Returns true, as this detector only queries local data"""
         return True
 
-    def detect(self):
+    def _detect(self):
         """uses the netifaces module to detect ifconfig information"""
+        if (not vars(self).has_key("netmask")):
+            if (not self.opts['netmask'] is None): # if a netmask was given
+                try:
+                    self.netmask = IPy.IP(self.opts['netmask'])
+                except Exception, e:
+                    # TODO: this is a potential trust issue, because if we don't
+                    # fail here, we might end up sending an IP to the outside
+                    # world that should be hidden (because in a "private" netmask) 
+                    logger.error("Choked while parsing netmask '%s'" % self.opts["netmask"], exc_info = e)
+                    self.netmask = None
+                
+            else:
+                self.netmask = None
         ip = None
         try:
-            addrlist = netifaces.ifaddresses(self.opts['iface'])[netifaces.AF_INET6]
+            if self.opts['family'] == 'INET6':
+                addrlist = netifaces.ifaddresses(self.opts['iface'])[netifaces.AF_INET6]
+            else:
+                addrlist = netifaces.ifaddresses(self.opts['iface'])[netifaces.AF_INET]
         except Exception, e:
             logger.error("netifaces choked while trying to get inet6 interface information for interface '%s'" % self.opts['iface'], exc_info = e)
-        else:
-            netmask = IPy.IP("2001:0000::/32")
+        else: # now we have a list of addresses as returned by netifaces
             for pair in addrlist:
                 try:
                     detip = IPy.IP(pair['addr'])
                 except Exception, e:
                     logger.debug("Found invalid IP '%s' on interface %s!?" % (pair['addr'], self.opts['iface']))
                     continue
-                if detip in netmask:
+                if (not self.netmask is None):
+                    if (detip in self.netmask):
+                        ip = pair['addr']
+                    else:
+                        continue
+                else:
                     ip = pair['addr']
-                    break
+                break # we use the first IP found
         # ip can still be None at this point!
         self.setCurrentValue(ip)
         return ip
 
-class IPDetector_Teredo(IPDetector):
+    def detect(self):
+        return self._detect()
+
+class IPDetector_Teredo(IPDetector_Iface):
     """IPDetector to detect a Teredo ipv6 address of a local interface.
     Bits 0 to 31 of the ipv6 address are set to the Teredo prefix (normally 2001:0000::/32).
     This detector only checks the first 16 bits!
     See http://en.wikipedia.org/wiki/Teredo_tunneling for more information on Teredo.
+    
+    Inherits IPDetector_Iface and sets default options only
     """
     def __init__(self, options):
         """
         Constructor
         @param options: dictionary
         """
-        self.opts = {'iface': 'tun0'}
+        self.opts = {'iface': 'tun0', 'family': "INET6", "netmask": "2001:0000::/32"}
         for k in options.keys():
             logger.debug("%s explicitly got option: %s -> %s" % (self.__class__.__name__, k, options[k]))
             self.opts[k] = options[k]
-
-    def canDetectOffline(self):
-        """Returns true, as this detector only queries local data"""
-        return True
-
-    def detect(self):
-        """uses the netifaces module to detect ifconfig information"""
-        ip = None
-        try:
-            addrlist = netifaces.ifaddresses(self.opts['iface'])[netifaces.AF_INET6]
-        except Exception, e:
-            logger.error("netifaces choked while trying to get inet6 interface information for interface '%s'" % self.opts['iface'], exc_info = e)
-        else:
-            netmask = IPy.IP("2001:0000::/32")
-            for pair in addrlist:
-                try:
-                    detip = IPy.IP(pair['addr'])
-                except Exception, e:
-                    logger.debug("Found invalid IP '%s' on interface %s!?" % (pair['addr'], self.opts['iface']))
-                    continue
-                if detip in netmask:
-                    ip = pair['addr']
-                    break
-        # ip can still be None at this point!
-        self.setCurrentValue(ip)
-        return ip
 
 
 class IPDetector_WebCheck(IPDetector):
@@ -760,9 +786,10 @@ def getChangeDetectorClass(name):
              'webcheck': IPDetector_WebCheck,
              'teredoosx': IPDetector_Teredo,
              'teredo': IPDetector_Teredo,
+             'iface': IPDetector_Iface,
              'random': IPDetector_Random
              }
-    return avail[name]
+    return avail[name.lower()] # allow case insensitive config
 
 def getDynDnsClientForConfig(config):
     """Factory method to instantiate and initialize a complete and working dyndns client
