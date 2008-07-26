@@ -22,16 +22,24 @@ Eternal Storage in Social Networks: MISSION ETERNITYÕs \textsc{Angel-Application
 \begin{frontmatter}
 
 \begin{abstract}
-Current storage media such as hard disks, CD or DVD ROMs exhibit very limited average lifetimes on the order of 2-10 years. One way to increase data lifetime is therefore to increase the lifetime of the storage medium used. Another approach is to store redundant copies of the data, and continuously validate the resulting redundant data set, replacing corrupted pieces of data by correct ones.
-The latter approach is particularly interesting, because it corresponds to a continuously running, autonomous, and pervasive backup policy which can be implemented using a set of networked standard desktop computers. In this article, we discuss such an approach, in which users collaborate to back up each other's data (optionally in encrypted form) in a peer-to-peer network. The concept is based on a (byzantine fail-safe) generalization of standard file-system tree semantics. In the case of unavailability of benevolent peers, the system behaves analogously to a local file system. If peers are available, the resource graph remains globally tree-like, but is locally (nearly) fully connected, with edges connecting either parent and child resources, or replicas of a given resource. The internal mechanisms of this storage network are then hidden from the end-user by a locally running network filesystem server (in this case WebDAV). The user may therefore interact with the system via standard file system semantics. We believe this approach is particularly attractive, because (i) it should in general allow data lifetimes to scale exponentially with the actual storage space used (an idealized model predicts lifetimes exceeding that of the universe), (ii) apart from an initial setup, and optional fine-tuning, the approach is completely transparent to day-to-day filesystem use, it therefore requires no re-training or usage of additional custom tools, (iii) no resources beyond spare hard-disk space, CPU time and network bandwidth are used, and such a system is therefore easily deployed even by small teams with limited infrastructure and finances, (iv) the system capacity is capable of growing in line with system requirements, (v) reasonably strong privacy and security guarantees can be made for the data injected into the system. We discuss the underlying principles of such a system as well as practical problems encountered in the implementation of a functional prototype.
+Current storage media such as hard disks, CD or DVD ROMs suffer from very limited average lifetimes on the order of 2-10 years. One way to increase data lifetime is to increase the lifetime of the storage medium used. Another approach is to employ a pervasive and consistent backup policy: \emph{i.e.} to store redundant copies of the data, and continuously validate the resulting redundant data set, replacing corrupted pieces of data by correct ones.
+The latter approach is particularly interesting, because it can be implemented using a set of networked standard desktop computers. 
+
+In this article, we discuss such an approach, in which users collaborate to back up each other's data via a fully autonomous peer-to-peer protocol. Its key design features are
+\begin{itemize}
+\item absence of a  single point of failure (assuming no breakdown of current cryptographic systems);
+\item in the absence of cooperative peers, the system's behavior degenerates to that of a normal local filesystem. It is therefore byzantine fail-safe.
+\item The internal representation of the system is hidden from the user by exposing a standard file-system interface (tree traversal, node and branch manipulation) via a commonly supported network file system protocol (WebDAV for the time being).
+\end{itemize}
+We believe the present approach is attractive, because (i) it should in general allow data lifetimes to scale exponentially with the physical storage space used (corresponding to predicted lifetimes exceeding that of the universe for common cases), (ii) apart from an initial setup, and optional fine-tuning, the approach is completely transparent to day-to-day filesystem use, (iii) no resources beyond spare hard-disk space, CPU time and network bandwidth are used,  (iv) the system capacity is capable of growing in line with system requirements, (v) reasonably strong privacy and security guarantees can be made for the data injected into the system. We discuss the underlying principles of such a system as well as practical problems encountered in the implementation of a functional prototype.
 \end{abstract}
 
 \newpage
-\noindent Version 0.2, April 2007: Vincent Kr\"autler and Paul Kremer, etoy.VENTURE association.
+\noindent Version 0.3, July 2008: Vincent Kr\"autler and Paul Kremer, etoy.VENTURE association.
 
 \mbox{}\\
 
-\noindent \copyright \mbox{} 2005-2007, etoy.VENTURE association. This document is available under a creative commons license as described at: \texttt{http://creativecommons.org/licenses/by-nc-nd/3.0/}.
+\noindent \copyright \mbox{} 2005-2008, etoy.VENTURE association. This document is available under a creative commons license as described at: \texttt{http://creativecommons.org/licenses/by-nc-nd/3.0/}.
 
 \vspace{10cm}
 Following page: Visualization of the module import graph of the core (``maintainer'') process of the \textsc{Angel-Application}. This process negotiates inter-node communication, keeps track of resource replicas and verifies and replicates the resource graph.
@@ -39,7 +47,7 @@ Following page: Visualization of the module import graph of the core (``maintain
 
 \newpage
 \begin{center}
-\includegraphics[height=\textheight]{figures/eps/maintainer.eps}
+\includegraphics[height=\textheight]{figures/eps/maintainer.pdf}
 \end{center}
 
 \newpage
@@ -55,13 +63,9 @@ Following page: Visualization of the module import graph of the core (``maintain
 Current storage media such as hard disks, CD or DVD ROMs exhibit very limited average lifetimes on the order of 2-10 years. In general, data stored on them share this undesirable characteristic. 
 
 A conceptually simple approach to increase data lifetime is to increase the lifetime of the storage medium used, \emph{e.g.} by using media such as microfilm, paper, or stone. While this approach has been used successfully throughout history, it has two critical drawbacks.
-Firstly, such systems can ultimately not escape the second law of thermodynamics\footnote{
-A quote attributed to Rudolph Clausius:
-\quote{
-The entropy of an isolated system not in equilibrium will tend to increase over time, approaching a maximum value at equilibrium.
-}}: the deterioration of data is not completely stopped, but only slowed down to the characteristic lifetime of the new storage medium. The second important drawback is that the corresponding storage media typically require the stored data to be static -- once a hieroglyph has been chiseled into stone, it can not (in the general case) be changed anymore. So while degradation is slowed down, the cost of reversing partial degradation is correspondingly higher. The data is effectively frozen.
+Firstly, the deterioration of data is not completely stopped, but only slowed down to the characteristic lifetime of the new storage medium. The second important drawback is that the corresponding storage media by their very nature tend to be rather static -- it is difficult to edit a hieroglyph that has been chiseled into stone. So while degradation is slowed down, the cost of reversing partial degradation is correspondingly higher. The data is effectively frozen.
 
-A complementary approach uses the fact that entropy does not necessarily increase for \emph{non-isolated} systems (\emph{i.e.} systems which exchange energy with their environment). Such systems in principle allow for information to be stored indefinitely, in fact for as long as a suitable coupling to an external environment exists.  An impressive (and particularly extreme) example of such a system are cyanobacteria: the information defining that species is stored in a single molecule of DNA (an extremely fragile medium) but has nevertheless been largely preserved for billions of years through a non-isolated (in the thermodynamic sense) replication mechanism. The main drawback of such systems is the question of resource allocation -- deciding which piece of information gets to be replicated and where the result is stored. The this biological example is therefore not directly transferrable to most current data storage approaches, since it will indiscriminately use all available resources and does not (strongly) discriminate against mutation. 
+A complementary approach uses the fact that entropy does not necessarily increase (\emph{i.e.} information is not necessarily lost) in open systems (\emph{i.e.} those which exchange energy with their environment). Such systems in principle allow for information to be stored indefinitely, in fact for as long as a suitable coupling to an external environment exists.  An impressive and particularly extreme example of such a system are cyanobacteria: the information defining that species is stored in a single molecule of DNA (an extremely fragile medium) but has nevertheless been largely preserved for billions of years via a replication mechanism. The main drawback of such systems is the question of resource allocation -- deciding which piece of information gets to be replicated and where the result is stored. This biological example is therefore not directly transferrable to most current data storage approaches, since it will indiscriminately use all available resources and does not (strongly) discriminate against mutation. 
 
 A backup system aims to obtain the best of both approaches, combining (i) a replication mechanism which discards undesirable replica, and (ii) reliable storage media. Sophisticated backup systems typically employ a hierarchical structure, with backups taken at increasingly large intervals (daily, weekly, monthly), and stored in increasingly safe, inaccessible, and physically separated locations, with exact preservation of the original data being in principle possible through the use of checksumming and error correcting algorithms made possible due to the exact (digital) representation of the information in question. However, such procedures typically carry a significant infrastructure and administrative cost. Sophisticated but easy to use backup systems are therefore generally only accessible to large, well-funded organizations, resulting in a situation where most people do not backup their data regularly and properly.
 
@@ -172,7 +176,7 @@ We can address the second point in a similar fashion, by requiring that a link t
 
 \begin{figure}[ht!]
 \begin{center}
-\includegraphics[scale=0.9]{figures/eps/fileSystem.eps}
+\includegraphics[scale=0.9]{figures/eps/fileSystem.pdf}
 \end{center}
 \caption{
 A comparison of a standard file system (left), and the proposed redundant file system (right). Parent-child relationships are indicated using arrows, clone relationships are indicated using dotted lines.
@@ -183,7 +187,7 @@ We can summarize the above: \emph{a clone of a resource may be recovered if ther
 
 \begin{figure}[ht!]
 \begin{center}
-\includegraphics[scale=0.9]{figures/eps/fullyConnected.eps}
+\includegraphics[scale=0.9]{figures/eps/fullyConnected.pdf}
 \end{center}
 \caption{
 Illustration of a fully connected resource graph (clone relationships have been left out for clarity). All file-type resources (previously leaf nodes) reference the root resource. Every resource may be reached from every other resource by following a sequence of arrows.
@@ -201,7 +205,7 @@ The above suggests a straightforward implementation of the central registry of r
 
 \begin{figure}[ht!]
 \begin{center}
-\includegraphics[scale=0.9]{figures/eps/mount.eps}
+\includegraphics[scale=0.9]{figures/eps/mount.pdf}
 \end{center}
 \caption{
 A a resource in network \textbf{A} references the root resource of another network \textbf{B} (dashed arrow). Clone relationships have been left out for clarity. While in general, the two networks will be associated with different physical locations and belong to different users, the semantics of the link between the two networks are identical to the ones of intra-network links. 
@@ -390,7 +394,7 @@ The resulting proposed structure of an angel-app node is displayed in Figure \re
 
 \begin{figure}[ht!]
 \begin{center}
-\includegraphics[scale=0.7]{figures/eps/webdav.eps}
+\includegraphics[scale=0.7]{figures/eps/webdav.pdf}
 \end{center}
 \caption{Layout of an angel-app node. Basic file system operations are available to the user via standard file managers, while bookkeeping and encryption are transparently handled by a locally running network file system server. Administration tasks which can not be expressed as file system operations may be performed through a custom configuration interface. The implementation of the file system protocol is also used for inter-node messaging.}
 \label{webdav}
