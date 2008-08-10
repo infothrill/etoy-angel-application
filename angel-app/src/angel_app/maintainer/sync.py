@@ -1,10 +1,12 @@
 """
 Routines for synchronizing a local clone with a _single_ remote peer.
 """
+from angel_app import elements
+from angel_app.log import getLogger
+import angel_app
 import os
 
-from angel_app import elements
-import angel_app
+log = getLogger(__name__)
 
 from angel_app.log import getLogger
 log = getLogger(__name__)
