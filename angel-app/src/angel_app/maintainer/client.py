@@ -52,7 +52,7 @@ def getChildren(resource):
     """
     if resource.isWritableFile():
         # either the resource belongs to us. no mount of a mount, none of the 
-        # chilren are mounts of mounts, simply return all children
+        # children are mounts of mounts, simply return all children
         return resource.children()
     else:
         # return only those children for which the key UUID is equal to
