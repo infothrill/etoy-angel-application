@@ -51,7 +51,14 @@ class Resource(object):
         """
         Return a resource property by element.
         """
-        return self.getPropertyManager().getByElement(element)
+        try:
+            return self.getPropertyManager().getByElement(element)
+        except e:
+            # treat broken meta data as if it did not exist:
+            log.error("Failed to look up meta data field " + `element` + " for resource: " + self.resourceID(), 
+                      exc_info = e)
+            return None
+            
        
     def revision(self):
         """
