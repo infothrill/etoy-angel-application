@@ -65,14 +65,14 @@ def traverseResourceTree(sleepTime):
     """
     I do one traversal of the local resource tree.
     """
-    def toEvaluate(resource, dummy = None):
+    def timedValidation(resource, dummy = None):
         log.info("sleeping for %d sec" %sleepTime)
         time.sleep(sleepTime)
         return (inspectResource(resource), None)
     
     log.growl("User", "MAINTENANCE PROCESS", "Starting resource tree traversal.")
      
-    for dummyii in graphWalker(Basic(repository), getChildren, toEvaluate):
+    for dummyii in graphWalker(Basic(repository), getChildren, timedValidation):
         continue
     
 
