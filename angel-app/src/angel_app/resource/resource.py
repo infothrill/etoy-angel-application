@@ -58,7 +58,6 @@ class Resource(object):
             log.error("Failed to look up meta data field " + `element` + " for resource: " + self.resourceID(), 
                       exc_info = e)
             return None
-            
        
     def revision(self):
         """
