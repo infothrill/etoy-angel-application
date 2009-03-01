@@ -71,14 +71,14 @@ def __createQuotas():
     try:
         default = AngelConfig.getint("common", "defaultquota") 
     except:
-        log.warn("No default quota provided. Consider specifying common/defaultquota in the config.")
+        log.warn("No default quota provided. Consider specifying common/defaultquota in the configuration file.")
     log.info("Default quota set to " + `default / oneMeg` + " MiB per mount.")
     
     quotas = None
     try:
         default = AngelConfig.get("quotas")
     except:
-        log.warn("No per-mount point quotas specified. Consider specifying a 'quotas' secsion in the config.")
+        log.warn("No per-mount point quotas specified. Consider specifying a 'quotas' section in the configuration file.")
     
     
     QuotaManager(
