@@ -31,7 +31,7 @@ class AboutWindow(wx.Dialog):
         hboxTop.Add(vboxNameAndVersion, 0, wx.ALL | wx.ALIGN_CENTER | wx.ALIGN_CENTER_VERTICAL, 5)
 
         name = "ANGEL APPLICATION"
-        version = 'v %s (b%s)' % (getVersionString(), getBuildString())
+        version = 'Version %s (%s)' % (getVersionString(), getBuildString())
         website = "http://angelapp.missioneternity.org/"
         description ="""The ANGEL APPLICATION (a subproject of MISSION ETERNITY) aims to minimize,
 and ideally eliminate, the administrative and material costs of backing up.
@@ -39,7 +39,7 @@ It does so by providing a peer-to-peer/social storage infrastructure where
 people collaborate to back up each other's data."""
 
         # unicode copyright symbol: \u00A9
-        copyright = u'\u00A9 Copyright 2006-2008 etoy.VENTURE ASSOCIATION, all rights reserved.'
+        copyright = u'\u00A9 Copyright 2006-2009 etoy.VENTURE ASSOCIATION, all rights reserved.'
 
         nameLabel = wx.StaticText(self, -1, name, style=wx.ALIGN_LEFT)
         nameLabel.SetFont(wx.Font(18, wx.SWISS, wx.NORMAL, wx.BOLD))
