@@ -13,7 +13,7 @@ class ContentManager(AbstractReadonlyContentManager):
     def openFile(self):
         response = self.resource.remote.performRequest()
         if response.status != responsecode.OK:
-            raise "must receive an OK response for GET, otherwise something's wrong"
+            raise Exception, "must receive an OK response for GET, otherwise something's wrong"
         return response
     
     def contentLength(self):
