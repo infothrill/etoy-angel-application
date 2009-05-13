@@ -1,3 +1,9 @@
+import os
+import time
+import random
+
+from __future__ import division # to make those sleepTime calculations real
+
 from angel_app.config import config
 from angel_app.graph import graphWalker
 from angel_app.log import getLogger
@@ -5,8 +11,6 @@ from angel_app.maintainer import sync
 from angel_app.maintainer import update
 from angel_app.resource import childLink
 from angel_app.resource.local.basic import Basic
-import os
-import time
 
 
 log = getLogger(__name__)
@@ -41,7 +45,7 @@ def newSleepTime(currentSleepTime, startTime):
     if elapsedTime > traversalTime:
         sleepTime = currentSleepTime / 2
     else:
-        sleepTime = currentSleepTime * 2 + 1
+        sleepTime = currentSleepTime * 2 + random.random() # random() returns 0<x<1
         if sleepTime > maxSleepTime:
             sleepTime = maxSleepTime
     return sleepTime
