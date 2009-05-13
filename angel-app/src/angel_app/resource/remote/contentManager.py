@@ -17,9 +17,7 @@ class ContentManager(AbstractReadonlyContentManager):
         return response
     
     def contentLength(self):
-        # TODO: defaults to GET request, but we're only interested in the header...
-        rr = self.resource.performRequest() 
-        clh = rr.getheader("content-length")
-        cl = int(clh)
-        return cl
+        # we're only interested in the header, so issue a HEAD request only
+        rr = self.resource.performRequest(method = "HEAD")
+        return long(rr.getheader("content-length"))
         
