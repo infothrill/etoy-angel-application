@@ -1,7 +1,7 @@
 import sys
 
 # dyndns: initial test. Should probably go somewhere else than this module
-import angel_app.contrib.dyndnsc as dyndnsc
+import dyndnsc
 from angel_app.log import getLogger
 
 def getDynDnsConfiguration(angelConfig):
