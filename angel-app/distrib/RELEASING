@@ -8,6 +8,7 @@ be respected:
    1.2 test the code
    1.3 make sure all code is "signed-off", e.g. not in a broken state and all
        developers are OK with a release
+   1.4 Update setup.py to reflect the version number
 2. create a subversion tag for the release in angel_app/tags/ (see versioning below)
 3. the actual building:
    3.1 Prepare the release using the preprelease.sh script

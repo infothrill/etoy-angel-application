@@ -14,7 +14,7 @@ ez_setup.use_setuptools()
 
 from setuptools import setup, find_packages
 
-VERSION = '0.3.1' # TODO: use version from angel_app.version.getVersionString()
+VERSION = "0.4.1" # Update for every release 
 DESCRIPTION = "ANGEL APPLICATION - long term peer to peer backup"
 LONG_DESCRIPTION = """
 See http://angelapp.missioneternity.org/
@@ -57,9 +57,8 @@ setup(
                         "xattr<=0.4",
                         "zope.interface>=3.3.0",
                         "netaddress>=0.2.2",
-                        "netifaces>=0.4",
-                        "IPy>=0.56",
                         "pycrypto>=2.0.1",
+                        "dyndnsc>=0.1.0",
                         ], 
     # for some unkown reason pycrypto gets bundled fine only if installed manually from its tarball (easy_install not so easy)
     # wxPython does not conform to cheeseshop.python.org standards, so currently we cannot include it here
