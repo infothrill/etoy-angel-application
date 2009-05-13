@@ -156,9 +156,9 @@ def _configspec_lines():
     
     [maintainer]
     enable = boolean(default=True)
-    initialsleep = integer(min=1)
+    initialsleep = integer(min=0)
     treetraversaltime = integer(min=600)
-    maxsleeptime = integer(min=2)    
+    maxsleeptime = integer(min=2)
     nodename = string
 
     [gui]
