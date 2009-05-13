@@ -136,7 +136,10 @@ class SingleFileTransaction(object):
         """
         if not None is self.safe:
             if DEBUG: print "we have a safe, so we need to commit!"
-            self.safe.close()
+            if not self.safe.closed:
+                self.safe.flush()
+                os.fsync(self.safe.fileno())
+                self.safe.close()
             os.rename(self.safename, self.name)
             return self.name
 
