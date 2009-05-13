@@ -1,8 +1,8 @@
+from __future__ import division # to make those sleepTime calculations real
+
 import os
 import time
 import random
-
-from __future__ import division # to make those sleepTime calculations real
 
 from angel_app.config import config
 from angel_app.graph import graphWalker
