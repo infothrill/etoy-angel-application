@@ -32,7 +32,7 @@ class HTTPRemote(object):
         # a path string. must be valid as part of an absolute URL (i.e. quoted, using "/")
         self.path = path                    
     
-    def performRequestWithTimeOut(self, method = "CONNECT", headers = {}, body = "", timeout = 3.0):
+    def performRequestWithTimeOut(self, method = "HEAD", headers = {}, body = "", timeout = 3.0):
         """
         Perform a request with a timeout. 
         
