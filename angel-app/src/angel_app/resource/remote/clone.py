@@ -178,7 +178,7 @@ class Clone(Resource):
         @return whether the remote host is reachable
         """
         try:
-            dummyresponse = self.remote.performRequestWithTimeOut()
+            dummyresponse = self.remote.performRequestWithTimeOut(method = "HEAD")
             return True
         except KeyboardInterrupt:
             raise
