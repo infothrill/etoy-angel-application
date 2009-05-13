@@ -1,20 +1,13 @@
 from angel_app.config import config
-from angel_app.graph import graphWalker
 from angel_app.log import getLogger
-from angel_app.maintainer import sync
-from angel_app.maintainer import update
-from angel_app.resource import childLink
 from angel_app.resource.local.basic import Basic
-import os
-import time
 
 log = getLogger(__name__)
 AngelConfig = config.getConfig()
 
-        
-    
-class QuotaManager:
-    def __init__(self, default_, root_, quotas_ = None):
+
+class QuotaManager(object):
+    def __init__(self, default_, root_, quotas_=None):
         self.default = default_
         self.root = root_
         self.quotas = quotas_
@@ -54,11 +47,11 @@ def __readQuotasFromConfig(mounts, quotas):
     
     for mount in quotas.iterkeys():
         if mount not in mounts:
-            log.warn("No mount point defined for quota specification: " + `mout`)
+            log.warn("No mount point defined for quota specification: " + `mount`)
         else:
             myQ = quotas.getint(mount)
             qq[Basic(mount).keyUUID()] = myQ
-            log.info("Added quota of "  + myQ + " for mount point: " + mount)
+            log.info("Added quota of " + myQ + " for mount point: " + mount)
             
     return qq
 
@@ -83,11 +76,11 @@ def __createQuotas():
     
     QuotaManager(
                       default,
-                      Basic(AngelConfig.get("common","repository")),
+                      Basic(AngelConfig.get("common", "repository")),
                       __readQuotasFromConfig(
                                              AngelConfig.get("mounttab"),
                                              quotas)
                       )
 
 quotas = __createQuotas()
-    
+
