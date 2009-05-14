@@ -19,7 +19,6 @@ def getProcsToStart(angelConfig):
     def enabled(procName):
         return angelConfig.getboolean(procName, 'enable')
     enabledProcs = filter(enabled, procsThatShouldBeExplicitlyEnabled)
-    # we always need ZEO for DB support
     return enabledProcs
 
 def boot():
@@ -28,6 +27,7 @@ def boot():
     parser = OptionParser()
     parser.add_option("-d", "--daemon", dest="daemon", help="daemon mode?", default='')
     parser.add_option("-c", "--config", dest="config", help="alternative config file", default=None)
+    parser.add_option("--no-log-console", dest="no_log_console", help="disable console logging", action="store_true", default=False)
     (options, dummyargs) = parser.parse_args()
 
     appname = "master"
@@ -45,7 +45,7 @@ def boot():
     loghandlers = ['file']
     if angelConfig.getboolean('common', 'desktopnotification'):
         loghandlers.append('growl')
-    if len(options.daemon) == 0: # not in daemon mode, so we log to console!
+    if len(options.daemon) == 0 and not options.no_log_console: # not in daemon mode, so we log to console!
         loghandlers.append('console')
     initializeLogging(appname, loghandlers)
 

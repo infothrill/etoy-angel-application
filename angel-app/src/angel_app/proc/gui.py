@@ -29,7 +29,7 @@ def boot():
     appname = "gui"
     # setup/configure logging
     from angel_app.log import initializeLogging
-    loghandlers = ['file', 'console'] # always log to file
+    loghandlers = ['file'] # always log to file, no console -> this is a GUI ;-)
     if angelConfig.getboolean('common', 'desktopnotification'):
         loghandlers.append('growl')
     initializeLogging(appname, loghandlers)

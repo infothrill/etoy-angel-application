@@ -86,4 +86,4 @@ Responsible for starting all relevant angel-app components
 """
 class MasterThread(SubprocessThread):
     def __init__(self, args = None):
-        super(MasterThread, self).__init__(args = [sys.executable, "master.py"])
+        super(MasterThread, self).__init__(args = [sys.executable, "master.py", "--no-log-console"])

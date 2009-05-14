@@ -25,7 +25,7 @@ def boot():
     parser = OptionParser()
     parser.add_option("-d", "--daemon", dest="daemon", help="daemon mode?", default='')
     parser.add_option("-c", "--config", dest="config", help="alternative config file", default=None)
-    parser.add_option("-l", "--log", dest="networklogging", help="use network logging?",action="store_true" ,default=False)
+    parser.add_option("-l", "--log", dest="networklogging", help="use network logging?", action="store_true", default=False)
     (options, dummyargs) = parser.parse_args()
 
     # setup/configure config system
@@ -37,7 +37,7 @@ def boot():
     appname = "presenter"
     # setup/configure logging
     from angel_app.log import initializeLogging
-    loghandlers = ['file'] # always log to file
+    loghandlers = [] # default: no handlers, add as needed below
     if len(options.daemon) > 0:
         loghandlers.append('socket')
     else:
@@ -47,7 +47,8 @@ def boot():
             loghandlers.append('console')
             if angelConfig.getboolean('common', 'desktopnotification'):
                 loghandlers.append('growl')
-            
+    if 'socket' not in loghandlers: # if there is no network logging, then log at least to file:
+        loghandlers.append('file')
     initializeLogging(appname, loghandlers)
 
     if angelConfig.get(appname, 'enable') == False:
