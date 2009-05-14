@@ -173,7 +173,7 @@ class ExternalProcessManager(object):
         self.stopServicing(processObj)
         self.delayedstarter(self.startendedprocessdelay, self.startServicing, processObj)
 
-    def startProcess(self,processObj, delay = 0):
+    def startProcess(self, processObj, delay = 0):
         """
         Method to physically start the given process in asynchronous fashion.
         """
@@ -247,8 +247,8 @@ class ExternalProcessManager(object):
         for k,dummyv in self.procDict.iteritems():
             if k.protocol == protocol:
                 return k
-        self.log.error("Could not find the process that ended")
-        raise NameError, "Could not find the process that ended"
+        self.log.error("Could not find the process with protocol '%s' that ended" % `protocol`)
+        raise Exception, "Could not find the process with protocol '%s' that ended" % `protocol`
 
 
 class ExternalProcessProtocol(ProcessProtocol):
@@ -296,8 +296,6 @@ class MaintainerProtocol(ExternalProcessProtocol):
 class MasterProtocol(ExternalProcessProtocol):
     pass
 class TestProtocol(ExternalProcessProtocol):
-    pass
-class ZEOProtocol(ExternalProcessProtocol):
     pass
 
 if __name__ == '__main__':
