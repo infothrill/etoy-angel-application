@@ -1,3 +1,9 @@
+0.4.2 ****UNRELEASED*****
+ * initial draft for quota support 
+ * switched to dyndnsc from pypi.python.org
+ * bugfix: treat broken meta data as if it did not exist
+ * minor bugfixes
+ 
 0.4.1 "zhong guo" July 1 2008
  * bugfix: don't try unreachable clones in maintenance
  * bugfix: require a default crypto key
