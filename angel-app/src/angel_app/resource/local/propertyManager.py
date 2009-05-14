@@ -8,7 +8,6 @@ import urllib
 
 from twisted.web2 import responsecode
 from twisted.web2.dav.element.base import WebDAVElement
-from twisted.web2.dav.xattrprops import xattrPropertyStore
 from angel_app.resource.local.DirectoryDeadProperties import DirectoryDeadProperties
 from twisted.web2.http import HTTPError, StatusResponse
 from zope.interface import implements
