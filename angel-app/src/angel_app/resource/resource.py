@@ -55,7 +55,7 @@ class Resource(object):
             return self.getPropertyManager().getByElement(element)
         except Exception, e:
             # treat broken meta data as if it did not exist:
-            log.error("Failed to look up meta data field " + `element` + " for resource: " + self.resourceID(), 
+            log.error("Failed to look up meta data field " + `element` + " for resource: " + `self.resourceID()`, 
                       exc_info = e)
             return None
        
