@@ -70,7 +70,7 @@ def traverseResourceTree(sleepTime):
     I do one traversal of the local resource tree.
     """
     def timedValidation(resource, dummy = None):
-        log.info("sleeping for %d sec" %sleepTime)
+        log.info("sleeping for %f sec" % sleepTime)
         time.sleep(sleepTime)
         return (inspectResource(resource), None)
     
