@@ -27,7 +27,7 @@ providerport = AngelConfig.getint("provider","listenPort")
 
 def typed(expr, ref):
     if not type(expr) == type(ref):
-        raise TypeError, "Expected type " + `type(ref)` + " but found: " + `type(expr)` 
+        raise TypeError, "Expected type " + repr(type(ref)) + " but found: " + repr(type(expr))
 
 class Clone(Resource):
     """
@@ -81,7 +81,7 @@ class Clone(Resource):
         from urllib import url2pathname, pathname2url
         # if the path is valid, then the composition of url2pathname and pathname2url is the identity function
         if not pathname2url(url2pathname(self.path)) == self.path:
-            raise CloneError("Invalid path for clone: " + `self.path`)
+            raise CloneError("Invalid path for clone: " + self.path)
 
         if not len(self.path) > 0:
             raise CloneError("Need non-empty path for clone. Got: " + self.path)
@@ -98,8 +98,8 @@ class Clone(Resource):
         rc = cloneFromURI(self.toURI())
         
         if not rc == self:
-            log.info("Clone doesn't self-match: %s vs. %s" % (`self`, `rc`))
-            raise CloneError("Invalid host for clone: %s %s" % (`self`, `rc`))                                             
+            log.info("Clone doesn't self-match: %s vs. %s" % (repr(self), repr(rc)))
+            raise CloneError("Invalid host for clone: %s %s" % (repr(self), repr(rc)))                                             
         
     
     def checkForRedirect(self):
@@ -112,10 +112,10 @@ class Clone(Resource):
 
         response = self.remote.performRequest(method = "HEAD", body = "")
         if response.status == responsecode.MOVED_PERMANENTLY:
-            log.info("Received redirect for clone: " + `self`)
+            log.info("Received redirect for clone: " + str(self))
             
             if self.redirected:
-                errMsg = "Guarding against multiple redirects for " + `self`
+                errMsg = "Guarding against multiple redirects for " + str(self)
                 raise CloneError(errMsg)
             
             redirectlocation = response.getheader("location")
@@ -129,7 +129,7 @@ class Clone(Resource):
                 raise CloneError(errorMessage)
             redirectClone = Clone(self.host, self.port, redirectlocation)
             redirectClone.redirected = True
-            log.info("Redirecting to: %s" % `redirectClone`)
+            log.info("Redirecting to: %s" % str(redirectClone))
             return redirectClone
         else:
             return self
@@ -147,16 +147,18 @@ class Clone(Resource):
         return self.toURI() == clone.toURI()
     
     def __repr__(self):
-        return "<Clone '%s'>" % self.toURI()
+        return self.toURI()
+        # pk: this reallt 'should' look more like the stuff below, but for now, we rely on URIs 
+        #return "Clone('%s', '%s', '%s', '%s')" % (self.host, self.port, self.path, self.scheme)
 
     def __str__(self):
         return self.toURI()
 
     def __hash__(self):
-        return `self`.__hash__()
+        return str(self).__hash__()
 
     def toURI(self):
-        return self.scheme + "://" + formatHost(self.host) + ":" + `self.port` + self.path
+        return self.scheme + "://" + formatHost(self.host) + ":" + str(self.port) + self.path
             
 
     def exists(self): 
@@ -226,7 +228,7 @@ def makeCloneBody(localResource):
     """
     nodename = AngelConfig.get("maintainer","nodename")
     cc = Clone(nodename, providerport, localResource.relativeURL())
-    cloneElement = elements.Clone(rfc2518.HRef(`cc`))
+    cloneElement = elements.Clone(rfc2518.HRef(str(cc)))
     clonesElement = elements.Clones(*[cloneElement])
     setElement = rfc2518.Set(rfc2518.PropertyContainer(clonesElement))
     propertyUpdateElement = rfc2518.PropertyUpdate(setElement)
@@ -238,7 +240,6 @@ def cloneFromURI(_uri, defaultHost = None):
     Return a new instance of a clone given the URI
     """
     pp = uri.parse(_uri)
-    #log.debug("parsed URI: %s" % `pp`)
     # check optional argument defaultHost
     if defaultHost is None:
         _host = str(pp.host)
@@ -293,7 +294,7 @@ def maybeCloneFromElement(cc):
     except KeyboardInterrupt:
         raise
     except:
-        log.info("ignoring invalid clone uri: " + `cc`)
+        log.info("ignoring invalid clone uri: " + str(cc))
         return None
 
 def clonesFromElement(cloneElement):
@@ -308,7 +309,7 @@ def cloneToElement(cc):
     """
     This is still quite evil, but less so than splitParse etc.
     """
-    url = `cc`
+    url = str(cc)
     urlElem = rfc2518.HRef(url)
     return elements.Clone(urlElem)
 
