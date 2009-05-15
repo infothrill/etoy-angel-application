@@ -6,7 +6,12 @@ import os
 from angel_app import elements
 from angel_app.log import getLogger
 from angel_app.singlefiletransaction import SingleFileTransaction
+from angel_app.io import RateLimit
+from angel_app.io import bufferedReadLoop
+from angel_app.config.config import getConfig
 
+cfg = getConfig()
+MAX_DOWNLOAD_SPEED = cfg.getint('common', 'maxdownloadspeed_kib') * 1024 # internally handled in bytes
 log = getLogger(__name__)
 
 def syncContents(resource, referenceClone):
@@ -28,17 +33,13 @@ def syncContents(resource, referenceClone):
 
 def readResponseIntoFile(resource, referenceClone):
     t = SingleFileTransaction()
-    bufsize = 8192 # 8 kB
     safe = t.open(resource.fp.path, 'wb')
-    readstream = referenceClone.open()
-    EOF = False
+    stream = referenceClone.open()
+    size = long(stream.getheader('Content-Length'))
+    callbacks = [ safe.write, RateLimit(size, MAX_DOWNLOAD_SPEED) ]
     try:
-        while not EOF:
-            data = readstream.read(bufsize)
-            if len(data) == 0:
-                EOF = True
-            else:
-                safe.write(data)
+        numbytesread = bufferedReadLoop(stream.read, 4096, size, callbacks)
+        assert numbytesread == size, "Download size does not match expected size"
     except Exception, e:
         log.warn("Error while downloading clone '%s'" % str(referenceClone), exc_info = e)
         t.cleanup()

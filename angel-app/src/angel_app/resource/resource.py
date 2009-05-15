@@ -1,12 +1,25 @@
+import os
+import stat
+
 from angel_app import elements
 from angel_app.contrib.ezPyCrypto import key as ezKey
 from angel_app.log import getLogger
 from angel_app.resource import IResource
 from angel_app.resource import util
 from zope.interface import implements
+from angel_app.io import RateLimit
+from angel_app.io import bufferedReadLoop
 
+from angel_app.config.config import getConfig
 
 log = getLogger(__name__)
+
+cfg = getConfig()
+
+MAX_DOWNLOAD_SPEED = cfg.getint('common', 'maxdownloadspeed_kib') * 1024 # internally handled in bytes
+
+HTTP_BUFSIZE = 4096
+LOCAL_BUFSIZE = 16384
 
 class Resource(object):
     """
@@ -120,19 +133,29 @@ class Resource(object):
     
     def validate(self):
         return (self._dataIsCorrect() and self._metaDataIsCorrect())
-    
+
     def _computeContentHexDigest(self):
         """
         @return hexdigest for content of self
         """
         hash = util.getHashObject()
+        callbacks = [ hash.update ]
         f = self.open()
-        bufsize = 4096 # 4 kB
-        while True:
-            buf = f.read(bufsize)
-            if len(buf) == 0:
-                break
-            hash.update(buf)
+        BUFSIZE = LOCAL_BUFSIZE # files and StringIO
+        # This is sort of hacky thanx to duck typing.
+        # What we want to achieve here is rate limiting for network based activity.
+        if f.__class__.__name__ == 'StringIO':
+            size = len(f.getvalue()) # this is ok because we should only hit StringIO for directories which are only 9 bytes
+        elif f.__class__.__name__ == 'HTTPResponse':
+            size = long(f.getheader('Content-Length'))
+            callbacks.append(RateLimit(size, MAX_DOWNLOAD_SPEED))
+            BUFSIZE = HTTP_BUFSIZE
+        elif f.__class__.__name__ == 'file':
+            size = os.fstat(f.fileno())[stat.ST_SIZE]
+        else:
+            raise Exception, "resource %s has unknown size" % repr(self)
+        bytesread = bufferedReadLoop(f.read, BUFSIZE, size, callbacks)
+        assert bytesread == size, "Expected size of resource does not match the number of bytes read!"
         f.close()
         return hash.hexdigest()
 
