@@ -92,8 +92,10 @@ class HTTPRemote(object):
         vinc: I still keep getting hangs in the maintainer -- and I think we will never be able to guarantee the absence 
         thereof, which is a major pain. I'll make performRequest use a (long) timeout.
         """
-        return self.performRequestWithTimeOut(method, headers, body, timeout = 30.0)
+        return self.performRequestWithTimeOut(method, headers, body, timeout = 5.0)
 
-
-
+    def __str__(self):
+        return "%s:%s%s" % (self.host, self.port, self.path)
     
+    def __repr__(self):
+        return "HTTPRemote('%s', '%s', '%s')" % (self.host, self.port, self.path)
