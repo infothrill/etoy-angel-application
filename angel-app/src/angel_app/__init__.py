@@ -18,6 +18,7 @@ all = [
        "contrib", 
        "elements", 
        "graph", 
+       "io",
        "ipv6",
        "log",  
        "logserver", 
