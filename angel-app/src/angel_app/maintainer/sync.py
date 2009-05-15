@@ -1,14 +1,12 @@
 """
 Routines for synchronizing a local clone with a _single_ remote peer.
 """
-from angel_app import elements
-from angel_app.log import getLogger
-import angel_app
 import os
 
-log = getLogger(__name__)
-
+from angel_app import elements
 from angel_app.log import getLogger
+from angel_app.singlefiletransaction import SingleFileTransaction
+
 log = getLogger(__name__)
 
 def syncContents(resource, referenceClone):
@@ -29,18 +27,24 @@ def syncContents(resource, referenceClone):
         
 
 def readResponseIntoFile(resource, referenceClone):
-    t = angel_app.singlefiletransaction.SingleFileTransaction()
+    t = SingleFileTransaction()
     bufsize = 8192 # 8 kB
     safe = t.open(resource.fp.path, 'wb')
     readstream = referenceClone.open()
     EOF = False
-    while not EOF:
-        data = readstream.read(bufsize)
-        if len(data) == 0:
-            EOF = True
-        else:
-            safe.write(data)
-    t.commit() # TODO: only commit if the download worked!
+    try:
+        while not EOF:
+            data = readstream.read(bufsize)
+            if len(data) == 0:
+                EOF = True
+            else:
+                safe.write(data)
+    except Exception, e:
+        log.warn("Error while downloading clone '%s'" % str(referenceClone), exc_info = e)
+        t.cleanup()
+        raise
+    else:
+        t.commit()
     
 
 def updateMetaData(resource, referenceClone):    
