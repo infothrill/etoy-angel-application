@@ -1,8 +1,19 @@
-0.4.2 ****UNRELEASED*****
- * initial draft for quota support 
- * switched to dyndnsc from pypi.python.org
+0.4.2 "pollination" May 15 2009
+
+ Mainly a bugfix release, introducing download speed limitation as the only
+ major change. Named after the etoy workshop that was held at pollinaria.org
+ during May 9/10th 2009. 
+
+ * added new option for limiting download speed, only active for actual
+   data transfers, not active in the protocol itself
+ * automatically timeout network connections in the maintainer
+ * initial draft for quota support, not in action yet
+ * switched to dyndnsc from http://pypi.python.org/
  * bugfix: treat broken meta data as if it did not exist
- * minor bugfixes
+ * lots of small and minor bugfixes
+ * removed final ZODB traces from the code
+ * optimized logging (less IO, less CPU usage)
+ * upgraded wxpython to 2.8.8.1 in mac os x build
  
 0.4.1 "zhong guo" July 1 2008
  * bugfix: don't try unreachable clones in maintenance
