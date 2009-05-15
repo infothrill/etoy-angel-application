@@ -87,17 +87,33 @@ class PrefsPanel(wx.Panel):
         self.maintainerCheckbox = wx.CheckBox(panelNetworkSettings, ID_onMaintainerCheckbox, _('Maintain repository'))
         self.maintainerCheckbox.SetValue(self.app.config.get('maintainer','enable'))
         gridnet.Add(self.maintainerCheckbox, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 20)
+        gridnet.Add(wx.StaticText(panelNetworkSettings, -1, ''), 0, wx.ALIGN_CENTER_VERTICAL) # nop filler
+        gridnet.Add(wx.StaticText(panelNetworkSettings, -1, ''), 0, wx.ALIGN_CENTER_VERTICAL) # nop filler
+        gridnet.Add(wx.StaticText(panelNetworkSettings, -1, ''), 0, wx.ALIGN_CENTER_VERTICAL) # nop filler
 
-
-        gridnet.Add(wx.StaticText(self, -1, ''), 0, wx.ALIGN_CENTER_VERTICAL) # nop filler
-        gridnet.Add(wx.StaticText(self, -1, ''), 0, wx.ALIGN_CENTER_VERTICAL) # nop filler
-        gridnet.Add(wx.StaticText(self, -1, ''), 0, wx.ALIGN_CENTER_VERTICAL) # nop filler
-
+        # ipv6
         ID_onUseIpv6Checkbox = wx.NewId()
-        self.useIpv6Checkbox = wx.CheckBox(panelNetworkSettings, ID_onUseIpv6Checkbox, _('enable IPv6'))
+        self.useIpv6Checkbox = wx.CheckBox(panelNetworkSettings, ID_onUseIpv6Checkbox, _('Enable IPv6'))
         self.useIpv6Checkbox.SetValue(self.app.config.get('provider','useIPv6'))
         gridnet.Add(self.useIpv6Checkbox, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 20)
-        
+        gridnet.Add(wx.StaticText(panelNetworkSettings, -1, ''), 0, wx.ALIGN_CENTER_VERTICAL) # nop filler
+        gridnet.Add(wx.StaticText(panelNetworkSettings, -1, ''), 0, wx.ALIGN_CENTER_VERTICAL) # nop filler
+        gridnet.Add(wx.StaticText(panelNetworkSettings, -1, ''), 0, wx.ALIGN_CENTER_VERTICAL) # nop filler
+
+        # max download speed
+        ID_onMaxDownloadSpeedCheckbox = wx.NewId()
+        self.onMaxDownloadSpeedCheckbox = wx.CheckBox(panelNetworkSettings, ID_onMaxDownloadSpeedCheckbox, _('Limit download speed to:'))
+        downloadspeed = self.app.config.get('common','maxdownloadspeed_kib')
+        self.onMaxDownloadSpeedCheckbox.SetValue(downloadspeed > 0)
+        ID_onMaxDownloadSpeed = wx.NewId()
+        self.maxDownloadSpeedSpinCtrl = wx.SpinCtrl(panelNetworkSettings, ID_onMaxDownloadSpeed, _("kiB/sec"))
+        self.maxDownloadSpeedSpinCtrl.SetRange(0, 102400)
+        self.maxDownloadSpeedSpinCtrl.SetValue(downloadspeed)
+        gridnet.Add(self.onMaxDownloadSpeedCheckbox, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 20)
+        gridnet.Add(self.maxDownloadSpeedSpinCtrl, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 20)
+        gridnet.Add(wx.StaticText(panelNetworkSettings, -1, 'kiB/sec'), 0, wx.ALIGN_CENTER_VERTICAL) # nop filler
+        gridnet.Add(wx.StaticText(panelNetworkSettings, -1, ''), 0, wx.ALIGN_CENTER_VERTICAL) # nop filler
+
         vboxNetwork.Add(gridnet, 0, wx.ALL | wx.EXPAND, 0)
 
         ######################
@@ -171,6 +187,10 @@ class PrefsPanel(wx.Panel):
         self.presenterPort.SetValue(u'6222')
 
     def savePrefs(self):
+        if self.onMaxDownloadSpeedCheckbox.GetValue() == True:
+            self.app.config.container['common']['maxdownloadspeed_kib'] = self.maxDownloadSpeedSpinCtrl.GetValue() 
+        else:
+            self.app.config.container['common']['maxdownloadspeed_kib'] = 0 
         self.app.config.container['common']['loglevel']= self.loglevelChooser.GetValue()
         self.app.config.container['provider']['listenPort'] = self.providerPort.GetValue()
         self.app.config.container['provider']['enable'] = self.providerCheckbox.GetValue()
