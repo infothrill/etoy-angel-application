@@ -53,24 +53,28 @@ class RateLimit(object):
     def __init__(self, total_size, rate_limit = None):
         """rate limit in bytes / second"""
         self.rate_limit = rate_limit
+        self.rate_limit_kb = rate_limit / 1024
         self.total_size = total_size
+        self.total_size_kb = total_size / 1024
         self.piped_bytes = 0
         self.start = time.time()
+        self._lastlog = 0
 
     def __call__(self, buf):
         if self.rate_limit is None or self.rate_limit <= 0: return # no limit
         self.piped_bytes += len(buf)
         elapsed_time = time.time() - self.start
         if elapsed_time != 0:
-            rate = self.piped_bytes / elapsed_time
             expected_time = self.piped_bytes / self.rate_limit
             sleep_time = expected_time - elapsed_time
-            if sleep_time > 0:
-                rate_limit_kb = self.rate_limit / 1024
-                total_kb = self.total_size / 1024
-                piped_kb = self.piped_bytes / 1024
-                rate_kb = rate / 1024
-                # this might flood the log with one entry per second...
-                log.debug("Rate limiting (max %.1f kiB/s): %d kiB of %d kiB piped at %.1f kiB/s, sleeping for %.1f s" % (rate_limit_kb, piped_kb ,total_kb, rate_kb, sleep_time))
+            if sleep_time > 0: # only sleep when it's worth it ;-)
+                self._log(self.piped_bytes / elapsed_time, sleep_time)
                 time.sleep(sleep_time)
+                
+    def _log(self, rate, sleep_time):
+        "helper method to limit the rate of logging to 1 / second"
+        now = time.time()
+        if now - self._lastlog > 1: # log once per second max
+            log.debug("Rate limiting (max %.1f kiB/s): %d kiB of %d kiB piped at %.1f kiB/s, sleeping for %.4f s" % (self.rate_limit_kb, self.piped_bytes / 1024 ,self.total_size_kb, rate / 1024, sleep_time))
+            self._lastlog = now 
 
