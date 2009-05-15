@@ -1,4 +1,3 @@
-from angel_app.contrib.ezPyCrypto import key as ezKey
 from os import sep, listdir
 
 from angel_app.config.config import getConfig
