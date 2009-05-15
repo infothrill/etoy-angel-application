@@ -143,6 +143,22 @@ class SingleFileTransaction(object):
             os.rename(self.safename, self.name)
             return self.name
 
+    def cleanup(self):
+        """
+        Cleanup left overs that have not been comitted.
+        Usually, you want to call this method if something failed during writing
+        to the safe file and you haven't comitted yet, in order to discard
+        the temporary data.
+        """
+        if not self.safe is None:
+            try:
+                if not self.safe.closed:
+                    self.safe.close()
+                os.unlink(self.safename)
+            except: # don't fail / worst case is spurious leftovers
+                pass
+            self.safe = None
+
     def __createTmpEmpty(self):
         """
         Creates an empty temp file
@@ -180,6 +196,8 @@ class SingleFileTransaction(object):
         safe = os.fdopen(fd, self.mode)
         return (safe, safename)
 
+    def __del__(self):
+        self.cleanup()
 
 import unittest
 
@@ -248,6 +266,17 @@ class SingleFileTransactionTest(unittest.TestCase):
         # result must now match 
         expectedcontent = self.teststring2 + self.teststring[len(self.teststring2):] + self.teststring2
         self.assertEqual(expectedcontent, open(self.testfilename).read())
+    
+    def testCleanup(self):
+        #t = SingleFileTransaction(self.testdir)
+        safe = self.t.open(self.testfilename, 'wb')
+        safe.write(self.teststring)
+        self.t.cleanup()
+        fname = self.t.commit()
+        # now, nothing should exist, because we ran cleanup():
+        self.assertEqual(fname, None)
+        self.assertEqual(False, os.path.exists(self.testfilename))
+        del self.t # make sure the destructor does not fail by calling it explicitly
 
     def tearDown(self):
         shutil.rmtree(self.testdir)
