@@ -59,7 +59,7 @@ class Clone(Resource):
         self.redirected = False
         
         self.updateRemote(HTTPRemote(self.host, self.port, self.path))
-       
+    
     def getPropertyManager(self):
         """
         @see updateRemote
@@ -147,8 +147,11 @@ class Clone(Resource):
         return self.toURI() == clone.toURI()
     
     def __repr__(self):
+        return "<Clone '%s'>" % self.toURI()
+
+    def __str__(self):
         return self.toURI()
-    
+
     def __hash__(self):
         return `self`.__hash__()
 
