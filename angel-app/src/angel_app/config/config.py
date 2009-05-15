@@ -81,7 +81,9 @@ def getDefaultConfigObj():
     consolelogformat = '%(consolelogformat)s'
     # enable growling and the likes:
     desktopnotification = True
-    
+    # maximum download speed in kiB, 0 disables limit
+    maxdownloadspeed_kib = 0
+
     [presenter]
     # presenter provides priviledged DAV support on localhost (=> Finder) 
     enable = True
@@ -143,6 +145,7 @@ def _configspec_lines():
     logformat = string
     consolelogformat = string
     desktopnotification = boolean(default=True)
+    maxdownloadspeed_kib = integer(min=0,default=0)
     
     [presenter]
     enable = boolean(default=True)
