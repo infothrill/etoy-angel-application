@@ -7,6 +7,7 @@ Requirements:
 - py2app >=0.3.6 from http://undefined.org/python/ or http://cheeseshop.python.org/pypi/py2app/
 - wxpython from http://www.wxpython.org/download.php#binaries
 - pycrypto from http://www.amk.ca/python/code/crypto
+	ATTENTION: pycrypto must be installed as unzipped egg, otherwise py2app will not include it!
 - source code of angel-app from http://svn.gna.org/svn/angel-app/
 
 
