@@ -218,6 +218,7 @@ def pingBack(clone, request, publicKeyString, resourceID):
                 return None
         else:
             log.info("Invalid PROPPATCH request. Can't pingBack() to clone at: " + `clone` + ". NOT falling back to IP '%s', because nodename already resolves to it." % ip_address)
+            return None
             
     
     if not collect.acceptable(clone, publicKeyString, resourceID):
