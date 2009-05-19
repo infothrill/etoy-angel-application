@@ -199,26 +199,29 @@ def pingBack(clone, request, publicKeyString, resourceID):
     """
     
     if not clone.ping() or not clone.exists():
-        error = "Invalid PROPPATCH request. Can't connect to clone at: " + `clone` + ". Falling back to IP."
-        log.info(error)
-        # can't connect to the clone as advertised by "nodename",
-        # the "nodename" defaults to something marginally useful, so this might be expected,
-        # default to the request's originating ip address and try again.
-        address = str(request.remoteAddr.host)
-
+        dns_resolved_ips = [res[4][0] for res in socket.getaddrinfo(clone.getHost(), None)]
+        ip_address = str(request.remoteAddr.host)
+        if not ip_address in dns_resolved_ips: # only fallback to IP if nodename does not already resolve to it
+            log.info("Invalid PROPPATCH request. Can't pingBack() to clone at: " + `clone` + ". Falling back to IP '%s'." % ip_address)
+            # can't connect to the clone as advertised by "nodename",
+            # the "nodename" defaults to something marginally useful, so this might be expected,
+            # default to the request's originating ip address and try again.
+    
+                
+            clone = Clone(ip_address, clone.port, clone.path)
+                
+            # here, we should still expect to be fooled by NATs etc.
+            (clone, access) = collect.accessible(clone)
+            if not access:
+                error = "Invalid PROPPATCH request. Can't pingBack() to clone at: " + `clone`
+                log.info(error)
+                return None
+        else:
+            log.info("Invalid PROPPATCH request. Can't pingBack() to clone at: " + `clone` + ". NOT falling back to IP '%s', because nodename already resolves to it." % ip_address)
             
-        clone = Clone(address, clone.port, clone.path)
-            
-        # here, we should still expect to be fooled by NATs etc.
-        (clone, access) = collect.accessible(clone)
-        if not access:
-            error = "Invalid PROPPATCH request. Can't connect to clone at: " + `clone`
-            log.info(error)
-            return None
     
     if not collect.acceptable(clone, publicKeyString, resourceID):
-        error = "Invalid PROPPATCH request. Invalid data for clone at: " + `clone`
-        log.info(error)
+        log.info("Invalid PROPPATCH request. Invalid data for clone at: " + `clone`)
         return None  
           
     return clone 

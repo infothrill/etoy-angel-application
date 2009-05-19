@@ -159,7 +159,9 @@ class Clone(Resource):
 
     def toURI(self):
         return self.scheme + "://" + formatHost(self.host) + ":" + str(self.port) + self.path
-            
+    
+    def getHost(self):
+        return self.host
 
     def exists(self): 
         """
@@ -267,8 +269,6 @@ def tryNumericAddress(family = socket.AF_INET, address = "127.0.0.1"):
     try:
         socket.inet_pton(family, address)
         return True
-    except KeyboardInterrupt:
-        raise
     except socket.error:
         return False
     
