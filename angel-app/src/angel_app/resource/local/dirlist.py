@@ -12,6 +12,7 @@ import time
 # twisted imports
 from twisted.web2 import resource, http, http_headers
 
+from angel_app.tracker.connectToTracker import connectToTracker
 from angel_app.config import config
 nodename = config.getConfig().get("maintainer","nodename")
 
@@ -35,11 +36,14 @@ def formatClones(path):
     except:
         return ""
 
-
+_STATISTICS_CACHE = [0, ""] # timestamp, buffer
 def getStatistics():
-    from angel_app.tracker.connectToTracker import connectToTracker
-    stats = connectToTracker()
-    return "<br/>".join(stats.split("\n"))
+    now = time.time()
+    # query the tracker max once per hour:
+    if _STATISTICS_CACHE[0] + 3600 < now:
+        _STATISTICS_CACHE[0] = now
+        _STATISTICS_CACHE[1] = connectToTracker()
+    return "<br/>".join(_STATISTICS_CACHE[1].split("\n"))
 
 def showStatistics():
     return """<p>%s</p>""" % getStatistics()
