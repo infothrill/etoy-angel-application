@@ -1,3 +1,12 @@
+0.4.3 May 22 2009
+
+ Maintenance release, fixing a major bug in the network code.
+
+ * bugfix in rate limiting: endless read() loop on remote disconnects
+ * optimized pingBack(): resolve DNS entries before falling back to IP
+ * tracker connections optimized
+ * html directory listing slightly adapted
+
 0.4.2 "pollination" May 15 2009
 
  Mainly a bugfix release, introducing download speed limitation as the only
