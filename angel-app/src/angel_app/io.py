@@ -28,6 +28,9 @@ def bufferedReadLoop(readCall, blocksize, totalsize, callbacks):
     bytesread = 0
     while bytesread < totalsize:
         buf = readCall(blocksize)
+        if len(buf) == 0:
+            log.warn("Unexpected EOF after %s bytes, expected total %s bytes. Remote disconnect?" % (bytesread, totalsize))
+            break
         bytesread += len(buf)
         for callback in callbacks:
             callback(buf)
