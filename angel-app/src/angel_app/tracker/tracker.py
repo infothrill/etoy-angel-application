@@ -10,6 +10,8 @@ from twisted.web2 import http, resource
 
 from angel_app.config import config
 
+TRACKER_PORT = 6223
+
 AngelConfig = config.getConfig()
 repository =  AngelConfig.get("common", "repository")
 
@@ -107,7 +109,7 @@ def main():
     
     site = server.Site(Toplevel())
     
-    reactor.listenTCP(6223, channel.HTTPFactory(site), 50)
+    reactor.listenTCP(TRACKER_PORT, channel.HTTPFactory(site), 50)
     reactor.run()
 
 
