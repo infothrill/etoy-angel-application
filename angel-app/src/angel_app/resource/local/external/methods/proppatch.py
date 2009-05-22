@@ -194,12 +194,16 @@ def pingBack(clone, request, publicKeyString, resourceID):
     Determine if the clone as advertised in the PROPPATCH request is reachable.
     
     TODO: validate & clean up
+    TODO: avoid pingBack() to self!
     
     @return the (potentially modified) clone, if it's reachable, None otherwise
     """
-    
     if not clone.ping() or not clone.exists():
-        dns_resolved_ips = [res[4][0] for res in socket.getaddrinfo(clone.getHost(), None)]
+        dns_resolved_ips = []
+        try:
+            dns_resolved_ips = [res[4][0] for res in socket.getaddrinfo(clone.getHost(), None)]
+        except Exception, e:
+            log.warn("DNS lookup failed for hostname '%s'" % clone.getHost(), exc_info = e)
         ip_address = str(request.remoteAddr.host)
         if not ip_address in dns_resolved_ips: # only fallback to IP if nodename does not already resolve to it
             log.info("Invalid PROPPATCH request. Can't pingBack() to clone at: " + `clone` + ". Falling back to IP '%s'." % ip_address)
