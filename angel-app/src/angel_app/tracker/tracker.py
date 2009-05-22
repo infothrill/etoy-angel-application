@@ -86,18 +86,18 @@ Estimated data lifetime: %15.1e years
 from twisted.web2 import http, resource
 
 class Toplevel(resource.Resource):
-  addSlash = True
-  def render(self, request):
-      removeOldItems()
-      ti = TrackedItem(request.remoteAddr.host)
-      if not ti in tracked:
-          print "not tracked yet: " + `ti`
-          tracked.append(ti)
-      else:
-          print "already tracked: " + `tracked[tracked.index(ti)]`
+    addSlash = True
+    def render(self, request):
+        removeOldItems()
+        ti = TrackedItem(request.remoteAddr.host)
+        if not ti in tracked:
+            print "not tracked yet: " + `ti`
+            tracked.append(ti)
+        else:
+            print "already tracked: " + `tracked[tracked.index(ti)]`
           
-      stats = makeStatistics(len(tracked), repositorySize())    
-      return http.Response(stream=stats)
+        stats = makeStatistics(len(tracked), repositorySize())    
+        return http.Response(stream=stats)
 
 def main():
 
@@ -109,6 +109,7 @@ def main():
     
     reactor.listenTCP(6223, channel.HTTPFactory(site), 50)
     reactor.run()
+
 
 
 if __name__ == "__main__":
