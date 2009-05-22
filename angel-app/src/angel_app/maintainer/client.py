@@ -87,7 +87,7 @@ def maintenanceLoop():
     assert(Basic(repository).exists()), "Root directory (%s) not found." % repository
 
     sleepTime = AngelConfig.getint("maintainer", "initialsleep")
-    while 1:
+    while 1: # for eternity ;-)
         log.info("sleep timeout between resource inspections is: " + `sleepTime`)
         startTime = int(time.time())
 

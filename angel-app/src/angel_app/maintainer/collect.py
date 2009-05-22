@@ -239,7 +239,7 @@ def clonesToStore(goodClones, unreachableClones):
         if clone not in clonesToBeStored:
             clonesToBeStored.append(clone)
             
-        # guard against DOS and xattr overflow
+        # guard against DOS and metadata overflow
         if len(clonesToBeStored) >= maxclones: break
 
     return clonesToBeStored
