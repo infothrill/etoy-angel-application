@@ -11,7 +11,7 @@ from angel_app.maintainer import sync
 from angel_app.maintainer import update
 from angel_app.resource import childLink
 from angel_app.resource.local.basic import Basic
-
+from angel_app.tracker.connectToTracker import pingTracker
 
 log = getLogger(__name__)
 AngelConfig = config.getConfig()
@@ -92,8 +92,7 @@ def maintenanceLoop():
         startTime = int(time.time())
 
         # register with the tracker
-        from angel_app.tracker.connectToTracker import connectToTracker
-        dummystats = connectToTracker()
+        pingTracker()
         
         # check all mount points
         from angel_app.maintainer import mount
