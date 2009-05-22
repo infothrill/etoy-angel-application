@@ -36,19 +36,16 @@ def formatClones(path):
         return ""
 
 
-def getStatistics():  
+def getStatistics():
     from angel_app.tracker.connectToTracker import connectToTracker
     stats = connectToTracker()
     return "<br/>".join(stats.split("\n"))
 
 def showStatistics():
-    return """
-<p style="line-height: 1.6em;
-    padding: 0 15px;
-    margin:0 0 5px 0;">
-%s
-<br/>
-<span style="font-size:xx-small">
+    return """<p>%s</p>""" % getStatistics()
+
+def showDisclaimer():
+    return """<p class="disclaimer">
 DISCLAIMER: Lifetime estimate assumes:
 (i) Availability of digital communication, the absence of 
 nuclear wars, major meteorite impacts and lethal pandemics. 
@@ -57,8 +54,7 @@ its contributors.
 <br/>
 Please help us make these assumptions hold, by becoming an
 <a href="http://www.etoy.com/fundamentals/etoy-share/">etoy.INVESTOR</a>.
-</span>
-</p>""" % getStatistics()
+</p>"""
 
 def htmlHead(title):
     return """
@@ -67,21 +63,12 @@ def htmlHead(title):
     <title>ANGEL APPLICATION: %s</title>
     <link href="http://www.missioneternity.org/themes/m221e/css/main.css" rel="stylesheet" type="text/css" media="all" />
     <link rel="shortcut icon" href="http://www.missioneternity.org/themes/m221e/buttons/m221e-favicon.ico" type="image/x-icon" />
-    <style type="text/css">
-        .even-dir { background-color: #ffffff }
-        .even { background-color: #ffffff }
-        .odd-dir {background-color: #eeeeee }
-        .odd { background-color: #eeeeee }
-        td { vertical-align: top;}
-        th { white-space:nowrap; text-align:left; padding-right: 10px;}
-    </style>
 </head>""" % title
 
 def showClones(path):
     return """
-<p style="line-height: 1.6em; padding: 0 15px; margin:0 0 5px 0; ">
 Recently seen replicas of this resource: 
-<br/> %s </p>""" % formatClones(path)
+<br/>%s""" % formatClones(path)
 
 def showFile(even, link, linktext, size, lastmod, type):
     even = even and "even" or "odd"
@@ -99,9 +86,7 @@ def showFile(even, link, linktext, size, lastmod, type):
 
 def showFileListing(data_listing):
     s = """
-<div id="bilder">
-    <div style="line-height: 1.6em; padding: 0 0 0 35px; margin:0 0 10px 0;">
-        <table  style="background-color: #ffffff;" width="480px;">
+        <table border="0" cellpadding="0" cellspacing="0" id="angel-listing">
         <tr>
             <th>Filename</th>
             <th>Size</th>
@@ -112,16 +97,15 @@ def showFileListing(data_listing):
     for row in data_listing:
         s += '\n' + showFile(even, row["link"], row["linktext"], row["size"], row["lastmod"], row["type"])
         even = not even               
-    s += "\n</table></div></div>"
+    s += "\n</table>"
     return s
 
-def showDirectoryListing(linkList):
-    return "<p>Directory listing for %s</p>" % linkList
+def showDirectoryNavigation(linkList):
+    return "<h3>%s</h3>" % linkList
 
-def showBlurb(linkList):
+def showBlurb():
     return """
-<p>%s</p>
-<p>
+    <p>
 You are viewing a directory listing of the <a href="http://angelapp.missioneternity.org">ANGEL APPLICATION</a>,
 an autonomous peer-to-peer file system developed for <a href="http://missioneternity.org">MISSION ETERNITY</a>.
 </p>
@@ -131,10 +115,10 @@ process from the physical storage medium by embedding data in a root-less and th
 Unlike freenet, our primary goal is not anonymity, but 
 data preservation.
 </p>
-<br/>
-<br/>
-<p>
-Like the content on this site? 
+"""
+
+def showHelpPreserve():
+    return """<h3>Like the content on this site?</h3>
 <ul>
 <li>
 You can help preserving and sharing it (and add your own) 
@@ -143,12 +127,9 @@ on your computer.
 </li>
 <li>
 The ANGEL APPLICATION fully supports WebDAV. You can make this directory part of your desktop.
-E.g. on Mac OS X, simply type Command-K in the finder, and "connect to" this page's URL.
+E.g. on Mac OS X, simply type Command-K in the Finder, and "connect to" this page's URL.
 </li>
-<ul>
-</p>
-
-""" % (linkList)
+</ul>"""
 
 def showNavi():
     return """
@@ -163,22 +144,15 @@ def showNavi():
 
 def showHost(nodeName):
     return """
-<p style="line-height: 1.6em; padding: 0 15px; margin:0 0 5px 0; ">
-This node is hosted on: %s
-</p>
+<strong>This node is hosted on: %s</strong>
 """ % nodeName
 
 def showResourceStatistics(path, nodeName):
-    return """
-<div id="bilder" 
-style="left:900px; top:86px; width: 300px; background-color: #ffffff; padding:5px 0 5px 0; margin-left: 25px">
-<h3>About This Network</h3>
+    return """<h1>About This Network</h1>
+<p>%s<br/>
     %s
-<br/>
+</p>
     %s
-    
-    %s
-</div>
 """ % (showHost(nodeName), showClones(path), showStatistics())
 
 class DirectoryLister(resource.Resource):
@@ -275,14 +249,18 @@ class DirectoryLister(resource.Resource):
             <a href="http://www.missioneternity.org/">
                 <img src="http://www.missioneternity.org/themes/m221e/images/m221e-logo2-o.gif" alt="" border="0" />
             </a>
-        </h1>
+        </h1>"""
               
-        <h1>Directory Listing</h1>"""
-        s += '\n' + showBlurb(linkList)
-        s += "\n</div>"
-        #s += '\n' + showNavi()
-        s += showFileListing(self.data_listing(request, None))   
         s += showResourceStatistics(self.path, nodename)
+        s += showHelpPreserve()
+        s += "</div>" # id content
+        s += """<div id="bilder">"""
+        s += """<h1>Directory Listing</h1>"""
+        s += showBlurb()
+        s += showDirectoryNavigation(linkList)
+        s += showFileListing(self.data_listing(request, None))   
+        s += showDisclaimer()
+        s += "</div>" # id bilder
         s += "\n</body></html>"
         response = http.Response(200, {}, s)
         response.headers.setHeader("content-type", http_headers.MimeType('text', 'html'))
