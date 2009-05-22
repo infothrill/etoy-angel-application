@@ -3,9 +3,17 @@
 """
 based on http://twistedmatrix.com/projects/web2/documentation/examples/intro/simple.py
 """
+import commands
+import time, calendar
+
+from twisted.web2 import http, resource
+
+from angel_app.config import config
+
+AngelConfig = config.getConfig()
+repository =  AngelConfig.get("common", "repository")
 
 tracked = []
-import time, calendar
 oneDay = 24 * 60 * 60
 
 def removeOldItems():
@@ -18,12 +26,6 @@ def removeOldItems():
             print "old item: " + `ti`
             tracked.remove(ti)
             
-            
-import commands
-from angel_app.config import config
-AngelConfig = config.getConfig()
-repository =  AngelConfig.get("common", "repository")
-
 def repositorySize():
     """
     Currently, all angel-app instances completely mirror the repository on missioneternity.org
@@ -81,9 +83,6 @@ Total rate of data validation: %i %s / h
 Estimated data lifetime: %15.1e years
 """ % (numberOfHosts, normalizedData, unit, normalizedTransferred, transferUnit, tau)
 
-    
-        
-from twisted.web2 import http, resource
 
 class Toplevel(resource.Resource):
     addSlash = True
@@ -95,12 +94,13 @@ class Toplevel(resource.Resource):
             tracked.append(ti)
         else:
             print "already tracked: " + `tracked[tracked.index(ti)]`
-          
-        stats = makeStatistics(len(tracked), repositorySize())    
+
+        if request.method.upper() == 'HEAD': # no stats if only HEAD is requested
+            return http.Response()
+        stats = makeStatistics(len(tracked), repositorySize())
         return http.Response(stream=stats)
 
 def main():
-
     from twisted.web2 import server
     from twisted.web2 import channel
     from twisted.internet import reactor
