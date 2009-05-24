@@ -9,11 +9,8 @@
 Module for Unix/Linux specific methods
 """
 
-import wx
-
-# TODO: review command line args (whitespaces ,special chars)
-
 import os
+import subprocess
 
 def _which (filename):
     """
@@ -32,21 +29,30 @@ def _which (filename):
             return f
     return None
 
-def _findWebBrowser():
-    # list of possible browser, in order of preference:
-    possibleBrowsers = [ "x-www-browser", "mozilla-firefox", "firefox", "iceweasel", "konqueror", "epiphany", "mozilla", "netscape", "opera"]
-    for p in possibleBrowsers:
-        browser = _which(p)
-        if not browser == None:
-            return browser
+def _findAvailableTool( tools ):
+    for p in tools:
+        tool = _which(p)
+        if not tool == None:
+            return tool
     return None
 
 def showRepositoryInFilemanager(interface, port):
-    wx.Execute("start http://%s:%s" %( interface, str(port)), wx.EXEC_ASYNC)
+    # Notes on popular X11 filemanagers:
+    #  - konqueror can open urls with protocol "webdav"
+    #  - nautilus can open urls with protocol "dav"
+    fmanager = _findAvailableTool([ "nautilus", "konqueror", "dolphin" ])
+    if fmanager == None:
+        return # TODO : alert user that no web-browser was found!
+    elif fmanager == "nautilus":
+        subprocess.call( [fmanager, "dav://%s:%s/" % (str(interface), str(port)) ] )
+    elif fmanager == 'konqueror':
+        subprocess.call( [fmanager, "webdav://%s:%s/" % (str(interface), str(port)) ] )
+    else:
+        subprocess.call( [fmanager, "http://%s:%s/" % (str(interface), str(port)) ] ) # no idea how dolphin handles this
 
 def showURLInBrowser(url):
-    browser = _findWebBrowser()
+    browser = _findAvailableTool([ "xdg-open", "x-www-browser", "mozilla-firefox", "firefox", "iceweasel", "konqueror", "epiphany", "mozilla", "netscape", "opera"])
     if browser == None:
         return # TODO : alert user that no web-browser was found!
-    wx.Execute("%s '%s'" % (browser, url))
+    subprocess.call( [browser, str(url)] )
 

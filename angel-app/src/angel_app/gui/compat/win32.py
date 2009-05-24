@@ -2,12 +2,10 @@
 Module for Windows specific methods
 """
 
-import wx
-
-# TODO: review command line args (whitespaces ,special chars)
+import subprocess
 
 def showRepositoryInFilemanager(interface, port):
-    wx.Execute("start http://%s:%s" %( interface, str(port)), wx.EXEC_ASYNC)
+    subprocess.call( ["start", "http://%s:%s/" % (interface, str(port)) ] )
 
 def showURLInBrowser(url):
-    wx.Execute("start '%s'" % url)
+    subprocess.call( ["start", str(url) ] )
