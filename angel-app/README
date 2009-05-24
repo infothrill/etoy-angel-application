@@ -10,8 +10,8 @@ RUNNING angel-app
 ------------------
 Background: angel-app currently consists of 3 main programs, called
 - maintainer (does the network maintenance loop)
-- presenter  (provides local, private repository access)
-- provider   (public network server)
+- presenter  (provides local, private repository access through WebDAV)
+- provider   (public network server providing WebDAV)
 
 To easily run all of these programs, angel-app currently provides
 a wrapper program that controls the different parts. This program is
@@ -27,6 +27,9 @@ and also restarting:
 $ cd angel-app/bin
 $ ./python ./master.py -d start|stop|restart
 
+Also, there is a GUI interface called angel.py:
+$ cd angel-app/bin
+$ ./python ./angel.py
 
 CONFIGURATION
 -------------
@@ -40,6 +43,7 @@ In the default setup, angel-app logs all its output to $HOME/.angel_app/log/*.lo
 Each process has its own logfile called respectively presenter|provider|maintainer[.log]
 If angel-app is started with master.py, there is an overall logfile, which contains
 all messages from all components of angel-app. This logfile is called master.log.
+The same behaviour is true for the GUI angel.py.
 
 
 LICENSE
