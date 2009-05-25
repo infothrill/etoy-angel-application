@@ -106,8 +106,8 @@ class Clone(Resource):
         """
         Check for redirect on this clone.
         
-        @return this clone, if no redirect happened, otherwise return a new clone c
-        orresponding to the redirect target
+        @return this clone, if no redirect happened, otherwise return a new clone
+        corresponding to the redirect target
         """
 
         response = self.remote.performRequest(method = "HEAD", body = "")
@@ -120,7 +120,7 @@ class Clone(Resource):
             
             redirectlocation = response.getheader("location")
             # TODO: how to verify/validate redirectlocation ?
-            # RFCs state it should be URI, but we gat a path only
+            # RFCs state it should be URI, but we get a path only
             # for the time being, we require it's an absolute path
             try:
                 path_absolute.parseString(redirectlocation)
@@ -167,12 +167,13 @@ class Clone(Resource):
         """
         Keep in mind that existence does not imply validity.
         """
+        log.debug("exists %s" % repr(self))
                 
         self.validatePath()
         self.validateHostPort()
         
         try:
-            response = self.remote.performRequest(method = "HEAD", body = "")
+            response = self.remote.performRequest(method = "HEAD")
             return response.status == responsecode.OK
         except KeyboardInterrupt:
             raise
@@ -184,6 +185,7 @@ class Clone(Resource):
         """
         @return whether the remote host is reachable
         """
+        log.debug("ping %s" % repr(self))
         try:
             dummyresponse = self.remote.performRequestWithTimeOut(method = "HEAD")
             return True
@@ -198,7 +200,6 @@ class Clone(Resource):
         @rtype [(string, int)]
         @return a list of (string hostname, int port) tuples of clones registered with this clone.
         """
-
         try:
             prop = self.getProperty(elements.Clones)
                                        
@@ -210,12 +211,17 @@ class Clone(Resource):
         
     def announce(self, localResource):
         """
-        Inform the remote clone that we have a local clone here.
+        Inform the remote clone that we have a local clone here. This method
+        may fail to announce the remote clone.
         """
+        log.debug("announcing local clone to %s" % repr(self))
         requestBody = makeCloneBody(localResource)
-        if not self.ping(): return False
-        if not self.exists(): return False
-        self.remote.performRequest(method = "PROPPATCH", body = requestBody)
+        # no point in ping() or exists(): the PROPPATCH will either work or fail ;-)
+        try:
+            self.remote.performRequest(method = "PROPPATCH", body = requestBody)
+        except Exception, e:
+            log.warn("Announcement to clone %s failed" % repr(self), exc_info = e)
+            return False
         return True
 
 def formatHost(hostname = "localhost"):

@@ -75,8 +75,8 @@ def broadCastAddress(localResource):
     """
     for clone in localResource.clones():
         try:
-            if clone.ping() and clone.exists():
-                clone.announce(localResource)
+            # no ping() / exists(), as announce() may fail anyway
+            clone.announce(localResource)
         except KeyboardInterrupt:
             raise
         except Exception, e:
