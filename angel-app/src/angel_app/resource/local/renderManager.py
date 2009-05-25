@@ -23,7 +23,7 @@ class RenderManager(object):
         if self.resource.isCollection():
             return self.renderDirectory(req)
         else:
-            return self.__renderFile()
+            return self.__renderFile(req)
 
     def renderDirectory(self, req):
         if req.uri[-1] != "/":
@@ -60,20 +60,35 @@ class RenderManager(object):
                 response.headers.setHeader(header, value)
                 
         return response
-    
-    def __getResponseStream(self):        
+
+    def __renderFile(self, request):
         """
         The Basic AngelFile just returns the cyphertext of the file.
         """
-        f = self.resource.open()
-        
-        return stream.FileStream(f, 0, self.resource.fp.getsize())
-
-    def __renderFile(self):
-        
         log.debug("running __renderFile")
-        
+        f = self.resource.open()
+        filesize = self.resource.fp.getsize()
         response = self.__getResponse()
-        response.stream = self.__getResponseStream()
+        rangeheader = request.headers.getHeader('range')
+        if rangeheader is not None:
+            log.debug("http byte range header is: %s" % repr(rangeheader))
+            assert rangeheader[0] == 'bytes', "Syntactically unknown http range header %s" % repr(rangeheader) 
+            bytesrangetuple = rangeheader[1][0]
+            rangestart, rangeend = bytesrangetuple[0], bytesrangetuple[1]
+            rangelength = rangeend - rangestart
+            if rangestart < 0 or rangeend <=0 or rangelength <= 0 or (rangestart + rangelength) > filesize:
+                # TODO: we SHOULD probably satisfy RFC 2616: 10.4.17. 416 Requested Range Not Satisfiable
+                response.code = responsecode.REQUESTED_RANGE_NOT_SATISFIABLE
+                f.close()
+                return response
+            else: 
+                response.code = responsecode.PARTIAL_CONTENT
+                response.headers.setHeader('content-range', "bytes %s-%s/%s " % ( str(rangestart), str(rangeend), str(rangelength)))
+        else:
+            rangestart = 0
+            rangelength = filesize
+
+        response.stream = stream.FileStream(f, rangestart, rangelength)
+
         log.debug("done running __renderFile")
         return response
