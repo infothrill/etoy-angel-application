@@ -1,14 +1,10 @@
 import socket
 from httplib import HTTPConnection
 
-from angel_app.config import config
 from angel_app.log import getLogger
 from angel_app import version
 
 log = getLogger(__name__)
-
-AngelConfig = config.getConfig()
-providerport = AngelConfig.getint("provider","listenPort")
 
 USER_AGENT = 'Angel/%s' % version.getVersionString()
 
