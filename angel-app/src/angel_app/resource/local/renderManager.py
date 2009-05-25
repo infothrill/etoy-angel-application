@@ -66,29 +66,8 @@ class RenderManager(object):
         The Basic AngelFile just returns the cyphertext of the file.
         """
         log.debug("running __renderFile")
-        f = self.resource.open()
-        filesize = self.resource.fp.getsize()
         response = self.__getResponse()
-        rangeheader = request.headers.getHeader('range')
-        if rangeheader is not None:
-            log.debug("http byte range header is: %s" % repr(rangeheader))
-            assert rangeheader[0] == 'bytes', "Syntactically unknown http range header %s" % repr(rangeheader) 
-            bytesrangetuple = rangeheader[1][0]
-            rangestart, rangeend = bytesrangetuple[0], bytesrangetuple[1]
-            rangelength = rangeend - rangestart
-            if rangestart < 0 or rangeend <=0 or rangelength <= 0 or (rangestart + rangelength) > filesize:
-                # TODO: we SHOULD probably satisfy RFC 2616: 10.4.17. 416 Requested Range Not Satisfiable
-                response.code = responsecode.REQUESTED_RANGE_NOT_SATISFIABLE
-                f.close()
-                return response
-            else: 
-                response.code = responsecode.PARTIAL_CONTENT
-                response.headers.setHeader('content-range', "bytes %s-%s/%s " % ( str(rangestart), str(rangeend), str(rangelength)))
-        else:
-            rangestart = 0
-            rangelength = filesize
-
-        response.stream = stream.FileStream(f, rangestart, rangelength)
+        response.stream = stream.FileStream(self.resource.open(), 0, self.resource.fp.getsize())
 
         log.debug("done running __renderFile")
         return response
