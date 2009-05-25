@@ -219,6 +219,8 @@ class Clone(Resource):
         # no point in ping() or exists(): the PROPPATCH will either work or fail ;-)
         try:
             self.remote.performRequest(method = "PROPPATCH", body = requestBody)
+        except KeyboardInterrupt:
+            raise
         except Exception, e:
             log.warn("Announcement to clone %s failed" % repr(self), exc_info = e)
             return False

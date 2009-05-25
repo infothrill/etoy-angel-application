@@ -74,12 +74,4 @@ def broadCastAddress(localResource):
     Broadcast availability of local clone to remote destinations.
     """
     for clone in localResource.clones():
-        try:
-            # no ping() / exists(), as announce() may fail anyway
-            clone.announce(localResource)
-        except KeyboardInterrupt:
-            raise
-        except Exception, e:
-            log.warn(
-                     "Address broadcast failed for clone " + clone.toURI() \
-                     + " of resource: " + localResource.fp.path, exc_info = e)
+        clone.announce(localResource) # will not fail, as defined!
