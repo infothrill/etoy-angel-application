@@ -212,7 +212,8 @@ class Clone(Resource):
     def announce(self, localResource):
         """
         Inform the remote clone that we have a local clone here. This method
-        may fail to announce the remote clone.
+        may fail (silently) to announce the local clone to the remote clone.
+        @return: boolean
         """
         log.debug("announcing local clone to %s" % repr(self))
         requestBody = makeCloneBody(localResource)
