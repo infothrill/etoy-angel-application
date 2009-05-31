@@ -103,7 +103,7 @@ def getDefaultConfigObj():
     # sleep this long between resource inspection
     initialsleep = 1 # it's nice to be fast on the first traversal
     # don't sleep longer than this (in seconds) between resource inspections
-    maxsleeptime = 100
+    maxsleeptime = 3600
     # try to make a complete traversal take about this long 
     # (use a long time for low resource usage, a short one for tight synchronization)
     treetraversaltime = 86400 # we want a tree traversal to take about one day after the initial sync
