@@ -78,8 +78,9 @@ def setMountPoint(mountPoint, URLToMount):
    
     # add the clone
     from angel_app.resource.remote.clone import clonesToElement
-    # TODO: check that the resource is already registered -- might happen in special cases
-    dp.set(clonesToElement([cc]))
+    # here, we store a list of already known clones + the remote mount !
+    # this makes sure that it works both for the first virgin mount as well as later
+    dp.set(clonesToElement(rr.clones() + [cc]))
           
     from angel_app.maintainer.client import inspectResource
     
