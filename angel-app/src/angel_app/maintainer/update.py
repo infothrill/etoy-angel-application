@@ -31,12 +31,12 @@ def updateResourceFromClone(resource, referenceClone):
         # TODO: throws an HTTPError, which is certainly inappropriate..
         old = True
     
-    if resource.exists() and resource.verify() and not old:
+    if resource.exists() and resource.validate() and not old:
         # all is fine
         return True
     else:
         sync.updateLocal(resource, referenceClone)
-        return resource.verify()
+        return resource.validate()
 
 def updateResourceFromClones(resource, cloneList):
     """
@@ -61,8 +61,10 @@ def storeClones(af, goodClones, unreachableClones):
     
     @see:  iterateClones
     """
-    
     clonesToStore = collect.clonesToStore(goodClones, unreachableClones)
+    if len(clonesToStore) == 0:
+        log.warn("no clones to store. cowardly refusing create an empty clonelist")
+        return
     cloneElements = clonesToElement(clonesToStore)
     af.deadProperties().set(cloneElements)
     
@@ -115,28 +117,33 @@ def removeUnreferencedChildren(resource):
             child.remove()
     
 
-def updateResource(af):
+def updateResource(lresource):
     """
     Inspect the resource, updating it if necessary.
     """
     cloneLists = collect.iterateClones(
-                      discoverSeedClones(af), 
-                      discoverPublicKey(af), 
-                      discoverResourceID(af))
-    
+                      discoverSeedClones(lresource), 
+                      discoverPublicKey(lresource), 
+                      discoverResourceID(lresource))
+   
+    # When we have no local clones yet, we will have to download the complete
+    # remote clone to validate it, which sucks in terms of speed.
+    # Then, when we have downloaded all clones, we proceed below by redownloading
+    # it again in order to create/update the local clone.
+    # TODO: optimize!!!
     if cloneLists.good == []:
-        log.info("no valid clones found for " + af.fp.path)
+        log.info("no valid clones found for " + lresource.fp.path)
     else:
-        updateResourceFromClones(af, cloneLists.good)
+        updateResourceFromClones(lresource, cloneLists.good)
 
-    if af.exists():        
-        storeClones(af, cloneLists.good, cloneLists.old + cloneLists.unreachable)
-        removeUnreferencedChildren(af)
-        if af.validate():
+    if lresource.exists():        
+        storeClones(lresource, cloneLists.good, cloneLists.old + cloneLists.unreachable)
+        removeUnreferencedChildren(lresource)
+        if lresource.validate():
             return True
         else:
-            log.warn("Resource was not valid after update: " + af.fp.path)
+            log.warn("Resource was not valid after update: " + lresource.fp.path)
             return False
     else:
-        log.warn("update did not create local resource for " + af.fp.path)
+        log.warn("update did not create local resource for " + lresource.fp.path)
         return False
