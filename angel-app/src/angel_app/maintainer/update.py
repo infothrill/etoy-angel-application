@@ -122,6 +122,7 @@ def updateResource(lresource):
     Inspect the resource, updating it if necessary.
     """
     cloneLists = collect.iterateClones(
+                      lresource,
                       discoverSeedClones(lresource), 
                       discoverPublicKey(lresource), 
                       discoverResourceID(lresource))

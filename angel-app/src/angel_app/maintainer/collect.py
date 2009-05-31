@@ -39,7 +39,7 @@ def accessible(clone):
 
 def acceptable(clone, publicKeyString, resourceID):
     """
-    Compare the clone against the metadata, perform validation.
+    Compare the clone against the metadata, perform complete validation.
     
     @return a boolean, indicating if the clone is valid
     """
@@ -64,16 +64,98 @@ def acceptable(clone, publicKeyString, resourceID):
         log.info("Clone " + clone.toURI() + " not acceptable().", exc_info = e)
         return False
 
+def acceptableChunk(lresource, clone, publicKeyString, resourceID):
+    """
+    Compare the clone against the metadata, perform validation based on byte ranges.
+    
+    @return a boolean, indicating if the clone is valid
+    """
+    log.debug("started acceptableChunk()")
+    try:
+        if clone.resourceID() != resourceID:
+            # an invalid clone
+            return False
+        
+        if clone.publicKeyString() != publicKeyString:
+            # an invalid clone
+            return False
+        
+        # here we do a comparison of a chunk of data only
+        size = lresource.contentLength()
+        log.debug("local resource is a file of size %s" % size)
+        startoffset = random.randint(0, size)
+        endoffset = startoffset + 4096 - 1 # minus 1 because byte range includes the last byte position in reponse!
+        if endoffset > size: endoffset = size
+        f = lresource.open()
+        f.seek(startoffset)
+        lbuf = f.read(4096)
+        f.close()
+        log.debug("length of local chunk: %s" % len(lbuf) )
+        from angel_app.resource.remote.httpRemote import rangeHeader
+        try:
+            resp = clone.remote.performRequest("GET", {'range': rangeHeader(startoffset, endoffset) })
+            log.debug(`resp.getheaders()`)
+            buf = resp.read()
+            log.debug("length of clone chunk: %s" % len(buf) )
+            assert lbuf == buf, "chunk validation failed"
+        except Exception, e:
+            log.warn("While fetching a chunk, we got an exception", exc_info = e)
+            return False
+        return True
+    except KeyboardInterrupt:
+        raise
+    except Exception, e:
+        log.info("Clone " + clone.toURI() + " not acceptable().", exc_info = e)
+        return False
 
-def cloneList(cloneSeedList, publicKeyString, resourceID):
+class ValidateClone(object):
+    """
+    A class to be used as a filter on a list of clones of which we need to
+    figure out wether the members are acceptable for 
+     a- syncing to a non-existant/broken local resource
+     b- keeping them as a meta property in the clonelist
+    """
+    def __init__(self, lresource, publicKeyString = None, resourceID = None):
+        self.lresource = lresource
+        self.publicKeyString = publicKeyString
+        self.resourceID = resourceID
+        if publicKeyString is None:
+            self.publicKeyString = lresource.publicKeyString()
+        if resourceID is None:
+            self.resourceID = lresource.resourceID()
+        self._doByteRangeValidation = self._canDoByteRangeValidationWith(lresource)
+
+    def _canDoByteRangeValidationWith(self, lresource):
+        try: # don't make inspection fail on broken local resources because we
+            # want to optimize for the good case where the local resource is valid!
+            if not lresource.isCollection():
+                if lresource.validate():
+                    log.debug("_canDoByteRangeValidationWith(): True " + `lresource`)
+                    return True
+        except:
+            pass
+        log.debug("_canDoByteRangeValidationWith(): False " + `lresource`)
+        return False
+    
+    def __call__(self, clone):
+        # the clone should be reachable at this point!
+        # check if it's good:
+        log.debug("__call__ in ValidateClone for " + `clone`)
+        if self._doByteRangeValidation:
+            return acceptableChunk(self.lresource, clone, self.publicKeyString, self.resourceID)
+        else:
+            return acceptable(clone, self.publicKeyString, self.resourceID)
+
+def cloneList(lresource, cloneSeedList, publicKeyString, resourceID):
     """
     @return an iterable over _unique_ (clone, reachable) pairs
     
     @see accessible
     """
     
-    validate = lambda clone: acceptable(clone, publicKeyString, resourceID)
-    
+    #validate = lambda clone: acceptable(clone, publicKeyString, resourceID)
+    validate = ValidateClone(lresource, publicKeyString, resourceID)
+
     toVisit = copy.copy(cloneSeedList)
     visited = []
     
@@ -175,7 +257,7 @@ def orderByRevision(cl):
     
     
 
-def iterateClones(cloneSeedList, publicKeyString, resourceID):
+def iterateClones(lresource, cloneSeedList, publicKeyString, resourceID):
     """
     get all the clones of the (valid) clones we have already looked at
     which are not among any (including the invalid) of the clones we
@@ -186,7 +268,7 @@ def iterateClones(cloneSeedList, publicKeyString, resourceID):
     """  
     cl = CloneLists()
     
-    notBadClones = cloneList(cloneSeedList, publicKeyString, resourceID)
+    notBadClones = cloneList(lresource, cloneSeedList, publicKeyString, resourceID)
     (goodClones, unreachableClones) = cloneListPartitionReachable(notBadClones)
     
     cl.unreachable = unreachableClones
