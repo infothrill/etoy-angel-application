@@ -95,3 +95,26 @@ class HTTPRemote(object):
     
     def __repr__(self):
         return "HTTPRemote('%s', '%s', '%s')" % (self.host, self.port, self.path)
+
+def rangeHeader(startoffset, endoffset, rangetype = 'bytes'):
+    """
+    Utility method to generate the http header syntax for querying a range of bytes from a resource
+    @param startoffset: offset in bytes to start at
+    @param endoffset: offset in bytes to end at (including this byte!)
+    @param rangetype: default 'bytes'
+    """
+    assert endoffset >= startoffset >= 0
+    return "%s=%d-%d" % (rangetype, startoffset, endoffset)
+
+if __name__ == '__main__':
+    # example to use byte range headers:
+    r = HTTPRemote("localhost", 6221, "/MISSION%20ETERNITY/ARCANUM-CAPSULES/STOWAWAY/E20C7ABCB7D1DB66/5f537c32663df4edad16377d55feb86a6b9cef45-E20C7ABCB7D1DB66.txt")
+    
+    byterangeheader = {'range' : rangeHeader( 4, 5 ) }
+    resp = r.performRequest("GET", byterangeheader)
+    print resp.getheaders()
+    buf = resp.read()
+    print len(buf)
+    print "'%s'" % buf
+
+    
