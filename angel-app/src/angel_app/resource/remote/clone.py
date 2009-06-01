@@ -13,6 +13,10 @@ from angel_app.resource.remote.contentManager import ContentManager
 from angel_app.resource.remote.httpRemote import HTTPRemote
 from angel_app.resource.remote.propertyManager import PropertyManager
 from angel_app.resource.resource import Resource
+from angel_app.io import RateLimit
+from angel_app.io import bufferedReadLoop
+from angel_app.resource.util import getHashObject
+from angel_app.resource.remote.httpRemote import rangeHeader
 
 from angel_app.resource.remote.exceptions import CloneError
 from angel_app.resource.remote.exceptions import CloneNotFoundError
@@ -24,6 +28,8 @@ PROVIDER_PUBLIC_LISTEN_PORT = 6221
 
 AngelConfig = config.getConfig()
 providerport = AngelConfig.getint("provider","listenPort")
+MAX_DOWNLOAD_SPEED = AngelConfig.getint('common', 'maxdownloadspeed_kib') * 1024 # internally handled in bytes
+log = getLogger(__name__)
 
 def typed(expr, ref):
     if not type(expr) == type(ref):
@@ -222,10 +228,36 @@ class Clone(Resource):
             self.remote.performRequest(method = "PROPPATCH", body = requestBody)
         except KeyboardInterrupt:
             raise
+        except socket.timeout:
+            log.debug("timeout while announcing to clone %s" % repr(self))
+            return False
         except Exception, e:
-            log.warn("Announcement to clone %s failed" % repr(self), exc_info = e)
+            log.warn("announcement to clone %s failed" % repr(self), exc_info = e)
             return False
         return True
+
+    def getChunkHash(self, offset, length):
+        """
+        Utility method to fetch a byte range of the clone, compute a digest of
+        that chunk and return a digest.
+        @param offset: int
+        @param length: int
+        """
+        assert offset >= 0
+        assert length >= 0
+        assert not self.isCollection()
+        hash = getHashObject()
+        endoffset = offset + length - 1 # minus 1, because the http range request will include the last byte
+        try:
+            response = self.remote.performRequest("GET", {'range': rangeHeader(offset, endoffset) })
+            bufferedReadLoop(response.read, 4096, length, [hash.update, RateLimit(length, MAX_DOWNLOAD_SPEED)])
+        except socket.timeout:
+            log.debug("timeout while doing chunk validation on clone %s" % repr(self))
+            return None
+        except Exception, e:
+            log.warn("exception while fetching a chunk of clone %s" % repr(self), exc_info = e)
+            return None
+        return hash.digest()
 
 def formatHost(hostname = "localhost"):
     if not isNumericIPv6Address(hostname):

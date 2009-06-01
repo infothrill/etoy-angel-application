@@ -70,7 +70,8 @@ def acceptableChunk(lresource, clone, publicKeyString, resourceID):
     
     @return a boolean, indicating if the clone is valid
     """
-    log.debug("started acceptableChunk()")
+    CHUNKLENGTH = 4096 # the number of bytes to be validated
+
     try:
         if clone.resourceID() != resourceID:
             # an invalid clone
@@ -82,28 +83,20 @@ def acceptableChunk(lresource, clone, publicKeyString, resourceID):
         
         # here we do a comparison of a chunk of data only
         size = lresource.contentLength()
-        log.debug("local resource is a file of size %s" % size)
         startoffset = random.randint(0, size)
-        endoffset = startoffset + 4096 - 1 # minus 1 because byte range includes the last byte position in reponse!
-        if endoffset > size: endoffset = size
-        f = lresource.open()
-        f.seek(startoffset)
-        lbuf = f.read(4096)
-        f.close()
-        log.debug("length of local chunk: %s" % len(lbuf) )
-        from angel_app.resource.remote.httpRemote import rangeHeader
-        try:
-            resp = clone.remote.performRequest("GET", {'range': rangeHeader(startoffset, endoffset) })
-            log.debug(`resp.getheaders()`)
-            buf = resp.read()
-            log.debug("length of clone chunk: %s" % len(buf) )
-            assert lbuf == buf, "chunk validation failed"
-        except Exception, e:
-            log.warn("While fetching a chunk, we got an exception", exc_info = e)
+        if startoffset + CHUNKLENGTH > size:
+            CHUNKLENGTH = size - startoffset 
+            log.debug("had to shrink the chunk to verify to %s bytes. Offset: %s, resource-size: %s" % (CHUNKLENGTH, startoffset, size))
+        log.debug("doing byte range based validation of a resource of size %s, saving %s bytes traffic" % (size, size - CHUNKLENGTH))
+        localdigest = lresource.getChunkHash(startoffset, CHUNKLENGTH)
+        remotedigest = clone.getChunkHash(startoffset, CHUNKLENGTH)
+        assert localdigest is not None
+        assert remotedigest is not None
+        if localdigest == remotedigest:
+            return True
+        else:
+            log.info("remote clone %s is not acceptable" % repr(clone))
             return False
-        return True
-    except KeyboardInterrupt:
-        raise
     except Exception, e:
         log.info("Clone " + clone.toURI() + " not acceptable().", exc_info = e)
         return False
@@ -130,17 +123,17 @@ class ValidateClone(object):
             # want to optimize for the good case where the local resource is valid!
             if not lresource.isCollection():
                 if lresource.validate():
-                    log.debug("_canDoByteRangeValidationWith(): True " + `lresource`)
+                    #log.debug("_canDoByteRangeValidationWith(): True " + `lresource`)
                     return True
         except:
             pass
-        log.debug("_canDoByteRangeValidationWith(): False " + `lresource`)
+        #log.debug("_canDoByteRangeValidationWith(): False " + `lresource`)
         return False
     
     def __call__(self, clone):
         # the clone should be reachable at this point!
         # check if it's good:
-        log.debug("__call__ in ValidateClone for " + `clone`)
+        # log.debug("__call__ in ValidateClone for " + `clone`)
         if self._doByteRangeValidation:
             return acceptableChunk(self.lresource, clone, self.publicKeyString, self.resourceID)
         else:

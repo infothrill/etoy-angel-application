@@ -107,6 +107,7 @@ class Basic(DAVFile, Resource):
         """
         DEPRECATED.
         """
+        log.warn("DEPRECATED method verify()")
         return self.validate()
 
     def relativePathEntries(self):
@@ -189,3 +190,22 @@ class Basic(DAVFile, Resource):
     def render(self, req):
         """You know what you doing. override render method (for GET) in twisted.web2.static.py"""
         return self.renderManager.render(req)
+
+
+    def getChunkHash(self, offset, length):
+        """
+        Utility method to fetch a byte range of the local resource, compute a digest of
+        that chunk and return a digest.
+        @param offset: int
+        @param length: int
+        """
+        assert offset >= 0
+        assert length >= 0
+        assert not self.isCollection()
+        from angel_app.resource.util import getHashObject
+        hash = getHashObject() 
+        f = self.open()
+        f.seek(offset)
+        hash.update(f.read(length))
+        f.close()
+        return hash.digest()
