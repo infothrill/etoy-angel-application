@@ -63,7 +63,7 @@ def storeClones(af, goodClones, unreachableClones):
     """
     clonesToStore = collect.clonesToStore(goodClones, unreachableClones)
     if len(clonesToStore) == 0:
-        log.warn("no clones to store. cowardly refusing create an empty clonelist")
+        log.warn("no clones to store. cowardly refusing to create an empty clonelist")
         return
     cloneElements = clonesToElement(clonesToStore)
     af.deadProperties().set(cloneElements)
