@@ -282,6 +282,36 @@ def eliminateSelfReferences(clones):
     selfReferences = ["localhost", "127.0.0.1", AngelConfig.get("maintainer","nodename")]
     return [cc for cc in clones if cc.host not in selfReferences]
 
+def eliminateDNSDoubles(clones):
+    import socket
+    def isNumericAddress(address):
+        "Test if address is a numeric ip address"
+        for family in [ socket.AF_INET, socket.AF_INET6 ]:
+            try:
+                socket.inet_pton(family, address)
+                return True
+            except socket.error:
+                pass
+        return False
+    
+    if len(clones) <= 1:
+        return clones
+    allhostnames = [c.getHost() for c in clones if not isNumericAddress(c.getHost())]
+    resolved_ips = []
+    for hostname in allhostnames:
+        try:
+            resolved_ips.extend([res[4][0] for res in socket.getaddrinfo(hostname, None)])
+        except Exception:
+            #log.debug("DNS lookup failed for hostname '%s'" % hostname, exc_info = e)
+            pass
+
+    result = [cc for cc in clones if cc.host not in resolved_ips]
+    numeliminated = len(clones) - len(result)
+    if numeliminated > 0:
+        log.debug("eliminated %d clone(s) w.r.t. DNS/IP" % numeliminated)
+    return result
+
+
 def clonesToStore(goodClones, unreachableClones):
     """
     We're interested in storing a (maximum number) of clones of "sufficient quality".
@@ -299,10 +329,10 @@ def clonesToStore(goodClones, unreachableClones):
     """
     
     # set up a queue of good clones and unreachable clones, both in randomized sequence
-    gc = copy.copy(eliminateSelfReferences(goodClones))
+    gc = copy.copy(eliminateDNSDoubles(eliminateSelfReferences(goodClones)))
     random.shuffle(gc)
     
-    uc = copy.copy(eliminateSelfReferences(unreachableClones))
+    uc = copy.copy(eliminateDNSDoubles(eliminateSelfReferences(unreachableClones)))
     random.shuffle(uc)
     
     clonesWeMightStore = gc + uc
