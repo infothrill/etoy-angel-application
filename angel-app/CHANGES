@@ -1,3 +1,15 @@
+0.4.4 XXXXXXXXXXXX
+
+ * initial support for doing remote clone validation based on random chunks of
+   data. Implemented using standard HTTP byte range headers. This should
+   lead to MASSIVE bandwidth savings.
+ * improvements in clone resolution: clones with numeric IP addresses are
+   thrown away if a clone with a hostname resolving to this address exists.
+ * mount now forces the remote clone to be saved locally, even if the initial
+   inspection fails.
+ * broadcasting of local clone to remote clones optimized.
+ * improved KDE/Gnome support for opening the WebDAV repository. 
+
 0.4.3 May 22 2009
 
  Maintenance release, fixing a major bug in the network code.
