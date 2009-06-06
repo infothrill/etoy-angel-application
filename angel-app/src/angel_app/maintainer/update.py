@@ -88,11 +88,19 @@ def discoverSeedClones(af):
     """
     Either return the resource's clones directly (if they exist), or inherit them from the parent.
     """
+    seedclones = []
     if af.exists():
-        return af.clones()
-    else:
+        seedclones = af.clones()
+
+    # we are not allowed to assume that getting the clone list from a local
+    # clone results in a good, usable clonelist, so we try to avoid having
+    # an empty clone list (could happen if local repository/metadata got corrupt)
+    if len(seedclones) == 0:
+        # TODO: maybe always extend seedclones with inherotClones() ?
         from angel_app.resource.local.propertyManager import inheritClones
         return inheritClones(af)
+    else:
+        return seedclones
     
 def discoverPublicKey(af):
     if af.exists():
