@@ -9,7 +9,7 @@ log = getLogger(__name__)
 
 class RenderManager(object):
     """
-    Renders the angel resource when an HTTP GET request is encountered.
+    Renders the angel resource when an HTTP GET/HEAD request is encountered.
     """
     
     def __init__(self, resource):
@@ -21,17 +21,19 @@ class RenderManager(object):
             return responsecode.NOT_FOUND
 
         if self.resource.isCollection():
-            return self.renderDirectory(req)
+            response = self.renderDirectory(req)
         else:
-            return self.__renderFile(req)
+            response = self.__renderFile(req)
+        log.debug("%s %s %s %s" % (req.method, req.remoteAddr.host, response.code, req.uri))
+        return response
 
     def renderDirectory(self, req):
-        if req.method == 'HEAD':
+        if req.method == 'HEAD': #no point in doing anything here in the angel context: used for exists() check only
             return http.Response(200, {}, "")
         if req.uri[-1] != "/":
             # Redirect to include trailing '/' in URI
-            log.debug("redirecting")
             return http.RedirectResponse(req.unparseURL(path=req.path+'/'))
+
         
         # is there an index file?
         ifp = self.resource.fp.childSearchPreauth(*self.resource.indexNames)
@@ -67,9 +69,6 @@ class RenderManager(object):
         """
         The Basic AngelFile just returns the cyphertext of the file.
         """
-        log.debug("running __renderFile")
         response = self.__getResponse()
         response.stream = stream.FileStream(self.resource.open(), 0, self.resource.fp.getsize())
-
-        log.debug("done running __renderFile")
         return response
