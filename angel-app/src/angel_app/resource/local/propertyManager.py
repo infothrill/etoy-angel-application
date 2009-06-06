@@ -27,7 +27,7 @@ def getOnePublicKey(resource):
     This is used in the initialization phase of a resource's meta-data:
     get hold of a meaningful public key.
     """
-    if resource.isRepositoryRoot():   
+    if resource.isRepositoryRoot():
         return defaultPublicKey()
     else:
         return resource.parent().publicKeyString()
@@ -40,9 +40,14 @@ def inheritClones(resource):
     Note that this will recursively initialize the clone field all parent resources, 
     until one parent is found that does have clones. Will raise a RuntimeError if the root node has no
     clones.
+    One exception is being made for the repository root: here we do not fail,
+    but silently return an empty list.
     """
     from angel_app.resource.remote import clone
         
+    if resource.isRepositoryRoot():
+        return []
+
     parentClones = resource.parent().clones()
     
     def adaptPaths(parentClone):
