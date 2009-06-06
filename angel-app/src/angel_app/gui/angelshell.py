@@ -14,6 +14,8 @@ log = getLogger(__name__)
 
 # executed by angelshell if no angelshellinit.py is found:
 defaultShellCommands = [
+              "from angel_app.log import initializeLogging",
+              "initializeLogging('shell', ['console'])",
               "from angel_app.config.config import getConfig",
               "cc = getConfig()",
               "rootPath = cc.get('common', 'repository')",
@@ -44,7 +46,7 @@ class AngelShellWindow(wx.Frame):
         @param event: wx.KeyEvent
         """
         keycode = event.GetKeyCode()
-        log.debug("OnKeyDown() got keycode: %s" % keycode)
+        #log.debug("OnKeyDown() got keycode: %s" % keycode)
         if keycode == wx.WXK_ESCAPE:
             ret  = wx.MessageBox(_('Quit the shell?'), _('Question'), wx.YES_NO | wx.CENTRE | wx.NO_DEFAULT, self)
             if ret == wx.YES:
