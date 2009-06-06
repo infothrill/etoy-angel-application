@@ -26,6 +26,8 @@ class RenderManager(object):
             return self.__renderFile(req)
 
     def renderDirectory(self, req):
+        if req.method == 'HEAD':
+            return http.Response(200, {}, "")
         if req.uri[-1] != "/":
             # Redirect to include trailing '/' in URI
             log.debug("redirecting")
