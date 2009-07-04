@@ -95,7 +95,7 @@ def acceptableChunk(lresource, clone, publicKeyString, resourceID):
         if localdigest == remotedigest:
             return True
         else:
-            log.info("remote clone %s is not acceptable", repr(clone))
+            log.info("remote clone %r is not acceptable", clone)
             return False
     except Exception, e:
         log.info("Clone %s not acceptable().", clone.toURI(), exc_info = e)
