@@ -345,7 +345,7 @@ def getLoggingFilters():
     sectionname = 'logfilters'
     log = getLogger(__name__)
     if not angelConfig.has_section(sectionname):
-        log.info("No section '%s' in config file, skipping" % sectionname)
+        log.info("No section '%s' in config file, skipping", sectionname)
         return []
     filters = []
     #print "=======LOGGING CONFIG================"
