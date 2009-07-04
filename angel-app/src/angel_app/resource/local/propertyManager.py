@@ -190,7 +190,7 @@ class PropertyManager(object):
         self.store.remove()
         #except:
         #    pp = self.resource.relativePath()
-        #    log.warning("Failed to remove property manager for resource: " + pp)
+        #    log.warn("Failed to remove property manager for resource: %s", pp)
         
     def set(self, element):
         

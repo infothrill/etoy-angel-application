@@ -20,7 +20,7 @@ assert os.path.exists(home), \
 metadata = home + os.sep + "metadata"
 
 if not os.path.exists(metadata):
-    log.info("Creating root directory for meta data: " + `metadata`)
+    log.info("Creating root directory for meta data: %r", metadata)
     os.mkdir(metadata)
      
     
@@ -59,7 +59,7 @@ class DirectoryDeadProperties(object):
             assert self.metadataPath.isdir(), \
                 "metadata store must be a directory: " + self.metaDataPath.path
         else:
-            log.info("Creating metadata store for: " + self.metadataPath.path)
+            log.info("Creating metadata store for: %s", self.metadataPath.path)
             os.mkdir(self.metadataPath.path)
         
     def get(self, qname):

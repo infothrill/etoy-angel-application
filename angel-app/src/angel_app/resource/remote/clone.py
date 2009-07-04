@@ -104,7 +104,7 @@ class Clone(Resource):
         rc = cloneFromURI(self.toURI())
         
         if not rc == self:
-            log.info("Clone doesn't self-match: %s vs. %s" % (repr(self), repr(rc)))
+            log.info("Clone doesn't self-match: %r vs. %r", self, rc)
             raise CloneError("Invalid host for clone: %s %s" % (repr(self), repr(rc)))                                             
         
     
@@ -118,7 +118,7 @@ class Clone(Resource):
 
         response = self.remote.performRequest(method = "HEAD", body = "")
         if response.status == responsecode.MOVED_PERMANENTLY:
-            log.info("Received redirect for clone: " + str(self))
+            log.info("Received redirect for clone: %s", self)
             
             if self.redirected:
                 errMsg = "Guarding against multiple redirects for " + str(self)
@@ -135,7 +135,7 @@ class Clone(Resource):
                 raise CloneError(errorMessage)
             redirectClone = Clone(self.host, self.port, redirectlocation)
             redirectClone.redirected = True
-            log.info("Redirecting to: %s" % str(redirectClone))
+            log.info("Redirecting to: %s", redirectClone)
             return redirectClone
         else:
             return self
@@ -173,7 +173,7 @@ class Clone(Resource):
         """
         Keep in mind that existence does not imply validity.
         """
-        log.debug("exists %s" % repr(self))
+        log.debug("exists %r", self)
                 
         self.validatePath()
         self.validateHostPort()
@@ -191,7 +191,7 @@ class Clone(Resource):
         """
         @return whether the remote host is reachable
         """
-        log.debug("ping %s" % repr(self))
+        log.debug("ping %r", self)
         try:
             dummyresponse = self.remote.performRequestWithTimeOut(method = "HEAD")
             return True
@@ -221,7 +221,7 @@ class Clone(Resource):
         may fail (silently) to announce the local clone to the remote clone.
         @return: boolean
         """
-        log.debug("announcing local clone to %s" % repr(self))
+        log.debug("announcing local clone to %r", self)
         requestBody = makeCloneBody(localResource)
         # no point in ping() or exists(): the PROPPATCH will either work or fail ;-)
         try:
@@ -229,10 +229,10 @@ class Clone(Resource):
         except KeyboardInterrupt:
             raise
         except socket.timeout:
-            log.debug("timeout while announcing to clone %s" % repr(self))
+            log.debug("timeout while announcing to clone %r", self)
             return False
         except Exception, e:
-            log.warn("announcement to clone %s failed" % repr(self), exc_info = e)
+            log.warn("announcement to clone %r failed", self, exc_info = e)
             return False
         return True
 
@@ -252,10 +252,10 @@ class Clone(Resource):
             response = self.remote.performRequest("GET", {'range': rangeHeader(offset, endoffset) })
             bufferedReadLoop(response.read, 4096, length, [hash.update, RateLimit(length, MAX_DOWNLOAD_SPEED)])
         except socket.timeout:
-            log.debug("timeout while doing chunk validation on clone %s" % repr(self))
+            log.debug("timeout while doing chunk validation on clone %r", self)
             return None
         except Exception, e:
-            log.warn("exception while fetching a chunk of clone %s" % repr(self), exc_info = e)
+            log.warn("exception while fetching a chunk of clone %r", self, exc_info = e)
             return None
         return hash.digest()
 
@@ -335,7 +335,7 @@ def maybeCloneFromElement(cc):
     except KeyboardInterrupt:
         raise
     except:
-        log.info("ignoring invalid clone uri: " + str(cc))
+        log.info("ignoring invalid clone uri: %s", cc)
         return None
 
 def clonesFromElement(cloneElement):

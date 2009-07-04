@@ -57,7 +57,7 @@ class ProppatchMixin:
     def preconditions_PROPPATCH(self, request):
         
         if not os.path.exists(self.fp.path):
-            error = "File not found in PROPPATCH: %s" % (self.fp.path,)
+            error = "File not found in PROPPATCH: %s" % self.fp.path
             log.error(error)
             raise HTTPError(StatusResponse(
                        responsecode.NOT_FOUND, error))
@@ -120,7 +120,7 @@ def readRequestBody(request):
         yield doc
         doc = doc.getResult()
     except ValueError, e:
-        log.error("Error while reading PROPPATCH body: %s" % (e,))
+        log.error("Error while reading PROPPATCH body", exc_info = e)
         raise HTTPError(StatusResponse(responsecode.BAD_REQUEST, str(e)))
 
     if doc is None:
@@ -203,10 +203,10 @@ def pingBack(clone, request, publicKeyString, resourceID):
         try:
             dns_resolved_ips = [res[4][0] for res in socket.getaddrinfo(clone.getHost(), None)]
         except Exception, e:
-            log.warn("DNS lookup failed for hostname '%s'" % clone.getHost(), exc_info = e)
+            log.warn("DNS lookup failed for hostname '%s'", clone.getHost(), exc_info = e)
         ip_address = str(request.remoteAddr.host)
         if not ip_address in dns_resolved_ips: # only fallback to IP if nodename does not already resolve to it
-            log.info("Invalid PROPPATCH request. Can't pingBack() to clone at: " + `clone` + ". Falling back to IP '%s'." % ip_address)
+            log.info("Invalid PROPPATCH request. Can't pingBack() to clone at: %r. Falling back to IP '%s'.", clone, ip_address)
             # can't connect to the clone as advertised by "nodename",
             # the "nodename" defaults to something marginally useful, so this might be expected,
             # default to the request's originating ip address and try again.
@@ -217,16 +217,15 @@ def pingBack(clone, request, publicKeyString, resourceID):
             # here, we should still expect to be fooled by NATs etc.
             (clone, access) = collect.accessible(clone)
             if not access:
-                error = "Invalid PROPPATCH request. Can't pingBack() to clone at: " + `clone`
-                log.info(error)
+                log.info("Invalid PROPPATCH request. Can't pingBack() to clone at: %r", clone)
                 return None
         else:
-            log.info("Invalid PROPPATCH request. Can't pingBack() to clone at: " + `clone` + ". NOT falling back to IP '%s', because nodename already resolves to it." % ip_address)
+            log.info("Invalid PROPPATCH request. Can't pingBack() to clone at: %r. NOT falling back to IP '%s', because nodename already resolves to it.", clone, ip_address)
             return None
             
     
     if not collect.acceptable(clone, publicKeyString, resourceID):
-        log.info("Invalid PROPPATCH request. Invalid data for clone at: " + `clone`)
+        log.info("Invalid PROPPATCH request. Invalid data for clone at: %r", clone)
         return None  
           
     return clone 
@@ -266,7 +265,7 @@ def cloneHandler(property, store, request, resource):
     # check if this clone is already registered _after_ doing the potential
     # IP resolution    
     if newClone in residentClones:
-        log.info("clone %s already registered." % `newClone`)
+        log.info("clone %r already registered.", newClone)
         # nothing needs to be done, pretend everything is fine
         return responsecode.OK
     

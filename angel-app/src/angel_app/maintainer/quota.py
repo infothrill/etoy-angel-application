@@ -47,11 +47,11 @@ def __readQuotasFromConfig(mounts, quotas):
     
     for mount in quotas.iterkeys():
         if mount not in mounts:
-            log.warn("No mount point defined for quota specification: " + `mount`)
+            log.warn("No mount point defined for quota specification: %r", mount)
         else:
             myQ = quotas.getint(mount)
             qq[Basic(mount).keyUUID()] = myQ
-            log.info("Added quota of " + myQ + " for mount point: " + mount)
+            log.info("Added quota of %s for mount point: %s", myQ, mount)
             
     return qq
 
@@ -65,7 +65,7 @@ def __createQuotas():
         default = AngelConfig.getint("common", "defaultquota") 
     except:
         log.warn("No default quota provided. Consider specifying common/defaultquota in the configuration file.")
-    log.info("Default quota set to " + `default / oneMeg` + " MiB per mount.")
+    log.info("Default quota set to %r MiB per mount.", default / oneMeg)
     
     quotas = None
     try:
