@@ -1,4 +1,22 @@
-0.4.4 XXXXXXXXXXXX
+0.4.4 July 4 2009
+
+This release introduces major speed improvements in the maintenance algorithm
+which should result in maintaining local replicas a lot quicker, while
+preserving network resources during normal maintenance. 
+
+In practice:
+
+For desktop users, the maintenance process will find individual local broken
+resources (e.g. also new resources / deleted resources) much faster than in
+earlier versions. This only holds true if the sleep interval is small, e.g. if
+the maintainer has just been started (by default, the maintainer will
+incrementally adjust its speed of operation to fit into one day).
+
+For server installation, e.g. long-running instances, it means that a lot less
+traffic will be generated during the maintenance.  
+
+Note: the initial sync is still slow, as each resource will get downloaded twice
+for each node running (find+update)!
 
  * initial support for doing remote clone validation based on random chunks of
    data. Implemented using standard HTTP byte range headers. This should
@@ -7,8 +25,14 @@
    thrown away if a clone with a hostname resolving to this address exists.
  * mount now forces the remote clone to be saved locally, even if the initial
    inspection fails.
- * broadcasting of local clone to remote clones optimized.
- * improved KDE/Gnome support for opening the WebDAV repository. 
+ * bugfix in maintenance: when no local clones are stored, recursively walk up
+   the tree to find some
+ * broadcasting of local clone to remote clones optimized (e.g. dropped
+   reachability and existence checks, as broadcasting is allowed to fail).
+ * improved KDE/Gnome support for opening the WebDAV repository.
+ * optimized server side HEAD operation for directories by not computing a
+   content listing.
+ * logging: use format strings
 
 0.4.3 May 22 2009
 
