@@ -18,7 +18,7 @@ def loadKeysFromFile(keyDir = secretKey.getKeyringDirectory()):
     keyFiles = listdir(keyDir)
     keyRing = {}
     for fileName in keyFiles:
-        log.info("loading secret key: " + `fileName`)
+        log.info("loading secret key: %r", fileName)
         angelKey = secretKey.getKeyFor(keyDir + sep + fileName)
         keyRing[angelKey.exportKey()] = angelKey
     return keyRing

@@ -28,7 +28,7 @@ def createKey(filePath = defaultKeyFilePath()):
     kk = ezKey()
     # TODO: make key size configurable
     kk.makeNewKeys() 
-    log.info("creating new key in file: " + `filePath`)
+    log.info("creating new key in file: %r", filePath)
     open(filePath, 'w').write(kk.exportKeyPrivate())
     return kk
 
@@ -58,7 +58,7 @@ def createAtLeastOneKey():
     # the keys that already exist
     keyFiles = os.listdir(keyDirectory)
     
-    log.info("current key files: " + `keyFiles`)
+    log.info("current key files: %r", keyFiles)
     
     # make a key if we don't have any keys yet
     if keyFiles == []:

@@ -50,12 +50,12 @@ def setKey(path = "", key = None):
     except KeyboardInterrupt:
         raise
     except Exception, e:
-        log.info("Could not set key for " + path, exc_info = e)
+        log.info("Could not set key for %s", path, exc_info = e)
         presentKey = ""
 
     try: 
         key.importKey(presentKey)
-        log.info("key already set to %s for resource: %s"  % (presentKey, rr.fp.path))
+        log.info("key already set to %s for resource: %s", presentKey, rr.fp.path)
     except KeyboardInterrupt:
         raise
     except:       
