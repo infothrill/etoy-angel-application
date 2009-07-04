@@ -68,7 +68,7 @@ class Resource(object):
             return self.getPropertyManager().getByElement(element)
         except Exception, e:
             # treat broken meta data as if it did not exist:
-            log.error("Failed to look up meta data field " + `element`, exc_info = e)
+            log.error("Failed to look up meta data field %r", element, exc_info = e)
             return None
  
     def revision(self):
@@ -102,10 +102,10 @@ class Resource(object):
     def _dataIsCorrect(self):
         cs = self.contentSignature()
         if cs == self._computeContentHexDigest():
-            log.debug("data signature for resource '%s' is correct: %s" % (self.resourceID(), cs))
+            log.debug("data signature for resource '%s' is correct: %s", self.resourceID(), cs)
             return True
         else:
-            log.info("data signature for resource '%s' is incorrect: %s" % (self.resourceID(), cs))
+            log.info("data signature for resource '%s' is incorrect: %s", self.resourceID(), cs)
             return False
 
     def _metaDataIsCorrect(self):
@@ -121,13 +121,13 @@ class Resource(object):
         try:
             isCorrect = publicKey.verifyString(sm, ms)
             if not isCorrect:
-                log.info("Incorrect meta data for: " + `self.resourceID()`)
-                log.info("Meta data to be signed: " + `self.signableMetadata()`)
+                log.info("Incorrect meta data for: %r", self.resourceID())
+                log.info("Meta data to be signed: %r", self.signableMetadata())
                 return False
             else:
                 return True
         except:
-            log.info("Can not verify metadata %s against signature %s" % (sm, ms))
+            log.info("Can not verify metadata %s against signature %s", sm, ms)
             return False
     
     def validate(self):

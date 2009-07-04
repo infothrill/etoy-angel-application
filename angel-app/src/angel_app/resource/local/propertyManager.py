@@ -166,7 +166,7 @@ class PropertyManager(object):
                 # TODO: I don't feel good about this "solution" -- review when time permits
                 self.set(dp)
             except Exception, e:
-                log.info("Failed to persist default property: " + `dp`, exc_info = e)
+                log.info("Failed to persist default property: %r", dp, exc_info = e)
             return dp
         
         else:
