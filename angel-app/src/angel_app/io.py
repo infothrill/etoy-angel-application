@@ -29,7 +29,7 @@ def bufferedReadLoop(readCall, blocksize, totalsize, callbacks):
     while bytesread < totalsize:
         buf = readCall(blocksize)
         if len(buf) == 0:
-            log.warn("Unexpected EOF after %s bytes, expected total %s bytes. Remote disconnect?" % (bytesread, totalsize))
+            log.warn("Unexpected EOF after %s bytes, expected total %s bytes. Remote disconnect?", bytesread, totalsize)
             break
         bytesread += len(buf)
         for callback in callbacks:
@@ -78,6 +78,6 @@ class RateLimit(object):
         "helper method to limit the rate of logging to 1 / second"
         now = time.time()
         if now - self._lastlog > 1: # log once per second max
-            log.debug("Rate limiting (max %.1f kiB/s): %d kiB of %d kiB piped at %.1f kiB/s, sleeping for %.4f s" % (self.rate_limit_kb, self.piped_bytes / 1024 ,self.total_size_kb, rate / 1024, sleep_time))
+            log.debug("Rate limiting (max %.1f kiB/s): %d kiB of %d kiB piped at %.1f kiB/s, sleeping for %.4f s", self.rate_limit_kb, self.piped_bytes / 1024 ,self.total_size_kb, rate / 1024, sleep_time)
             self._lastlog = now 
 
