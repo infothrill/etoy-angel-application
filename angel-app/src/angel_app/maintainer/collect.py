@@ -26,13 +26,13 @@ def accessible(clone):
     @return a tuple of (Clone, bool), where Clone is the (redirected) clone, and bool indicates whether it's reachable.
     """
     if not clone.ping():
-        log.debug("clone " + `clone` + " not reachable, ignoring")
+        log.debug("clone %r not reachable, ignoring", clone)
         return (clone, False)
 
     clone = clone.checkForRedirect()
         
     if not clone.exists():
-        log.debug("resource " + `clone.path` + " not found on host " + `clone.host`)
+        log.debug("resource %r not found on host %r", clone.path, clone.host)
         return (clone, False)
     
     return (clone, True)
@@ -54,14 +54,14 @@ def acceptable(clone, publicKeyString, resourceID):
         
         if not clone.validate():
             # an invalid clone
-            log.debug("iterateClones: " + `clone` + " invalid signature")
+            log.debug("iterateClones: %r invalid signature", clone)
             return False
     
         return True
     except KeyboardInterrupt:
         raise
     except Exception, e:
-        log.info("Clone " + clone.toURI() + " not acceptable().", exc_info = e)
+        log.info("Clone %s not acceptable().", clone.toURI(), exc_info = e)
         return False
 
 def acceptableChunk(lresource, clone, publicKeyString, resourceID):
@@ -86,19 +86,19 @@ def acceptableChunk(lresource, clone, publicKeyString, resourceID):
         startoffset = random.randint(0, size)
         if startoffset + CHUNKLENGTH > size:
             CHUNKLENGTH = size - startoffset 
-            log.debug("had to shrink the chunk to verify to %s bytes. Offset: %s, resource-size: %s" % (CHUNKLENGTH, startoffset, size))
-        log.debug("doing byte range based validation of a resource of size %s, saving %s bytes traffic" % (size, size - CHUNKLENGTH))
+            log.debug("had to shrink the chunk to verify to %s bytes. Offset: %s, resource-size: %s", CHUNKLENGTH, startoffset, size)
+        log.debug("doing byte range based validation of a resource of size %s, saving %s bytes traffic", size, size - CHUNKLENGTH)
         localdigest = lresource.getChunkHash(startoffset, CHUNKLENGTH)
         remotedigest = clone.getChunkHash(startoffset, CHUNKLENGTH)
         assert localdigest is not None
-        assert remotedigest is not None
+        assert remotedigest is not None, "Remote clone unreachable?"
         if localdigest == remotedigest:
             return True
         else:
-            log.info("remote clone %s is not acceptable" % repr(clone))
+            log.info("remote clone %s is not acceptable", repr(clone))
             return False
     except Exception, e:
-        log.info("Clone " + clone.toURI() + " not acceptable().", exc_info = e)
+        log.info("Clone %s not acceptable().", clone.toURI(), exc_info = e)
         return False
 
 class ValidateClone(object):
@@ -158,11 +158,11 @@ def cloneList(lresource, cloneSeedList, publicKeyString, resourceID):
         cc = toVisit[0]
         toVisit = toVisit[1:]
         
-        log.debug("visiting: " + `cc`)
+        log.debug("visiting: %r", cc)
     
         if cc in visited:
             # we have already looked at this clone -- don't bother with it
-            log.debug("ignoring already visited clone: " + `cc`)
+            log.debug("ignoring already visited clone: %r", cc)
             continue
 
         # mark this clone as visited        
@@ -172,8 +172,7 @@ def cloneList(lresource, cloneSeedList, publicKeyString, resourceID):
         try:
             (cc, acc) = accessible(cc)
         except CloneError, e:
-            errorMessage = "Failure on clone inspection: " + `e` + " (Invalid redirect?) Ignoring: " + `cc`
-            log.warn(errorMessage)          
+            log.warn("Failure on clone inspection: %r (Invalid redirect?) Ignoring: %r", e, cc)          
             continue
 
         # if a redirect happened, mark also the new clone as visited
@@ -182,15 +181,15 @@ def cloneList(lresource, cloneSeedList, publicKeyString, resourceID):
         
         # the clone is reachable -- check if it's good.
         if acc and (not validate(cc)):
-            log.debug("ignoring bad clone: " + `cc`)
+            log.debug("ignoring bad clone: %r", cc)
             continue
         
         if acc:
-            log.debug("accepting good clone: " + `cc` + " and extending clone list.")
+            log.debug("accepting good clone: %r and extending clone list.", cc)
             # clone is reachable and good -- look also at its clones:
             toVisit += cc.cloneList()
         else:
-            log.debug("keeping unreachable clone (it might be good eventually): " + `cc`)        
+            log.debug("keeping unreachable clone (it might be good eventually): %r",  cc)        
         yield (cc, acc)
     
     raise StopIteration
@@ -274,7 +273,7 @@ def iterateClones(lresource, cloneSeedList, publicKeyString, resourceID):
         # append the rest to the old clones
         cl.old.extend(gc)
 
-    log.info("good clones: " + `cl.good`)
+    log.info("good clones: %r", cl.good)
 
     return cl
     
@@ -308,7 +307,7 @@ def eliminateDNSDoubles(clones):
     result = [cc for cc in clones if cc.host not in resolved_ips]
     numeliminated = len(clones) - len(result)
     if numeliminated > 0:
-        log.debug("eliminated %d clone(s) w.r.t. DNS/IP" % numeliminated)
+        log.debug("eliminated %d clone(s) w.r.t. DNS/IP", numeliminated)
     return result
 
 

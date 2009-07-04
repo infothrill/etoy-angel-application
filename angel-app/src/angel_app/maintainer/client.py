@@ -23,7 +23,7 @@ def inspectResource(af):
     available valid clones, updating if necessary, and then broadcasting my existence
     to whoever is inclined to listen.
     """
-    log.info("inspecting resource: " + af.fp.path)
+    log.info("inspecting resource: %s", af.fp.path)
     try:
         update.updateResource(af)
         sync.broadCastAddress(af)
@@ -31,7 +31,7 @@ def inspectResource(af):
     except KeyboardInterrupt:
         raise
     except Exception, e:
-        log.error("Resource inspection failed for resource: " + af.fp.path, exc_info = e)
+        log.error("Resource inspection failed for resource: %s", af.fp.path, exc_info = e)
         return False
     
 def newSleepTime(currentSleepTime, startTime):
@@ -70,7 +70,7 @@ def traverseResourceTree(sleepTime):
     I do one traversal of the local resource tree.
     """
     def timedValidation(resource, dummy = None):
-        log.info("sleeping for %f sec" % sleepTime)
+        log.info("sleeping for %f sec", sleepTime)
         time.sleep(sleepTime)
         return (inspectResource(resource), None)
     
@@ -88,7 +88,7 @@ def maintenanceLoop():
 
     sleepTime = AngelConfig.getint("maintainer", "initialsleep")
     while 1: # for eternity ;-)
-        log.info("sleep timeout between resource inspections is: " + `sleepTime`)
+        log.info("sleep timeout between resource inspections is: %r", sleepTime)
         startTime = int(time.time())
 
         # register with the tracker

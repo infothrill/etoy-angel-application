@@ -31,7 +31,7 @@ def setMountPoint(mountPoint, URLToMount):
     @param path is the resource that we want to use as a mount point
     @param pointsTo is the URL of the resource that we want to mount
     """       
-    log.info("attempting to mount: " + URLToMount + " at " + mountPoint)
+    log.info("attempting to mount: %s at %s", URLToMount, mountPoint)
     
     pp = absPath(mountPoint)
     
@@ -41,7 +41,7 @@ def setMountPoint(mountPoint, URLToMount):
     
     if not (cc.ping() and cc.exists()):
         # don't fail, just mount at next startup
-        log.warn("Can not connect to %s. Can not initialize mount point." % URLToMount)
+        log.warn("Can not connect to %s. Can not initialize mount point.", URLToMount)
         return
     
 
@@ -89,18 +89,18 @@ def setMountPoint(mountPoint, URLToMount):
     except KeyboardInterrupt:
         raise
     except Exception, e:
-        log.warn("Resource inspection failed for mount point: " + pp, exc_info = e)
+        log.warn("Resource inspection failed for mount point: %s", pp, exc_info = e)
 
 def addMounts():
     
     fstab = getMountTab()
     for mount in fstab:
         ap = absPath(mount[1])
-        log.info("Attempting to mount %s at %s (in repository) => %s (on file system)." % (mount[0], mount[1], ap))
+        log.info("Attempting to mount %s at %s (in repository) => %s (on file system).", mount[0], mount[1], ap)
         bb = Basic(ap)
         if (not bb.exists()) or (not bb.validate()):
-            log.info("mounting '%s' to '%s'" % (mount[0], mount[1]))
+            log.info("mounting '%s' to '%s'", mount[0], mount[1])
             try:
                 setMountPoint(mount[1], mount[0])
             except Exception, e:
-                log.warn("Mount failed for " + `mount[1]`, exc_info = e)
+                log.warn("Mount failed for %r", mount[1], exc_info = e)

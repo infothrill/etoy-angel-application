@@ -49,7 +49,7 @@ def updateResourceFromClones(resource, cloneList):
         except KeyboardInterrupt:
             raise
         except Exception, e:
-            log.info("Failed to update local resource from clone: " + clone.toURI(),  exc_info = e)
+            log.info("Failed to update local resource from clone: %s", clone.toURI(),  exc_info = e)
     assert False, "Failed to update local resource %s from clone list." % resource.fp.path
         
 
@@ -121,7 +121,7 @@ def removeUnreferencedChildren(resource):
     storedChildren = resource.findChildren("1") 
     for (child, path) in storedChildren:
         if not linkedChildren.has_key(child.resourceName()):
-            log.info("unlinking: " + `child`)
+            log.info("unlinking: %r", child)
             child.remove()
     
 
@@ -141,7 +141,7 @@ def updateResource(lresource):
     # it again in order to create/update the local clone.
     # TODO: optimize!!!
     if cloneLists.good == []:
-        log.info("no valid clones found for " + lresource.fp.path)
+        log.info("no valid clones found for %s", lresource.fp.path)
     else:
         updateResourceFromClones(lresource, cloneLists.good)
 
@@ -151,8 +151,8 @@ def updateResource(lresource):
         if lresource.validate():
             return True
         else:
-            log.warn("Resource was not valid after update: " + lresource.fp.path)
+            log.warn("Resource was not valid after update: %s", lresource.fp.path)
             return False
     else:
-        log.warn("update did not create local resource for " + lresource.fp.path)
+        log.warn("update did not create local resource for %s", lresource.fp.path)
         return False
