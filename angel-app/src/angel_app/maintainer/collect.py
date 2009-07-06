@@ -9,6 +9,7 @@ from angel_app.resource.remote.exceptions import CloneError
 import copy
 import itertools
 import random
+import socket
 
 log = getLogger(__name__)
 AngelConfig = config.getConfig()
@@ -278,11 +279,20 @@ def iterateClones(lresource, cloneSeedList, publicKeyString, resourceID):
     return cl
     
 def eliminateSelfReferences(clones):
-    selfReferences = ["localhost", "127.0.0.1", AngelConfig.get("maintainer","nodename")]
+    """
+    Takes a list of clones and filters out clones that seemingly refer to
+    the local node. This is done by comparing the clone.host with a list
+    of hardcoded names and a the IP addresses that the nodename refers to 
+    """
+    selfNodeName = AngelConfig.get("maintainer","nodename")
+    selfReferences = ["localhost", "127.0.0.1", "::1", selfNodeName]
+    try:
+        selfReferences.extend( [res[4][0] for res in socket.getaddrinfo(selfNodeName, None)] )
+    except Exception: # allow DNS lookup to fail
+        pass
     return [cc for cc in clones if cc.host not in selfReferences]
 
 def eliminateDNSDoubles(clones):
-    import socket
     def isNumericAddress(address):
         "Test if address is a numeric ip address"
         for family in [ socket.AF_INET, socket.AF_INET6 ]:
