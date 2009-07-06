@@ -292,7 +292,30 @@ def eliminateSelfReferences(clones):
         pass
     return [cc for cc in clones if cc.host not in selfReferences]
 
+def resolve(hostname):
+    """
+    helper method to resolve a hostname and return a list of IPs or the empty
+    list
+
+    @param hostname: hostname
+    """
+    try:
+        return [ res[4][0] for res in socket.getaddrinfo(hostname, None) ]
+    except Exception:
+        pass
+    return []
+
 def eliminateDNSDoubles(clones):
+    """
+    awkward internet. Here we _try_ to filter out clone doubles that refer to
+    the same node on the network by
+     a- getting rid of clones with IP addresses for which we have a hostname
+     b- resolving all hostnames and see if they point to the same IPs
+    
+    Note: this should work fine with multiple dns records (round robin). untested.
+
+    @param clones: list of clones
+    """
     def isNumericAddress(address):
         "Test if address is a numeric ip address"
         for family in [ socket.AF_INET, socket.AF_INET6 ]:
@@ -305,16 +328,25 @@ def eliminateDNSDoubles(clones):
     
     if len(clones) <= 1:
         return clones
+
     allhostnames = [c.getHost() for c in clones if not isNumericAddress(c.getHost())]
     resolved_ips = []
     for hostname in allhostnames:
-        try:
-            resolved_ips.extend([res[4][0] for res in socket.getaddrinfo(hostname, None)])
-        except Exception:
-            #log.debug("DNS lookup failed for hostname '%s'" % hostname, exc_info = e)
-            pass
+        resolved_ips.extend( resolve(hostname) )
 
-    result = [cc for cc in clones if cc.host not in resolved_ips]
+    result = []
+    seen = []
+    for cc in clones:
+        if cc.getHost() not in resolved_ips:
+            ips = resolve(cc.getHost())
+            if len(ips) > 0:
+                foo = [ ip for ip in ips if ip not in seen ]                
+                if len(foo) > 0:
+                    seen.extend(ips)
+                    result.append(cc)
+            else:
+                seen.extend(cc.getHost())
+                result.append(cc)
     numeliminated = len(clones) - len(result)
     if numeliminated > 0:
         log.debug("eliminated %d clone(s) w.r.t. DNS/IP", numeliminated)
