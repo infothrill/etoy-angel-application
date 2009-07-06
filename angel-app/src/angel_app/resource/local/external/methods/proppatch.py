@@ -43,6 +43,8 @@ from angel_app import elements
 from angel_app.log import getLogger
 from angel_app.resource.remote.clone import Clone
 from angel_app.maintainer import collect
+from angel_app.maintainer.collect import ValidateClone
+from angel_app.maintainer.collect import eliminateSelfReferences
 
 log = getLogger(__name__)
 
@@ -174,11 +176,16 @@ def defaultHandler(property, store):
             store.set(property)
         return responsecode.OK
 
-    except ValueError, err:
+    except ValueError, e:
         return Failure(exc_value=HTTPError(
                                 StatusResponse(
-                                   responsecode.BAD_REQUEST, str(err))))
-                
+                                   responsecode.BAD_REQUEST, str(e))))
+    except Exception, e:
+        log.error("Unknown problem in propatch", exc_info = e)
+        return Failure(exc_value=HTTPError(
+                                StatusResponse(
+                                   responsecode.BAD_REQUEST, str(e))))
+
 
 def isIPv6(ip_string):
     """checks if the given string is an IPv6 address"""
@@ -189,7 +196,7 @@ def isIPv6(ip_string):
     return True
 
 
-def pingBack(clone, request, publicKeyString, resourceID):  
+def pingBack(clone, request, publicKeyString, resourceID, lresource):
     """
     Determine if the clone as advertised in the PROPPATCH request is reachable.
     
@@ -198,6 +205,13 @@ def pingBack(clone, request, publicKeyString, resourceID):
     
     @return the (potentially modified) clone, if it's reachable, None otherwise
     """
+    log.debug("pingBack(%r) called.", clone)
+    clones = eliminateSelfReferences([clone]) # get rid of pingBacks to self!
+    if len(clones) < 1:
+        return None
+    else:
+        clone = clones[0]
+    del clones
     if not clone.ping() or not clone.exists():
         dns_resolved_ips = []
         try:
@@ -222,12 +236,11 @@ def pingBack(clone, request, publicKeyString, resourceID):
         else:
             log.info("Invalid PROPPATCH request. Can't pingBack() to clone at: %r. NOT falling back to IP '%s', because nodename already resolves to it.", clone, ip_address)
             return None
-            
     
-    if not collect.acceptable(clone, publicKeyString, resourceID):
+    validate = ValidateClone(lresource, publicKeyString, resourceID)
+    if not validate(clone):
         log.info("Invalid PROPPATCH request. Invalid data for clone at: %r", clone)
-        return None  
-          
+        return None          
     return clone 
 
 def failWith(errorMessage = ""):
@@ -235,7 +248,7 @@ def failWith(errorMessage = ""):
     response = StatusResponse(responsecode.BAD_REQUEST, errorMessage)
     raise HTTPError(response)
             
-def cloneHandler(property, store, request, resource):
+def cloneHandler(property, store, request, lresource):
     """
     The host from which the request originates must have access to a local clone,
     store if we want.
@@ -255,7 +268,7 @@ def cloneHandler(property, store, request, resource):
         
     newClone = newClones[0]
 
-    newClone = pingBack(newClone, request, resource.publicKeyString(), resource.resourceID())
+    newClone = pingBack(newClone, request, lresource.publicKeyString(), lresource.resourceID(), lresource)
     
     if not newClone:
         error = "Can't connect to you. I will ignore you."
