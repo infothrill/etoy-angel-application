@@ -149,6 +149,7 @@ class Resource(object):
             size = long(f.getheader('Content-Length'))
             callbacks.append(RateLimit(size, MAX_DOWNLOAD_SPEED))
             BUFSIZE = HTTP_BUFSIZE
+            log.debug("downloading clone %r to compute a digest (size %d)", self, size)
         elif f.__class__.__name__ == 'file':
             size = os.fstat(f.fileno())[stat.ST_SIZE]
         else:
