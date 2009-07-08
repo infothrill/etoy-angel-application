@@ -1,3 +1,12 @@
+0.4.5 XXXXXXXXXXXXX
+
+ * optimized PROPPATCH: do not pingBack() to self
+ * optimized PROPPATCH: use byte range based validation instead of full
+   validation
+ * optimized clone resolution: resolve IP of local nodename, resolve all clone
+   hostnames and check for IP doubles 
+
+
 0.4.4 July 4 2009
 
 This release introduces major speed improvements in the maintenance algorithm
