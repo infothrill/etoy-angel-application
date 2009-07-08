@@ -1,4 +1,4 @@
-
+#!/usr/bin/env python
 
 def main():
     import angel_app.proc.maintainer

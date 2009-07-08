@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 """
 Master process. Responsible for starting all relevant angel-app components
 (presenter, provider, maintainer), does the logging as well.

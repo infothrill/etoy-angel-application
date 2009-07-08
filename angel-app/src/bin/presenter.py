@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 """
 DAV server that runs on the 'internal' interface -- i.e. the UI.
 This guy is safe and has access to the secret key(s). I.e. it 
