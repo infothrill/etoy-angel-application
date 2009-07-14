@@ -36,7 +36,6 @@ def readResponseIntoFile(resource, referenceClone):
     safe = t.open(resource.fp.path, 'wb')
     stream = referenceClone.open()
     size = long(stream.getheader('Content-Length'))
-    log.debug("downloading reference clone %r (%d bytes)", referenceClone, size)
     callbacks = [ safe.write, RateLimit(size, MAX_DOWNLOAD_SPEED) ]
     try:
         numbytesread = bufferedReadLoop(stream.read, 4096, size, callbacks)
@@ -74,5 +73,7 @@ def broadCastAddress(localResource):
     """
     Broadcast availability of local clone to remote destinations.
     """
+    if not cfg.getboolean('provider', 'enable'):
+        return # pointless to broadcast if we don't serve the data
     for clone in localResource.clones():
         clone.announce(localResource) # will not fail, as defined!
