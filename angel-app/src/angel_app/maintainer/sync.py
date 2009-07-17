@@ -68,6 +68,30 @@ def updateLocal(resource, referenceClone):
     updateMetaData(resource, referenceClone)  
     
 
+def _parallelBroadcast(localResource):
+    """
+    this will broadcast to all clones in parallel. Internally forks()!
+    @param localResource: the local resource
+    """
+    class LocalResourceBroadCaster(object):
+        def __init__(self, localResource):
+            self.res = localResource
+        def __call__(self, clone):
+            clone.announce(self.res) # will not fail, as defined!
+            return 0
+    broadcaster = LocalResourceBroadCaster(localResource)
+    from angel_app.contrib.delegate import parallelize
+    #print localResource.clones()
+    
+    parallelize(broadcaster, localResource.clones(), children=6) # max 6 forks() at a time
+
+def _sequentialBroadcast(localResource):
+    """
+    this will broadcast to all clones in sequential order.
+    @param localResource: the local resource
+    """
+    for clone in localResource.clones():
+        clone.announce(localResource) # will not fail, as defined!
 
 def broadCastAddress(localResource):
     """
@@ -75,5 +99,12 @@ def broadCastAddress(localResource):
     """
     if not cfg.getboolean('provider', 'enable'):
         return # pointless to broadcast if we don't serve the data
-    for clone in localResource.clones():
-        clone.announce(localResource) # will not fail, as defined!
+
+    if len(localResource.clones()) < 1:
+        return # no one to broadcast to
+    
+    import time
+    t1 = time.time()
+    _parallelBroadcast(localResource)
+    log.debug("speed: broadcast took %s sec", str(time.time() - t1))
+    
