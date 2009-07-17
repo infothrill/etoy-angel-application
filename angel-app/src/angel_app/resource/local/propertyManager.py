@@ -88,17 +88,26 @@ def makeResourceID(relativePath = ""):
     """
     return relativePath + `time.gmtime()`
 
-# a map from xml-elements corresponding to metadata fields to functions taking a resource 
-# and returning appropriate values for those metadata fields
+# A map from xml-elements corresponding to metadata fields to functions taking a resource 
+# and returning appropriate values for those metadata fields.
+# We don't use lambda functions to avoid problems when pickling
+def _revision_qname(x): elements.Revision.fromString("0")
+def _encrypted_qname(x): elements.Encrypted.fromString("0")
+def _pubkeystring_qname(x): elements.PublicKeyString.fromString(getOnePublicKey(x.resource))
+def _contentsignature_qname(x): elements.ContentSignature.fromString("")
+def _metadatasignature_qname(x): elements.MetaDataSignature.fromString("")
+def _resourceid_qname(x): elements.ResourceID.fromString(makeResourceID(x.resource.relativePath()))
+def _clones_qname(x): inheritClonesElement(x.resource)
+def _children_qname(x): elements.Children()
 defaultMetaData = {
-                   elements.Revision.qname()           : lambda x: elements.Revision.fromString("0"),
-                   elements.Encrypted.qname()          : lambda x: elements.Encrypted.fromString("0"),
-                   elements.PublicKeyString.qname()    : lambda x: elements.PublicKeyString.fromString(getOnePublicKey(x.resource)),
-                   elements.ContentSignature.qname()   : lambda x: elements.ContentSignature.fromString(""),
-                   elements.MetaDataSignature.qname()  : lambda x: elements.MetaDataSignature.fromString(""),
-                   elements.ResourceID.qname()         : lambda x: elements.ResourceID.fromString(makeResourceID(x.resource.relativePath())),
-                   elements.Clones.qname()             : lambda x: inheritClonesElement(x.resource),
-                   elements.Children.qname()           : lambda x: elements.Children()
+                   elements.Revision.qname()           : _revision_qname,
+                   elements.Encrypted.qname()          : _encrypted_qname,
+                   elements.PublicKeyString.qname()    : _pubkeystring_qname,
+                   elements.ContentSignature.qname()   : _contentsignature_qname,
+                   elements.MetaDataSignature.qname()  : _metadatasignature_qname,
+                   elements.ResourceID.qname()         : _resourceid_qname,
+                   elements.Clones.qname()             : _clones_qname,
+                   elements.Children.qname()           : _children_qname
                    }
 
 def getDefaultPropertyManager(_resource):
@@ -197,5 +206,3 @@ class PropertyManager(object):
         self.assertExistence()
         
         self.store.set(element)
-            
-            
