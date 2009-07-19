@@ -91,14 +91,14 @@ def makeResourceID(relativePath = ""):
 # A map from xml-elements corresponding to metadata fields to functions taking a resource 
 # and returning appropriate values for those metadata fields.
 # We don't use lambda functions to avoid problems when pickling
-def _revision_qname(x): elements.Revision.fromString("0")
-def _encrypted_qname(x): elements.Encrypted.fromString("0")
-def _pubkeystring_qname(x): elements.PublicKeyString.fromString(getOnePublicKey(x.resource))
-def _contentsignature_qname(x): elements.ContentSignature.fromString("")
-def _metadatasignature_qname(x): elements.MetaDataSignature.fromString("")
-def _resourceid_qname(x): elements.ResourceID.fromString(makeResourceID(x.resource.relativePath()))
-def _clones_qname(x): inheritClonesElement(x.resource)
-def _children_qname(x): elements.Children()
+def _revision_qname(x): return elements.Revision.fromString("0")
+def _encrypted_qname(x): return elements.Encrypted.fromString("0")
+def _pubkeystring_qname(x): return elements.PublicKeyString.fromString(getOnePublicKey(x.resource))
+def _contentsignature_qname(x): return elements.ContentSignature.fromString("")
+def _metadatasignature_qname(x): return elements.MetaDataSignature.fromString("")
+def _resourceid_qname(x): return elements.ResourceID.fromString(makeResourceID(x.resource.relativePath()))
+def _clones_qname(x): return inheritClonesElement(x.resource)
+def _children_qname(x): return elements.Children()
 defaultMetaData = {
                    elements.Revision.qname()           : _revision_qname,
                    elements.Encrypted.qname()          : _encrypted_qname,
