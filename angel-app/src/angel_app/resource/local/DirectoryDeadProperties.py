@@ -105,13 +105,18 @@ class DirectoryDeadProperties(object):
         # should not crash.
         # TODO: optimize?
         # Therefore, even if slow, we try get() in order to figure out contains():
-        try:
-            self.get(qname)
-        except Exception, e:
-            log.debug("Error on contains(%r) -> assume non existant", qname, exc_info = e)
-            return False
+        self.__sanitize()
+        fileNames = os.listdir(self.metadataPath.path)
+        if qname[1] in fileNames:
+            try:
+                self.get(qname)
+            except Exception, e:
+                log.debug("Error on contains(%r) -> assume non existant", qname, exc_info = e)
+                return False
+            else:
+                return True
         else:
-            return True
+            return False
 
     def list(self):
         """
