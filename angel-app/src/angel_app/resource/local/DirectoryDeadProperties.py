@@ -84,7 +84,7 @@ class DirectoryDeadProperties(object):
             f.close()
         except Exception, e:
             transaction.cleanup()
-            log.warn("A problem occured while saving a property:", exc_info = e)
+            log.warn("A problem occured while saving property %s:", property.qname(), exc_info = e)
             raise
         else:
             transaction.commit()
@@ -100,9 +100,18 @@ class DirectoryDeadProperties(object):
         """
         @param qname (see twisted.web2.dav.davxml) of the property to look for.
         """
-        self.__sanitize()
-        fileNames = os.listdir(self.metadataPath.path)
-        return (qname[1] in fileNames)
+        # hm, if the pickle file is corrupt, we should not return true...
+        # I think it is good style to define that if contains() is true, get()
+        # should not crash.
+        # TODO: optimize?
+        # Therefore, even if slow, we try get() in order to figure out contains():
+        try:
+            self.get(qname)
+        except Exception, e:
+            log.debug("Error on contains(%r) -> assume non existant", qname, exc_info = e)
+            return False
+        else:
+            return True
 
     def list(self):
         """
