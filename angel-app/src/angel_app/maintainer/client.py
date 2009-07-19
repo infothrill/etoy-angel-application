@@ -72,7 +72,10 @@ def traverseResourceTree(sleepTime):
     def timedValidation(resource, dummy = None):
         log.info("sleeping for %f sec", sleepTime)
         time.sleep(sleepTime)
-        return (inspectResource(resource), None)
+        t1 = time.time()
+        res = (inspectResource(resource), None)
+        log.debug("speed: inspection took %s sec", str( time.time() - t1 ))
+        return res
     
     log.growl("User", "MAINTENANCE PROCESS", "Starting resource tree traversal.")
      
