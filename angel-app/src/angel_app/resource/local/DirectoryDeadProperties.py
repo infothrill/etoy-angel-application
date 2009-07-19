@@ -1,13 +1,16 @@
-from angel_app.config.config import getConfig
-from angel_app.resource.IDeadPropertyStore import IDeadPropertyStore
-from zope.interface import implements
 import os
-from twisted.python.filepath import FilePath
-from angel_app.log import getLogger
 import cPickle
 import shutil
-log = getLogger(__name__)
 
+from zope.interface import implements
+from twisted.python.filepath import FilePath
+
+from angel_app.config.config import getConfig
+from angel_app.resource.IDeadPropertyStore import IDeadPropertyStore
+from angel_app.singlefiletransaction import SingleFileTransaction
+from angel_app.log import getLogger
+
+log = getLogger(__name__)
 
 # the root of the angel-app directory tree
 home = getConfig().get("common","angelhome")
@@ -74,11 +77,17 @@ class DirectoryDeadProperties(object):
         @param property -- an instance of twisted.web2.dav.davxml.WebDAVElement
         """
         self.__sanitize()
-        cPickle.dump(
-                     property, 
-                     open(
-                          self._fileNameFor(property.qname()), 
-                          "w"))
+        transaction = SingleFileTransaction()
+        try:
+            f = transaction.open(self._fileNameFor(property.qname()), 'wb')
+            cPickle.dump(property, f)
+            f.close()
+        except Exception, e:
+            transaction.cleanup()
+            log.warn("A problem occured while saving a property:", exc_info = e)
+            raise
+        else:
+            transaction.commit()
         
     def delete(self, qname):
         """
