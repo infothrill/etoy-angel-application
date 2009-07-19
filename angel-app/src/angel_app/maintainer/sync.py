@@ -2,6 +2,7 @@
 Routines for synchronizing a local clone with a _single_ remote peer.
 """
 import os
+import time
 
 from angel_app import elements
 from angel_app.log import getLogger
@@ -68,43 +69,57 @@ def updateLocal(resource, referenceClone):
     updateMetaData(resource, referenceClone)  
     
 
-def _parallelBroadcast(localResource):
+def _parallelBroadcast(localResource, clones):
     """
-    this will broadcast to all clones in parallel. Internally forks()!
+    this will broadcast to all clones in parallel. Internally forks() and thus
+    might not work in some situations (e.g. GUI thread)
     @param localResource: the local resource
+    @param clones: the clones to be patched
     """
-    class LocalResourceBroadCaster(object):
+    class _LocalResourceBroadCaster(object):
+        """
+        Class to be used as a callable callback for broadcasting the local
+        resource to the given remote clone. (Could also be done with a closure)
+        """
         def __init__(self, localResource):
             self.res = localResource
         def __call__(self, clone):
-            clone.announce(self.res) # will not fail, as defined!
+            clone.announce(self.res) # should never fail, as defined!
             return 0
-    broadcaster = LocalResourceBroadCaster(localResource)
-    from angel_app.contrib.delegate import parallelize
-    #print localResource.clones()
-    
-    parallelize(broadcaster, localResource.clones(), children=6) # max 6 forks() at a time
 
-def _sequentialBroadcast(localResource):
+    broadcaster = _LocalResourceBroadCaster(localResource)
+    from angel_app.contrib.delegate import parallelize
+    
+    parallelize(broadcaster, clones, children=6) # max 6 forks() at a time
+
+def _sequentialBroadcast(localResource, clones):
     """
     this will broadcast to all clones in sequential order.
     @param localResource: the local resource
+    @param clones: the clones to be patched
     """
-    for clone in localResource.clones():
+    for clone in clones:
         clone.announce(localResource) # will not fail, as defined!
 
 def broadCastAddress(localResource):
+    """
+    Broadcast availability of local clone to remote destinations.
+
+    This method does not optimize in any way and broadcasts to all known
+    clones of the local resource (no inheritance of clones!).
+    """
+    return broadCastAddressToClones(localResource, localResource.clones())
+    
+def broadCastAddressToClones(localResource, targetClones):
     """
     Broadcast availability of local clone to remote destinations.
     """
     if not cfg.getboolean('provider', 'enable'):
         return # pointless to broadcast if we don't serve the data
 
-    if len(localResource.clones()) < 1:
+    if len(targetClones) < 1:
         return # no one to broadcast to
     
-    import time
     t1 = time.time()
-    _parallelBroadcast(localResource)
+    _parallelBroadcast(localResource, targetClones)
     log.debug("speed: broadcast took %s sec", str(time.time() - t1))
-    
