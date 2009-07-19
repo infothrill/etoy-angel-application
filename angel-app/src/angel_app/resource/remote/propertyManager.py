@@ -108,9 +108,9 @@ class PropertyManager(object):
 
         if resp.status != responsecode.MULTI_STATUS:
             if resp.status == responsecode.NOT_FOUND:
-                raise CloneNotFoundError("Clone %s not found, response code is: %s" % (self, `resp.status`))
+                raise CloneNotFoundError("Clone with url %s not found, response code is: %r" % (self.remote, resp.status))
             else:
-                raise CloneError("must receive a MULTI_STATUS response for PROPFIND, otherwise something's wrong, got: " + `resp.status`)
+                raise CloneError("Clone with url %s didn't send a MULTI_STATUS response for PROPFIND, otherwise something's wrong, got: %r" % (self.remote, resp.status))
 
 
         return davxml.WebDAVDocument.fromString(resp.read())
