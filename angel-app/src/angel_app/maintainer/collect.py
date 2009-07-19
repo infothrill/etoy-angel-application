@@ -2,14 +2,14 @@
 Routines for obtaining a best guess about the current replication state of a clone. 
 """
 
+import itertools
+import random
+import socket
 
 from angel_app.config import config
 from angel_app.log import getLogger
 from angel_app.resource.remote.exceptions import CloneError
 import copy
-import itertools
-import random
-import socket
 
 log = getLogger(__name__)
 AngelConfig = config.getConfig()
@@ -278,6 +278,16 @@ def iterateClones(lresource, cloneSeedList, publicKeyString, resourceID):
 
     return cl
     
+def anyin(totest, reference):
+    """
+    Tests wether any of the elements in iterable 'totest' is in container 'reference'.
+    @param totest: any iterable
+    @param reference: container type (e.g. implements __contains__)
+    """
+    for element in totest:
+        if element in reference: return True
+    return False
+
 def eliminateSelfReferences(clones):
     """
     Takes a list of clones and filters out clones that seemingly refer to
@@ -290,7 +300,7 @@ def eliminateSelfReferences(clones):
         selfReferences.extend( [res[4][0] for res in socket.getaddrinfo(selfNodeName, None)] )
     except Exception: # allow DNS lookup to fail
         pass
-    return [cc for cc in clones if cc.host not in selfReferences]
+    return [cc for cc in clones if cc.host not in selfReferences and not anyin(resolve(cc.host), selfReferences)]
 
 def resolve(hostname):
     """
