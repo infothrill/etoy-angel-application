@@ -83,6 +83,8 @@ def getDefaultConfigObj():
     desktopnotification = True
     # maximum download speed in kiB, 0 disables limit
     maxdownloadspeed_kib = 0
+    # wether to use forking to optimize network connectivity:
+    workerforking = False
 
     [presenter]
     # presenter provides priviledged DAV support on localhost (=> Finder) 
@@ -146,6 +148,7 @@ def _configspec_lines():
     consolelogformat = string
     desktopnotification = boolean(default=True)
     maxdownloadspeed_kib = integer(min=0,default=0)
+    workerforking = boolean(default=True)
     
     [presenter]
     enable = boolean(default=True)

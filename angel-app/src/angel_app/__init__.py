@@ -28,7 +28,8 @@ all = [
        "server", 
        "singlefiletransaction",
        "version",
-       "wx"
+       "wx",
+       "worker"
        ]
 
 # register xml elements with parser. see task #3500

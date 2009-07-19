@@ -10,6 +10,7 @@ from angel_app.singlefiletransaction import SingleFileTransaction
 from angel_app.io import RateLimit
 from angel_app.io import bufferedReadLoop
 from angel_app.config.config import getConfig
+from angel_app.worker import dowork
 
 cfg = getConfig()
 MAX_DOWNLOAD_SPEED = cfg.getint('common', 'maxdownloadspeed_kib') * 1024 # internally handled in bytes
@@ -69,38 +70,6 @@ def updateLocal(resource, referenceClone):
     updateMetaData(resource, referenceClone)  
     
 
-def _parallelBroadcast(localResource, clones):
-    """
-    this will broadcast to all clones in parallel. Internally forks() and thus
-    might not work in some situations (e.g. GUI thread)
-    @param localResource: the local resource
-    @param clones: the clones to be patched
-    """
-    class _LocalResourceBroadCaster(object):
-        """
-        Class to be used as a callable callback for broadcasting the local
-        resource to the given remote clone. (Could also be done with a closure)
-        """
-        def __init__(self, localResource):
-            self.res = localResource
-        def __call__(self, clone):
-            clone.announce(self.res) # should never fail, as defined!
-            return 0
-
-    broadcaster = _LocalResourceBroadCaster(localResource)
-    from angel_app.contrib.delegate import parallelize
-    
-    parallelize(broadcaster, clones, children=6) # max 6 forks() at a time
-
-def _sequentialBroadcast(localResource, clones):
-    """
-    this will broadcast to all clones in sequential order.
-    @param localResource: the local resource
-    @param clones: the clones to be patched
-    """
-    for clone in clones:
-        clone.announce(localResource) # will not fail, as defined!
-
 def broadCastAddress(localResource):
     """
     Broadcast availability of local clone to remote destinations.
@@ -109,6 +78,7 @@ def broadCastAddress(localResource):
     clones of the local resource (no inheritance of clones!).
     """
     return broadCastAddressToClones(localResource, localResource.clones())
+
     
 def broadCastAddressToClones(localResource, targetClones):
     """
@@ -121,5 +91,19 @@ def broadCastAddressToClones(localResource, targetClones):
         return # no one to broadcast to
     
     t1 = time.time()
-    _parallelBroadcast(localResource, targetClones)
+
+    class _LocalResourceBroadCaster(object):
+        """
+        Class to be used as a callable callback for broadcasting the local
+        resource to the given remote clone. (Could also be done with a closure)
+        """
+        def __init__(self, localResource):
+            self.res = localResource
+        def __call__(self, clone):
+            clone.announce(self.res) # should never fail, as defined!
+            return 0
+
+    broadcaster = _LocalResourceBroadCaster(localResource)
+    dowork(broadcaster, targetClones)
+
     log.debug("speed: broadcast took %s sec", str(time.time() - t1))
