@@ -86,21 +86,20 @@ def discoverResourceID(af):
 
 def discoverSeedClones(af):
     """
-    Either return the resource's clones directly (if they exist), or inherit them from the parent.
+    Either return the resource's clones directly (if they exist), or inherit
+    them from the parent.
+    
+    @return: tuple (seedClones, inheritedClones)
     """
     seedclones = []
     if af.exists():
         seedclones = af.clones()
 
-    # we are not allowed to assume that getting the clone list from a local
-    # clone results in a good, usable clonelist, so we try to avoid having
-    # an empty clone list (could happen if local repository/metadata got corrupt)
-    if len(seedclones) == 0:
-        # TODO: maybe always extend seedclones with inherotClones() ?
-        from angel_app.resource.local.propertyManager import inheritClones
-        return inheritClones(af)
-    else:
-        return seedclones
+    # We are not allowed to assume that getting the clone list from a local
+    # clone results in a good, usable clonelist, so we always try to avoid having
+    # an empty clone list by always inheriting clones additionally.
+    from angel_app.resource.local.propertyManager import inheritClones
+    return (seedclones, inheritClones(af))
     
 def discoverPublicKey(af):
     if af.exists():
@@ -129,9 +128,10 @@ def updateResource(lresource):
     """
     Inspect the resource, updating it if necessary.
     """
+    (thisClones, inheritedClones) = discoverSeedClones(lresource) 
     cloneLists = collect.iterateClones(
                       lresource,
-                      discoverSeedClones(lresource), 
+                      thisClones + inheritedClones,
                       discoverPublicKey(lresource), 
                       discoverResourceID(lresource))
    
@@ -141,11 +141,11 @@ def updateResource(lresource):
     # it again in order to create/update the local clone.
     # TODO: optimize!!!
     if cloneLists.good == []:
-        log.info("no valid clones found for %s", lresource.fp.path)
+        log.info("no good clones found for %s", lresource.fp.path)
     else:
         updateResourceFromClones(lresource, cloneLists.good)
 
-    if lresource.exists():        
+    if lresource.exists():
         storeClones(lresource, cloneLists.good, cloneLists.old + cloneLists.unreachable)
         removeUnreferencedChildren(lresource)
         if lresource.validate():
