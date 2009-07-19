@@ -2,6 +2,8 @@
 Routines for updating a local resource from _all_ accessible remote clones.
 """
 
+from itertools import chain
+
 from angel_app.log import getLogger
 from angel_app.maintainer import collect
 from angel_app.maintainer import sync
@@ -127,6 +129,7 @@ def removeUnreferencedChildren(resource):
 def updateResource(lresource):
     """
     Inspect the resource, updating it if necessary.
+    Returns a tuple containing (isValid, newGoodClones)
     """
     (thisClones, inheritedClones) = discoverSeedClones(lresource) 
     cloneLists = collect.iterateClones(
@@ -149,10 +152,19 @@ def updateResource(lresource):
         storeClones(lresource, cloneLists.good, cloneLists.old + cloneLists.unreachable)
         removeUnreferencedChildren(lresource)
         if lresource.validate():
-            return True
+            # Gather the clones to which we want to announce this local resource
+            # by taking good, old and bad clones and announcing ourselves to them
+            # if they don't know about us yet:
+            broadcastClones = []
+            lclone = lresource.makeClone()
+            log.debug("lresource is valid: %s, collecting clones for broadcast...", lresource)
+            for c in chain(cloneLists.good, cloneLists.old, cloneLists.bad):
+                if lclone not in c.cloneList():
+                    broadcastClones.append(c)
+            return (True, collect.eliminateDNSDoubles(collect.eliminateSelfReferences(broadcastClones)))
         else:
             log.warn("Resource was not valid after update: %s", lresource.fp.path)
-            return False
+            return (False, [])
     else:
         log.warn("update did not create local resource for %s", lresource.fp.path)
-        return False
+        return (False, [])

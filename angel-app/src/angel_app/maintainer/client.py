@@ -25,8 +25,10 @@ def inspectResource(af):
     """
     log.info("inspecting resource: %s", af.fp.path)
     try:
-        update.updateResource(af)
-        sync.broadCastAddress(af)
+        (isValid, broadcastClones) = update.updateResource(af)
+        if isValid:
+            # broadcast to previously unknown clones
+            sync.broadCastAddressToClones(af, broadcastClones)
         return True
     except KeyboardInterrupt:
         raise

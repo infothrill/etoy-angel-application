@@ -6,10 +6,11 @@ import itertools
 import random
 import socket
 
+#from angel_app.contrib.delegate import parallelize
+from angel_app.worker import dowork
 from angel_app.config import config
 from angel_app.log import getLogger
-from angel_app.resource.remote.exceptions import CloneError
-import copy
+#from angel_app.resource.remote.exceptions import CloneError
 
 log = getLogger(__name__)
 AngelConfig = config.getConfig()
@@ -18,8 +19,12 @@ maxclones = AngelConfig.getint("common","maxclones")
 class CloneLists(object):
     def __init__(self):
         self.good = []
-        self.old = []
+        self.old = [] # valid but outdated
         self.unreachable = []
+        self.bad = [] # reachable but broken
+
+    def __str__(self):
+        return "good: %r, old: %r, unreachable: %r, bad: %r" % (self.good, self.old, self.unreachable, self.bad)
 
 def accessible(clone):
     """
@@ -104,8 +109,8 @@ def acceptableChunk(lresource, clone, publicKeyString, resourceID):
 
 class ValidateClone(object):
     """
-    A class to be used as a filter on a list of clones of which we need to
-    figure out wether the members are acceptable for 
+    A class to be used as a callback to filter a list of clones of which we
+    need to figure out wether the members are acceptable for:
      a- syncing to a non-existant/broken local resource
      b- keeping them as a meta property in the clonelist
     """
@@ -140,78 +145,79 @@ class ValidateClone(object):
         else:
             return acceptable(clone, self.publicKeyString, self.resourceID)
 
-def cloneList(lresource, cloneSeedList, publicKeyString, resourceID):
+def basicCloneChecks(toVisit, accessibleCb, validateCb):
     """
-    @return an iterable over _unique_ (clone, reachable) pairs
+    This method is a helper to run some checks on a list of clones and return
+    the results.
     
-    @see accessible
+    @param toVisit: list of clones to check
+    @param accessibleCb: callback to check accessibility / redirects etc.
+    @param validateCb: callback to check if clone is valid
+    
+    @return: dictionary with clone as key, and dictionaries with keys 'accessible' and 'valid'
     """
+    resultMap = {}
+    if len(toVisit) < 1: return resultMap
+    accessibleResult = dowork(accessibleCb, toVisit)  # TODO: CloneError
+    log.debug("parallel accessibility check done")
+    #log.debug("%r", accessibleResult)
+    for tt in accessibleResult.itervalues(): # mark redirects as seen
+        if type(tt) != type(tuple()): # TODO: exceptions in parallelization
+            log.warn("FOO %r", exc_info = tt)
+        if tt[0] not in resultMap:
+            resultMap[tt[0]] = { 'accessible': tt[1], 'valid': False } # valid: default to false
+    toValidate = [ t[0] for t in accessibleResult.itervalues() if t[1] == True ]
+    if len(toValidate) > 0:
+        validationResult = dowork(validateCb, toValidate)
+        log.debug("parallel validation done")
+        for cc in validationResult.keys():
+            if validationResult[cc]: # valid!
+                resultMap[cc]['valid'] =  True
+    return resultMap
+
     
-    #validate = lambda clone: acceptable(clone, publicKeyString, resourceID)
+def clonesFor(lresource, cloneSeedList, publicKeyString, resourceID):
+    """
+    This method will take the local resource, combined with a list of seed clones,
+    its public key string, its id and then:
+      (1) check the validity of the seed clones (reachability+validity)
+      (2) discover unknown/new clones and run (1)
+      (3) yield unique clones for the local resource
+    The yielded clones might be accessible, unreachable, valid, invalid,
+    previously known, newly discovered etc.
+    
+    yields tuples of: (clone, accessible, valid)
+    
+    @param lresource:
+    @param cloneSeedList:
+    @param publicKeyString:
+    @param resourceID:
+    """
+    # create validation callback:
     validate = ValidateClone(lresource, publicKeyString, resourceID)
+    # before visiting clones, get rid of duplicate junk:
+    toVisit = eliminateDNSDoubles(eliminateSelfReferences(cloneSeedList))
 
-    toVisit = copy.copy(cloneSeedList)
     visited = []
-    
-    while len(toVisit) != 0:
-        
-        # pop the next clone from the queue
-        cc = toVisit[0]
-        toVisit = toVisit[1:]
-        
-        log.debug("visiting: %r", cc)
-    
-        if cc in visited:
-            # we have already looked at this clone -- don't bother with it
-            log.debug("ignoring already visited clone: %r", cc)
-            continue
 
-        # mark this clone as visited        
-        visited.append(cc) 
+    def getCloneList(clone):
+        return clone.cloneList()
 
-        # here, we may receive a redirect, which may of course be broken and fail
-        try:
-            (cc, acc) = accessible(cc)
-        except CloneError, e:
-            log.warn("Failure on clone inspection: %r (Invalid redirect?) Ignoring: %r", e, cc)          
-            continue
-
-        # if a redirect happened, mark also the new clone as visited
-        if cc not in visited:
+    while len(toVisit) > 0:
+        resultMap = basicCloneChecks(toVisit, accessible, validate)
+        toVisit = []
+        for cc in resultMap:
             visited.append(cc)
-        
-        # the clone is reachable -- check if it's good.
-        if acc and (not validate(cc)):
-            log.debug("ignoring bad clone: %r", cc)
-            continue
-        
-        if acc:
-            log.debug("accepting good clone: %r and extending clone list.", cc)
-            # clone is reachable and good -- look also at its clones:
-            toVisit += cc.cloneList()
-        else:
-            log.debug("keeping unreachable clone (it might be good eventually): %r",  cc)        
-        yield (cc, acc)
-    
+            yield( (cc, resultMap[cc]['accessible'], resultMap[cc]['valid']) )
+        # discover new clones based on valid clones:
+        validClones = [ cc for cc in resultMap if resultMap[cc]['valid'] ]
+        if len(validClones) > 0:
+            for ctocheck in eliminateDNSDoubles(eliminateSelfReferences(itertools.chain(*dowork(getCloneList, validClones).itervalues()))):
+                if ctocheck not in visited and ctocheck not in toVisit:
+                    log.debug("discovered new clone: %r", ctocheck)
+                    toVisit.append(ctocheck)
     raise StopIteration
-
-
-def cloneListPartitionReachable(cl = []):
-    """
-    Partition a list of (clone, reachable) pairs as produced by cloneList into a pair of two lists,
-    the first consisting of those that are reachable, the second consisting of those that are unreachable.
     
-    @see cloneList
-    """
-    reachable = []
-    unreachable = []
-    for (clone, reach) in cl:
-        if reach:
-            reachable.append(clone)
-        else:
-            unreachable.append(clone)
-            
-    return (reachable, unreachable)
 
 def orderByRevision(cl):
     """
@@ -247,8 +253,6 @@ def orderByRevision(cl):
         
     return groups
     
-    
-    
 
 def iterateClones(lresource, cloneSeedList, publicKeyString, resourceID):
     """
@@ -260,24 +264,25 @@ def iterateClones(lresource, cloneSeedList, publicKeyString, resourceID):
     @return a tuple of ([the list of valid clones], [the list of checked clones])
     """  
     cl = CloneLists()
-    
-    notBadClones = cloneList(lresource, cloneSeedList, publicKeyString, resourceID)
-    (goodClones, unreachableClones) = cloneListPartitionReachable(notBadClones)
-    
-    cl.unreachable = unreachableClones
-    
-    orderedGoodClones = [oc for oc in orderByRevision(goodClones)]
+    okClones = [] # might be old
+    for (c, reachable, valid) in clonesFor(lresource, cloneSeedList, publicKeyString, resourceID):
+        if not reachable: cl.unreachable.append(c)
+        elif valid: okClones.append(c)
+        else: cl.bad.append(c)
+
+    # take okClones and sort by revision:
+    orderedGoodClones = [oc for oc in orderByRevision(okClones)]
     if len(orderedGoodClones) > 0:
         # the good clones are the newest clones
         cl.good = [gc for gc in orderedGoodClones[0]]
-    for gc in orderByRevision(goodClones)[1:]:
+    for gc in orderByRevision(okClones)[1:]:
         # append the rest to the old clones
         cl.old.extend(gc)
 
-    log.info("good clones: %r", cl.good)
+    log.debug("clonesFor(%s): %s", lresource, cl)
 
     return cl
-    
+
 def anyin(totest, reference):
     """
     Tests wether any of the elements in iterable 'totest' is in container 'reference'.
@@ -380,10 +385,12 @@ def clonesToStore(goodClones, unreachableClones):
     """
     
     # set up a queue of good clones and unreachable clones, both in randomized sequence
-    gc = copy.copy(eliminateDNSDoubles(eliminateSelfReferences(goodClones)))
+    #gc = copy.copy(eliminateDNSDoubles(eliminateSelfReferences(goodClones))) # pk: why copy?
+    gc = eliminateDNSDoubles(eliminateSelfReferences(goodClones))
     random.shuffle(gc)
     
-    uc = copy.copy(eliminateDNSDoubles(eliminateSelfReferences(unreachableClones)))
+    #uc = copy.copy(eliminateDNSDoubles(eliminateSelfReferences(unreachableClones))) # pk: why copy?
+    uc = eliminateDNSDoubles(eliminateSelfReferences(unreachableClones))
     random.shuffle(uc)
     
     clonesWeMightStore = gc + uc
