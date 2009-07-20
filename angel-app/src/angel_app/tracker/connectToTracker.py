@@ -4,6 +4,8 @@
 based on http://twistedmatrix.com/projects/web2/documentation/examples/intro/simple.py
 """
 
+import socket
+
 from angel_app.log import getLogger
 from angel_app.resource.remote.httpRemote import HTTPRemote
 from angel_app.tracker.tracker import TRACKER_PORT
@@ -15,7 +17,7 @@ def connectToTracker():
         tracker = HTTPRemote("missioneternity.org", TRACKER_PORT, "/")
         statistics = tracker.performRequestWithTimeOut("GET").read()
         return statistics
-    except:
+    except socket.error:
         return "Tracker unavailable. Try connecting later."
 
 def pingTracker():
@@ -23,6 +25,6 @@ def pingTracker():
         tracker = HTTPRemote("missioneternity.org", TRACKER_PORT, "/")
         dummyresponse = tracker.performRequestWithTimeOut("HEAD")
         return True
-    except Exception, e:
-        log.debug("Tracker ping failed", exc_info = e)
+    except socket.error:
+        log.debug("Tracker ping failed")
         return False
