@@ -169,7 +169,7 @@ def basicCloneChecks(toVisit, accessibleCb, validateCb):
     resultMap = {}
     if len(toVisit) < 1: return resultMap
     accessibleResult = dowork(accessibleCb, toVisit)  # TODO: CloneError
-    log.debug("parallel accessibility check done")
+    log.debug("accessibility check done")
     #log.debug("%r", accessibleResult)
     for tt in accessibleResult.itervalues(): # mark redirects as seen
         if type(tt) != type(tuple()): # TODO: exceptions in parallelization
@@ -179,7 +179,7 @@ def basicCloneChecks(toVisit, accessibleCb, validateCb):
     toValidate = [ t[0] for t in accessibleResult.itervalues() if t[1] == True ]
     if len(toValidate) > 0:
         validationResult = dowork(validateCb, toValidate)
-        log.debug("parallel validation done")
+        log.debug("validation done")
         for cc in validationResult.keys():
             if validationResult[cc]: # valid!
                 resultMap[cc]['valid'] =  True
