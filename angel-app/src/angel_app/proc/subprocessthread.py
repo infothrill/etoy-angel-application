@@ -15,10 +15,10 @@ from angel_app.log import getLogger
 
 log = getLogger(__name__)
 
-"""
-Class for running an external process in its own thread.
-"""
 class SubprocessThread(threading.Thread):
+    """
+    Class for running an external process in its own thread.
+    """
     def __init__(self, args = None):
         """
         Instantiate the subprocess thread and define the external command.
@@ -55,7 +55,7 @@ class SubprocessThread(threading.Thread):
         maxWait = 2 # number of seconds the subprocess is allowed to take when shutting down
         if self.isAlive():
             pid = self.proc.pid
-            log.info("================SIGNALLING SUBPROCESS %s ========================" % `pid`)
+            log.info("================SIGNALLING SUBPROCESS %r ========================", pid)
             os.kill(pid, signal.SIGTERM) # FIXME: not cross-platform
             # give it a moment to digest the signal:
             tStart = time.time()
@@ -66,10 +66,10 @@ class SubprocessThread(threading.Thread):
                 tElapsed = time.time() - tStart
             # check if it's really gone:
             if self.isAlive():
-                log.warn("================SIGNALLING SUBPROCESS HARD %s ========================" % `pid`)
+                log.warn("================SIGNALLING SUBPROCESS HARD %r ========================", pid)
                 os.kill(pid, signal.SIGKILL) # FIXME: not cross-platform
         else:
-            log.info("=========== not alive, not signalling ===============")
+            log.info("=========== not alive, not signaling ===============")
 
     def conditionalRestart(self):
         """
@@ -79,11 +79,11 @@ class SubprocessThread(threading.Thread):
             self.stop()
             self.run()
 
-"""
-Class to run the "master"-process from the GUI.
-Responsible for starting all relevant angel-app components
-(presenter, provider, maintainer), does the logging as well.
-"""
 class MasterThread(SubprocessThread):
+    """
+    Class to run the "master"-process from the GUI.
+    Responsible for starting all relevant angel-app components
+    (presenter, provider, maintainer), does the logging as well.
+    """
     def __init__(self, args = None):
         super(MasterThread, self).__init__(args = [sys.executable, "master.py", "--no-log-console"])

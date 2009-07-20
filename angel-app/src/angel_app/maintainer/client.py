@@ -72,6 +72,10 @@ def traverseResourceTree(sleepTime):
     I do one traversal of the local resource tree.
     """
     def timedValidation(resource, dummy = None):
+        """
+        Callback method for the graphwalker which validates/inspects each node
+        in the graph
+        """
         log.info("sleeping for %f sec", sleepTime)
         time.sleep(sleepTime)
         t1 = time.time()

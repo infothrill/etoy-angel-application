@@ -17,9 +17,12 @@ AngelConfig = config.getConfig()
 maxclones = AngelConfig.getint("common","maxclones")
 
 class CloneLists(object):
+    """
+    A python style struct
+    """
     def __init__(self):
         self.good = []
-        self.old = [] # valid but outdated
+        self.old = [] # valid but out-dated
         self.unreachable = []
         self.bad = [] # reachable but broken
 
@@ -104,8 +107,27 @@ def acceptableChunk(lresource, clone, publicKeyString, resourceID):
             log.info("remote clone %r is not acceptable", clone)
             return False
     except Exception, e:
+        # TODO: more specific exception catching
         log.info("Clone %s not acceptable().", clone.toURI(), exc_info = e)
         return False
+
+def canDoByteRangeValidationWith(lresource):
+    """
+    test wether the given local resource can be used to optimize validation
+    of remote clones (e.g. byte range based validation). For this, the resource
+    must be valid and not a container type resource.
+    @param lresource: local resource
+    """
+    try: # don't make inspection fail on broken local resources because we
+        # want to optimize for the good case where the local resource is valid!
+        if not lresource.isCollection():
+            if lresource.validate():
+                #log.debug("_canDoByteRangeValidationWith(): True " + `lresource`)
+                return True
+    except Exception, e:
+        log.debug("TODO: more specific exception handling", exc_info = e)
+    #log.debug("_canDoByteRangeValidationWith(): False " + `lresource`)
+    return False
 
 class ValidateClone(object):
     """
@@ -122,19 +144,7 @@ class ValidateClone(object):
             self.publicKeyString = lresource.publicKeyString()
         if resourceID is None:
             self.resourceID = lresource.resourceID()
-        self._doByteRangeValidation = self._canDoByteRangeValidationWith(lresource)
-
-    def _canDoByteRangeValidationWith(self, lresource):
-        try: # don't make inspection fail on broken local resources because we
-            # want to optimize for the good case where the local resource is valid!
-            if not lresource.isCollection():
-                if lresource.validate():
-                    #log.debug("_canDoByteRangeValidationWith(): True " + `lresource`)
-                    return True
-        except:
-            pass
-        #log.debug("_canDoByteRangeValidationWith(): False " + `lresource`)
-        return False
+        self._doByteRangeValidation = canDoByteRangeValidationWith(lresource)
     
     def __call__(self, clone):
         # the clone should be reachable at this point!
@@ -301,10 +311,7 @@ def eliminateSelfReferences(clones):
     """
     selfNodeName = AngelConfig.get("maintainer","nodename")
     selfReferences = ["localhost", "127.0.0.1", "::1", selfNodeName]
-    try:
-        selfReferences.extend( [res[4][0] for res in socket.getaddrinfo(selfNodeName, None)] )
-    except Exception: # allow DNS lookup to fail
-        pass
+    selfReferences.extend( resolve(selfNodeName) )
     return [cc for cc in clones if cc.host not in selfReferences and not anyin(resolve(cc.host), selfReferences)]
 
 def resolve(hostname):
@@ -316,7 +323,7 @@ def resolve(hostname):
     """
     try:
         return [ res[4][0] for res in socket.getaddrinfo(hostname, None) ]
-    except Exception:
+    except socket.error:
         pass
     return []
 
@@ -355,8 +362,8 @@ def eliminateDNSDoubles(clones):
         if cc.getHost() not in resolved_ips:
             ips = resolve(cc.getHost())
             if len(ips) > 0:
-                foo = [ ip for ip in ips if ip not in seen ]                
-                if len(foo) > 0:
+                newips = [ ip for ip in ips if ip not in seen ]                
+                if len(newips) > 0:
                     seen.extend(ips)
                     result.append(cc)
             else:

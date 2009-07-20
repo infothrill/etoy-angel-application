@@ -120,7 +120,7 @@ def removeUnreferencedChildren(resource):
     linkedChildren = dict([(cc.resourceName(), cc) for cc in resource.children()]) 
     # the child resources found on the file system
     storedChildren = resource.findChildren("1") 
-    for (child, path) in storedChildren:
+    for (child, dummypath) in storedChildren:
         if not linkedChildren.has_key(child.resourceName()):
             log.info("unlinking: %r", child)
             child.remove()
