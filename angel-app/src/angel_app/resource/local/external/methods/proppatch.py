@@ -45,6 +45,7 @@ from angel_app.resource.remote.clone import Clone
 from angel_app.maintainer import collect
 from angel_app.maintainer.collect import ValidateClone
 from angel_app.maintainer.collect import eliminateSelfReferences
+from angel_app.maintainer.collect import resolvedns
 
 log = getLogger(__name__)
 
@@ -54,7 +55,7 @@ AngelConfig = config.getConfig()
 maxclones = AngelConfig.getint("common","maxclones")
 
 
-class ProppatchMixin:
+class ProppatchMixin(object):
     
     def preconditions_PROPPATCH(self, request):
         
@@ -191,7 +192,7 @@ def isIPv6(ip_string):
     """checks if the given string is an IPv6 address"""
     try:
         socket.inet_pton(socket.AF_INET6, ip_string)
-    except:
+    except socket.error:
         return False
     return True
 
@@ -213,11 +214,7 @@ def pingBack(clone, request, publicKeyString, resourceID, lresource):
         clone = clones[0]
     del clones
     if not clone.ping() or not clone.exists():
-        dns_resolved_ips = []
-        try:
-            dns_resolved_ips = [res[4][0] for res in socket.getaddrinfo(clone.getHost(), None)]
-        except Exception, e:
-            log.warn("DNS lookup failed for hostname '%s'", clone.getHost(), exc_info = e)
+        dns_resolved_ips = resolvedns( clone.getHost() )
         ip_address = str(request.remoteAddr.host)
         if not ip_address in dns_resolved_ips: # only fallback to IP if nodename does not already resolve to it
             log.info("Invalid PROPPATCH request. Can't pingBack() to clone at: %r. Falling back to IP '%s'.", clone, ip_address)

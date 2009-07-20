@@ -311,10 +311,10 @@ def eliminateSelfReferences(clones):
     """
     selfNodeName = AngelConfig.get("maintainer","nodename")
     selfReferences = ["localhost", "127.0.0.1", "::1", selfNodeName]
-    selfReferences.extend( resolve(selfNodeName) )
-    return [cc for cc in clones if cc.host not in selfReferences and not anyin(resolve(cc.host), selfReferences)]
+    selfReferences.extend( resolvedns(selfNodeName) )
+    return [cc for cc in clones if cc.host not in selfReferences and not anyin(resolvedns(cc.host), selfReferences)]
 
-def resolve(hostname):
+def resolvedns(hostname):
     """
     helper method to resolve a hostname and return a list of IPs or the empty
     list
@@ -354,13 +354,13 @@ def eliminateDNSDoubles(clones):
     allhostnames = [c.getHost() for c in clones if not isNumericAddress(c.getHost())]
     resolved_ips = []
     for hostname in allhostnames:
-        resolved_ips.extend( resolve(hostname) )
+        resolved_ips.extend( resolvedns(hostname) )
 
     result = []
     seen = []
     for cc in clones:
         if cc.getHost() not in resolved_ips:
-            ips = resolve(cc.getHost())
+            ips = resolvedns(cc.getHost())
             if len(ips) > 0:
                 newips = [ ip for ip in ips if ip not in seen ]                
                 if len(newips) > 0:
