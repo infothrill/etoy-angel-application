@@ -66,7 +66,7 @@ class Resource(object):
         """
         try:
             return self.getPropertyManager().getByElement(element)
-        except Exception, e:
+        except Exception, e: # TODO: be more specific!
             # treat broken meta data as if it did not exist:
             log.error("Failed to look up meta data field %r", element, exc_info = e)
             return None
@@ -126,8 +126,8 @@ class Resource(object):
                 return False
             else:
                 return True
-        except:
-            log.info("Can not verify metadata %s against signature %s", sm, ms)
+        except Exception, e: # TODO: be more specific!
+            log.info("Can not verify metadata %s against signature %s", sm, ms, exc_info = e)
             return False
     
     def validate(self):
@@ -137,8 +137,8 @@ class Resource(object):
         """
         @return hexdigest for content of self
         """
-        hash = util.getHashObject()
-        callbacks = [ hash.update ]
+        hashObj = util.getHashObject()
+        callbacks = [ hashObj.update ]
         f = self.open()
         BUFSIZE = LOCAL_BUFSIZE # files and StringIO
         # This is sort of hacky thanx to duck typing.
@@ -157,7 +157,7 @@ class Resource(object):
         bytesread = bufferedReadLoop(f.read, BUFSIZE, size, callbacks)
         assert bytesread == size, "Expected size of resource does not match the number of bytes read!"
         f.close()
-        return hash.hexdigest()
+        return hashObj.hexdigest()
 
     def resourceID(self):
         """
@@ -202,17 +202,9 @@ class Resource(object):
  
     def keyUUID(self):
         """
-        @return aa UUID of the  first 32 bytes of the SHA checksum of the resource's public key string.
+        @return a UUID of the first 32 bytes of the SHA checksum of the resource's public key string.
         """
         return util.uuidFromPublicKeyString(self.publicKeyString())
-
-    def sigUUID(self):
-        """
-        @return a UUID of the  first 32 bytes of the SHA checksum of the resource's signature.
-        
-        TODO: UNUSED. Consider removal.
-        """
-        return util.uuidFromPublicKeyString(self.metaDataSignature())
 
     def signableMetadata(self):
         """
@@ -222,5 +214,5 @@ class Resource(object):
         try:
             sm = "".join([self.getProperty(key).toxml() for key in elements.signedKeys])
             return sm
-        except Exception, e:
+        except Exception, e: # TODO: be more specific! or: why catch and raise???
             raise
