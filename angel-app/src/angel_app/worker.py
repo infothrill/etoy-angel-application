@@ -15,12 +15,14 @@ def dowork(function, items, children = 5):
     @param items:
     @param children:
     """
-    if cfg.getboolean('common', 'workerforking'):
-        log.debug("dowork(): PARALLEL execution with %i children", children)
+    if len(items) < 1:
+        return {}
+    elif len(items) > 1 and cfg.getboolean('common', 'workerforking'):
+        log.debug("dowork(): parallel execution with %i tasks (max %i)", len(items), children)
         from angel_app.contrib import delegate
         return delegate.parallelize(function, items, children)
     else:
-        log.debug("dowork(): SEQUENTIAL execution")
+        log.debug("dowork(): sequential execution for %i tasks", len(items))
         res = {}
         for item in items:
             try:
