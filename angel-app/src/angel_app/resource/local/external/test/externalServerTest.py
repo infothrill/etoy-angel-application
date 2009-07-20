@@ -30,17 +30,20 @@ legalMatters = """
 
 author = """Vincent Kraeutler 2007"""
 
-
-from angel_app import elements
-from angel_app.config import config
-from angel_app.resource.local.basic import Basic as EResource
-from angel_app.resource.local.internal.resource import Crypto
-from angel_app.resource.remote import clone
-from twisted.web2 import responsecode
-from twisted.web2.dav.element import rfc2518
 import os 
 import unittest
 
+from angel_app import elements
+from angel_app.config import config
+#from angel_app.resource.local.basic import Basic as EResource
+from angel_app.resource.local.internal.resource import Crypto
+from angel_app.resource.remote import clone
+from angel_app.resource.remote import exceptions
+from twisted.web2 import responsecode
+from twisted.web2.dav.element import rfc2518
+from angel_app.log import getLogger
+
+log = getLogger(__name__)
 
 AngelConfig = config.getConfig()
 repositoryPath = AngelConfig.get("common","repository")
@@ -79,9 +82,9 @@ def performPushRequest(self, localClone, elements = elements.requiredKeys):
     data = resp.read()
     if resp.status != responsecode.MULTI_STATUS:
         if resp.status == responsecode.NOT_FOUND:
-            raise CloneNotFoundError("Clone %s not found, response code is: %s, data is %s" % (`self`, `resp.status`, data) )
+            raise exceptions.CloneNotFoundError("Clone %s not found, response code is: %s, data is %s" % (`self`, `resp.status`, data) )
         else:
-            raise CloneError("must receive a MULTI_STATUS response for PROPPATCH, otherwise something's wrong, got: " + `resp.status` +\
+            raise exceptions.CloneError("must receive a MULTI_STATUS response for PROPPATCH, otherwise something's wrong, got: " + `resp.status` +\
                     data)
 
 def runRequest(clone, method, expect):
