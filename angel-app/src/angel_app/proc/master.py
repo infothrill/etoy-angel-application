@@ -15,10 +15,12 @@ def bootInit():
     pass
 
 def getProcsToStart(angelConfig):
+    """
+    returns a list of process names that are enabled in the configuration 
+    @param angelConfig: config object
+    """
     procsThatShouldBeExplicitlyEnabled = ['provider', 'presenter', 'maintainer']
-    def enabled(procName):
-        return angelConfig.getboolean(procName, 'enable')
-    enabledProcs = filter(enabled, procsThatShouldBeExplicitlyEnabled)
+    enabledProcs = [ proc for proc in procsThatShouldBeExplicitlyEnabled if angelConfig.getboolean(proc, 'enable') ]
     return enabledProcs
 
 def boot():
