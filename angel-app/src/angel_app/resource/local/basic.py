@@ -15,6 +15,7 @@ from angel_app.resource.local import propertyManager
 from angel_app.resource.local.renderManager import RenderManager
 from angel_app.resource.resource import Resource
 from angel_app.resource.remote.clone import Clone
+from angel_app.resource.util import getHashObject
 from angel_app.log import getLogger
 
 log = getLogger(__name__)
@@ -124,7 +125,8 @@ class Basic(DAVFile, Resource):
         @return the relative path with respect to the repository root as an absolute path,
         i.e. ${repository}/foo becomes "/foo", for the repository itself, "/" is returned.
         """
-        if self.isRepositoryRoot(): return os.sep
+        if self.isRepositoryRoot():
+            return os.sep
         path = os.sep + os.sep.join(self.relativePathEntries())
         if self.isCollection():
             path += os.sep
@@ -205,13 +207,12 @@ class Basic(DAVFile, Resource):
         assert offset >= 0
         assert length >= 0
         assert not self.isCollection()
-        from angel_app.resource.util import getHashObject
-        hash = getHashObject() 
+        hashObj = getHashObject() 
         f = self.open()
         f.seek(offset)
-        hash.update(f.read(length))
+        hashObj.update(f.read(length))
         f.close()
-        return hash.digest()
+        return hashObj.digest()
 
     def makeClone(self):
         """
