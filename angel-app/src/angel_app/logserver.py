@@ -50,8 +50,8 @@ class LoggingProtocol(Protocol):
             if (len(self.buf)-4 >= self.slen):
                 try:
                     obj = cPickle.loads(self.buf[4:self.slen+4])
-                except:
-                    log.error("Problem unpickling")
+                except cPickle.PickleError, e:
+                    log.error("Problem unpickling", exc_info = e)
                 else:
                     record = logging.makeLogRecord(obj)
                     self.handleLogRecord(record)
