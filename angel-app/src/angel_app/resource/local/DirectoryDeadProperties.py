@@ -70,7 +70,12 @@ class DirectoryDeadProperties(object):
         @param qname (see twisted.web2.dav.davxml) of the property to look for.
         """
         self.__sanitize()
-        return cPickle.load(open(self._fileNameFor(qname)))
+        obj = None
+        try:
+            obj = cPickle.load(open(self._fileNameFor(qname)))
+        except (EOFError, cPickle.PickleError):
+            return None
+        return obj
 
     def set(self, property):
         """
@@ -82,7 +87,7 @@ class DirectoryDeadProperties(object):
             f = transaction.open(self._fileNameFor(property.qname()), 'wb')
             cPickle.dump(property, f)
             f.close()
-        except Exception, e:
+        except cPickle.PickleError, e:
             transaction.cleanup()
             log.warn("A problem occured while saving property %s:", property.qname(), exc_info = e)
             raise
@@ -108,13 +113,16 @@ class DirectoryDeadProperties(object):
         self.__sanitize()
         fileNames = os.listdir(self.metadataPath.path)
         if qname[1] in fileNames:
+            q = None
             try:
-                self.get(qname)
+                q = self.get(qname)
             except Exception, e:
                 log.debug("Error on contains(%r) -> assume non existant", qname, exc_info = e)
                 return False
             else:
                 return True
+            if q is None:
+                return False
         else:
             return False
 
