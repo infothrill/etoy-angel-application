@@ -25,10 +25,9 @@ def updateResourceFromClone(resource, referenceClone):
 
     try:
         # this will fail, if the resource does not (yet) actually exist on the file system
-        log.debug("revisions: ref: %s, local: %s", referenceClone.revision(), resource.revision())
         old = referenceClone.revision() > resource.revision()
         if old:
-            log.debug("resource %r is older than clone %r", resource, referenceClone)
+            log.debug("local %r is older than reference clone %r: %s < %s", resource, referenceClone, resource.revision(), referenceClone.revision())
     except KeyboardInterrupt:
         raise
     except Exception:
