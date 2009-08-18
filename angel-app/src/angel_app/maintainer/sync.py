@@ -20,14 +20,14 @@ def syncContents(resource, referenceClone):
     """
     Synchronize the contents of the resource from the reference clone.
     """
-    path = resource.fp.path
-    
+    localpath = resource.fp.path
+    log.debug('syncContents to %r from %r', resource, referenceClone)
     if referenceClone.isCollection():
         # handle directory        
         if resource.exists() and not resource.isCollection():
-            os.remove(path)
+            os.remove(localpath)
         if not resource.exists():
-            os.mkdir(path)   
+            os.mkdir(localpath)
     else:
         # handle file
         readResponseIntoFile(resource, referenceClone)
