@@ -66,8 +66,13 @@ def updateLocal(resource, referenceClone):
     
     @return whether the update succeeded.
     """ 
-    syncContents(resource, referenceClone)
-    updateMetaData(resource, referenceClone)  
+    # if both local and remote are collections,
+    # then only update metadata.
+    if resource.isCollection() and referenceClone.isCollection():
+        updateMetaData(resource, referenceClone)  
+    else:
+        syncContents(resource, referenceClone)
+        updateMetaData(resource, referenceClone)  
     
 
 def broadCastAddress(localResource):
