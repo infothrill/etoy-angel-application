@@ -25,7 +25,10 @@ def updateResourceFromClone(resource, referenceClone):
 
     try:
         # this will fail, if the resource does not (yet) actually exist on the file system
+        log.debug("revisions: ref: %s, local: %s", referenceClone.revision(), resource.revision())
         old = referenceClone.revision() > resource.revision()
+        if old:
+            log.debug("resource %r is older than clone %r", resource, referenceClone)
     except KeyboardInterrupt:
         raise
     except Exception:
@@ -37,8 +40,6 @@ def updateResourceFromClone(resource, referenceClone):
         # all is fine
         return True
     else:
-        if old:
-            log.debug("resource %r is older than clone %r", resource, referenceClone)
         sync.updateLocal(resource, referenceClone)
         return resource.validate()
 
