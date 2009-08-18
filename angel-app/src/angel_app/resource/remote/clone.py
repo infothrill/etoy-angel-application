@@ -1,5 +1,7 @@
 import socket
 
+from netaddress.rfc3986 import path_absolute
+from pyparsing import ParseException
 from twisted.web2 import responsecode
 from twisted.web2.dav.element import rfc2518
 from zope.interface import implements
@@ -17,19 +19,14 @@ from angel_app.io import RateLimit
 from angel_app.io import bufferedReadLoop
 from angel_app.resource.util import getHashObject
 from angel_app.resource.remote.httpRemote import rangeHeader
-
 from angel_app.resource.remote.exceptions import CloneError
-from angel_app.resource.remote.exceptions import CloneNotFoundError
-from netaddress.rfc3986 import path_absolute
-from pyparsing import ParseException
-log = getLogger(__name__)
 
+log = getLogger(__name__)
 PROVIDER_PUBLIC_LISTEN_PORT = 6221
 
 AngelConfig = config.getConfig()
 providerport = AngelConfig.getint("provider","listenPort")
 MAX_DOWNLOAD_SPEED = AngelConfig.getint('common', 'maxdownloadspeed_kib') * 1024 # internally handled in bytes
-log = getLogger(__name__)
 
 def typed(expr, ref):
     if not type(expr) == type(ref):
@@ -117,6 +114,7 @@ class Clone(Resource):
         """
 
         response = self.remote.performRequest(method = "HEAD", body = "")
+        response.read()
         if response.status == responsecode.MOVED_PERMANENTLY:
             log.info("Received redirect for clone: %s", self)
             
@@ -132,6 +130,7 @@ class Clone(Resource):
                 path_absolute.parseString(redirectlocation)
             except ParseException:
                 errorMessage = "Invalid redirect. Must be an absolute path. Found: " + redirectlocation
+                log.warn(errorMessage)
                 raise CloneError(errorMessage)
             redirectClone = Clone(self.host, self.port, redirectlocation)
             redirectClone.redirected = True
@@ -180,13 +179,11 @@ class Clone(Resource):
         
         try:
             response = self.remote.performRequest(method = "HEAD")
+            response.read()
             return response.status == responsecode.OK
-        except KeyboardInterrupt:
-            raise
-        except:
-            return False       
+        except socket.error:
+            raise CloneError('clone.exists() on %r failed due to socket error', self)
 
-    
     def ping(self):
         """
         @return whether the remote host is reachable
@@ -194,12 +191,10 @@ class Clone(Resource):
         log.debug("ping %r", self)
         try:
             dummyresponse = self.remote.performRequestWithTimeOut(method = "HEAD")
+            dummyresponse.read()
             return True
-        except KeyboardInterrupt:
-            raise
-        except:
-            return False   
-
+        except socket.error:
+            return False
         
     def cloneList(self):
         """
@@ -208,11 +203,13 @@ class Clone(Resource):
         """
         try:
             prop = self.getProperty(elements.Clones)
-                                       
-            return clonesFromElement(prop)
-        except KeyboardInterrupt:
-            raise
-        except:
+            if prop is None:
+                return []
+            else:
+                return clonesFromElement(prop)
+        except socket.error:
+            log.warn("clone.cloneList() on %r failed due to a socket error", self)
+            # it seems safe to just return an empty list in this case
             return []
         
     def announce(self, localResource):
@@ -226,13 +223,8 @@ class Clone(Resource):
         # no point in ping() or exists(): the PROPPATCH will either work or fail ;-)
         try:
             self.remote.performRequest(method = "PROPPATCH", body = requestBody)
-        except KeyboardInterrupt:
-            raise
         except socket.timeout:
             log.debug("timeout while announcing to clone %r", self)
-            return False
-        except Exception, e:
-            log.warn("announcement to clone %r failed", self, exc_info = e)
             return False
         return True
 
@@ -246,18 +238,15 @@ class Clone(Resource):
         assert offset >= 0
         assert length >= 0
         assert not self.isCollection()
-        hash = getHashObject()
+        hashObj = getHashObject()
         endoffset = offset + length - 1 # minus 1, because the http range request will include the last byte
         try:
             response = self.remote.performRequest("GET", {'range': rangeHeader(offset, endoffset) })
-            bufferedReadLoop(response.read, 4096, length, [hash.update, RateLimit(length, MAX_DOWNLOAD_SPEED)])
-        except socket.timeout:
-            log.debug("timeout while doing chunk validation on clone %r", self)
+            bufferedReadLoop(response.read, 4096, length, [hashObj.update, RateLimit(length, MAX_DOWNLOAD_SPEED)])
+        except socket.error:
+            log.debug("socket error while doing chunk validation on clone %r", self)
             return None
-        except Exception, e:
-            log.warn("exception while fetching a chunk of clone %r", self, exc_info = e)
-            return None
-        return hash.digest()
+        return hashObj.digest()
 
 def formatHost(hostname = "localhost"):
     if not isNumericIPv6Address(hostname):
