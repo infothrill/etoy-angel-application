@@ -12,9 +12,84 @@ import time
 # twisted imports
 from twisted.web2 import resource, http, http_headers
 
+from angel_app.version import getVersionString
 from angel_app.tracker.connectToTracker import connectToTracker
-from angel_app.config import config
-nodename = config.getConfig().get("maintainer","nodename")
+from angel_app.config.config import getConfig
+nodename = getConfig().get("maintainer","nodename")
+
+CSS = """
+<style type="text/css">
+<!--
+html { height: 100% } 
+body {
+    min-height: 101%;
+    background-color: #ffffff;
+    font-family: Arial, Helvetica, SunSans-Regular, sans-serif;
+    color:#343434;  
+    padding:0;
+    margin: 0;
+    border-top: #ff6600 solid 3px;
+}
+
+a { color:#ff6600;  text-decoration: none; }
+a:visited {color:#ff6600;}
+a:hover {color: #444444;}
+a:active { color:#000000;}
+
+h1 {font-weight: normal;}
+h2 {font-weight: normal;}
+h3 {font-weight: normal;}
+h4 {font-weight: normal;}
+
+#content {
+    min-height: 100%; 
+    width: 90%;
+    padding: 20px 0; 
+    margin: 0 auto;
+    background-color: #ffffff;
+}
+
+h1 {
+    padding: 0 15px;
+    margin:0 0 20px 0;
+}
+h2, h3, h4 {
+    padding: 0 15px;
+    margin:0 0 5px 0;
+}
+p {
+    padding: 0 15px;
+    margin:0 0 10px 0;
+}
+
+#content li {
+    padding: 0 15px 0 0px;
+    margin: 0;
+}
+
+.center{ text-align:center;}
+.rechts{ text-align:right;}
+
+code, pre {
+  font-family: Courier, "Courier New", monospace;
+}
+
+table#angel-listing {
+   font-family: Courier, "Courier New", monospace;
+   margin: 0 20px 15px 0;
+   padding: 5px;
+   border-bottom:1px solid #555;
+   width: 100%;
+}
+
+table#angel-listing td { padding:2px; padding-right:8px; }
+table#angel-listing td a { color:#ff6600;  text-decoration: none; }
+table#angel-listing td a:visited {color:#444;}
+table#angel-listing td a:hover {color: #444444;}
+table#angel-listing td a:active { color:#000000;}
+-->
+</style>
+"""
 
 def formatFileSize(size):
     if size < 1024:
@@ -31,7 +106,7 @@ def formatClones(path):
     
     try:
         return ", \n".join([              
-                   '<a href="' + `clone`+ '">' + clone.host + '</a>'
+                   '<a href="' + repr(clone)+ '">' + clone.host + '</a>'
                    for clone in basic.Basic(path).clones()])
     except:
         return ""
@@ -61,102 +136,66 @@ Please help us make these assumptions hold, by becoming an
 </p>"""
 
 def htmlHead(title):
+#    <link href="http://www.missioneternity.org/themes/m221e/css/angel-app.css" rel="stylesheet" type="text/css" media="all" />
     return """
 <head>
-    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
     <title>ANGEL APPLICATION: %s</title>
-    <link href="http://www.missioneternity.org/themes/m221e/css/main.css" rel="stylesheet" type="text/css" media="all" />
-    <link rel="shortcut icon" href="http://www.missioneternity.org/themes/m221e/buttons/m221e-favicon.ico" type="image/x-icon" />
-</head>""" % title
+    <link rel="shortcut icon" href="http://www.missioneternity.org/themes/m221e/buttons/m221e-favicon.ico" type="image/x-icon"/>
+    %s
+</head>""" % (title, CSS)
 
 def showClones(path):
     return """
 Recently seen replicas of this resource: 
 <br/>%s""" % formatClones(path)
 
-def showFile(even, link, linktext, size, lastmod, type):
-    even = even and "even" or "odd"
-    s = """
-<tr class="%s">
-    <td>
-        <a href="%s">%s</a>
-    </td>
-    <td align="right">%s</td>
-    <td>%s</td>
-    <td>%s</td>
-</tr>
-""" % (even, link, linktext, size, lastmod, type)    
+def showFile(even, link, linktext, size, lastmod, mimetype):
+    #even = even and "even" or "odd"
+    if size == '':
+        size = '-'
+    s = """<tr><td align="left"><a href="%s">%s</a></td><td align="center">%s</td><td align="right">%s</td><td align="right">%s</td></tr>\n""" % (link, linktext, lastmod, size, mimetype)
     return s
 
 def showFileListing(data_listing):
-    s = """
-        <table border="0" cellpadding="0" cellspacing="0" id="angel-listing">
-        <tr>
-            <th>Filename</th>
-            <th>Size</th>
-            <th>Last Modified</th>
-            <th>File Type</th>
-        </tr>"""
+    s = """<table border="0" cellpadding="0" cellspacing="0" id="angel-listing">
+        <tr><th align="left">Name</th><th>Last Modified</th><th>Size</th><th>File Type</th></tr>\n"""
     even = False
     for row in data_listing:
-        s += '\n' + showFile(even, row["link"], row["linktext"], row["size"], row["lastmod"], row["type"])
+        s += showFile(even, row["link"], row["linktext"], row["size"], row["lastmod"], row["type"])
         even = not even               
-    s += "\n</table>"
+    s += "</table>\n"
     return s
 
 def showDirectoryNavigation(linkList):
-    return "<h3>%s</h3>" % linkList
+    return "<h1>Index of %s</h1>" % linkList
 
 def showBlurb():
-    return """
-    <p>
-You are viewing a directory listing of the <a href="http://angelapp.missioneternity.org">ANGEL APPLICATION</a>,
-an autonomous peer-to-peer file system developed for <a href="http://missioneternity.org">MISSION ETERNITY</a>.
-</p>
-<p>
-Much like <a href="http://freenetproject.org/">freenet</a>, it decouples the storage 
+    return """<p>This is a directory listing of the <a href="http://www.missioneternity.org/angel-application/">ANGEL APPLICATION</a>,
+an autonomous peer-to-peer file system developed for <a href="http://www.missioneternity.org/">MISSION ETERNITY</a>.</p>
+<p>Much like <a href="http://freenetproject.org/">freenet</a>, it decouples the storage 
 process from the physical storage medium by embedding data in a root-less and therefore fail-safe social network. 
-Unlike freenet, our primary goal is not anonymity, but 
-data preservation.
-</p>
-"""
+Unlike freenet, our primary goal is not anonymity, but data preservation.</p>"""
 
 def showHelpPreserve():
     return """<h3>Like the content on this site?</h3>
 <ul>
-<li>
-You can help preserving and sharing it (and add your own) 
+<li>You can help preserving and sharing it (and add your own) 
 by running the <a href="http://angelapp.missioneternity.org">ANGEL APPLICATION</a> 
-on your computer.
-</li>
-<li>
-The ANGEL APPLICATION fully supports WebDAV. You can make this directory part of your desktop.
-E.g. on Mac OS X, simply type Command-K in the Finder, and "connect to" this page's URL.
-</li>
+on your computer.</li>
+<li>The ANGEL APPLICATION fully supports WebDAV. You can make this directory part of your desktop.
+E.g. on Mac OS X, simply type Command-K in the Finder, and "connect to" this page's URL.</li>
 </ul>"""
 
-def showNavi():
-    return """
-<div id="topnavi">
-    <ul>
-        <li><a href="http://missioneternity.org/cult-of-the-dead/">MISSION ETERNITY</a></li>
-        <li><a href="http://missioneternity.org/data-storage/">DATA STORAGE</a></li>
-        <li><a href="http://missioneternity.org/angel-application/">ANGEL APPLICATION</a></li>
-    </ul>
-</div>
-"""
-
 def showHost(nodeName):
-    return """
-<strong>This node is hosted on: %s</strong>
-""" % nodeName
+    return """<strong>This node is hosted on: %s</strong>""" % nodeName
 
 def showResourceStatistics(path, nodeName):
-    return """<h1>About This Network</h1>
+    return """<h2>About This Network</h2>
 <p>%s<br/>
     %s
 </p>
-    %s
+%s
 """ % (showHost(nodeName), showClones(path), showStatistics())
 
 class DirectoryLister(resource.Resource):
@@ -235,36 +274,33 @@ class DirectoryLister(resource.Resource):
         for segment in pathSegments[1:]:
             accumulated += urllib.quote(segment) + "/"
             linkTargets.append(accumulated)
-        linkList = '<a href="%s">%s</a>' % ("/", "/")  + \
+        linkList = '<a href="%s">%s</a>' % ("/", nodename)  +  "/" + \
             "/".join(['<a href="%s">%s</a>' % (linkTarget, pathSegment) 
                     for (linkTarget, pathSegment) in 
                     zip(linkTargets[1:], pathSegments[1:])
                     ])
-    
-        s= """<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+
+        s = """<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
         "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
         <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">"""
         s += htmlHead(title)
-        s += """
-        <body class="bg-still3">
-        <div id="metanavi"><a href="http://www.etoy.com/">etoy.CORPORATION</a> 2007</div>
+        s += """<body>
         <div id="content">
         <h1 class="rechts">
             <a href="http://www.missioneternity.org/">
                 <img src="http://www.missioneternity.org/themes/m221e/images/m221e-logo2-o.gif" alt="" border="0" />
             </a>
         </h1>"""
-              
-        s += showResourceStatistics(self.path, nodename)
-        s += showHelpPreserve()
-        s += "</div>" # id content
-        s += """<div id="bilder">"""
-        s += """<h1>Directory Listing</h1>"""
-        s += showBlurb()
+
         s += showDirectoryNavigation(linkList)
         s += showFileListing(self.data_listing(request, None))   
+        s += showBlurb()
+        s += showResourceStatistics(self.path, nodename)
+        s += showHelpPreserve()
         s += showDisclaimer()
-        s += "</div>" # id bilder
+        s += "<hr/>"
+        s += "<address>Angel/"+ getVersionString() + " Server at " + nodename +"</address>"
+        s += "</div>"
         s += "\n</body></html>"
         response = http.Response(200, {}, s)
         response.headers.setHeader("content-type", http_headers.MimeType('text', 'html'))
