@@ -63,8 +63,6 @@ def updateLocal(resource, referenceClone):
     """
     Update the resource from the reference clone, by updating the contents,
     then the metadata, in that order.
-    
-    @return whether the update succeeded.
     """ 
     # if both local and remote are collections,
     # then only update metadata.
