@@ -1,3 +1,4 @@
+import socket
 from twisted.web2 import responsecode
 from twisted.web2.dav import davxml
 from twisted.web2.dav.element import rfc2518
@@ -99,12 +100,15 @@ class PropertyManager(object):
         
         @rtype string
         @return the raw XML body of the multistatus response corresponding to the respective PROPFIND request.
-        """  
-        resp = self.remote.performRequest(
-                              method = "PROPFIND", 
-                              headers = {"Depth" : 0}, 
-                              body = makePropfindRequestBody(properties)
-                              )
+        """
+        try:
+            resp = self.remote.performRequest(
+                                  method = "PROPFIND", 
+                                  headers = {"Depth" : 0}, 
+                                  body = makePropfindRequestBody(properties)
+                                  )
+        except socket.error, e:
+            raise CloneError("Getting clone properties failed (socket problem): %r" % e)
 
         if resp.status != responsecode.MULTI_STATUS:
             if resp.status == responsecode.NOT_FOUND:
@@ -179,7 +183,7 @@ def propertiesFromPropfindResponse(response):
     response = responses[0]
 
     # get the url
-    url = response.childOfType(davxml.HRef).children[0]
+    #url = response.childOfType(davxml.HRef).children[0]
     # TODO: this should in fact be the clone's self.path, we could check this, too
     
     propstats = response.childrenOfType(davxml.PropertyStatus)
