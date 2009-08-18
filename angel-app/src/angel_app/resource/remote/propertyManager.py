@@ -6,8 +6,7 @@ from zope.interface import implements
 
 from angel_app import elements
 from angel_app.resource.IReadonlyPropertyManager import IReadonlyPropertyManager
-from angel_app.resource.remote.exceptions import CloneNotFoundError
-from angel_app.resource.remote.exceptions import CloneError
+from angel_app.resource.remote import exceptions as cloneExceptions
 
 class PropertyManager(object):
     """
@@ -108,13 +107,13 @@ class PropertyManager(object):
                                   body = makePropfindRequestBody(properties)
                                   )
         except socket.error, e:
-            raise CloneError("Getting clone properties failed (socket problem): %r" % e)
+            raise cloneExceptions.CloneIOError("Getting clone properties failed (socket problem): %r" % e)
 
         if resp.status != responsecode.MULTI_STATUS:
             if resp.status == responsecode.NOT_FOUND:
-                raise CloneNotFoundError("Clone with url %s not found, response code is: %r" % (self.remote, resp.status))
+                raise cloneExceptions.CloneNotFoundError("Clone with url %s not found, response code is: %r" % (self.remote, resp.status))
             else:
-                raise CloneError("Clone with url %s didn't send a MULTI_STATUS response for PROPFIND, got: %r" % (self.remote, resp.status))
+                raise cloneExceptions.CloneError("Clone with url %s didn't send a MULTI_STATUS response for PROPFIND, got: %r" % (self.remote, resp.status))
 
         return davxml.WebDAVDocument.fromString(resp.read())
 
