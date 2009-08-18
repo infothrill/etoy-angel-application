@@ -9,6 +9,7 @@ from angel_app.maintainer import collect
 from angel_app.maintainer import sync
 from angel_app.resource.remote.clone import clonesToElement
 from angel_app.resource import childLink
+from angel_app.resource.remote.exceptions import CloneError
 
 log = getLogger(__name__)
 
@@ -128,6 +129,23 @@ def removeUnreferencedChildren(resource):
             child.remove()
     
 
+def discoverBroadCastClones(lclone, cloneList):
+    """
+    Find all remote clones in cloneList that do not know about lclone.
+    
+    @param lclone: clone
+    @param cloneList: list of clones
+    """
+    broadcastClones = []
+    for c in cloneList:
+        try:
+            if lclone not in c.cloneList():
+                broadcastClones.append(c)
+        except CloneError, e:
+            # ignore IO and network issues, just collect what we can find
+            log.debug("got a clone error while discovering broadcast clones: %r", e)
+    return collect.eliminateDNSDoubles(collect.eliminateSelfReferences(broadcastClones))
+
 def updateResource(lresource):
     """
     Inspect the resource, updating it if necessary.
@@ -157,13 +175,9 @@ def updateResource(lresource):
             # Gather the clones to which we want to announce this local resource
             # by taking good, old and bad clones and announcing ourselves to them
             # if they don't know about us yet:
-            broadcastClones = []
-            lclone = lresource.makeClone()
             log.debug("lresource is valid: %s, collecting clones for broadcast...", lresource)
-            for c in chain(cloneLists.good, cloneLists.old, cloneLists.bad):
-                if lclone not in c.cloneList():
-                    broadcastClones.append(c)
-            return (True, collect.eliminateDNSDoubles(collect.eliminateSelfReferences(broadcastClones)))
+            broadcastClones = discoverBroadCastClones(lresource.makeClone(), chain(cloneLists.good, cloneLists.old, cloneLists.bad))
+            return (True, broadcastClones)
         else:
             log.warn("Resource was not valid after update: %s", lresource.fp.path)
             return (False, [])
