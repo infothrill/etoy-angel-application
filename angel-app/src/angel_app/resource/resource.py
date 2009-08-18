@@ -73,7 +73,11 @@ class Resource(object):
         @rtype int
         @return the revision number. if not already set, it is initialized to 1.
         """
-        return int(str(self.getProperty(elements.Revision)))
+        rev = self.getProperty(elements.Revision)
+        if rev is None:
+            return 1
+        else:
+            return int(str(rev))
 
     def isEncrypted(self):
         """
