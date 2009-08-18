@@ -9,6 +9,7 @@ from angel_app.resource import util
 from zope.interface import implements
 from angel_app.io import RateLimit
 from angel_app.io import bufferedReadLoop
+from angel_app.resource.remote import exceptions as cloneExceptions
 
 from angel_app.config.config import getConfig
 
@@ -32,9 +33,6 @@ class Resource(object):
     """
     
     implements(IResource.IAngelResource)
-    
-    def __init__(self):
-        pass
     
     def getPropertyManager(self):
         """
@@ -66,9 +64,8 @@ class Resource(object):
         """
         try:
             return self.getPropertyManager().getByElement(element)
-        except Exception, e: # TODO: be more specific!
-            # treat broken meta data as if it did not exist:
-            log.error("Failed to look up meta data field %r", element, exc_info = e)
+        except cloneExceptions.CloneIOError, e:
+            log.warn("Failed to look up meta data field %r", element, exc_info = e)
             return None
  
     def revision(self):
@@ -126,7 +123,8 @@ class Resource(object):
                 return False
             else:
                 return True
-        except Exception, e: # TODO: be more specific!
+        except Exception, e:
+            log.debug("TODO more specific error handling needed here", exc_info = e)
             log.info("Can not verify metadata %s against signature %s", sm, ms, exc_info = e)
             return False
     
@@ -188,7 +186,10 @@ class Resource(object):
         """
         from angel_app.resource.remote import clone
         clonesElement = self.getProperty(elements.Clones)
-        return clone.clonesFromElement(clonesElement)
+        if clonesElement is None:
+            return []
+        else:
+            return clone.clonesFromElement(clonesElement)
 
     def childLinks(self):
         return self.getProperty(elements.Children)
@@ -211,8 +212,4 @@ class Resource(object):
         Returns a string representation of the metadata that needs to
         be signed.
         """
-        try:
-            sm = "".join([self.getProperty(key).toxml() for key in elements.signedKeys])
-            return sm
-        except Exception, e: # TODO: be more specific! or: why catch and raise???
-            raise
+        return "".join([self.getProperty(key).toxml() for key in elements.signedKeys])
