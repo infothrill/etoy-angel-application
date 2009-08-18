@@ -9,7 +9,7 @@ from angel_app.maintainer import collect
 from angel_app.maintainer import sync
 from angel_app.resource.remote.clone import clonesToElement
 from angel_app.resource import childLink
-from angel_app.resource.remote.exceptions import CloneError
+from angel_app.resource.remote import exceptions as cloneExceptions
 
 log = getLogger(__name__)
 
@@ -141,9 +141,9 @@ def discoverBroadCastClones(lclone, cloneList):
         try:
             if lclone not in c.cloneList():
                 broadcastClones.append(c)
-        except CloneError, e:
+        except cloneExceptions.BaseCloneError, e:
             # ignore IO and network issues, just collect what we can find
-            log.debug("got a clone error while discovering broadcast clones: %r", e)
+            log.debug("got a clone error from %r while discovering broadcast clones: %s", c, repr(e))
     return collect.eliminateDNSDoubles(collect.eliminateSelfReferences(broadcastClones))
 
 def updateResource(lresource):
