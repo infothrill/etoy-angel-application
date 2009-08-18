@@ -10,7 +10,7 @@ import socket
 from angel_app.worker import dowork
 from angel_app.config import config
 from angel_app.log import getLogger
-#from angel_app.resource.remote.exceptions import CloneError
+from angel_app.resource.remote.exceptions import CloneError
 
 log = getLogger(__name__)
 AngelConfig = config.getConfig()
@@ -249,16 +249,26 @@ def orderByRevision(cl):
     @return a list of lists of clones, grouped by revision number
     """
     def rev(clone):
-        return clone.revision()
+        """
+        Safely find the revision of the remote clone, ignoring network issues
+        by setting the revision to 0 in that case.
+        @param clone: remote resource
+        """
+        try:
+            res = clone.revision()
+        except CloneError, e:
+            log.debug('Clone.revision() on %r failed, using 0', clone, exc_info = e)
+            res = 0
+        return res
     
     def cmpRev(cloneA, cloneB):
-        return cmp(cloneA.revision(), cloneB.revision())
+        return cmp(rev(cloneA), rev(cloneB))
     
     # the clones, highest revision first
     cl = reversed(sorted(cl, cmpRev))
     
     groups = []
-    for k, g in itertools.groupby(cl, rev):
+    for dummyk, g in itertools.groupby(cl, rev):
         groups.append(list(g))      # Store group iterator as a list
         
     return groups
@@ -276,9 +286,12 @@ def iterateClones(lresource, cloneSeedList, publicKeyString, resourceID):
     cl = CloneLists()
     okClones = [] # might be old
     for (c, reachable, valid) in clonesFor(lresource, cloneSeedList, publicKeyString, resourceID):
-        if not reachable: cl.unreachable.append(c)
-        elif valid: okClones.append(c)
-        else: cl.bad.append(c)
+        if not reachable:
+            cl.unreachable.append(c)
+        elif valid:
+            okClones.append(c)
+        else:
+            cl.bad.append(c)
 
     # take okClones and sort by revision:
     orderedGoodClones = [oc for oc in orderByRevision(okClones)]
@@ -300,7 +313,8 @@ def anyin(totest, reference):
     @param reference: container type (e.g. implements __contains__)
     """
     for element in totest:
-        if element in reference: return True
+        if element in reference:
+            return True
     return False
 
 def eliminateSelfReferences(clones):
@@ -410,6 +424,7 @@ def clonesToStore(goodClones, unreachableClones):
             clonesToBeStored.append(clone)
             
         # guard against DOS and metadata overflow
-        if len(clonesToBeStored) >= maxclones: break
+        if len(clonesToBeStored) >= maxclones:
+            break
 
     return clonesToBeStored
