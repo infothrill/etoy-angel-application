@@ -37,6 +37,8 @@ def updateResourceFromClone(resource, referenceClone):
         # all is fine
         return True
     else:
+        if old:
+            log.debug("resource %r is older than clone %r", resource, referenceClone)
         sync.updateLocal(resource, referenceClone)
         return resource.validate()
 
