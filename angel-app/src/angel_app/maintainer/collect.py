@@ -10,7 +10,7 @@ import socket
 from angel_app.worker import dowork
 from angel_app.config import config
 from angel_app.log import getLogger
-from angel_app.resource.remote.exceptions import CloneError
+from angel_app.resource.remote import exceptions as cloneExceptions
 
 log = getLogger(__name__)
 AngelConfig = config.getConfig()
@@ -67,9 +67,7 @@ def acceptable(clone, publicKeyString, resourceID):
             return False
     
         return True
-    except KeyboardInterrupt:
-        raise
-    except Exception, e:
+    except cloneExceptions.BaseCloneError, e:
         log.info("Clone %s not acceptable().", clone.toURI(), exc_info = e)
         return False
 
@@ -106,8 +104,7 @@ def acceptableChunk(lresource, clone, publicKeyString, resourceID):
         else:
             log.info("remote clone %r is not acceptable", clone)
             return False
-    except Exception, e:
-        # TODO: more specific exception catching
+    except cloneExceptions.BaseCloneError, e:
         log.info("Clone %s not acceptable().", clone.toURI(), exc_info = e)
         return False
 
@@ -256,7 +253,7 @@ def orderByRevision(cl):
         """
         try:
             res = clone.revision()
-        except CloneError, e:
+        except cloneExceptions.BaseCloneError, e:
             log.debug('Clone.revision() on %r failed, using 0', clone, exc_info = e)
             res = 0
         return res
