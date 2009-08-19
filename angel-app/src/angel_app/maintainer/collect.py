@@ -7,7 +7,7 @@ import random
 import socket
 from logging import getLogger
 
-from angel_app.worker import dowork
+from angel_app import worker
 from angel_app.config import config
 from angel_app.resource.remote import exceptions as cloneExceptions
 
@@ -162,20 +162,26 @@ def basicCloneChecks(toVisit, accessibleCb, validateCb):
     @return: dictionary with clone as key, and dictionaries with keys 'accessible' and 'valid'
     """
     resultMap = {}
-    if len(toVisit) < 1: return resultMap
-    accessibleResult = dowork(accessibleCb, toVisit)  # TODO: CloneError
+    if len(toVisit) < 1:
+        return resultMap
+    accessibleResult = worker.dowork(accessibleCb, toVisit)
+    for cc in accessibleResult:
+        if isinstance(accessibleResult[cc], worker.WorkerError):
+            log.debug("error in accessibility checks: %r\n%s", accessibleResult[cc], "".join(accessibleResult[cc].formatted_tb()))
+            accessibleResult[cc] = (cc, False)
     log.debug("accessibility check done")
-    #log.debug("%r", accessibleResult)
-    for tt in accessibleResult.itervalues(): # mark redirects as seen
-        if type(tt) != type(tuple()): # TODO: exceptions in parallelization
-            log.warn("FOO %r", exc_info = tt)
-        if tt[0] not in resultMap:
-            resultMap[tt[0]] = { 'accessible': tt[1], 'valid': False } # valid: default to false
-    toValidate = [ t[0] for t in accessibleResult.itervalues() if t[1] == True ]
+    for (clone, acc) in accessibleResult.itervalues(): # mark redirects as seen
+        if clone not in resultMap:
+            resultMap[clone] = { 'accessible': acc, 'valid': False } # valid: default to false
+    toValidate = [ cc for (cc, acc) in accessibleResult.itervalues() if acc == True ]
     if len(toValidate) > 0:
-        validationResult = dowork(validateCb, toValidate)
+        validationResult = worker.dowork(validateCb, toValidate)
+        for cc in validationResult:
+            if isinstance(validationResult[cc], worker.WorkerError):
+                log.debug("error in validation: %r\n%s", validationResult[cc], "".join(validationResult[cc].formatted_tb()))
+                validationResult[cc] = False
         log.debug("validation done")
-        for cc in validationResult.keys():
+        for cc in validationResult:
             if validationResult[cc]: # valid!
                 resultMap[cc]['valid'] =  True
     return resultMap
@@ -218,7 +224,7 @@ def clonesFor(lresource, cloneSeedList, publicKeyString, resourceID):
         # discover new clones based on valid clones:
         validClones = [ cc for cc in resultMap if resultMap[cc]['valid'] ]
         if len(validClones) > 0:
-            for ctocheck in eliminateDNSDoubles(eliminateSelfReferences(itertools.chain(*dowork(getCloneList, validClones).itervalues()))):
+            for ctocheck in eliminateDNSDoubles(eliminateSelfReferences(itertools.chain(*worker.dowork(getCloneList, validClones).itervalues()))):
                 if ctocheck not in visited and ctocheck not in toVisit:
                     log.debug("discovered new clone: %r", ctocheck)
                     toVisit.append(ctocheck)
