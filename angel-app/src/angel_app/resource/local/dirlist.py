@@ -87,6 +87,9 @@ table#angel-listing td a { color:#ff6600;  text-decoration: none; }
 table#angel-listing td a:visited {color:#444;}
 table#angel-listing td a:hover {color: #444444;}
 table#angel-listing td a:active { color:#000000;}
+
+tr.even { background-color: #ffffff }
+tr.odd { background-color: #eeeeee }
 -->
 </style>
 """
@@ -151,10 +154,10 @@ Recently seen replicas of this resource:
 <br/>%s""" % formatClones(path)
 
 def showFile(even, link, linktext, size, lastmod, mimetype):
-    #even = even and "even" or "odd"
+    even = even and "even" or "odd"
     if size == '':
         size = '-'
-    s = """<tr><td align="left"><a href="%s">%s</a></td><td align="center">%s</td><td align="right">%s</td><td align="right">%s</td></tr>\n""" % (link, linktext, lastmod, size, mimetype)
+    s = """<tr class="%s"><td align="left"><a href="%s">%s</a></td><td align="center">%s</td><td align="right">%s</td><td align="right">%s</td></tr>\n""" % (even, link, linktext, lastmod, size, mimetype)
     return s
 
 def showFileListing(data_listing):
