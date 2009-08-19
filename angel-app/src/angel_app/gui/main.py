@@ -487,19 +487,12 @@ class AngelMainWindow(AngelMainFrameBase):
         """
         wx.Frame.__init__(self, parent, id, title, wx.DefaultPosition, wx.Size(450, 535))
 
-        self._buildMenus()
-
-        self.SetStatusBar(statusbar.AngelStatusBar(self))
-
         #self.doNoteBookLayout() # deprecated
         self.doControllerLayout()
 
-        # start the p2p process:
-        if wx.GetApp().config.getboolean('gui', 'autostartp2p'):
-            wx.GetApp().p2p.start()
-            self.enableP2PMenuItems(True)
-        else:
-            self.enableP2PMenuItems(False)
+        self._buildMenus()
+
+        self.SetStatusBar(statusbar.AngelStatusBar(self))
 
         # make sure to have a handler when quitting (shutdown p2p) 
         self.Bind(wx.EVT_CLOSE, self.OnQuit)
@@ -527,6 +520,7 @@ class AngelMainWindow(AngelMainFrameBase):
         Sizer.Add(win)
 
 def showSplashScreen():
+    # unused
     bitmapfilename = os.path.join(platformwrap.getResourcePath(), "images", "skull.png")
     assert os.path.isfile(bitmapfilename), "Splash screen picture '%s' could not be found" % bitmapfilename
     aBitmap = wx.Image(name = bitmapfilename).ConvertToBitmap()
@@ -541,13 +535,22 @@ class AngelApp(wx.App):
         """
         Instantiates the main frame and shows it
         """
-        #showSplashScreen()
         self.config = config.getConfig()
         self.p2p = masterthread.MasterThread()
         self.p2p.setDaemon(True)
-        mainframe = AngelMainWindow(None, -1, _("ANGEL APPLICATION"))
-        mainframe.Show(True)
-        self.SetTopWindow(mainframe)
+        self.main = AngelMainWindow(None, -1, _("ANGEL APPLICATION"))
+        self.main.Show(True)
+        self.SetTopWindow(self.main)
+
+        from angel_app.gui import startup
+        startup.checkM221eMount()
+        # start the p2p process:
+        if wx.GetApp().config.getboolean('gui', 'autostartp2p'):
+            wx.GetApp().p2p.start()
+            self.main.enableP2PMenuItems(True)
+        else:
+            self.main.enableP2PMenuItems(False)
+        
         return True
 
 if __name__ == '__main__':

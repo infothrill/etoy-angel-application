@@ -6,6 +6,7 @@ all = [
        "main",
        "prefs",
        "compat",
+       "startup",
        "statusbar",
        "welcome"
        ]
