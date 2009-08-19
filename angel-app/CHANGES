@@ -3,20 +3,12 @@
  * mounting missioneternity.org is not forced anymore. On GUI startup, a check
    is performed that asks the end-user wether he wants to become an ANGEL by
    doing so
- * added angel_app.worker, which implements boiled down map/reduce functionality.
-   This is currently only used in the maintainer networking code to speed
-   up operation by parallelizing network activity using fork().
- * added new config variable in section 'common': 'repository-tmp'
-   This variable holds absolute paths, is optional and only relevant if you
-   put the repository on a different mount point than angelHome. Atomic file
-   renames cannot be done cross-device.
+ * added angel_app.worker, which implements boiled down map/reduce functionality
  * html directory listing changed to be more independant of the
    missioneternity.org website (css) and made it look more like a "technical"
    listing as opposed to looking like being part of the website 
  * when syncing a collection that already exists, only sync the metadata
  * error handling refinements
- * new config option to enable/disable parallelization in network requests,
-   default off
  * optimized resource inspection by parallelizing network requests
  * optimized broadcast: parallelize broadcasting, essentially scaling O(1)
    instead of O(n). This saves about 1 hour per tree traversal right now.
@@ -28,6 +20,12 @@
    validation
  * optimized clone DNS resolution: resolve IP of local nodename, resolve all
    clone hostnames and check for IP doubles
+ * added new config option to enable/disable parallelization in network requests,
+   default on (common.workerforking = bool)
+ * added new config variable in section 'common': 'repository-tmp'
+   This variable holds absolute paths, is optional and only relevant if you
+   put the repository on a different mount point than angelHome. Atomic file
+   renames cannot be done cross-device.
 
 0.4.4 July 4 2009
 
