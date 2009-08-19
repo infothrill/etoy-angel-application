@@ -131,16 +131,6 @@ then
 	BUILD_ID="unknown" # should not happen, but set a string!
 fi
 
-# remove spurious development files/repository files
-echo "Removing files not used for production/release..."
-cd ${THISTMPDIR}
-echo -n " SVN directories"
-find ${SHORTNAME}/ -type d -name '.svn' -print0 | xargs -0 rm -rf
-echo ""
-echo -n " Python pre-compiled files"
-find ${SHORTNAME}/ -type f -name '.pyc' -print0 | xargs -0 rm -f
-echo ""
-
 # twisted: unpack the tarball we ship, so we are sure we use it during the build process
 twistedtar=`ls ${SHORTNAME}/twisted_trunk_*.tar.bz2`
 twistedsrc=`basename $twistedtar .tar.bz2`
@@ -150,6 +140,18 @@ rm -rf ${SHORTNAME}/src/twisted/
 mv ${twistedsrc}/twisted/ ${SHORTNAME}
 rm -rf ${twistedsrc}
 rm ${twistedtar} # we don't want to distribute the tar file
+
+# remove spurious development files/repository files
+# we do this after unpacking the twisted tarball, so it gets cleaned too
+echo "Removing files not used for production/release..."
+cd ${THISTMPDIR}
+echo -n " SVN directories"
+find ${SHORTNAME}/ -type d -name '.svn' -print0 | xargs -0 rm -rf
+echo ""
+echo -n " Python pre-compiled files"
+find ${SHORTNAME}/ -type f -name '.pyc' -print0 | xargs -0 rm -f
+echo ""
+
 
 echo "Setting correct version to '$RELEASE'..."
 if [ "x${RELEASE}" == "xSVN" ]
