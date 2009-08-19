@@ -3,10 +3,12 @@ Utilities for creating the default repository directory layout.
 """
 
 import os
+import re
 from logging import getLogger
 
 from angel_app.config import config
 from angel_app.contrib.ezPyCrypto import key as ezKey
+from angel_app.singlefiletransaction import SingleFileTransaction
 
 AngelConfig = config.getConfig()
 log = getLogger(__name__)
@@ -103,8 +105,6 @@ def importKey(streamObj, keyname = "importedkey.key"):
     """
     will try to import the key pair from the given stream object,
     """
-    import re
-    import angel_app.singlefiletransaction
     fileextension = ".key"
     # strip off a possibly existing .key extension:
     m = re.compile("\.key$")
@@ -115,7 +115,7 @@ def importKey(streamObj, keyname = "importedkey.key"):
         newkeyfilename = os.path.join(keyDirectory, keyname + fileextension)
         if os.path.exists(newkeyfilename):
             raise NameError, "A key with the name '%s' already exists" % keyname
-        t = angel_app.singlefiletransaction.SingleFileTransaction()
+        t = SingleFileTransaction()
         newkeyfile = t.open(newkeyfilename, 'wb')
         streamObj.seek(0)
         newkeyfile.write(streamObj.read())
