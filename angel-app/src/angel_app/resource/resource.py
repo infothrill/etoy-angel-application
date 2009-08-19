@@ -103,7 +103,13 @@ class Resource(object):
 
     def _dataIsCorrect(self):
         cs = self.contentSignature()
-        if cs == self._computeContentHexDigest():
+        cs_computed = None
+        try:
+            cs_computed = self._computeContentHexDigest()
+        except IOError: # possibly more exceptions need to be caught here
+            log.debug("_computeContentHexDigest() on %r failed due to IOError", self)
+            return False
+        if cs == cs_computed:
             log.debug("data signature for resource '%s' is correct: %s", self.resourceID(), cs)
             return True
         else:
