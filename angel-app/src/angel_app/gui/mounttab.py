@@ -1,5 +1,6 @@
 import wx
 import sys
+import os
 
 from angel_app.maintainer.mount import getMountTab
 from angel_app.config.config import getConfig
@@ -14,15 +15,11 @@ def mountDict():
     # convert the mounttab to a dictionary for the ListCtrl:
     mounttab = getMountTab()
     mountdict = {}
-    c = 1
-    for e in mounttab:
+    for c, e in enumerate(mounttab):
         tmp = ( e[0], e[1] )
         mountdict[c] = tmp
-        c += 1
     return mountdict
 
-
-#tableData = mountDict()
 
 class OurListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin):
     def __init__(self, parent, ID, pos=wx.DefaultPosition,
@@ -201,7 +198,6 @@ Example valid URI: http://missioneternity.org:6221/"""
             try:
                 from angel_app.resource.local.basic import Basic
                 repositoryPath = wx.GetApp().config.container['common']['repository']
-                import os
                 destination = Basic(repositoryPath + os.sep + mountpoint)
                 if not destination.fp.exists() or not destination.isCollection():
                     from angel_app.resource.local.internal.resource import Crypto
