@@ -66,7 +66,7 @@ class Resource(object):
             return self.getPropertyManager().getByElement(element)
         except cloneExceptions.CloneIOError, e:
             # don't log complete exception, just notify IO problem
-            log.debug("Failed to look up meta data field %r: %r" % repr(element), repr(e))
+            log.debug("Failed to look up meta data field %r: %r" % (repr(element), repr(e)))
             return None
  
     def revision(self):
