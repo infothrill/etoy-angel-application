@@ -7,14 +7,12 @@ import random
 import socket
 from logging import getLogger
 
-#from angel_app.contrib.delegate import parallelize
 from angel_app.worker import dowork
 from angel_app.config import config
 from angel_app.resource.remote import exceptions as cloneExceptions
 
 log = getLogger(__name__)
 AngelConfig = config.getConfig()
-maxclones = AngelConfig.getint("common","maxclones")
 
 class CloneLists(object):
     """
@@ -185,7 +183,7 @@ def basicCloneChecks(toVisit, accessibleCb, validateCb):
     
 def clonesFor(lresource, cloneSeedList, publicKeyString, resourceID):
     """
-    This method will take the local resource, combined with a list of seed clones,
+    This generator will take the local resource, combined with a list of seed clones,
     its public key string, its id and then:
       (1) check the validity of the seed clones (reachability+validity)
       (2) discover unknown/new clones and run (1)
@@ -208,6 +206,7 @@ def clonesFor(lresource, cloneSeedList, publicKeyString, resourceID):
     visited = []
 
     def getCloneList(clone):
+        # this assumes that we always get an iterable result!
         return clone.cloneList()
 
     while len(toVisit) > 0:
@@ -412,6 +411,8 @@ def clonesToStore(goodClones, unreachableClones):
     random.shuffle(uc)
     
     clonesWeMightStore = gc + uc
+
+    maxclones = AngelConfig.getint("common","maxclones")
 
     # fill in only non-duplicates    
     clonesToBeStored = []    
