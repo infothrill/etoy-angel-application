@@ -34,7 +34,11 @@ def syncContents(resource, referenceClone):
         
 
 def readResponseIntoFile(resource, referenceClone):
-    t = SingleFileTransaction()
+    try:
+        tmppath = cfg.get('common', 'repository-tmp')
+    except KeyError:
+        tmppath = None
+    t = SingleFileTransaction(tmppath)
     safe = t.open(resource.fp.path, 'wb')
     stream = referenceClone.open()
     size = long(stream.getheader('Content-Length'))

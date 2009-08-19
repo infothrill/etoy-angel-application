@@ -8,7 +8,8 @@ from twisted.internet.defer import deferredGenerator, waitForDeferred
 from twisted.web2.stream import readIntoFile
 from twisted.web2.dav.http import statusForFailure
 
-import angel_app.singlefiletransaction
+from angel_app.singlefiletransaction import SingleFileTransaction
+from angel_app.config.config import getConfig
 
 log = getLogger(__name__)
 
@@ -78,7 +79,11 @@ class Putable(object):
          Write the contents of the request stream to resource's file
         """
 
-        t = angel_app.singlefiletransaction.SingleFileTransaction()
+        try:
+            tmppath = getConfig().get('common', 'repository-tmp')
+        except KeyError:
+            tmppath = None
+        t = SingleFileTransaction(tmppath)
         try:
             safe = t.open(self.fp.path, 'wb')
             x = waitForDeferred(readIntoFile(stream, safe))

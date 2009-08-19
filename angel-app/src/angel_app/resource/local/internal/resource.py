@@ -78,18 +78,21 @@ class Crypto(
     
     def encrypt(self):
         """
-        <p>
         Replace the contents of the file with the encrypted data,
         return right away if the resource is a directory or self.secretKey
         is None.
-        </p>
         """   
         if self.fp.isdir() or self.secretKey() == None: return
 
-        import angel_app.singlefiletransaction
+        from angel_app.config.config import getConfig
+        from angel_app.singlefiletransaction import SingleFileTransaction
+        try:
+            tmppath = getConfig().get('common', 'repository-tmp')
+        except KeyError:
+            tmppath = None
         encrypter = self.secretKey()
         myFile = self.fp.open()
-        t = angel_app.singlefiletransaction.SingleFileTransaction()
+        t = SingleFileTransaction(tmppath)
         safe = t.open(self.fp, 'wb')
 
         EOF = False
