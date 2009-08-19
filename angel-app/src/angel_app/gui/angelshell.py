@@ -12,14 +12,16 @@ from angel_app.log import getLogger
 
 log = getLogger(__name__)
 
-# executed by angelshell if no angelshellinit.py is found:
-# TODO: add a check that ensure workerforking is disabled?
-defaultShellCommands = [
+# always executed:
+forcedShellCommands = [
               "from angel_app.config.config import getConfig",
               "cfg  = getConfig()",
-              "cfg.container['common']['workerforking'] = False", # forking will crash the app!
+              "cfg.container['common']['workerforking'] = False", # forking will crash the GUI!
               "from angel_app.log import initializeLogging",
               "initializeLogging('shell', ['console'])",
+                      ]
+# executed by angelshell if no angelshellinit.py is found:
+defaultShellCommands = [
               "rootPath = cfg.get('common', 'repository')",
               "from angel_app.resource.local.internal.resource import Crypto",
               "root = Crypto(rootPath)"
@@ -67,11 +69,13 @@ def angelshell(parent):
     """
     # sort of a joke for now ;-)
     def getInitCommands():
+        lines = forcedShellCommands 
         try:
             fileName = getConfig().get("gui", "angelshellinit")
-            return open(fileName).readlines()
+            lines.extend(open(fileName).readlines())
         except IOError: # file not found
-            return defaultShellCommands
+            lines.extend(defaultShellCommands)
+        return lines
     
     onShellLoad = getInitCommands()
     intro = 'ANGELSHELL %s - EVERYTHING YOU NEED FOR BACKUP' % py.version.VERSION
