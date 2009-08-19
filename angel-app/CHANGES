@@ -1,11 +1,27 @@
 0.4.5 XXXXXXXXXXXXX
 
+ * added new config variable in section 'common': 'repository-tmp'
+   This variable holds absolute paths, is optional and only relevant if you
+   put the repository on a different mount point than angelHome. Atomic file
+   renames cannot be done cross-device.
+ * html directory listing changed to be more independant of the
+   missioneternity.org website (css) and made it look more like a "technical"
+   listing as opposed to looking like being part of the website 
+ * when syncing a collection that already exists, only sync the metadata
+ * error handling refinements
+ * new config option to enable/disable parallelization in network requests,
+   default off
+ * optimized resource inspection by parallelizing network requests
+ * optimized broadcast: parallelize broadcasting, essentially scaling O(1)
+   instead of O(n). This saves about 1 hour per tree traversal right now.
+   Also, only broadcasts to reachable clones that don't have the local node.
+ * stability fixes in DirectoryDeadPropertyStore (file transactions and broken
+   metadata)
  * optimized PROPPATCH: do not pingBack() to self
  * optimized PROPPATCH: use byte range based validation instead of full
    validation
- * optimized clone resolution: resolve IP of local nodename, resolve all clone
-   hostnames and check for IP doubles 
-
+ * optimized clone DNS resolution: resolve IP of local nodename, resolve all
+   clone hostnames and check for IP doubles
 
 0.4.4 July 4 2009
 
