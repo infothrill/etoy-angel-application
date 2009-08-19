@@ -18,6 +18,27 @@ class WxLog(logging.Handler):
         '''
         self.ctrl.AppendText(self.format(record)+"\n")
 
+class RawWxLog(object):
+    def fileno(self):
+        1
+    def __init__(self, ctrl = None):
+        #self.fileno = 0
+        if ctrl is None:
+            self.doit = False
+        else:
+            self.ctrl = ctrl
+            self.doit = True
+    def startLogging(self):
+        self.doit = True
+    def stopLogging(self):
+        self.doit = True
+    def setCtrl(self, ctrl):
+        self.ctrl = ctrl
+    def write(self, buf):
+        log.debug(buf)
+        if self.doit:
+            self.ctrl.AppendText(buf+"\n")
+
 class AutoLoggingButton(wx.Button):
     def __init__(self, parent, label, level):
         wx.Button.__init__(self, parent, label = label)
@@ -28,8 +49,8 @@ class AutoLoggingButton(wx.Button):
         log.log(self.level, self.GetLabel())
 
 class LogFrame(wx.Frame):
-    def __init__(self):
-        wx.Frame.__init__(self, None, title=_("log console"), size = (800, 200))
+    def __init__(self, parent):
+        wx.Frame.__init__(self, parent, title=_("log console"), size = (800, 200))
         sizer = wx.BoxSizer(wx.VERTICAL)
         closeButton = wx.Button(self, wx.ID_CLOSE, _("Close"))
         self.Bind(wx.EVT_BUTTON, self.OnClose, closeButton)

@@ -13,12 +13,14 @@ from angel_app.log import getLogger
 log = getLogger(__name__)
 
 # executed by angelshell if no angelshellinit.py is found:
+# TODO: add a check that ensure workerforking is disabled?
 defaultShellCommands = [
+              "from angel_app.config.config import getConfig",
+              "cfg  = getConfig()",
+              "cfg.container['common']['workerforking'] = False", # forking will crash the app!
               "from angel_app.log import initializeLogging",
               "initializeLogging('shell', ['console'])",
-              "from angel_app.config.config import getConfig",
-              "cc = getConfig()",
-              "rootPath = cc.get('common', 'repository')",
+              "rootPath = cfg.get('common', 'repository')",
               "from angel_app.resource.local.internal.resource import Crypto",
               "root = Crypto(rootPath)"
               ]

@@ -8,11 +8,11 @@ import time, calendar
 
 from twisted.web2 import http, resource
 
-from angel_app.config import config
+from angel_app.config.config import getConfig
 
 TRACKER_PORT = 6223
 
-AngelConfig = config.getConfig()
+AngelConfig = getConfig()
 repository =  AngelConfig.get("common", "repository")
 
 tracked = []

@@ -1,6 +1,7 @@
 import os
 import shutil
 import urllib
+from logging import getLogger
 
 from twisted.python.filepath import FilePath
 from twisted.web2.dav.element import rfc2518
@@ -16,7 +17,6 @@ from angel_app.resource.local.renderManager import RenderManager
 from angel_app.resource.resource import Resource
 from angel_app.resource.remote.clone import Clone
 from angel_app.resource.util import getHashObject
-from angel_app.log import getLogger
 
 log = getLogger(__name__)
 

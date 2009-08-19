@@ -3,11 +3,12 @@ Utilities for creating the default repository directory layout.
 """
 
 import os
+from logging import getLogger
+
 from angel_app.config import config
 from angel_app.contrib.ezPyCrypto import key as ezKey
 
 AngelConfig = config.getConfig()
-from angel_app.log import getLogger
 log = getLogger(__name__)
 
 def getKeyringDirectory():

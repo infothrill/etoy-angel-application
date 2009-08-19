@@ -1,4 +1,5 @@
 import socket
+from logging import getLogger
 
 from netaddress.rfc3986 import path_absolute
 from pyparsing import ParseException
@@ -8,8 +9,7 @@ from zope.interface import implements
 
 from angel_app import elements
 from angel_app import uri
-from angel_app.config import config
-from angel_app.log import getLogger
+from angel_app.config.config import getConfig
 from angel_app.resource import IResource
 from angel_app.resource.remote.contentManager import ContentManager
 from angel_app.resource.remote.httpRemote import HTTPRemote
@@ -24,7 +24,7 @@ from angel_app.resource.remote.exceptions import CloneError
 log = getLogger(__name__)
 PROVIDER_PUBLIC_LISTEN_PORT = 6221
 
-AngelConfig = config.getConfig()
+AngelConfig = getConfig()
 providerport = AngelConfig.getint("provider","listenPort")
 MAX_DOWNLOAD_SPEED = AngelConfig.getint('common', 'maxdownloadspeed_kib') * 1024 # internally handled in bytes
 

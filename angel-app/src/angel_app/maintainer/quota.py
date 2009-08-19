@@ -1,10 +1,10 @@
+from logging import getLogger
+
 from angel_app.config import config
-from angel_app.log import getLogger
 from angel_app.resource.local.basic import Basic
 
 log = getLogger(__name__)
 AngelConfig = config.getConfig()
-
 
 class QuotaManager(object):
     def __init__(self, default_, root_, quotas_=None):
@@ -74,7 +74,7 @@ def __createQuotas():
         log.warn("No per-mount point quotas specified. Consider specifying a 'quotas' section in the configuration file.")
     
     
-    QuotaManager(
+    return QuotaManager(
                       default,
                       Basic(AngelConfig.get("common", "repository")),
                       __readQuotasFromConfig(

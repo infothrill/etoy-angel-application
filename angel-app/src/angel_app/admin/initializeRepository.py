@@ -1,5 +1,5 @@
- 
-from angel_app.log import getLogger
+from logging import getLogger
+
 log = getLogger(__name__)
 
 def initializeRepository():

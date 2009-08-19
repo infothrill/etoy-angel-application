@@ -9,6 +9,8 @@ Timeout headers are ignored (RFC 2518, Section 9.8).
 """
 __all__ = ["http_LOCK"]
 
+from logging import getLogger
+
 from twisted.internet.defer import deferredGenerator, waitForDeferred
 from twisted.web2 import responsecode, stream, http_headers
 from twisted.web2.http import HTTPError, Response, StatusResponse
@@ -17,7 +19,6 @@ from twisted.web2.dav.util import davXMLFromStream
 from twisted.web2.dav.element.rfc2518 import LockInfo
 
 from angel_app.contrib.uuid import uuid4
-from angel_app.log import getLogger
 log = getLogger(__name__)
 
 

@@ -30,6 +30,7 @@ __all__ = ["http_PROPPATCH"]
 
 import os
 import socket
+from logging import getLogger
 
 from twisted.python.failure import Failure
 from twisted.web2 import responsecode
@@ -40,7 +41,6 @@ from twisted.web2.dav.http import MultiStatusResponse, PropertyStatusResponseQue
 from twisted.internet.defer import deferredGenerator, waitForDeferred
 
 from angel_app import elements
-from angel_app.log import getLogger
 from angel_app.resource.remote.clone import Clone
 from angel_app.maintainer import collect
 from angel_app.maintainer.collect import ValidateClone
@@ -50,8 +50,8 @@ from angel_app.maintainer.collect import resolvedns
 log = getLogger(__name__)
 
 # get config:
-from angel_app.config import config
-AngelConfig = config.getConfig()
+from angel_app.config.config import getConfig
+AngelConfig = getConfig()
 maxclones = AngelConfig.getint("common","maxclones")
 
 

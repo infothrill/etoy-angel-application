@@ -1,7 +1,7 @@
 from os import sep, listdir
+from logging import getLogger
 
 from angel_app.config.config import getConfig
-from angel_app.log import getLogger
 from angel_app.admin import secretKey
 
 

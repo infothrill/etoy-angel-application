@@ -1,12 +1,12 @@
 import os
 import urllib
+from logging import getLogger
 
 from twisted.web2 import stream
 from twisted.web2.dav.element import rfc2518
 
 from angel_app import elements
 from angel_app.config.internal import loadKeysFromFile
-from angel_app.log import getLogger
 from angel_app.resource.local.basic import Basic
 from angel_app.resource.local.internal.methods import copy, delete, lock, mkcol, move, put
 

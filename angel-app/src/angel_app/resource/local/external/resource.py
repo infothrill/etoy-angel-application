@@ -1,10 +1,11 @@
-from angel_app.resource.local.basic import Basic
+from logging import getLogger
+
 
 from twisted.web2 import responsecode
 from twisted.web2.http import StatusResponse
 from twisted.web2.http import HTTPError
 
-from angel_app.log import getLogger
+from angel_app.resource.local.basic import Basic
 from angel_app.resource.local.external.methods import proppatch
 
 log = getLogger(__name__)

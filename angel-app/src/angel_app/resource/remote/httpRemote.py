@@ -1,7 +1,7 @@
 import socket
 from httplib import HTTPConnection
+from logging import getLogger
 
-from angel_app.log import getLogger
 from angel_app import version
 
 log = getLogger(__name__)

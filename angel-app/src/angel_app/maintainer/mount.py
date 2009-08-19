@@ -1,9 +1,10 @@
+import os
+from logging import getLogger
+
 from angel_app.admin.resourceProperties import absPath
 from angel_app.config.config import getConfig
-from angel_app.log import getLogger
 from angel_app.resource.local.basic import Basic
 from angel_app.resource.local.internal.resource import Crypto
-import os
  
 log = getLogger(__name__)
 

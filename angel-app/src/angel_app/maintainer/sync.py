@@ -3,9 +3,9 @@ Routines for synchronizing a local clone with a _single_ remote peer.
 """
 import os
 import time
+from logging import getLogger
 
 from angel_app import elements
-from angel_app.log import getLogger
 from angel_app.singlefiletransaction import SingleFileTransaction
 from angel_app.io import RateLimit
 from angel_app.io import bufferedReadLoop

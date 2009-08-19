@@ -29,6 +29,9 @@ WebDAV MKCOL method
 
 __all__ = ["http_MKCOL"]
 
+import os
+from logging import getLogger
+
 from twisted.internet.defer import deferredGenerator, waitForDeferred
 from twisted.web2 import responsecode
 from twisted.web2.http import HTTPError, StatusResponse
@@ -36,8 +39,6 @@ from twisted.web2.dav.fileop import mkcollection
 from twisted.web2.dav.util import noDataFromStream
 #from angel_app import elements
 #from angel_app.resource.local.internal.util import inspectWithResponse
-from angel_app.log import getLogger
-import os
 
 log = getLogger(__name__)
 

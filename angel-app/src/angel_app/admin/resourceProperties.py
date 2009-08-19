@@ -2,8 +2,8 @@
 Utility script to force resigning the repository root
 """
 import os
+from logging import getLogger
 
-from angel_app.log import getLogger
 log = getLogger(__name__)
 
 from angel_app.resource.local.basic import Basic

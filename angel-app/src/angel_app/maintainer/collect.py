@@ -5,11 +5,11 @@ Routines for obtaining a best guess about the current replication state of a clo
 import itertools
 import random
 import socket
+from logging import getLogger
 
 #from angel_app.contrib.delegate import parallelize
 from angel_app.worker import dowork
 from angel_app.config import config
-from angel_app.log import getLogger
 from angel_app.resource.remote import exceptions as cloneExceptions
 
 log = getLogger(__name__)

@@ -1,6 +1,7 @@
 import os
 import cPickle
 import shutil
+from logging import getLogger
 
 from zope.interface import implements
 from twisted.python.filepath import FilePath
@@ -8,7 +9,6 @@ from twisted.python.filepath import FilePath
 from angel_app.config.config import getConfig
 from angel_app.resource.IDeadPropertyStore import IDeadPropertyStore
 from angel_app.singlefiletransaction import SingleFileTransaction
-from angel_app.log import getLogger
 
 log = getLogger(__name__)
 

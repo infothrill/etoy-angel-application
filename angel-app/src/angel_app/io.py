@@ -9,8 +9,7 @@ from __future__ import division
 import time
 import StringIO
 from copy import deepcopy
-
-from angel_app.log import getLogger
+from logging import getLogger
 
 log = getLogger(__name__)
 

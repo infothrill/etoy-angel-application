@@ -1,4 +1,5 @@
 import os
+from logging import getLogger
 
 from twisted.web2 import responsecode
 from twisted.web2.http import HTTPError, StatusResponse
@@ -8,7 +9,6 @@ from twisted.web2.stream import readIntoFile
 from twisted.web2.dav.http import statusForFailure
 
 import angel_app.singlefiletransaction
-from angel_app.log import getLogger
 
 log = getLogger(__name__)
 

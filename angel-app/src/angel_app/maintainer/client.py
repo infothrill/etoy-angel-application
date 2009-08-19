@@ -3,10 +3,10 @@ from __future__ import division # to make those sleepTime calculations real
 import os
 import time
 import random
+from logging import getLogger
 
 from angel_app.config import config
 from angel_app.graph import graphWalker
-from angel_app.log import getLogger
 from angel_app.maintainer import sync
 from angel_app.maintainer import update
 from angel_app.resource import childLink

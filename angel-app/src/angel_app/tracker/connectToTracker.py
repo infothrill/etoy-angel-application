@@ -5,8 +5,8 @@ based on http://twistedmatrix.com/projects/web2/documentation/examples/intro/sim
 """
 
 import socket
+from logging import getLogger
 
-from angel_app.log import getLogger
 from angel_app.resource.remote.httpRemote import HTTPRemote
 from angel_app.tracker.tracker import TRACKER_PORT
 

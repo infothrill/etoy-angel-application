@@ -6,9 +6,9 @@ For now, this code can
 """
 
 import sys
+from logging import getLogger
 
 from angel_app.config.config import getConfig
-from angel_app.log import getLogger
 
 log = getLogger(__name__)
 cfg = getConfig()

@@ -1,6 +1,6 @@
 from twisted.web2 import responsecode
 from twisted.web2.http import HTTPError, StatusResponse
-from angel_app.log import getLogger
+from logging import getLogger
 
 log = getLogger(__name__)
 

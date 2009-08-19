@@ -1,11 +1,12 @@
-from angel_app.log import getLogger
-from angel_app.resource.local.dirlist import DirectoryLister
+from logging import getLogger
+
 from twisted.web2 import http
 from twisted.web2 import responsecode
 from twisted.web2 import stream
 
-log = getLogger(__name__)
+from angel_app.resource.local.dirlist import DirectoryLister
 
+log = getLogger(__name__)
 
 class RenderManager(object):
     """

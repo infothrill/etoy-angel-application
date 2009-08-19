@@ -5,6 +5,7 @@ Handle initialization of attributes with default values.
 import os.path
 import time
 import urllib
+from logging import getLogger
 
 from twisted.web2 import responsecode
 from twisted.web2.dav.element.base import WebDAVElement
@@ -13,7 +14,6 @@ from twisted.web2.http import HTTPError, StatusResponse
 from zope.interface import implements
 
 from angel_app import elements
-from angel_app.log import getLogger
 from angel_app.resource.IReadonlyPropertyManager import IReadonlyPropertyManager
 from angel_app.resource.remote.clone import clonesToElement
 from angel_app.resource.IDeadPropertyStore import IDeadPropertyStore

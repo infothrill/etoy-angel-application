@@ -3,8 +3,8 @@ Routines for updating a local resource from _all_ accessible remote clones.
 """
 
 from itertools import chain
+from logging import getLogger
 
-from angel_app.log import getLogger
 from angel_app.maintainer import collect
 from angel_app.maintainer import sync
 from angel_app.resource.remote.clone import clonesToElement

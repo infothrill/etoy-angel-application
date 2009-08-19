@@ -29,9 +29,8 @@ author = """Vincent Kraeutler, 2006"""
 from urllib import unquote
 from urlparse import urlsplit
 from os import sep
+from logging import getLogger
 
-
-from angel_app.log import getLogger
 log = getLogger(__name__)
 # get config:
 from angel_app.config import config
