@@ -125,6 +125,8 @@ class MountListCtrlPanel(wx.Panel): #, listmix.ColumnSorterMixin
             self.list.SetStringItem(index, 1, data[1])
             self.list.SetItemData(index, key)
         
+        self.list.SetColumnWidth(0, wx.LIST_AUTOSIZE)
+        self.list.SetColumnWidth(1, wx.LIST_AUTOSIZE)
         # select  row:
         self.list.SetItemState(self.currentItem, wx.LIST_STATE_SELECTED, wx.LIST_STATE_SELECTED)
 
