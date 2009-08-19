@@ -167,7 +167,7 @@ def basicCloneChecks(toVisit, accessibleCb, validateCb):
     accessibleResult = worker.dowork(accessibleCb, toVisit)
     for cc in accessibleResult:
         if isinstance(accessibleResult[cc], worker.WorkerError):
-            log.debug("error in accessibility checks: %r\n%s", accessibleResult[cc], "".join(accessibleResult[cc].formatted_tb()))
+            log.warn("error in accessibility checks: %r\n%s", accessibleResult[cc], "".join(accessibleResult[cc].formatted_tb()))
             accessibleResult[cc] = (cc, False)
     log.debug("accessibility check done")
     for (clone, acc) in accessibleResult.itervalues(): # mark redirects as seen
@@ -178,7 +178,7 @@ def basicCloneChecks(toVisit, accessibleCb, validateCb):
         validationResult = worker.dowork(validateCb, toValidate)
         for cc in validationResult:
             if isinstance(validationResult[cc], worker.WorkerError):
-                log.debug("error in validation: %r\n%s", validationResult[cc], "".join(validationResult[cc].formatted_tb()))
+                log.warn("error in validation: %r\n%s", validationResult[cc], "".join(validationResult[cc].formatted_tb()))
                 validationResult[cc] = False
         log.debug("validation done")
         for cc in validationResult:
