@@ -68,6 +68,9 @@ def getDefaultConfigObj():
     angelhome = "%(angelhome)s"
     # where we keep the actual file system data
     repository =  "%(repository)s"
+    # For fancy setups, where the repository is not located on the same partition
+    # than angelhome, you need to setup a separate tmp path for atomic file renames
+    # repository-tmp =  /foo/bar/
     # where we keep key files
     keyring = "%(keyring)s"
     # logs go here
@@ -122,7 +125,7 @@ def getDefaultConfigObj():
     [mounttab]
     # list of default mounts.
     # $URL = $MOUNT_POINT
-    "http://missioneternity.org:6221/" = "MISSION ETERNITY"
+    #"http://missioneternity.org:6221/" = "MISSION ETERNITY"
 
     """ % ( defaults )
 
