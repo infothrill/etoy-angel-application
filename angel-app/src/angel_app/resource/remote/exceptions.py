@@ -1,7 +1,8 @@
 class BaseCloneError(Exception):
     # don't use directly
-    def __init__(self, value):
-        self.parameter=value
+    def __init__(self, value = None):
+        if value is not None:
+            self.parameter = value
     def __str__(self):
         return repr(self.parameter)
     def __repr__(self):
