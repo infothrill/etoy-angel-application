@@ -84,7 +84,7 @@ def getDefaultConfigObj():
     # maximum download speed in kiB, 0 disables limit
     maxdownloadspeed_kib = 0
     # wether to use forking to optimize network connectivity:
-    workerforking = False
+    workerforking = True
 
     [presenter]
     # presenter provides priviledged DAV support on localhost (=> Finder) 
