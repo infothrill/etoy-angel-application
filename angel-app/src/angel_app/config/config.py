@@ -123,10 +123,6 @@ def getDefaultConfigObj():
     angelshellinit = '%(angelshellinit)s'
 
     [mounttab]
-    # list of default mounts.
-    # $URL = $MOUNT_POINT
-    #"http://missioneternity.org:6221/" = "MISSION ETERNITY"
-
     """ % ( defaults )
 
     cfg = ConfigObj(defaultconfig_txt.splitlines(), configspec = _configspec_lines())
