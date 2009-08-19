@@ -6,10 +6,12 @@ legalMatters = """See LICENSE for details."""
 __author__ = """Paul Kremer, 2007"""
 
 """
-This is a module that provides simple wrapping services for logging.
+This is a module that provides wrapping services for logging.
 It is responsible for tying together possibly different logging engines,
 initializing them and configuring them ...
-It uses the logging module from the python standard library.
+It uses the logging module from the python standard library and monkey patches
+the standard logging.getLogger method.
+
 Logfiles are in $HOME/.angel_app/log/
 The directory $HOME/.angel_app/log/ will automatically get created if needed.
 
@@ -59,10 +61,14 @@ def getLogger(area = ""):
         area = appname
     return _getLogger(area)
 
+# keep a reference to the original std library getLogger method
+# and monkey patch on startup:
+_std_getLogger = logging.getLogger
+logging.getLogger = getLogger
 
 def _getLogger(area = ''):
     if not loggers.has_key(area):
-        loggers[area] = logging.getLogger(area)
+        loggers[area] = _std_getLogger(area)
     return loggers[area]
 
 
