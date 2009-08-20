@@ -29,4 +29,5 @@ def checkM221eMount():
         from angel_app.gui.mounttab import MountsWindow 
         window = MountsWindow(None, -1, _("Mounts"))
         window.CenterOnParent()
-        window.mountsPanel.listPanel.modifyMountPoints("Edit mount point", url, mntpoint)
+        if window.mountsPanel.listPanel.modifyMountPoints("Edit mount point", url, mntpoint):
+            wx.GetApp().p2p.conditionalRestart()
