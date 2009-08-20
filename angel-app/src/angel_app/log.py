@@ -367,6 +367,9 @@ def getLoggingFilters():
 
 # Growl support is optional:
 try:
+    # to use Growl, http://growl.info/downloads_developers.php must be installed
+    # Unfortunately, they added new python dependencies at some point
+    # So we can only use version 1.1.4
     import Growl
 
     def getAngelGrowlNotifier():
