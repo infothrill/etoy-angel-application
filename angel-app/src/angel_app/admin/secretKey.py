@@ -32,7 +32,10 @@ def createKey(filePath = defaultKeyFilePath()):
     # TODO: make key size configurable
     kk.makeNewKeys() 
     log.info("creating new key in file: %r", filePath)
-    open(filePath, 'w').write(kk.exportKeyPrivate())
+    t = SingleFileTransaction()
+    safe = t.open(filePath, 'w')
+    safe.write(kk.exportKeyPrivate())
+    t.commit()
     return kk
 
 def getKeyFor(path = defaultKeyFilePath()):
