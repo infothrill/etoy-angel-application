@@ -265,7 +265,7 @@ Example valid URI: http://missioneternity.org:6221/"""
         res = self.showDialog(title, oldsource, oldmountpoint)
         if None == res:
             # user cancelled:
-            return
+            return False
         else:
             # store user settings:
             (source, mountpoint) = res
@@ -278,7 +278,8 @@ Example valid URI: http://missioneternity.org:6221/"""
             
             # refresh the view of available mount points:
             self.list.DeleteAllItems()
-            self.refreshContent()      
+            self.refreshContent()
+            return True      
 
     def add(self):
         """
