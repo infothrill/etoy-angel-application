@@ -540,7 +540,7 @@ class AngelApp(wx.App):
         self._timer.Start(1, oneShot=True)
 
         self.timer = wx.PyTimer(self.startUpChecks)
-        self.timer.Start(8000, oneShot=True)
+        self.timer.Start(500, oneShot=True)
         
         return True
 
