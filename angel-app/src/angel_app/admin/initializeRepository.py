@@ -12,6 +12,11 @@ def initializeRepository():
         log.info("making a secret key, if necessary.")
         createAtLeastOneKey()
         
+        # _always_ load the keyring if initializeRepository is called, no matter
+        # if new keys were created or not
+        from angel_app.admin.secretKey import reloadKeyRing
+        reloadKeyRing()
+        
         from angel_app.admin.resourceProperties import setKey
         log.info("taking ownership of repository root.")
         # TODO -- we need to be more specific about which key we use for owning the root
