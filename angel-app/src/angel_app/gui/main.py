@@ -542,14 +542,17 @@ class AngelApp(wx.App):
         self.main.Show(True)
         self.SetTopWindow(self.main)
 
-        from angel_app.gui import startup
-        startup.checkM221eMount()
-        # start the p2p process:
+        # start the p2p process as soon as possible:
         if wx.GetApp().config.getboolean('gui', 'autostartp2p'):
             wx.GetApp().p2p.start()
             self.main.enableP2PMenuItems(True)
         else:
             self.main.enableP2PMenuItems(False)
+
+        # currently this requires that initializeRepository() has been called,
+        # so for now, we call it after starting the p2p process.
+        from angel_app.gui import startup
+        startup.checkM221eMount()
         
         return True
 
