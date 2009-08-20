@@ -155,20 +155,20 @@ class AngelMainFrameBase(wx.Frame):
         self.SetMenuBar(self.menu_bar)
         # end define the menus
 
-    def OnQuit(self, event):
+    def OnClose(self, event):
         """
         Handler for wx.EVT_CLOSE event
         """
-        wx.GetApp().p2p.stop()
         self.Destroy()
+
+    def doClose(self, event):
+        self.Close(True)
 
     def doExit(self, event):
         """
         Exits the application explicitly
         """
-        log.info("Exiting on user request")
-        self.Close(True)
-
+        wx.GetApp().Exit()
 
     def askIFPurgeRepository(self):
         questiontext = _('By purging your repository, you delete all locally stored data. Are you sure you want to purge the repository?') 
@@ -457,58 +457,42 @@ class AngelMainFrameBase(wx.Frame):
         platformwrap.showURLInBrowser(self.TECHNICALREPORT_URL)
 
 
-class AngelMainNoteBook(wx.Notebook): # deprecated
-    def __init__(self, parent, id, statuslog):
-        wx.Notebook.__init__(self, parent, id, size=(-1,-1))
-        self.parent = parent
-        self.statuslog = statuslog
-
-        from angel_app.gui import mounttab
-        win = mounttab.MountsPanel(self, statuslog = self.statuslog)
-        self.AddPage(win, _('Mounts'))
-        
-        from angel_app.gui import prefs
-        win = prefs.PrefsPanel(self, statuslog = self.statuslog)
-        self.AddPage(win, _('Preferences'))
-        
-        from angel_app.gui.angelshell import angelshell 
-        self.AddPage(angelshell(parent = self), _('Angelshell'))
-    
-        from angel_app.gui import welcome
-        win = welcome.WelcomePanel(self, statuslog = self.statuslog)
-        self.InsertPage(0, win, _('Welcome'), select = True)
-
-
 class AngelMainWindow(AngelMainFrameBase):
+    """
+    This is the main window that visually appears on startup
+    """
     def __init__(self, parent, id, title):
         """
         The constructor, initializes the menus, the mainframe with the logo and the statusbar.
         By default, also starts the p2p process automatically on start-up
         """
-        wx.Frame.__init__(self, parent, id, title, wx.DefaultPosition, wx.Size(450, 535))
+        AngelMainFrameBase.__init__(self, parent, id, title, wx.DefaultPosition, wx.Size(450, 535))
 
-        #self.doNoteBookLayout() # deprecated
         self.doControllerLayout()
 
         self._buildMenus()
 
         self.SetStatusBar(statusbar.AngelStatusBar(self))
 
-        # make sure to have a handler when quitting (shutdown p2p) 
-        self.Bind(wx.EVT_CLOSE, self.OnQuit)
+        # make sure to have a handler when quitting 
+        self.Bind(wx.EVT_CLOSE, self.OnClose)
 
         self.CenterOnScreen()
-        self.Show(True)
+        wx.MenuBar.SetAutoWindowMenu(False)
 
-    def doNoteBookLayout(self):
+        self.Bind(wx.EVT_KEY_DOWN, self.OnKeyDown)
+
+    def OnKeyDown(self, event):
         """
-        main window organized with tabs
+        catch and handle a couple of special keys like Cmd-W
+        @param event: wx.KeyEvent
         """
-        log.debug("deprecated layout ;-) ")
-        Sizer = wx.BoxSizer(wx.VERTICAL)
-        self.nb = AngelMainNoteBook(self, -1, statuslog = statusbar.StatusLog())
-        Sizer.Add(self.nb, proportion = 2, flag=wx.RIGHT|wx.LEFT|wx.EXPAND, border = 20)
-        self.SetSizer(Sizer)
+        #log.debug("OnKeyDown() got keycode: %s" % keycode)
+        if event.CmdDown(): # Cmd or Ctrl
+            keycode = event.GetKeyCode()
+            if keycode == 87: # 'w'
+                self.Close()
+        event.Skip() # pass it up the hierarchy!
         
     def doControllerLayout(self):
         """
@@ -519,13 +503,21 @@ class AngelMainWindow(AngelMainFrameBase):
         win = welcome.WelcomePanel(self, None)
         Sizer.Add(win)
 
-def showSplashScreen():
-    # unused
-    bitmapfilename = os.path.join(platformwrap.getResourcePath(), "images", "skull.png")
-    assert os.path.isfile(bitmapfilename), "Splash screen picture '%s' could not be found" % bitmapfilename
-    aBitmap = wx.Image(name = bitmapfilename).ConvertToBitmap()
-    splashDuration = 3000 # milliseconds
-    wx.SplashScreen(aBitmap, wx.SPLASH_CENTRE_ON_SCREEN | wx.SPLASH_TIMEOUT, splashDuration, None)
+def attachDummyFrame():
+    """
+    This is a utility method for attaching an invisible frame to the main app,
+    which has all the menus necessary. This is needed on Mac OS X to be able to
+    quit the AngelMainWindow without closing the app. 
+
+    @param parent: wx.App
+    """
+    class DummyFrame(AngelMainFrameBase):
+        def __init__(self, parent, id, title):
+            AngelMainFrameBase.__init__(self, parent, id, title, wx.DefaultPosition, wx.Size(0, 0))
+            self._buildMenus()
+    df = DummyFrame( None, -1, title="")
+    df.Show(True)
+    return True
 
 class AngelApp(wx.App):
     """
@@ -538,10 +530,21 @@ class AngelApp(wx.App):
         self.config = config.getConfig()
         self.p2p = masterthread.MasterThread()
         self.p2p.setDaemon(True)
+        if platformwrap.isMacOSX():
+            attachDummyFrame()
         self.main = AngelMainWindow(None, -1, _("ANGEL APPLICATION"))
         self.main.Show(True)
         self.SetTopWindow(self.main)
 
+        self._timer =  wx.PyTimer(self.startp2p)
+        self._timer.Start(1, oneShot=True)
+
+        self.timer = wx.PyTimer(self.startUpChecks)
+        self.timer.Start(8000, oneShot=True)
+        
+        return True
+
+    def startp2p(self):
         # start the p2p process as soon as possible:
         if wx.GetApp().config.getboolean('gui', 'autostartp2p'):
             wx.GetApp().p2p.start()
@@ -549,12 +552,14 @@ class AngelApp(wx.App):
         else:
             self.main.enableP2PMenuItems(False)
 
+    def startUpChecks(self):
         # currently this requires that initializeRepository() has been called,
         # so for now, we call it after starting the p2p process.
         from angel_app.gui import startup
         startup.checkM221eMount()
-        
-        return True
+    
+    def OnExit(self):
+        wx.GetApp().p2p.stop()
 
 if __name__ == '__main__':
     pass
