@@ -24,10 +24,11 @@ def checkM221eMount():
     for k in getMountTab():
         if k[0] == url:
             return True
-    res = askYesNo(_("""The ANGEL APPLICATION is currently not set up to replicate %s on your computer. Would you like to become an ANGEL by activating it?""" % url))
-    if res:
+    if askYesNo(_("""The ANGEL APPLICATION is currently not set up to replicate %s on your computer. Would you like to become an ANGEL by activating it?""" % url)):
+        from angel_app.admin.initializeRepository import initializeRepository
+        initializeRepository()
         from angel_app.gui.mounttab import MountsWindow 
         window = MountsWindow(None, -1, _("Mounts"))
         window.CenterOnParent()
-        if window.mountsPanel.listPanel.modifyMountPoints("Edit mount point", url, mntpoint):
+        if window.mountsPanel.listPanel.modifyMountPoints("Add mount point", url, mntpoint):
             wx.GetApp().p2p.conditionalRestart()
