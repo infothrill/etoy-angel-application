@@ -101,43 +101,40 @@ class LicenseWindow(wx.Frame):
                 size=wx.DefaultSize, style=wx.CENTRE):
         wx.Frame.__init__(self, parent, id, title, pos, size, style)
 
-        vbox = wx.BoxSizer(wx.VERTICAL)
-
-        #
-        # Read licence file
-        #
         try:
-            licensefilename = os.path.join(platformwrap.getResourcePath(), "files", 'copying.html')
-            fd = open(licensefilename)
+            filename = os.path.join(platformwrap.getResourcePath(), "files", 'copying.html')
+            fd = open(filename)
             data = fd.read()
             fd.close()
-        except Exception, e:
-            log.error("Unable to read licence file: %s" % licensefilename, exc_info = e)
-            data = "Error: <i>license file not found</i>"
+        except IOError, e:
+            log.error("Unable to read licence file: %s" % filename, exc_info = e)
+            data = "Error: <i>license file '%s' not found</i>" % filename
 
-        scWinAbout = wx.ScrolledWindow(self, -1, wx.DefaultPosition,
-                                    wx.Size(-1, -1))
+        scWinAbout = wx.ScrolledWindow(self, -1, wx.DefaultPosition, wx.Size(-1, -1))
 
         htmlWin = wxhtml.HtmlWindow(scWinAbout, -1, style=wx.SUNKEN_BORDER)
         htmlWin.SetFonts('Helvetica', 'Fixed', [12]*5)
         htmlWin.SetPage(data)
+        htmlWin.Bind(wx.EVT_CHAR, self.OnChar)
       
         scBox = wx.BoxSizer(wx.VERTICAL)
-        scBox.Add(htmlWin, 1, wx.ALL | wx.EXPAND, 1)
+        scBox.Add(htmlWin, 1, wx.ALL | wx.EXPAND, border = 0)
         scWinAbout.SetSizer(scBox)
-        vbox.Add(scWinAbout, 1, wx.ALL | wx.EXPAND, 5)
 
-        self.buttonClose = wx.Button(self, 2002, _("&Close"))
-        vbox.Add(self.buttonClose, 0, wx.ALL | wx.ALIGN_RIGHT, 5)
+        vbox = wx.BoxSizer(wx.VERTICAL)
+        vbox.Add(scWinAbout, proportion = 1, flag = wx.ALL | wx.EXPAND, border = 0)
 
         self.SetSizer(vbox)
-
-        wx.EVT_BUTTON(self, 2002, self.onClose)
-
 
     def onClose(self, event):
         """This method is invoked when Close button is clicked"""
         self.Destroy()
+
+    def OnChar(self, event):
+        if event.CmdDown() and event.GetKeyCode() in (87, 119): # cmd/ctrl and 'w'/'W'
+            self.Close()
+        event.Skip()
+
       
 class CreditsWindow(wx.Dialog):
     """Credits window"""
@@ -188,3 +185,55 @@ class CreditsWindow(wx.Dialog):
     def onClose(self, event):
         """This method is invoked when Close button is clicked"""
         self.Destroy()
+
+class ChangesWindow(wx.Frame):
+    """Changes window class"""
+
+    def __init__(self, parent, id, title, pos=wx.DefaultPosition,
+                size=wx.DefaultSize, style=wx.CENTRE):
+        wx.Frame.__init__(self, parent, id, title, pos, size, style)
+
+
+        #
+        # Read file
+        #
+        try:
+            filename = os.path.join(platformwrap.getResourcePath(), "files", 'CHANGES')
+            fd = open(filename)
+            data = fd.read()
+            fd.close()
+        except IOError, e:
+            log.error("Unable to read file: %s" % filename, exc_info = e)
+            data = "Error: file '%s' not found!" % filename
+
+        text = wx.TextCtrl(self, -1, data, style=wx.TE_MULTILINE|wx.TE_READONLY)
+        text.SetFont(wx.Font(12, wx.FONTFAMILY_MODERN, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL)) # monospace
+
+        text.Bind(wx.EVT_CHAR, self.OnChar)
+    
+        textsizer = wx.BoxSizer(wx.VERTICAL)
+        textsizer.Add(text, proportion = 1, border = 0, flag = wx.ALL | wx.EXPAND)
+
+        self.SetSizer(textsizer)
+
+    def OnChar(self, event):
+        if event.CmdDown() and event.GetKeyCode() in (87, 119): # cmd/ctrl and 'w'/'W'
+            self.Close()
+        event.Skip()
+
+    def onClose(self, event):
+        """This method is invoked when Close button is clicked"""
+        self.Destroy()
+      
+if __name__ == '__main__':
+    """
+    This allows us to run it separately from the rest of the GUI (for quick testing)
+    """
+    from angel_app.log import initializeLogging
+    initializeLogging()
+    app = wx.App(0)
+    win = ChangesWindow(None, -1, _("Version History"), size=(620, 400), style=wx.DEFAULT_FRAME_STYLE)
+    #win = LicenseWindow(None, -1, _("Software license"), size=(620, 400), style=wx.DEFAULT_FRAME_STYLE)
+    win.CenterOnParent()
+    win.Show(True)
+    app.MainLoop()

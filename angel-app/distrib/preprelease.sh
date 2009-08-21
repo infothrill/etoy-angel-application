@@ -167,6 +167,10 @@ else
 	rm -f ${SHORTNAME}/src/angel_app/version.py.bak
 fi
 
+# additional file operations
+# copy the CHANGES file to distrib/files/CHANGES
+cp "${SHORTNAME}/CHANGES" "${SHORTNAME}/distrib/files/"
+
 rm -rf "${SHORTNAME}-${RELEASE}"
 #rm -rf "${SHORTNAME}-${RELEASE}.tgz"
 

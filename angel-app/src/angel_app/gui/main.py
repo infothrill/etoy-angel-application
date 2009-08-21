@@ -123,7 +123,8 @@ class AngelMainFrameBase(wx.Frame):
                          ("M&ISSION ETERNITY (Website)", "http://www.missioneternity.org", self.on_help_m221e),
                          ("Technical Report on ANGEL APPLICATION (Online PDF)", self.TECHNICALREPORT_URL, self.on_help_technicalreport),
                          ("Send a b&ug report (Website)", self.BUGREPORT_URL, self.on_help_bugreport),
-                         ("S&oftware License", "Software License", self.on_help_license)
+                         ("S&oftware License", "Software License", self.on_help_license),
+                         ("Version History", "Version History", self.on_help_changes)
                          ]
         about_menu = self.__buildMenuWith(helpMenuItems)
         
@@ -420,9 +421,18 @@ class AngelMainFrameBase(wx.Frame):
         Shows the license in a scroll box
         """
         from angel_app.gui.about import LicenseWindow 
-        licenseWindow = LicenseWindow(self, -1, _("Licence"), size=(500, 400), style=wx.DEFAULT_FRAME_STYLE)
-        licenseWindow.CenterOnParent()
-        licenseWindow.Show(True)
+        window = LicenseWindow(self, -1, _("Licence"), size=(500, 400), style=wx.DEFAULT_FRAME_STYLE)
+        window.CenterOnParent()
+        window.Show(True)
+
+    def on_help_changes(self, event):
+        """
+        Shows the license in a scroll box
+        """
+        from angel_app.gui.about import ChangesWindow 
+        window = ChangesWindow(self, -1, _("Version History"), size=(620, 400), style=wx.DEFAULT_FRAME_STYLE)
+        window.CenterOnParent()
+        window.Show(True)
 
     def on_help_presenter(self, event):
         """
@@ -487,12 +497,9 @@ class AngelMainWindow(AngelMainFrameBase):
         catch and handle a couple of special keys like Cmd-W
         @param event: wx.KeyEvent
         """
-        #log.debug("OnKeyDown() got keycode: %s" % keycode)
-        if event.CmdDown(): # Cmd or Ctrl
-            keycode = event.GetKeyCode()
-            if keycode == 87: # 'w'
-                self.Close()
-        event.Skip() # pass it up the hierarchy!
+        if event.CmdDown() and event.GetKeyCode() in (87, 119): # cmd/ctrl and 'w'/'W'
+            self.Close()
+        event.Skip()
         
     def doControllerLayout(self):
         """
