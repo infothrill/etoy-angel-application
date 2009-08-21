@@ -6,7 +6,7 @@ from distutils.core import setup
 import py2app
 
 NAME = 'Scrambler Droplet'
-VERSION = '1.1'
+VERSION = '1.2'
 
 plist = dict(
     #CFBundleIconFile='scrambler_icon.icns',
@@ -35,6 +35,7 @@ py2app_options = dict(
     # in the Contents/Resources folder of the application bundle,
     # and make sure the CFBundleIcon plist key is set appropriately.
     iconfile='scrambler_icon.icns',
+    plist = plist,
 )
 
 setup(

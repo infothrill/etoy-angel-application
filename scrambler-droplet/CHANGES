@@ -1,0 +1,9 @@
+1.2 XXXXXXX
+
+- added check for file length > 0
+- replaced print statements with logging
+
+
+1.1 July 2009
+
+initial release

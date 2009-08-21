@@ -6,9 +6,10 @@
 #
 
 VERSION=${1:?Please specify the version}
+NAME="Scrambler Droplet"
 
 rm -rf build dist
 ./setup.py py2app
-rm -rf scrambler-droplet-${VERSION}.app
-mv dist/scrambler-droplet.app scrambler-droplet-${VERSION}.app
+rm -rf "${NAME}-${VERSION}.app"
+mv "dist/${NAME}.app" "${NAME}-${VERSION}.app"
 rm -rf build dist
