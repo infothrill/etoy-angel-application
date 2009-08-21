@@ -1,10 +1,11 @@
-0.4.5 XXXXXXXXXXXXX
+0.4.5 August 21 2009
 
  * on Mac OS X, the main window can now be closed without quitting the
    application
  * mounting missioneternity.org is not forced in a hidden way anymore. Instead,
    on GUI startup, a check is performed that asks the end-user if he wants to
    become an ANGEL by backing up missioneternity data
+ * added menu Help->Version History
  * added angel_app.worker, which implements boiled down map/reduce functionality
  * html directory listing changed to be more independant of the
    missioneternity.org website (css) and made it look more like a "technical"
