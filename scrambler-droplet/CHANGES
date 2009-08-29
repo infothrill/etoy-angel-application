@@ -1,5 +1,6 @@
 1.2 XXXXXXX
 
+- factored out essential scrambling functionality into an independant module 
 - added check for file length > 0
 - replaced print statements with logging
 

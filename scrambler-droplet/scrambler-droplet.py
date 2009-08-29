@@ -17,69 +17,14 @@ import shutil
 from optparse import OptionParser
 import logging
 
-log = logging.getLogger('srcamber-droplet')
+log = logging.getLogger('scrambler-droplet')
 
-class ScrambledDirectory(object):
-    """
-    A class that should come in handy when wanting to take a file and scramble
-    its filename, while copying it into a destination folder.
-    """
-    def __init__(self, id, targetpath):
-        """
-        
-        @param id: the capsule ID
-        @param targetpath: the capsule folder, must exist 
-        """
-        self._id = id
-        assert os.path.isdir(targetpath), "The directory '%s' for the capsule does not exist" % targetpath
-        self._targetpath = targetpath
-        self.EXCLUDE_FILES = [ '.DS_Store', 'Thumbs.db' ]
-
-    def _checksum(self, fname):
-        hasher = hashlib.sha1()
-        inputf = open(fname, 'rb')
-        hasher.update(inputf.read())
-        inputf.close()
-        return hasher.hexdigest()
-        
-    def _generateFilename(self, fname, checksum):
-        """
-        generates a "scrambled" filename based on the given filename and the
-        given checksum
-        """
-        basename, extension = os.path.splitext(fname)
-        if len(extension) < 1:
-            raise ValueError, "Cowardly refusing to scramble a file that has no extension: '%s'" % fname 
-        extension = extension.lower()
-        return checksum + "-" + self._id + extension
-    
-    def addFile(self, sourcefilename):
-        assert os.path.isfile(sourcefilename), "The given filename is not a file: '%s'" % sourcefilename
-        assert os.path.getsize(sourcefilename) > 0, "The given file '%s' has 0 size!" % sourcefilename
-        sourcebasefilename = os.path.basename(sourcefilename)
-        if sourcebasefilename in self.EXCLUDE_FILES:
-            log.warn("excluding file '%s'" % sourcefilename)
-            return 0
-        sourcechecksum = self._checksum(sourcefilename)
-        targetbasefilename = self._generateFilename(sourcefilename, sourcechecksum) 
-        targetfilename = os.path.join(self._targetpath, targetbasefilename)
-        if os.path.isfile(targetfilename):
-            log.info("Skipping '%s', already present" % targetbasefilename)
-            return 0
-        log.info("\t%s from '%s'" % (targetbasefilename, sourcebasefilename))
-        try:
-            shutil.copy(sourcefilename, targetfilename)
-        except Exception, e:
-            log.error("got an exception while adding file %s to capsule %s: %s" % (sourcefilename, targetfilename), exc_info =e)
-            try:
-                os.unlink(targetfilename)
-            except:
-                pass
-        os.chmod(targetfilename, 0444) # make target read-only / pure paranoia
-        assert self._checksum(targetfilename) == sourcechecksum, "After copying, the checksum changed"
-
+import scramble
 
 def findId():
+    """
+    tool to find the ARCANUM ID based on the name of the .app bundle on disk
+    """
     thispath = sys.argv[0]
     print thispath
     reg = re.compile("\.app")
@@ -125,7 +70,7 @@ def main():
     if not os.path.exists(capsulepath):
         os.mkdir(capsulepath)
 
-    capsule = ScrambledDirectory(capsuleid, capsulepath)
+    capsule = scramble.ScrambledDirectory(capsuleid, capsulepath)
 
     for arg in args:
         if os.path.isdir(arg):
