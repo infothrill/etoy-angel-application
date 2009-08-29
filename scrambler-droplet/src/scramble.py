@@ -1,13 +1,13 @@
 import os
-import hashlib
 import shutil
 import logging
 import mimetypes
+import sha
 
 log = logging.getLogger('ScrambledDirectory')
 
 def m221estreamchecksum(stream):
-    hasher = hashlib.sha1()
+    hasher = sha.new()
     hasher.update(stream.read())
     return hasher.hexdigest()
 
