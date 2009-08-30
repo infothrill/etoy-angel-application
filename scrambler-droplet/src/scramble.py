@@ -42,7 +42,7 @@ def generateFilename(id, fname, checksum, mimetype = None):
     given checksum
     """
     assert hasExtension(fname, mimetype), "Cowardly refusing to scramble a file that has no extension: '%s'" % fname
-    extension = getExtension(fname).lower()
+    extension = getExtension(fname, mimetype).lower()
     return checksum + "-" + id + extension
 
 class ScrambledDirectory(object):
