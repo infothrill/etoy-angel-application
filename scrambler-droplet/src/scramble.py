@@ -3,8 +3,18 @@ import shutil
 import logging
 import mimetypes
 import sha
+import re
 
 log = logging.getLogger('ScrambledDirectory')
+
+def parseScrambledName(name):
+    #bc3b8a1fbba4a475a1e607d665edf052b7b21325-F71806059E4A2EC3.html
+    regex = re.compile("^([0-9A-Fa-f]{40})-([0-9A-Fa-f]{16})(\..*)$")
+    matchObj = regex.match(name)
+    if matchObj is None:
+        raise ValueError, "Not a valid scrambled filename"
+    else:
+        return (matchObj.group(1), matchObj.group(2), matchObj.group(3))
 
 def m221estreamchecksum(stream):
     hasher = sha.new()
