@@ -35,12 +35,12 @@ def getExtension(fname, mimetype = None):
 def hasExtension(fname, mimetype = None):
     return len(getExtension(fname, mimetype)) > 0 
 
-def generateFilename(id, fname, checksum):
+def generateFilename(id, fname, checksum, mimetype = None):
     """
     generates a "scrambled" filename based on the given id, filename and the
     given checksum
     """
-    assert hasExtension(fname), "Cowardly refusing to scramble a file that has no extension: '%s'" % fname
+    assert hasExtension(fname, mimetype), "Cowardly refusing to scramble a file that has no extension: '%s'" % fname
     extension = getExtension(fname).lower()
     return checksum + "-" + id + extension
 
@@ -60,7 +60,7 @@ class ScrambledDirectory(object):
         self._targetpath = targetpath
         self.EXCLUDE_FILES = [ '.DS_Store', 'Thumbs.db' ]
 
-    def addFile(self, sourcefilename):
+    def addFile(self, sourcefilename, mimetype = None):
         assert os.path.isfile(sourcefilename), "The given filename is not a file: '%s'" % sourcefilename
         assert os.path.getsize(sourcefilename) > 0, "The given file '%s' has 0 size!" % sourcefilename
         sourcebasefilename = os.path.basename(sourcefilename)
@@ -68,7 +68,7 @@ class ScrambledDirectory(object):
             log.warn("excluding file '%s'" % sourcefilename)
             return 0
         sourcechecksum = m221echecksum(sourcefilename)
-        targetbasefilename = generateFilename(self._id, sourcefilename, sourcechecksum) 
+        targetbasefilename = generateFilename(self._id, sourcefilename, sourcechecksum, mimetype) 
         targetfilename = os.path.join(self._targetpath, targetbasefilename)
         if os.path.isfile(targetfilename):
             log.info("Skipping '%s', already present" % targetbasefilename)
