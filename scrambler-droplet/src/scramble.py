@@ -26,10 +26,11 @@ def getExtension(fname, mimetype = None):
     @param mimetype: a mimetype
     """
     dummybasename, extension = os.path.splitext(fname)
-    if len(extension) == 0 and not mimetype is None:
-        extension = mimetypes.guess_extension(mimetype) # includes leading dot, nice!
-        if extension is None:
-            return ''
+    if len(extension) == 0:
+        if not mimetype is None:
+            extension = mimetypes.guess_extension(mimetype) # includes leading dot, nice!
+            if extension is None:
+                return ''
     return extension
     
 def hasExtension(fname, mimetype = None):
