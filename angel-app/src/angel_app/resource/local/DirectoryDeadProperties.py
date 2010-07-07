@@ -73,7 +73,7 @@ class DirectoryDeadProperties(object):
         obj = None
         try:
             obj = cPickle.load(open(self._fileNameFor(qname)))
-        except (EOFError, cPickle.PickleError):
+        except (IOError, EOFError, cPickle.PickleError):
             return None
         return obj
 
