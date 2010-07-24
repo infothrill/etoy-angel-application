@@ -1,3 +1,6 @@
+0.4.6 July 24 2010
+ * fixed a WebDAV problem occuring with WebDavDroid for the Android platform
+
 0.4.5 August 21 2009
 
  * on Mac OS X, the main window can now be closed without quitting the

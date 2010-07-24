@@ -14,7 +14,7 @@ ez_setup.use_setuptools()
 
 from setuptools import setup, find_packages
 
-VERSION = "0.4.5" # Update for every release 
+VERSION = "0.4.6" # Update for every release 
 DESCRIPTION = "ANGEL APPLICATION - long term peer to peer backup"
 LONG_DESCRIPTION = """
 See http://angelapp.missioneternity.org/
