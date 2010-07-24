@@ -107,7 +107,7 @@ if [ "${MODE}" = "release" ]
 then
 	echo "Checking out fresh copy from SVN with tag ${TAG}...";
 	svn co ${SVNURL}/tags/${TAG} > /dev/null || error "An error occured while checking out from repository!"
-	mv ${TAG} ${SHORTNAME}
+	mv ${TAG}/angel-app ${SHORTNAME}
 fi
 if [ "${MODE}" = "trunk" ]
 then
