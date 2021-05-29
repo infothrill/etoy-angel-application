@@ -55,9 +55,10 @@ setup(
                  },
     install_requires = [
                         "zope.interface>=3.3.0",
+                        "pyparsing==1.5.7",
                         "netaddress>=0.2.2",
-                        "pycrypto>=2.0.1",
-                        "dyndnsc>=0.1.0",
+                        "pycrypto==2.0.1",
+                        "dyndnsc==0.2.0",
                         ], 
     # for some unkown reason pycrypto gets bundled fine only if installed manually from its tarball (easy_install not so easy)
     # wxPython does not conform to cheeseshop.python.org standards, so currently we cannot include it here
